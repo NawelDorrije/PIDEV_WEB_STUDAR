@@ -1,17 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+
         {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
         {% endblock %}
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% block css %}
+            <!-- Tu peux ajouter des styles supplémentaires ici dans les templates enfants -->
         {% endblock %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <!-- ***** Preloader Start ***** -->
+        <div id="js-preloader" class="js-preloader">
+            <div class="preloader-inner">
+                <span class="dot"></span>
+                <div class="dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+        <!-- ***** Preloader End ***** -->
+
+        <div class="sub-header">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 col-md-8">
+                        <ul class="info">
+                            <li><i class="fa fa-envelope"></i> studar21@gmail.com</li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-4 col-md-4">
+                        <ul class="social-links">
+                            <li><a href="{{ path('app_home') }}"><i class="fab fa-facebook"></i></a></li>
+                            <li><a href="https://x.com/minthu" target="_blank"><i class="fab fa-twitter"></i></a></li>
+                            <li><a href="{{ path('app_home') }}"><i class="fab fa-linkedin"></i></a></li>
+                            <li><a href="{{ path('app_home') }}"><i class="fab fa-instagram"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ***** Header Area Start ***** -->
+        <header class="header-area header-sticky">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <nav class="main-nav">
+                            <!-- ***** Logo Start ***** -->
+                            <a href="{{ path('app_home') }}" class="logo">
+                                <img class="logo" src="{{ asset('images/logo.png') }}" alt="Villa Agency">
+                            </a>
+                            <!-- ***** Logo End ***** -->
+
+                            <!-- ***** Menu Start ***** -->
+                            <ul class="nav">
+                                <li><a href="{{ path('app_home') }}" class="active">Accueil</a></li>
+
+                                <!-- Services Dropdown -->
+                                <li class="dropdown">
+                                    <a href="#">Services <i class="fa fa-caret-down"></i></a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="{{ path('app_home') }}">Logements</a></li>
+                                        <li><a href="{{ path('app_home') }}">Meubles</a></li>
+                                        <li><a href="{{ path('app_home') }}">Transports</a></li>
+                                    </ul>
+                                </li>
+
+                                <!-- Agenda Dropdown -->
+                                <li class="dropdown">
+                                    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="{{ path('app_home') }}">Réservation des logements</a></li>
+                                        <li><a href="{{ path('app_home') }}">Réservation des transporteurs</a></li>
+                                        <li><a href="{{ path('app_home') }}">Rendez-vous</a></li>
+                                    </ul>
+                                </li>
+
+                                <li><a href="{{ path('app_home') }}">Chat AI</a></li>
+                                <li><a href="{{ path('app_home') }}"><i class="fa fa-calendar"></i></a></li>
+                                <li><a href="{{ path('app_home') }}"><i class="fa fa-user"></i></a></li> <!-- Icône de profil -->
+                            </ul>
+
+                            <a class='menu-trigger'>
+                                <span>Menu</span>
+                            </a>
+                            <!-- ***** Menu End ***** -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- ***** Header Area End ***** -->
+
+        {% block body %}
+            <!-- Le contenu principal sera inséré ici par les templates enfants -->
+        {% endblock %}
+
+        <footer>
+            <div class="container">
+                <div class="col-lg-8">
+                    <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
+                    Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
+                </div>
+            </div>
+        </footer>
+
+        {% block javascripts %}
+            {{ encore_entry_script_tags('app') }}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+
+        {% block js %}
+            <!-- Tu peux ajouter des scripts supplémentaires ici dans les templates enfants -->
+        {% endblock %}
     </body>
 </html>
