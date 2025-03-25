@@ -15,9 +15,6 @@
                         <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
                         </symbol>
-                        <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-                        </symbol>
                         <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
                         </symbol>
@@ -36,64 +33,58 @@
                         </div>
                     {% endfor %}
 
-                    <!-- Formulaire avec validation Bootstrap -->
-                    <form class="row g-3 needs-validation" action="{{ path('app_gestion_meuble_ajouter') }}" method="post" enctype="multipart/form-data" novalidate>
+                    <!-- Formulaire Symfony avec validation Bootstrap -->
+                    {{ form_start(form, {'attr': {'class': 'row g-3 needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+
                         <!-- Champ Nom -->
                         <div class="col-md-6">
-                            <label for="nom" class="form-label">Nom du meuble</label>
-                            <input type="text" name="nom" id="nom" class="form-control" placeholder="Entrez le nom du meuble" required>
-                            <div class="valid-feedback">
-                                Valide !
-                            </div>
+                            {{ form_label(form.nom, 'Nom du meuble', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.nom, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le nom du meuble', 'required': 'required'}}) }}
+                            <div class="valid-feedback">Valide !</div>
                             <div class="invalid-feedback">
-                                Veuillez entrer le nom du meuble.
+                                {{ form_errors(form.nom) ?: 'Le nom du meuble est obligatoire et doit contenir au moins 3 caractères.' }}
                             </div>
                         </div>
 
-                        <!-- Champ Prix -->
+                        <!-- Champ Prix (type number strict) -->
                         <div class="col-md-6">
-                            <label for="prix" class="form-label">Prix</label>
-                            <input type="number" name="prix" id="prix" class="form-control" placeholder="Entrez le prix du meuble" step="0.01" required>
-                            <div class="valid-feedback">
-                                Valide !
-                            </div>
+                            {{ form_label(form.prix, 'Prix', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.prix, {'attr': {'type': 'number', 'class': 'form-control', 'placeholder': 'Entrez le prix du meuble', 'step': '0.01', 'min': '0', 'required': 'required'}}) }}
+                            <div class="valid-feedback">Valide !</div>
                             <div class="invalid-feedback">
-                                Veuillez entrer un prix valide.
+                                {{ form_errors(form.prix) ?: 'Le prix doit être un nombre positif.' }}
                             </div>
                         </div>
 
                         <!-- Champ Description -->
                         <div class="col-md-12">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea name="description" id="description" class="form-control" placeholder="Entrez la description du meuble" rows="4" required></textarea>
-                            <div class="valid-feedback">
-                                Valide !
-                            </div>
+                            {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Entrez la description du meuble', 'rows': '4'}}) }}
+                            <div class="valid-feedback">Valide !</div>
                             <div class="invalid-feedback">
-                                Veuillez entrer une description.
+                                {{ form_errors(form.description) ?: 'La description doit contenir au moins 10 caractères si elle est renseignée.' }}
                             </div>
                         </div>
 
-                        <!-- Champ Image -->
+                        <!-- Champ Image (type file avec validation) -->
                         <div class="col-md-12">
-                            <label for="image" class="form-label">Image</label>
+                            {{ form_label(form.image, 'Image', {'label_attr': {'class': 'form-label'}}) }}
                             <div class="image-preview-container" style="background: #e9edf4; padding: 10px; border-radius: 5px; display: flex; align-items: center;">
                                 <img id="image-preview" src="{{ asset('images/downloadImage.png') }}" alt="Aperçu de l'image" style="width: 200px; height: 150px; margin-right: 20px;">
-                                <input type="file" name="image" id="image" accept="image/*" class="form-control" onchange="previewImage(event)">
-                                <div class="valid-feedback">
-                                    Valide !
-                                </div>
+                                {{ form_widget(form.image, {'attr': {'type': 'file', 'class': 'form-control', 'accept': 'image/*', 'onchange': 'previewImage(event)', 'required': 'required'}}) }}
+                                <div class="valid-feedback">Valide !</div>
                                 <div class="invalid-feedback">
-                                    Veuillez choisir une image.
+                                    {{ form_errors(form.image) ?: 'Veuillez choisir une image depuis votre ordinateur.' }}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Bouton Ajouter -->
-                        <div class="col-12">
+                        <!-- Bouton Ajouter (aligné à droite) -->
+                        <div class="col-12 text-end">
                             <button type="submit" class="btn btn-primary">Ajouter le meuble</button>
                         </div>
-                    </form>
+
+                    {{ form_end(form) }}
                 </div>
             </div>
         </div>
@@ -128,6 +119,8 @@
                 imagePreview.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        } else {
+            imagePreview.src = "{{ asset('images/downloadImage.png') }}"; // Réinitialiser si aucune image sélectionnée
         }
     }
 </script>
