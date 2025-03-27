@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Ajouter un meuble{% endblock %}
+{% block title %}
+    {{ is_edit ? 'Modifier un meuble' : 'Ajouter un meuble' }}
+{% endblock %}
 
 {% block body %}
 <div class="section">
@@ -8,9 +10,11 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="form-container" style="background-color: #ffffff; padding: 20px; border-radius: 5px; margin-top:-80px">
-                    <h2 style="font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 20px;">Ajouter un Meuble</h2>
+                    <h2 style="font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 20px;">
+                        {{ is_edit ? 'Modifier un Meuble' : 'Ajouter un Meuble' }}
+                    </h2>
 
-                    <!-- Afficher les messages flash (succès ou erreur) -->
+                    <!-- Afficher les messages flash -->
                     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
                         <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
@@ -46,7 +50,7 @@
                             </div>
                         </div>
 
-                        <!-- Champ Prix (type number strict) -->
+                        <!-- Champ Prix -->
                         <div class="col-md-6">
                             {{ form_label(form.prix, 'Prix', {'label_attr': {'class': 'form-label'}}) }}
                             {{ form_widget(form.prix, {'attr': {'type': 'number', 'class': 'form-control', 'placeholder': 'Entrez le prix du meuble', 'step': '0.01', 'min': '0', 'required': 'required'}}) }}
@@ -62,16 +66,16 @@
                             {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Entrez la description du meuble', 'rows': '4'}}) }}
                             <div class="valid-feedback">Valide !</div>
                             <div class="invalid-feedback">
-                                {{ form_errors(form.description) ?: 'La description doit contenir au moins 10 caractères si elle est renseignée.' }}
+                                {{ form_errors(form.description) ?: 'La description doit contenir au moins 3 caractères si elle est renseignée.' }}
                             </div>
                         </div>
 
-                        <!-- Champ Image (type file avec validation) -->
+                        <!-- Champ Image -->
                         <div class="col-md-12">
                             {{ form_label(form.image, 'Image', {'label_attr': {'class': 'form-label'}}) }}
                             <div class="image-preview-container" style="background: #e9edf4; padding: 10px; border-radius: 5px; display: flex; align-items: center;">
-                                <img id="image-preview" src="{{ asset('images/downloadImage.png') }}" alt="Aperçu de l'image" style="width: 200px; height: 150px; margin-right: 20px;">
-                                {{ form_widget(form.image, {'attr': {'type': 'file', 'class': 'form-control', 'accept': 'image/*', 'onchange': 'previewImage(event)', 'required': 'required'}}) }}
+                                <img id="image-preview" src="{% if is_edit and meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" alt="Aperçu de l'image" style="width: 200px; height: 150px; margin-right: 20px;">
+                                {{ form_widget(form.image, {'attr': {'type': 'file', 'class': 'form-control', 'accept': 'image/*', 'onchange': 'previewImage(event)', 'required': is_edit ? '' : 'required'}}) }}
                                 <div class="valid-feedback">Valide !</div>
                                 <div class="invalid-feedback">
                                     {{ form_errors(form.image) ?: 'Veuillez choisir une image depuis votre ordinateur.' }}
@@ -79,9 +83,11 @@
                             </div>
                         </div>
 
-                        <!-- Bouton Ajouter (aligné à droite) -->
+                        <!-- Bouton -->
                         <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-primary">Ajouter le meuble</button>
+                            <button type="submit" class="btn btn-primary">
+                                {{ is_edit ? 'Modifier le meuble' : 'Ajouter le meuble' }}
+                            </button>
                         </div>
 
                     {{ form_end(form) }}
@@ -120,7 +126,7 @@
             };
             reader.readAsDataURL(file);
         } else {
-            imagePreview.src = "{{ asset('images/downloadImage.png') }}"; // Réinitialiser si aucune image sélectionnée
+            imagePreview.src = {% if is_edit and meuble.image %}"{{ asset('images/' ~ meuble.image) }}"{% else %}"{{ asset('images/downloadImage.png') }}"{% endif %};
         }
     }
 </script>

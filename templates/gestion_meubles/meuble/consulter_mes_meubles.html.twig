@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes meubles{% endblock %}
+
+{% block body %}
+<div class="section py-5">
+    <div class="container">
+        <!-- Section Heading -->
+        <div class="row mb-5">
+            <div class="col-lg-6 offset-lg-3 text-center">
+                <h2 class="display-5 fw-bold text-primary">Mes Meubles</h2>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success d-flex align-items-center" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Succès :">
+                    <use xlink:href="#check-circle-fill"/>
+                </svg>
+                <div>{{ message }}</div>
+            </div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Erreur :">
+                    <use xlink:href="#exclamation-triangle-fill"/>
+                </svg>
+                <div>{{ message }}</div>
+            </div>
+        {% endfor %}
+
+        <!-- Meubles List -->
+        {% if meubles is not empty %}
+            <div class="row g-4">
+                {% for meuble in meubles %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="furniture-card">
+                            <!-- Image -->
+                            <div class="furniture-image">
+                                {% if meuble.image %}
+                                    <img src="{{ asset('images/' ~ meuble.image) }}" alt="{{ meuble.nom }}" class="img-fluid">
+                                {% else %}
+                                    <img src="{{ asset('images/bureau bois avec chaise.jpg') }}" alt="Image par défaut" class="img-fluid">
+                                {% endif %}
+                                <span class="status-badge {{ meuble.statut == 'disponible' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ meuble.statut|capitalize }}
+                                </span>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="furniture-body p-3">
+                                <h5 class="furniture-title">{{ meuble.nom }}</h5>
+                                <p class="furniture-price text-primary fw-bold">{{ meuble.prix }} TND</p>
+                                <ul class="furniture-details list-unstyled">
+                                    
+                                    {% if meuble.description %}
+                                        <li><strong>Description:</strong> {{ meuble.description|u.truncate(50, '...') }}</li>
+                                    {% else %}
+                                        <li><strong>Description:</strong> Non fournie</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+
+                            <!-- Card Actions -->
+                            <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                                <a href="{{ path('app_gestion_meuble_modifier', {'id': meuble.id}) }}" class="btn btn-outline-primary btn-sm" {% if meuble.statut == 'indisponible' %} disabled {% endif %}>
+                                    <i class="bi bi-pencil-square me-1"></i> Modifier
+                                </a>
+                                <form method="post" action="{{ path('app_gestion_meuble_supprimer', {'id': meuble.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce meuble ? Cette action est irréversible.');" style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ meuble.id) }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" {% if meuble.statut == 'indisponible' %} disabled {% endif %}>
+                                        <i class="bi bi-trash me-1"></i> Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-box-seam display-1 text-muted"></i>
+                <p class="text-muted mt-3">Vous n'avez aucun meuble à vendre pour le moment.</p>
+            </div>
+        {% endif %}
+
+        <!-- Add New Meuble Button -->
+        <div class="text-center mt-5">
+            <a href="{{ path('app_gestion_meuble_ajouter') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle me-2"></i> Ajouter un meuble
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

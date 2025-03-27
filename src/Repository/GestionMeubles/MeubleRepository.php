@@ -28,6 +28,17 @@ class MeubleRepository extends ServiceEntityRepository
     }
 
     /**
+     * Supprime un meuble de la base de données
+     */
+    public function delete(Meuble $meuble, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($meuble);
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
      * Récupère tous les meubles
      * @return Meuble[]
      */
@@ -49,5 +60,29 @@ class MeubleRepository extends ServiceEntityRepository
             ->setParameter('id', $id)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    /**
+     * Récupère les meubles d'un vendeur spécifique (par cinVendeur)
+     * @return Meuble[]
+     */
+    public function findByCinVendeur(string $cinVendeur): array
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.cinVendeur = :cinVendeur')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->orderBy('m.statut', 'ASC') // Les meubles disponibles (DISPONIBLE) avant les vendus (INDISPONIBLE)
+            ->getQuery()
+            ->getResult();
+    }
+    public function findMeublesDisponiblesPourAcheteur(string $cinAcheteur): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where('m.cinVendeur != :cinAcheteur')
+            ->andWhere('m.statut = :statut')
+            ->setParameter('cinAcheteur', $cinAcheteur)
+            ->setParameter('statut', 'disponible')
+            ->getQuery()
+            ->getResult();
     }
 }
