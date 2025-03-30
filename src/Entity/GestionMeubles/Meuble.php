@@ -3,6 +3,8 @@
 namespace App\Entity\GestionMeubles;
 
 use App\Repository\GestionMeubles\MeubleRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -54,6 +56,16 @@ class Meuble
     #[Assert\File(mimeTypes: ["image/jpeg", "image/png", "image/webp"], mimeTypesMessage: "Le fichier doit être une image valide (JPG, PNG, WEBP).")]
     private ?string $image = null;
 
+    // Relation One-to-Many avec LignePanier
+    #[ORM\OneToMany(mappedBy: 'meuble', targetEntity: LignePanier::class, cascade: ['persist', 'remove'])]
+    private Collection $lignesPanier;
+
+    public function __construct()
+    {
+        $this->lignesPanier = new ArrayCollection();
+    }
+
+    // Getters et setters existants
     public function getId(): ?int { return $this->id; }
 
     public function getNom(): ?string { return $this->nom; }
@@ -79,4 +91,29 @@ class Meuble
 
     public function getImage(): ?string { return $this->image; }
     public function setImage(?string $image): static { $this->image = $image; return $this; }
+
+    // Méthodes pour la relation One-to-Many avec LignePanier
+    public function getLignesPanier(): Collection
+    {
+        return $this->lignesPanier;
+    }
+
+    public function addLignePanier(LignePanier $lignePanier): self
+    {
+        if (!$this->lignesPanier->contains($lignePanier)) {
+            $this->lignesPanier->add($lignePanier);
+            $lignePanier->setMeuble($this); // Assure la bidirectionnalité
+        }
+        return $this;
+    }
+
+    public function removeLignePanier(LignePanier $lignePanier): self
+    {
+        if ($this->lignesPanier->removeElement($lignePanier)) {
+            if ($lignePanier->getMeuble() === $this) {
+                $lignePanier->setMeuble(null);
+            }
+        }
+        return $this;
+    }
 }

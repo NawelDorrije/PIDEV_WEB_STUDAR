@@ -78,10 +78,19 @@ class MeubleRepository extends ServiceEntityRepository
     public function findMeublesDisponiblesPourAcheteur(string $cinAcheteur): array
     {
         return $this->createQueryBuilder('m')
-            ->where('m.cinVendeur != :cinAcheteur')
-            ->andWhere('m.statut = :statut')
+            ->where('m.cinVendeur != :cinAcheteur') // Exclure les meubles vendus par l'acheteur
+            ->andWhere('m.statut = :statut') // Seuls les meubles disponibles
+            ->andWhere('m NOT IN (
+                SELECT m2.id 
+                FROM App\Entity\GestionMeubles\LignePanier lp
+                JOIN lp.meuble m2
+                JOIN lp.panier p
+                WHERE p.cinAcheteur = :cinAcheteur 
+                AND p.statut = :statutPanier
+            )') // Exclure les meubles dans le panier en cours de l'acheteur
             ->setParameter('cinAcheteur', $cinAcheteur)
             ->setParameter('statut', 'disponible')
+            ->setParameter('statutPanier', 'EN_COURS')
             ->getQuery()
             ->getResult();
     }

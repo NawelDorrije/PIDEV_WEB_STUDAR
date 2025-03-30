@@ -2,14 +2,19 @@
 
 namespace App\Controller\GestionMeubles;
 
+use App\Entity\GestionMeubles\LignePanier;
 use App\Entity\GestionMeubles\Meuble;
+use App\Entity\GestionMeubles\Panier;
 use App\Form\MeubleType;
+use App\Repository\GestionMeubles\LignePanierRepository;
 use App\Repository\GestionMeubles\MeubleRepository;
+use App\Repository\GestionMeubles\PanierRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -17,11 +22,18 @@ final class MeubleController extends AbstractController
 {
     private MeubleRepository $meubleRepository;
     private ValidatorInterface $validator;
-
-    public function __construct(MeubleRepository $meubleRepository, ValidatorInterface $validator)
-    {
+    private PanierRepository $panierRepository;
+    private LignePanierRepository $lignePanierRepository;
+    public function __construct(
+        MeubleRepository $meubleRepository,
+        PanierRepository $panierRepository,
+        ValidatorInterface $validator,
+        LignePanierRepository $lignePanierRepository
+            ) {
         $this->meubleRepository = $meubleRepository;
+        $this->panierRepository = $panierRepository;
         $this->validator = $validator;
+        $this->lignePanierRepository = $lignePanierRepository;
     }
 
     #[Route('/meubles', name: 'app_gestion_meubles_meuble')]
@@ -197,23 +209,97 @@ final class MeubleController extends AbstractController
     }
 
 
+    // #[Route('/meubles/a-vendre', name: 'app_gestion_meubles_a_vendre', methods: ['GET'])]
+    // public function meublesAVendre(): Response
+    // {
+    //     // Récupérer l'utilisateur connecté (étudiant)
+    //     // $user = $this->getUser();
+    //     // if (!$user instanceof UserInterface) {
+    //     //     throw $this->createAccessDeniedException('Vous devez être connecté pour voir les meubles à vendre.');
+    //     // }
+
+    //     // // Récupérer le CIN de l'utilisateur connecté
+    //     // $cinAcheteur = $user->getCin(); // Assurez-vous que votre entité Utilisateur a une méthode getCin()
+
+    //     // Récupérer les meubles disponibles à la vente
+    //     $meubles = $this->meubleRepository->findMeublesDisponiblesPourAcheteur("14450157");
+
+    //     return $this->render('gestion_meubles/meuble/a_vendre.html.twig', [
+    //         'meubles' => $meubles,
+    //     ]);
+    // }
+    // #[Route('/meubles/a-vendre', name: 'app_gestion_meubles_a_vendre', methods: ['GET'])]
+    // public function meublesAVendre(): Response
+    // {
+    //     $cinAcheteur = "14450157";
+    //     $meubles = $this->meubleRepository->findMeublesDisponiblesPourAcheteur($cinAcheteur);
+
+    //     return $this->render('gestion_meubles/meuble/a_vendre.html.twig', [
+    //         'meubles' => $meubles,
+    //         'cin_acheteur' => $cinAcheteur,
+    //     ]);
+    // }
+    #[Route('/meubles/ajouter-au-panier/{id}', name: 'app_gestion_meubles_ajouter_panier', methods: ['POST'])]
+    public function ajouterAuPanier(Request $request, int $id): JsonResponse
+    {
+        try {
+            if (!$this->isCsrfTokenValid('add_to_cart_' . $id, $request->request->get('_token'))) {
+                throw new \Exception('Token CSRF invalide');
+            }
+
+            $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin() en production
+            $meuble = $this->meubleRepository->find($id);
+
+            if (!$meuble) {
+                throw new \Exception('Meuble non trouvé');
+            }
+
+            if ($meuble->getStatut() !== 'disponible') {
+                throw new \Exception('Ce meuble n\'est plus disponible');
+            }
+
+            $panier = $this->panierRepository->findPanierEnCours($cinAcheteur);
+            if (!$panier) {
+                $panier = new Panier();
+                $panier->setCinAcheteur($cinAcheteur);
+                $panier->setStatut(Panier::STATUT_EN_COURS);
+                $panier->setDateAjout(new \DateTime());
+                $this->panierRepository->save($panier, true);
+            }
+
+            if ($this->lignePanierRepository->verifierProduitDansPanier($panier->getId(), $meuble->getId())) {
+                return $this->json([
+                    'warning' => 'Ce meuble est déjà dans votre panier.'
+                ], Response::HTTP_CONFLICT);
+            }
+
+            $lignePanier = new LignePanier();
+            $lignePanier->setPanier($panier);
+            $lignePanier->setMeuble($meuble);
+            $this->lignePanierRepository->save($lignePanier, true);
+
+            return $this->json([
+                'message' => 'Le meuble a été ajouté à votre panier.',
+                'panier_id' => $panier->getId(),
+                'meuble_nom' => $meuble->getNom(),
+                'redirect' => $this->generateUrl('app_gestion_meubles_a_vendre') // URL pour recharger la page
+            ], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            return $this->json([
+                'error' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
     #[Route('/meubles/a-vendre', name: 'app_gestion_meubles_a_vendre', methods: ['GET'])]
     public function meublesAVendre(): Response
     {
-        // Récupérer l'utilisateur connecté (étudiant)
-        // $user = $this->getUser();
-        // if (!$user instanceof UserInterface) {
-        //     throw $this->createAccessDeniedException('Vous devez être connecté pour voir les meubles à vendre.');
-        // }
-
-        // // Récupérer le CIN de l'utilisateur connecté
-        // $cinAcheteur = $user->getCin(); // Assurez-vous que votre entité Utilisateur a une méthode getCin()
-
-        // Récupérer les meubles disponibles à la vente
-        $meubles = $this->meubleRepository->findMeublesDisponiblesPourAcheteur("14450157");
+        $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin() en production
+        $meubles = $this->meubleRepository->findMeublesDisponiblesPourAcheteur($cinAcheteur);
 
         return $this->render('gestion_meubles/meuble/a_vendre.html.twig', [
             'meubles' => $meubles,
+            'cin_acheteur' => $cinAcheteur,
         ]);
     }
 }

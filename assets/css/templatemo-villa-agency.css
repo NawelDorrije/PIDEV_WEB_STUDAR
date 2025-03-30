@@ -191,6 +191,123 @@ textarea.form-control {
   border-radius: 5px;
   margin-bottom: 20px;
 }
+    /* Styles modernes avec animations */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-50px); }
+      to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes scaleUp {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+  }
+
+  .section {
+      position: relative;
+      padding: 100px 0;
+      overflow: hidden;
+  }
+
+  .section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://www.transparenttextures.com/patterns/dark-wood.png') repeat;
+      opacity: 0.1;
+      z-index: 0;
+  }
+
+  .section-heading {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-bottom: 60px;
+  }
+
+  .section-heading h6 {
+      color: #ec631f;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: slideIn 1s ease-out;
+  }
+
+  .section-heading h2 {
+      color: #fff;
+      font-size: 3rem;
+      font-weight: 700;
+      animation: slideIn 1.2s ease-out;
+  }
+
+  .card {
+      background: rgba(255, 255, 255, 0.95);
+      border: none;
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      animation: scaleUp 0.6s ease-out;
+  }
+
+  .card:hover {
+      transform: translateY(-15px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .card-img-top {
+      height: 250px;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+  }
+
+  .card:hover .card-img-top {
+      transform: scale(1.1);
+  }
+
+  .card-body {
+      padding: 25px;
+  }
+
+  .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+  }
+
+  .card-text {
+      color: #7f8c8d;
+      font-size: 0.9rem;
+  }
+
+  .price {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #224a9f;
+  }
+
+  .btn-modern {
+      background: #ec631f;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 10px 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+  }
+
+  .btn-modern:hover {
+      background: #e67e22;
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .alert {
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      animation: scaleUp 0.8s ease-out;
+  }
 /* ---------------------------------  end code nawel   ------------------------------------- */
 
 
@@ -202,6 +319,7 @@ figure, header, nav, section, article, aside, footer, figcaption {
   padding: 0;
   border: 0;
   outline: 0;
+
 }
 
 .clearfix:after {
