@@ -13,6 +13,7 @@ import './css/animate.css';
 import './css/owl.css';
 import './css/fontawesome.css';
 import './css/templatemo-villa-agency.css';
+import './css/meuble-style.css';
 import './js/counter.js';
 import './js/custom.js';
 import './js/isotope.min.js';

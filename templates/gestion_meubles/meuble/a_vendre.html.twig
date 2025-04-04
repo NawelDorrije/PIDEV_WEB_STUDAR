@@ -5,203 +5,92 @@
 {% endblock %}
 
 {% block body %}
-<!-- Styles inchangés -->
+<!-- Styles mis à jour -->
 <style>
-    .section-heading {
-        text-align: center;
-        margin-bottom: 60px;
+    /* Styles existants conservés */
+    .toast-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1050;
+        width: 70%;
+        min-width: 700px;
+        max-width: 1000px;
+        pointer-events: none;
     }
-
-    .section-heading h6 {
-        color: #f39c12;
-        font-size: 1.2rem;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-    }
-
-    .section-heading h2 {
-        color: #333;
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
-
-    .alert {
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.9);
-    }
-
-    .card {
-        border: none;
+    .toast {
+        width: 100%;
         border-radius: 10px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
+        pointer-events: auto;
     }
-
-    .card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card-img-top {
-        height: 200px;
-        object-fit: cover;
+    .toast-header {
+        background: #f39c12;
+        color: white;
         border-top-left-radius: 10px;
         border-top-right-radius: 10px;
     }
-
-    .card-body {
+    .toast-body {
         padding: 20px;
-    }
-
-    .card-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-
-    .card-text {
-        font-size: 0.9rem;
-        color: #7f8c8d;
-        margin-bottom: 15px;
-    }
-
-    .price {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #e67e22;
-        margin-bottom: 15px;
-    }
-
-    .btn-container {
         display: flex;
-        justify-content: center;
-        gap: 10px;
+        flex-direction: row; /* Changement pour aligner horizontalement */
+        gap: 20px; /* Espacement entre l'image et les infos */
+        align-items: center; /* Centre verticalement les éléments */
     }
-
-    .btn-modern {
+    .toast-body img {
+        width: 300px; /* Taille fixe pour toutes les images */
+        height: 200px;
+        object-fit: cover;
+        border-radius: 5px;
+        flex-shrink: 0; /* Empêche l'image de rétrécir */
+    }
+    .toast-body .info-container {
+        flex-grow: 1; /* Les informations occupent l'espace restant */
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* Espacement entre les éléments d'info */
+    }
+    .toast-body .btn-add-to-cart {
         background: #f39c12;
-        color: #fff;
+        color: white;
         border: none;
         border-radius: 50px;
         padding: 10px 20px;
         font-weight: 500;
         transition: all 0.3s ease;
+        align-self: flex-start; /* Aligne le bouton à gauche dans les infos */
     }
-
-    .btn-modern:hover {
+    .toast-body .btn-add-to-cart:hover {
         background: #e67e22;
         transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
-
     .btn-detail {
-        background: #2c3e50;
+        background: #16a085;
     }
-
     .btn-detail:hover {
-        background: #34495e;
+        background: #138d75;
     }
-
-    .modal {
-        z-index: 1050 !important;
-    }
-
-    .modal-backdrop {
-        z-index: 1040 !important;
-        background-color: rgba(0, 0, 0, 0.3) !important;
-    }
-
-    .modal-dialog {
-        max-width: 700px;
-        z-index: 1051 !important;
-    }
-
-    .modal-content {
-        border-radius: 15px;
-        background: #fff;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        border: none;
-        position: relative;
-        z-index: 1052 !important;
-    }
-
-    .modal-header {
-        border-bottom: none;
-        background: #f39c12;
-        color: #fff;
-        border-top-left-radius: 15px;
-        border-top-right-radius: 15px;
-        padding: 15px 20px;
-    }
-
-    .modal-header .btn-close {
-        filter: invert(1);
-        z-index: 1053 !important;
-    }
-
-    .modal-body {
-        padding: 30px;
-        display: flex;
-        flex-direction: row;
-        align-items: stretch;
-        z-index: 1052 !important;
-    }
-
-    .modal-image {
-        flex: 1;
-        margin-right: 20px;
-    }
-
-    .modal-image img {
+    .blur-background {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        border-radius: 10px;
-    }
-
-    .modal-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-
-    .modal-details h4 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-
-    .modal-details .info-table ul {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
-    }
-
-    .modal-details .info-table li {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #eee;
-        font-size: 0.95rem;
-        color: #333;
-    }
-
-    .modal-details .info-table span {
-        font-weight: bold;
-        color: #e67e22;
-    }
-
-    .modal-details .description {
-        font-size: 0.9rem;
-        color: #7f8c8d;
-        margin-bottom: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(5px);
+        z-index: 1040;
+        display: none;
     }
 </style>
 
 <div class="section meubles-a-vendre">
     <div class="container" style="position: relative; z-index: 1;">
+        <!-- Conteneur pour l'arrière-plan flou -->
+        <div class="blur-background" id="blurBackground"></div>
+        <!-- Conteneur pour les toasts, centré -->
+        <div class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
         <div class="row">
             <div class="col-lg-12">
                 <div class="section-heading">
@@ -237,7 +126,7 @@
             {% if meubles|length > 0 %}
                 {% for meuble in meubles %}
                     <div class="col-lg-4 col-md-6 mb-5">
-                        <div class="card">
+                        <div class="card"> 
                             <img src="{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
                                  class="card-img-top" 
                                  alt="{{ meuble.nom }}">
@@ -252,40 +141,20 @@
                                             <i class="fa fa-shopping-cart"></i> Ajouter
                                         </button>
                                     </form>
-                                    <button type="button" class="btn-modern btn-detail" data-bs-toggle="modal" data-bs-target="#meubleModal{{ meuble.id }}">
+                                    <!-- Bouton Détail -->
+                                    <button type="button" 
+                                            class="btn-modern btn-detail" 
+                                            data-meuble-id="{{ meuble.id }}"
+                                            data-meuble-nom="{{ meuble.nom }}"
+                                            data-meuble-prix="{{ meuble.prix }}"
+                                            data-meuble-statut="{{ meuble.statut|capitalize }}"
+                                            data-meuble-vendeur="{{ meuble.cinVendeur }}"
+                                            data-meuble-description="{{ meuble.description }}"
+                                            data-meuble-image="{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}"
+                                            data-meuble-csrf="{{ csrf_token('add_to_cart_' ~ meuble.id) }}"
+                                            onclick="showMeubleToast(this)">
                                         <i class="fa fa-eye"></i> Détail
                                     </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Modal -->
-                        <div class="modal fade" id="meubleModal{{ meuble.id }}" tabindex="-1" aria-labelledby="meubleModalLabel{{ meuble.id }}" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="meubleModalLabel{{ meuble.id }}">{{ meuble.nom }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="modal-image">
-                                            <img src="{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
-                                                 alt="{{ meuble.nom }}">
-                                        </div>
-                                        <div class="modal-details">
-                                            <div>
-                                                <h4>Détails du meuble</h4>
-                                                <div class="info-table">
-                                                    <ul>
-                                                        <li>Prix <span>{{ meuble.prix }} TND</span></li>
-                                                        <li>Statut <span>{{ meuble.statut|capitalize }}</span></li>
-                                                        <li>Vendeur <span>{{ meuble.cinVendeur }}</span></li>
-                                                    </ul>
-                                                </div>
-                                                <p class="description">{{ meuble.description }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -335,7 +204,7 @@
                     } else {
                         alert(response.message);
                         if (response.redirect) {
-                            window.location.href = response.redirect; // Recharge la page
+                            window.location.href = response.redirect;
                         }
                         $button.html('<i class="fa fa-shopping-cart"></i> Ajouter').prop('disabled', false);
                     }
@@ -348,5 +217,97 @@
             });
         });
     });
+
+    // Fonction pour afficher un toast avec les détails du meuble
+    function showMeubleToast(button) {
+        const meuble = {
+            id: button.getAttribute('data-meuble-id'),
+            nom: button.getAttribute('data-meuble-nom'),
+            prix: button.getAttribute('data-meuble-prix'),
+            statut: button.getAttribute('data-meuble-statut'),
+            vendeur: button.getAttribute('data-meuble-vendeur'),
+            description: button.getAttribute('data-meuble-description'),
+            image: button.getAttribute('data-meuble-image'),
+            csrf: button.getAttribute('data-meuble-csrf')
+        };
+
+        // Création du toast avec image à gauche et infos à droite
+        const toastHTML = `
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">${meuble.nom}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <img src="${meuble.image}" alt="${meuble.nom}">
+                    <div class="info-container">
+                        <p><strong>Prix:</strong> ${meuble.prix} TND</p>
+                        <p><strong>Statut:</strong> ${meuble.statut}</p>
+                        <p><strong>Vendeur:</strong> ${meuble.vendeur}</p>
+                        <p><strong>Description:</strong> ${meuble.description}</p>
+                        <form action="${'{{ path("app_gestion_meubles_ajouter_panier", {"id": "__ID__"}) }}'.replace('__ID__', meuble.id)}" method="POST" class="add-to-cart-form-toast">
+                            <input type="hidden" name="_token" value="${meuble.csrf}">
+                            <button type="submit" class="btn-add-to-cart">
+                                <i class="fa fa-shopping-cart"></i> Ajouter au panier
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajout du toast au conteneur
+        const toastContainer = document.querySelector('.toast-container');
+        toastContainer.innerHTML = toastHTML;
+
+        // Afficher l'arrière-plan flou
+        const blurBackground = document.getElementById('blurBackground');
+        blurBackground.style.display = 'block';
+
+        // Initialisation et affichage du toast
+        const toastElement = toastContainer.querySelector('.toast');
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: false
+        });
+        toast.show();
+
+        // Masquer l'arrière-plan flou lorsque le toast est fermé
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            blurBackground.style.display = 'none';
+        });
+
+        // Gestion du bouton "Ajouter au panier" dans le toast
+        $(toastElement).find('.add-to-cart-form-toast').on('submit', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $button = $form.find('.btn-add-to-cart');
+            $button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ajout...');
+
+            $.ajax({
+                url: $form.attr('action'),
+                method: 'POST',
+                data: $form.serialize(),
+                success: function(response) {
+                    if (response.warning) {
+                        alert(response.warning);
+                        $button.html('<i class="fa fa-shopping-cart"></i> Ajouter au panier').prop('disabled', false);
+                    } else {
+                        alert(response.message);
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        }
+                        $button.html('<i class="fa fa-shopping-cart"></i> Ajouter au panier').prop('disabled', false);
+                        toast.hide();
+                        blurBackground.style.display = 'none';
+                    }
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Une erreur est survenue';
+                    alert('Erreur: ' + error);
+                    $button.html('<i class="fa fa-shopping-cart"></i> Ajouter au panier').prop('disabled', false);
+                }
+            });
+        });
+    }
 </script>
 {% endblock %}

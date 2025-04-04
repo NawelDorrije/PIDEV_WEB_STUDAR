@@ -1,0 +1,357 @@
+/* ------------------------------------ start code nawel -------------------------------- */
+/* Furniture Card Styles */
+.commandes-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  .commandes-container h1 {
+    color: #2458a8;
+    size: 1rem;
+    font-family: Georgia, serif;
+  
+  }
+  
+  .modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .modern-table th {
+    background: #2458a8;
+    color: white;
+    padding: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    vertical-align: middle;
+  }
+  
+  .modern-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .modern-table tr:hover {
+    background: #f5f6fa;
+  }
+  
+  .filter-row th {
+    background: #2458a8;
+    padding: 0.5rem;
+  }
+  
+  .filter-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+  }
+  
+  #filter-code {
+    width: 80px !important;
+  }
+  
+  
+  .payment-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: white;
+  }
+  
+  .btn-cancel {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .btn-cancel:hover {
+    background: #c0392b;
+  }
+  @media (max-width: 768px) {
+    .modern-table {
+        display: block;
+        overflow-x: auto;
+    }
+  }
+  
+  .furniture-card {
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .furniture-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+  
+  .furniture-image {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .furniture-image img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .furniture-card:hover .furniture-image img {
+    transform: scale(1.05);
+  }
+  
+  .status-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  
+  .furniture-body {
+    background: #f8f9fa;
+  }
+  
+  .furniture-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  
+  .furniture-price {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .furniture-details li {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+  }
+  
+  .furniture-details li strong {
+    color: #333;
+  }
+  
+  .furniture-actions {
+    background: #fff;
+  }
+  
+  .furniture-actions .btn {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .furniture-actions .btn-outline-primary:hover:not(:disabled) {
+    background-color: #007bff;
+    color: #fff;
+  }
+  
+  .furniture-actions .btn-outline-danger:hover:not(:disabled) {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  
+  .furniture-actions .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Section Styles */
+  
+  
+  .text-primary {
+    color: #007bff !important;
+  }
+  
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  
+  /* Empty State */
+  .text-muted i {
+    opacity: 0.3;
+  }
+  /* public/css/style.css */
+  .form-container {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .form-control:focus {
+    outline: none;
+    border-color: #214799;
+    box-shadow: 0 0 5px rgba(33, 71, 153, 0.3);
+  }
+  
+  textarea.form-control {
+    resize: vertical;
+  }
+  
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+      /* Styles modernes avec animations */
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-50px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+  
+    @keyframes scaleUp {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+  
+    .section {
+        position: relative;
+        overflow: hidden;
+    }
+  
+    .section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.1;
+        z-index: 0;
+    }
+  
+    .section-heading {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+  
+    .section-heading h6 {
+        color: #ec631f;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        animation: slideIn 1s ease-out;
+    }
+  
+    .section-heading h2 {
+        color: #fff;
+        font-size: 3rem;
+        font-weight: 700;
+        animation: slideIn 1.2s ease-out;
+    }
+  
+    .card {
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        animation: scaleUp 0.6s ease-out;
+    }
+  
+    .card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+  
+    .card-img-top {
+        height: 250px;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+  
+    .card:hover .card-img-top {
+        transform: scale(1.1);
+    }
+  
+    .card-body {
+        padding: 25px;
+    }
+  
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+  
+    .card-text {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+  
+    .price {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #224a9f;
+    }
+  
+    .btn-modern {
+        background: #ec631f;
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+  
+    .btn-modern:hover {
+        background: #e67e22;
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+  
+    .alert {
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        animation: scaleUp 0.8s ease-out;
+    }
+  /* ---------------------------------  end code nawel   ------------------------------------- */
+  

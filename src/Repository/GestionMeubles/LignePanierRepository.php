@@ -154,4 +154,5 @@ class LignePanierRepository extends ServiceEntityRepository
 
         return $count > 0;
     }
+    
 }

@@ -58,28 +58,27 @@ final class PanierController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
     }
-
     #[Route('/lignes', name: 'app_gestion_meubles_lignes_panier', methods: ['GET'])]
     public function voirLignesPanier(): Response
     {
-        $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin()
+        $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin() pour récupérer l'utilisateur connecté
         $panier = $this->panierRepository->findPanierEnCours($cinAcheteur);
-
-        if (!$panier) {
-            return $this->render('gestion_meubles/panier/voir_lignes.html.twig', [
-                'lignesPanier' => [],
-                'cin_acheteur' => $cinAcheteur,
-                'total' => 0.0,
-            ]);
+    
+        $cartCount = 0; // Initialisation du compteur
+        if ($panier) {
+            $lignesPanier = $this->lignePanierRepository->findByPanierId($panier->getId());
+            $cartCount = count($lignesPanier); // Nombre total de lignes dans le panier
+            $total = $this->panierRepository->calculerSommePanier($panier->getId());
+        } else {
+            $lignesPanier = [];
+            $total = 0.0;
         }
-
-        $lignesPanier = $this->lignePanierRepository->findByPanierId($panier->getId());
-        $total = $this->panierRepository->calculerSommePanier($panier->getId());
-
+    
         return $this->render('gestion_meubles/panier/voir_lignes.html.twig', [
             'lignesPanier' => $lignesPanier,
             'cin_acheteur' => $cinAcheteur,
             'total' => $total,
+            'cartCount' => $cartCount, // Passage du nombre de produits au template
         ]);
     }
 
