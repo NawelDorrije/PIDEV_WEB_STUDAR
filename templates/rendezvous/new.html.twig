@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Rendezvous{% endblock %}
+
+{% block body %}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="form-container">
+                    <h2 class="text-center mb-5">Planifier un Rendez-vous</h2>
+                    
+                    {{ form_start(form, {'attr': {'class': 'rendezvous-form'}}) }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form_row(form.date, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                            <div class="col-md-6">
+                              {{ form_row(form.heure, {
+    'attr': {'class': 'form-control'},
+    'label': 'Heure'
+}) }}
+                            </div>
+                        </div>
+                        
+                        {{ form_row(form.cinProprietaire, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_row(form.cinEtudiant, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_row(form.idLogement, {'attr': {'class': 'form-control'}}) }}
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calendar-check mr-2"></i> Valider le Rendez-vous
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

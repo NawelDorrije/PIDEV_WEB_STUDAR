@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Rendez-vous{% endblock %}
+
+{% block body %}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="form-container">
+                    <h2 class="text-center mb-5">Modifier le Rendez-vous </h2>
+                    
+                    {{ form_start(form, {'attr': {'class': 'rendezvous-form'}}) }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form_row(form.date, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form_row(form.heure, {'attr': {'class': 'form-control'}}) }}
+                            </div>
+                        </div>
+                        
+                        {{ form_row(form.cinProprietaire, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_row(form.cinEtudiant, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_row(form.idLogement, {'attr': {'class': 'form-control'}}) }}
+                        
+                        <div class="action-buttons text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save mr-2"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{{ path('app_rendezvous_index') }}" class="btn btn-secondary btn-lg ml-3">
+                                <i class="fas fa-arrow-left mr-2"></i> Retour à la liste
+                            </a>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

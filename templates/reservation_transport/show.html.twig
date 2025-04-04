@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ReservationTransport{% endblock %}
+
+{% block body %}
+    <h1>ReservationTransport</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ reservation_transport.id }}</td>
+            </tr>
+            <tr>
+                <th>AdresseDepart</th>
+                <td>{{ reservation_transport.adresseDepart }}</td>
+            </tr>
+            <tr>
+                <th>AdresseDestination</th>
+                <td>{{ reservation_transport.adresseDestination }}</td>
+            </tr>
+            <tr>
+                <th>TempsArrivage</th>
+                <td>{{ reservation_transport.tempsArrivage }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ reservation_transport.status }}</td>
+            </tr>
+            <tr>
+                <th>CinEtudiant</th>
+                <td>{{ reservation_transport.cinEtudiant }}</td>
+            </tr>
+            <tr>
+                <th>CinTransporteur</th>
+                <td>{{ reservation_transport.cinTransporteur }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_reservation_transport_index') }}">back to list</a>
+
+    <a href="{{ path('app_reservation_transport_edit', {'id': reservation_transport.id}) }}">edit</a>
+
+    {{ include('reservation_transport/_delete_form.html.twig') }}
+{% endblock %}

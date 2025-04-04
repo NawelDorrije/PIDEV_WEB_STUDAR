@@ -6,12 +6,14 @@
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
         <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
 
         {% block css %}
+                <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}">
+
             <!-- Tu peux ajouter des styles supplémentaires ici dans les templates enfants -->
         {% endblock %}
     </head>
@@ -75,15 +77,19 @@
                                     </ul>
                                 </li>
 
-                                <!-- Agenda Dropdown -->
-                                <li class="dropdown">
-                                    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ path('app_home') }}">Réservation des logements</a></li>
-                                        <li><a href="{{ path('app_home') }}">Réservation des transporteurs</a></li>
-                                        <li><a href="{{ path('app_home') }}">Rendez-vous</a></li>
-                                    </ul>
-                                </li>
+                              <!-- In your navigation menu -->
+<li class="dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
+    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
+    <ul class="dropdown-menu">
+        <li class="{{ app.request.get('_route') == 'app_rendezvous_index' ? 'active' }}">
+            <a href="{{ path('app_rendezvous_index') }}">
+                <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
+            </a>
+        </li>
+        <li><a href="#"><i class="fas fa-bed mr-2"></i> Réservation des logements</a></li>
+        <li><a href="#"><i class="fas fa-bus mr-2"></i> Réservation des transporteurs</a></li>
+    </ul>
+</li>
 
                                 <li><a href="{{ path('app_home') }}">Chat AI</a></li>
                                 <li><a href="{{ path('app_home') }}"><i class="fa fa-calendar"></i></a></li>
@@ -94,6 +100,12 @@
                                 <span>Menu</span>
                             </a>
                             <!-- ***** Menu End ***** -->
+                            <li class="nav-item">
+    <a href="{{ path('app_rendezvous_index') }}" class="nav-link">
+        <i class="far fa-calendar"></i>
+        <span class="badge badge-danger">3</span>
+    </a>
+</li>
                         </nav>
                     </div>
                 </div>
@@ -117,6 +129,71 @@
         {% block javascripts %}
             {{ encore_entry_script_tags('app') }}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
+          <script>
+        // View Toggle Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // View toggle buttons
+            const viewButtons = document.querySelectorAll('[data-view]');
+            viewButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Set active button
+                    viewButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Toggle views
+                    const viewType = this.dataset.view;
+                    document.querySelector('.rendezvous-list').style.display = 
+                        viewType === 'list' ? 'block' : 'none';
+                    document.querySelector('.rendezvous-calendar').style.display = 
+                        viewType === 'calendar' ? 'block' : 'none';
+                    
+                    // You would add timeline view here when implemented
+                });
+            });
+            
+            // Highlight current status filter
+            const currentStatus = new URL(window.location.href).searchParams.get('status');
+            if (currentStatus) {
+                const activeFilter = document.querySelector(`.status-filter a[href*="status=${currentStatus}"]`);
+                if (activeFilter) {
+                    activeFilter.classList.add('active');
+                }
+            }
+
+        });
+        // Dans votre fichier JavaScript
+document.querySelectorAll('[data-view]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Active le bouton cliqué
+        document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Masque toutes les vues
+        document.querySelector('.rendezvous-list').style.display = 'none';
+        document.querySelector('.rendezvous-calendar').style.display = 'none';
+        document.querySelector('.rendezvous-timeline').style.display = 'none';
+        
+        // Affiche la vue sélectionnée
+        const viewType = this.dataset.view;
+        document.querySelector(`.rendezvous-${viewType}`).style.display = 'block';
+    });
+    
+});
+// In a JavaScript file
+document.querySelectorAll('.delete-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        if (this.querySelector('button').disabled) {
+            e.preventDefault();
+            alert('Cette action est désactivée pour ce rendez-vous');
+        }
+    });
+});
+         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
         {% endblock %}
 
         {% block js %}
