@@ -161,4 +161,118 @@
   pointer-events: none;
   cursor: not-allowed;
 }
+
+/* Reservation Logement Specific Styles */
+.reservation-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid #4e73df;
+}
+
+.reservation-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.reservation-details .details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.reservation-details .detail-item {
+  margin-bottom: 1rem;
+}
+
+.reservation-details .detail-label {
+  font-weight: 600;
+  color: #4e73df;
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+}
+
+/* PDF Download Button */
+.btn-pdf {
+  background-color: #e74a3b;
+  color: white;
+}
+
+.btn-pdf:hover {
+  background-color: #be2617;
+  color: white;
+}
+
+/* Status Badges */
+.badge-confirmed {
+  background-color: #1cc88a;
+}
+
+.badge-pending {
+  background-color: #f6c23e;
+}
+
+.badge-refused {
+  background-color: #e74a3b;
+}
+
+/* Transport Specific Styles */
+.transport-card {
+  border-left: 4px solid #6c757d;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.transport-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.route-info {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.departure, .arrival {
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 4px;
+}
+
+.map-controls {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+/* Status specific colors */
+.transport-card.confirmée {
+  border-left-color: #28a745;
+}
+
+.transport-card.en_attente {
+  border-left-color: #ffc107;
+}
+
+.transport-card.refusée {
+  border-left-color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .route-info strong {
+    font-weight: 600;
+    color: #333;
+}
+  
+  .route-info i.fa-arrow-right {
+      transform: rotate(90deg);
+      margin: 5px 0;
+  }
+  
+}
+
+
 }

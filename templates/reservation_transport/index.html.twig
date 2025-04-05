@@ -1,43 +1,281 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}ReservationTransport index{% endblock %}
+{% block title %}Réservations de Transport{% endblock %}
 
 {% block body %}
-    <h1>ReservationTransport index</h1>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="section-heading">
+                    <h2><i class="fas fa-bus mr-2"></i>Vos Réservations de Transport</h2>
+                    <a href="{{ path('app_reservation_transport_new') }}" class="btn btn-success float-right">
+                        <i class="fas fa-plus"></i> Nouvelle Réservation
+                    </a>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="status-filter btn-group mb-4" role="group">
+                    <a href="{{ path('app_reservation_transport_index') }}" class="btn btn-outline-secondary {{ not current_status ? 'active' }}">Tous</a>
+                    <a href="{{ path('app_reservation_transport_index', {'status': 'confirmée'}) }}" 
+                       class="btn btn-outline-success {{ current_status == 'confirmée' ? 'active' }}">Confirmées</a>
+                    <a href="{{ path('app_reservation_transport_index', {'status': 'en_attente'}) }}" 
+                       class="btn btn-outline-warning {{ current_status == 'en_attente' ? 'active' }}">En attente</a>
+                    <a href="{{ path('app_reservation_transport_index', {'status': 'refusée'}) }}" 
+                       class="btn btn-outline-danger {{ current_status == 'refusée' ? 'active' }}">Refusées</a>
+                </div>
+                
+                <!-- Route Visualization -->
+                <div class="route-visualization mb-4 p-4 bg-light rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-route mr-2"></i>Visualisation des Trajets</h5>
+                        <div class="map-controls">
+                            <button class="btn btn-sm btn-outline-primary" onclick="zoomIn()">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="zoomOut()">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="routeMap" style="height: 300px; background-color: #f8f9fa; border-radius: 8px;">
+                        <div class="text-center py-5">
+                            <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Sélectionnez une réservation pour voir le trajet</p>
+                        </div>
+                    </div>
+                    <div class="route-info mt-3 p-3 bg-white rounded">
+    <div class="row">
+        <div class="col-md-6">
+            <p><i class="fas fa-ruler-combined text-primary"></i> <strong>Distance:</strong> <span id="distanceInfo">-</span></p>
+        </div>
+        <div class="col-md-6">
+            <p><i class="far fa-clock text-primary"></i> <strong>Temps estimé:</strong> <span id="durationInfo">-</span></p>
+        </div>
+    </div>
+</div>
+                </div>
+                
+                <!-- Reservations List -->
+                <div class="reservation-list">
+                    {% for reservation in reservations %}
+                    <div class="card transport-card mb-3" 
+                         onclick="showRoute({{ reservation.id }}, 
+                                  {{ reservation.departureLat|default('null') }}, 
+                                  {{ reservation.departureLng|default('null') }}, 
+                                  {{ reservation.destinationLat|default('null') }}, 
+                                  {{ reservation.destinationLng|default('null') }},
+                                  '{{ reservation.adresseDepart }}',
+                                  '{{ reservation.adresseDestination }}')">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-bus text-primary mr-2"></i>Trajet 
+                                        <span class="badge badge-{{ 
+                                            reservation.status == 'confirmée' ? 'success' : 
+                                            (reservation.status == 'en_attente' ? 'warning' : 'danger') 
+                                        }}">
+                                            {{ reservation.status }}
+                                        </span>
+                                    </h5>
+                                    <div class="card-meta">
+                                        <span><i class="fas fa-map-marker-alt text-danger"></i> {{ reservation.adresseDepart }}</span>
+                                        <span class="mx-2"><i class="fas fa-arrow-right text-muted"></i></span>
+                                        <span><i class="fas fa-map-marker-alt text-success"></i> {{ reservation.adresseDestination }}</span>
+                                    </div>
+                                    {% if reservation.tempsArrivage %}
+                                    <div class="card-meta mt-2">
+                                        <span><i class="far fa-clock text-info"></i> Temps estimé: {{ reservation.tempsArrivage }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ path('app_reservation_transport_show', {'id': reservation.id}) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye"></i> Détails
+                                        </a>
+                                        <a href="{{ path('app_reservation_transport_edit', {'id': reservation.id}) }}" 
+                                           class="btn btn-warning btn-sm {{ not reservation.isModifiable() ? 'disabled' }}"
+                                           {% if not reservation.isModifiable() %}
+                                               title="Modification impossible pour les réservations confirmées ou refusées"
+                                           {% endif %}>
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>Aucune réservation de transport trouvée.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>AdresseDepart</th>
-                <th>AdresseDestination</th>
-                <th>TempsArrivage</th>
-                <th>CinEtudiant</th>
-                <th>CinTransporteur</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for reservation_transport in reservation_transports %}
-            <tr>
-                <td>{{ reservation_transport.id }}</td>
-                <td>{{ reservation_transport.adresseDepart }}</td>
-                <td>{{ reservation_transport.adresseDestination }}</td>
-                <td>{{ reservation_transport.tempsArrivage }}</td>
-                <td>{{ reservation_transport.cinEtudiant }}</td>
-                <td>{{ reservation_transport.cinTransporteur }}</td>
-                <td>
-                    <a href="{{ path('app_reservation_transport_show', {'id': reservation_transport.id}) }}">show</a>
-                    <a href="{{ path('app_reservation_transport_edit', {'id': reservation_transport.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="8">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+{% block javascripts %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-    <a href="{{ path('app_reservation_transport_new') }}">Create new</a>
+    <script>
+        let map;
+        let routeControl;
+        const defaultCoords = [34.0, -6.0]; // Coordonnées par défaut (Maroc)
+
+        function initMap() {
+            map = L.map('routeMap').setView(defaultCoords, 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+        }
+
+        function showRoute(id, depLat, depLng, destLat, destLng, depAdresse, destAdresse) {
+            if (!map) initMap();
+            
+            // Vérifie si les coordonnées sont valides
+            if (!depLat || !depLng || !destLat || !destLng) {
+                alert("Les coordonnées de ce trajet ne sont pas disponibles");
+                return;
+            }
+
+            // Nettoie la carte avant d'ajouter un nouveau trajet
+            if (routeControl) {
+                map.removeControl(routeControl);
+            }
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Ajoute les marqueurs
+            const departureMarker = L.marker([depLat, depLng], {
+                icon: L.divIcon({
+                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:red"></i>',
+                    className: 'custom-icon'
+                })
+            }).addTo(map).bindPopup(`<b>Départ:</b> ${depAdresse}`);
+
+            const destinationMarker = L.marker([destLat, destLng], {
+                icon: L.divIcon({
+                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:green"></i>',
+                    className: 'custom-icon'
+                })
+            }).addTo(map).bindPopup(`<b>Destination:</b> ${destAdresse}`);
+
+            // Trace l'itinéraire
+            // Trace l'itinéraire (version simplifiée sans instructions)
+routeControl = L.Routing.control({
+    waypoints: [
+        L.latLng(depLat, depLng),
+        L.latLng(destLat, destLng)
+    ],
+    routeWhileDragging: false,
+    show: false,                     // Hides panel
+    addWaypoints: false,
+    lineOptions: {
+        styles: [{color: '#4285F4', opacity: 0.7, weight: 5}]
+    },
+    createMarker: () => null,        // No intermediate markers
+    itinerary: { template: '<div style="display:none"></div>' } // Hidden container
+}).addTo(map);
+
+// Handle route calculation
+routeControl.on('routesfound', function(e) {
+    const route = e.routes[0];
+    if (route) {
+        const distance = (route.summary.totalDistance / 1000).toFixed(1) + " km";
+        const minutes = Math.round(route.summary.totalTime / 60);
+        const duration = `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+        
+        document.getElementById('distanceInfo').textContent = distance;
+        document.getElementById('durationInfo').textContent = duration;
+    }
+});
+
+// Force-hide any leftovers (just in case)
+document.querySelectorAll('.leaflet-routing-container').forEach(el => el.remove());
+            // Met à jour les informations de distance et durée
+          routeControl.on('routesfound', function(e) {
+    const routes = e.routes;
+    if (routes && routes[0]) {
+        const distanceKm = routes[0].summary.totalDistance / 1000;
+        const totalMinutes = Math.round(routes[0].summary.totalTime / 60);
+        
+        // Formatage en heures et minutes
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        let durationText = '';
+        if (hours > 0) durationText += `${hours} h `;
+        durationText += `${minutes} min`;
+        
+        // Affichage en gras
+        document.getElementById('distanceInfo').innerHTML = `<strong>${distanceKm.toFixed(1)} km</strong>`;
+        document.getElementById('durationInfo').innerHTML = `<strong>${durationText}</strong>`;
+    }
+});
+
+            // Ajuste la vue de la carte
+            const bounds = L.latLngBounds(
+                [depLat, depLng],
+                [destLat, destLng]
+            );
+            map.fitBounds(bounds, {padding: [50, 50]});
+        }
+
+        function zoomIn() {
+            if (map) map.zoomIn();
+        }
+
+        function zoomOut() {
+            if (map) map.zoomOut();
+        }
+
+        // Initialise la carte au chargement
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+
+    <style>
+        /* Styles existants conservés */
+        .transport-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #6c757d;
+        }
+        .transport-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .transport-card.confirmée {
+            border-left-color: #28a745;
+        }
+        .transport-card.en_attente {
+            border-left-color: #ffc107;
+        }
+        .transport-card.refusée {
+            border-left-color: #dc3545;
+        }
+        .custom-icon {
+            background: transparent;
+            border: none;
+        }
+        .route-info {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #routeMap {
+            height: 300px;
+            z-index: 1;
+        }
+    </style>
 {% endblock %}

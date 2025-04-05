@@ -18,4 +18,6 @@ import './js/custom.js';
 import './js/isotope.min.js';
 import './js/owl-carousel.js';
 
+
+
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');

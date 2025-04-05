@@ -1,46 +1,77 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}ReservationLogement{% endblock %}
+{% block title %}Détails de la Réservation{% endblock %}
 
 {% block body %}
-    <h1>ReservationLogement</h1>
-
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ reservation_logement.id }}</td>
-            </tr>
-            <tr>
-                <th>DateDebut</th>
-                <td>{{ reservation_logement.dateDebut ? reservation_logement.dateDebut|date('Y-m-d') : '' }}</td>
-            </tr>
-            <tr>
-                <th>DateFin</th>
-                <td>{{ reservation_logement.dateFin ? reservation_logement.dateFin|date('Y-m-d') : '' }}</td>
-            </tr>
-            <tr>
-                <th>Status</th>
-                <td>{{ reservation_logement.status }}</td>
-            </tr>
-            <tr>
-                <th>CinEtudiant</th>
-                <td>{{ reservation_logement.cinEtudiant }}</td>
-            </tr>
-            <tr>
-                <th>CinProprietaire</th>
-                <td>{{ reservation_logement.cinProprietaire }}</td>
-            </tr>
-            <tr>
-                <th>IdLogement</th>
-                <td>{{ reservation_logement.idLogement }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <a href="{{ path('app_reservation_logement_index') }}">back to list</a>
-
-    <a href="{{ path('app_reservation_logement_edit', {'id': reservation_logement.id}) }}">edit</a>
-
-    {{ include('reservation_logement/_delete_form.html.twig') }}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card reservation-details">
+                    <div class="card-header">
+                        <h3>Réservation de Logement</h3>
+                        <div class="status-badge">
+                            <span class="badge bg-{{ 
+                                reservation_logement.status == 'confirmée' ? 'success' : 
+                                (reservation_logement.status == 'en_attente' ? 'warning' : 'danger') 
+                            }}">
+                                {{ reservation_logement.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Date de début:</span>
+                                <span class="detail-value">
+                                    {{ reservation_logement.dateDebut ? reservation_logement.dateDebut|date('d/m/Y') : 'Non définie' }}
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Date de fin:</span>
+                                <span class="detail-value">
+                                    {{ reservation_logement.dateFin ? reservation_logement.dateFin|date('d/m/Y') : 'Non définie' }}
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">CIN Propriétaire:</span>
+                                <span class="detail-value">{{ reservation_logement.cinProprietaire }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">CIN Étudiant:</span>
+                                <span class="detail-value">{{ reservation_logement.cinEtudiant }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Logement:</span>
+                                <span class="detail-value">{{ reservation_logement.idLogement }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons mt-4">
+                            <a href="{{ path('app_reservation_logement_edit', {'id': reservation_logement.id}) }}" 
+                               class="btn btn-primary {{ not reservation_logement.isModifiable() ? 'disabled' : '' }}"
+                               {% if not reservation_logement.isModifiable() %}
+                                   title="Modification impossible pour les réservations confirmées ou refusées"
+                               {% endif %}>
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            
+                            <a href="{{ path('app_reservation_logement_generate_pdf', {'id': reservation_logement.id}) }}" 
+                               class="btn btn-info">
+                                <i class="fas fa-file-pdf"></i> Générer PDF
+                            </a>
+                            
+                            {{ include('reservation_logement/_delete_form.html.twig') }}
+                            
+                            <a href="{{ path('app_reservation_logement_index') }}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Retour à la liste
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

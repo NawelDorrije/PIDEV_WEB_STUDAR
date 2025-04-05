@@ -10,10 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'reservation_logement')]
 class ReservationLogement
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+  #[ORM\Id]
+  #[ORM\GeneratedValue]
+  #[ORM\Column]
+  private ?int $id = null;
 
     #[ORM\Column(name: 'dateDebut', type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dateDebut = null;
@@ -26,7 +26,8 @@ class ReservationLogement
         columnDefinition: "ENUM('confirmée', 'en_attente', 'refusée')",
         nullable: true
     )]
-    private ?string $status = null;
+    private string $status = 'en_attente';
+    
 
     #[ORM\Column(name: 'cinEtudiant', length: 20, nullable: true)]
 private ?string $cinEtudiant = null;
@@ -34,9 +35,8 @@ private ?string $cinEtudiant = null;
 #[ORM\Column(name: 'cinProprietaire', length: 8, nullable: true)]
 private ?string $cinProprietaire = null;
 
-#[ORM\Column(name: 'idLogement', length: 255, nullable: true)]
-private ?string $idLogement = null;
-
+#[ORM\Column(name: 'idLogement', type: 'string', length: 255)]
+private string $idLogement;
     // Getters and Setters
     public function getId(): ?int
     {
@@ -107,5 +107,30 @@ private ?string $idLogement = null;
     {
         $this->idLogement = $idLogement;
         return $this;
+    }
+
+    // Add these methods similar to Rendezvous
+    public function isModifiable(): bool
+    {
+        return $this->status === 'en_attente';
+    }
+
+    public function isDeletable(): bool
+    {
+        if ($this->status === 'refusée') {
+            return false;
+        }
+
+        if (!$this->dateDebut) {
+            return true;
+        }
+
+        try {
+            $now = new \DateTime();
+            $diff = $now->diff($this->dateDebut);
+            return $diff->days >= 1; // Can delete if more than 1 day before start
+        } catch (\Exception $e) {
+            return true;
+        }
     }
 }

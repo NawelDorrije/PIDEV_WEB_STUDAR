@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container mt-4">
+    <h2>Monthly Reservation Statistics</h2>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Reservations</th>
+                <th>Chart</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in stats %}
+                <tr>
+                    <td>{{ stat.month }}</td>
+                    <td>{{ stat.count }}</td>
+                    <td>
+                        <div class="progress" style="height: 20px">
+                            <div class="progress-bar bg-primary" 
+                                 style="width: {{ (stat.count/max(stats|column('count')))*100 }}%">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

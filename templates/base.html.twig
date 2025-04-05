@@ -86,9 +86,18 @@
                 <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
             </a>
         </li>
-        <li><a href="#"><i class="fas fa-bed mr-2"></i> Réservation des logements</a></li>
-        <li><a href="#"><i class="fas fa-bus mr-2"></i> Réservation des transporteurs</a></li>
+         <li class="{{ app.request.get('_route') == 'app_reservation_logement_index' ? 'active' }}">
+            <a href="{{ path('app_reservation_logement_index') }}">
+                <i class="fas fa-bed mr-2"></i> Réservation des logements
+            </a>
+        </li>
+<li class="{{ app.request.get('_route') == 'app_reservation_transport_index' ? 'active' }}">
+    <a href="{{ path('app_reservation_transport_index') }}">
+        <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
+    </a>
+</li>        
     </ul>
+
 </li>
 
                                 <li><a href="{{ path('app_home') }}">Chat AI</a></li>
@@ -197,6 +206,7 @@ document.querySelectorAll('.delete-form').forEach(form => {
         {% endblock %}
 
         {% block js %}
+        
             <!-- Tu peux ajouter des scripts supplémentaires ici dans les templates enfants -->
         {% endblock %}
     </body>

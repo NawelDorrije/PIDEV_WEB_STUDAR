@@ -1,143 +1,81 @@
 <?php
 
-namespace App\Tests\Controller;
+namespace App\Controller\GestionReservation;
 
 use App\Entity\ReservationTransport;
+use App\Form\ReservationTransportType;
+use App\Repository\ReservationTransportRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityRepository;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
-final class ReservationTransportControllerTest extends WebTestCase
+#[Route('/reservation-transport')]
+class ReservationTransportController extends AbstractController
 {
-    private KernelBrowser $client;
-    private EntityManagerInterface $manager;
-    private EntityRepository $reservationTransportRepository;
-    private string $path = '/reservation/transport/';
-
-    protected function setUp(): void
+    #[Route('/', name: 'app_reservation_transport_index', methods: ['GET'])]
+    public function index(ReservationTransportRepository $reservationTransportRepository): Response
     {
-        $this->client = static::createClient();
-        $this->manager = static::getContainer()->get('doctrine')->getManager();
-        $this->reservationTransportRepository = $this->manager->getRepository(ReservationTransport::class);
+        return $this->render('reservation_transport/index.html.twig', [
+            'reservation_transports' => $reservationTransportRepository->findAll(),
+        ]);
+    }
 
-        foreach ($this->reservationTransportRepository->findAll() as $object) {
-            $this->manager->remove($object);
+    #[Route('/new', name: 'app_reservation_transport_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $reservationTransport = new ReservationTransport();
+        $form = $this->createForm(ReservationTransportType::class, $reservationTransport);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($reservationTransport);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        $this->manager->flush();
-    }
-
-    public function testIndex(): void
-    {
-        $this->client->followRedirects();
-        $crawler = $this->client->request('GET', $this->path);
-
-        self::assertResponseStatusCodeSame(200);
-        self::assertPageTitleContains('ReservationTransport index');
-
-        // Use the $crawler to perform additional assertions e.g.
-        // self::assertSame('Some text on the page', $crawler->filter('.p')->first());
-    }
-
-    public function testNew(): void
-    {
-        $this->markTestIncomplete();
-        $this->client->request('GET', sprintf('%snew', $this->path));
-
-        self::assertResponseStatusCodeSame(200);
-
-        $this->client->submitForm('Save', [
-            'reservation_transport[adresseDepart]' => 'Testing',
-            'reservation_transport[adresseDestination]' => 'Testing',
-            'reservation_transport[tempsArrivage]' => 'Testing',
-            'reservation_transport[status]' => 'Testing',
-            'reservation_transport[cinEtudiant]' => 'Testing',
-            'reservation_transport[cinTransporteur]' => 'Testing',
+        return $this->render('reservation_transport/new.html.twig', [
+            'reservation_transport' => $reservationTransport,
+            'form' => $form,
         ]);
-
-        self::assertResponseRedirects($this->path);
-
-        self::assertSame(1, $this->reservationTransportRepository->count([]));
     }
 
-    public function testShow(): void
+    #[Route('/{id}', name: 'app_reservation_transport_show', methods: ['GET'])]
+    public function show(ReservationTransport $reservationTransport): Response
     {
-        $this->markTestIncomplete();
-        $fixture = new ReservationTransport();
-        $fixture->setAdresseDepart('My Title');
-        $fixture->setAdresseDestination('My Title');
-        $fixture->setTempsArrivage('My Title');
-        $fixture->setStatus('My Title');
-        $fixture->setCinEtudiant('My Title');
-        $fixture->setCinTransporteur('My Title');
-
-        $this->manager->persist($fixture);
-        $this->manager->flush();
-
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-
-        self::assertResponseStatusCodeSame(200);
-        self::assertPageTitleContains('ReservationTransport');
-
-        // Use assertions to check that the properties are properly displayed.
-    }
-
-    public function testEdit(): void
-    {
-        $this->markTestIncomplete();
-        $fixture = new ReservationTransport();
-        $fixture->setAdresseDepart('Value');
-        $fixture->setAdresseDestination('Value');
-        $fixture->setTempsArrivage('Value');
-        $fixture->setStatus('Value');
-        $fixture->setCinEtudiant('Value');
-        $fixture->setCinTransporteur('Value');
-
-        $this->manager->persist($fixture);
-        $this->manager->flush();
-
-        $this->client->request('GET', sprintf('%s%s/edit', $this->path, $fixture->getId()));
-
-        $this->client->submitForm('Update', [
-            'reservation_transport[adresseDepart]' => 'Something New',
-            'reservation_transport[adresseDestination]' => 'Something New',
-            'reservation_transport[tempsArrivage]' => 'Something New',
-            'reservation_transport[status]' => 'Something New',
-            'reservation_transport[cinEtudiant]' => 'Something New',
-            'reservation_transport[cinTransporteur]' => 'Something New',
+        return $this->render('reservation_transport/show.html.twig', [
+            'reservation_transport' => $reservationTransport,
         ]);
-
-        self::assertResponseRedirects('/reservation/transport/');
-
-        $fixture = $this->reservationTransportRepository->findAll();
-
-        self::assertSame('Something New', $fixture[0]->getAdresseDepart());
-        self::assertSame('Something New', $fixture[0]->getAdresseDestination());
-        self::assertSame('Something New', $fixture[0]->getTempsArrivage());
-        self::assertSame('Something New', $fixture[0]->getStatus());
-        self::assertSame('Something New', $fixture[0]->getCinEtudiant());
-        self::assertSame('Something New', $fixture[0]->getCinTransporteur());
     }
 
-    public function testRemove(): void
+    #[Route('/{id}/edit', name: 'app_reservation_transport_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, ReservationTransport $reservationTransport, EntityManagerInterface $entityManager): Response
     {
-        $this->markTestIncomplete();
-        $fixture = new ReservationTransport();
-        $fixture->setAdresseDepart('Value');
-        $fixture->setAdresseDestination('Value');
-        $fixture->setTempsArrivage('Value');
-        $fixture->setStatus('Value');
-        $fixture->setCinEtudiant('Value');
-        $fixture->setCinTransporteur('Value');
+        $form = $this->createForm(ReservationTransportType::class, $reservationTransport);
+        $form->handleRequest($request);
 
-        $this->manager->persist($fixture);
-        $this->manager->flush();
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
 
-        $this->client->request('GET', sprintf('%s%s', $this->path, $fixture->getId()));
-        $this->client->submitForm('Delete');
+            return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
+        }
 
-        self::assertResponseRedirects('/reservation/transport/');
-        self::assertSame(0, $this->reservationTransportRepository->count([]));
+        return $this->render('reservation_transport/edit.html.twig', [
+            'reservation_transport' => $reservationTransport,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_reservation_transport_delete', methods: ['POST'])]
+    public function delete(Request $request, ReservationTransport $reservationTransport, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$reservationTransport->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($reservationTransport);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
     }
 }

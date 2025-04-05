@@ -12,6 +12,10 @@
         "doctrine/doctrine-bundle": "^2.14",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
+        "easycorp/easyadmin-bundle": "^4.24",
+        "endroid/qr-code": "^6.0",
+        "endroid/qr-code-bundle": "^6.0",
+        "knplabs/knp-snappy-bundle": "^1.10",
         "myclabs/php-enum": "^1.8",
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.1",
@@ -40,11 +44,13 @@
         "symfony/string": "6.4.*",
         "symfony/translation": "6.4.*",
         "symfony/twig-bundle": "6.4.*",
+        "symfony/ux-chartjs": "^2.23",
         "symfony/ux-turbo": "^2.23",
         "symfony/validator": "6.4.*",
         "symfony/web-link": "6.4.*",
         "symfony/webpack-encore-bundle": "^2.2",
         "symfony/yaml": "6.4.*",
+        "tecnickcom/tcpdf": "^6.9",
         "twig/extra-bundle": "^2.12|^3.0",
         "twig/twig": "^2.12|^3.0"
     },
@@ -52,7 +58,8 @@
         "allow-plugins": {
             "php-http/discovery": true,
             "symfony/flex": true,
-            "symfony/runtime": true
+            "symfony/runtime": true,
+            "endroid/installer": true
         },
         "sort-packages": true
     },

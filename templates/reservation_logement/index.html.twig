@@ -1,43 +1,85 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}ReservationLogement index{% endblock %}
+{% block title %}Liste des Réservations de Logement{% endblock %}
 
 {% block body %}
-    <h1>ReservationLogement index</h1>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>DateDebut</th>
-                <th>DateFin</th>
-                <th>CinEtudiant</th>
-                <th>CinProprietaire</th>
-                <th>IdLogement</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for reservation_logement in reservation_logements %}
-            <tr>
-                <td>{{ reservation_logement.id }}</td>
-                <td>{{ reservation_logement.dateDebut ? reservation_logement.dateDebut|date('Y-m-d') : '' }}</td>
-                <td>{{ reservation_logement.dateFin ? reservation_logement.dateFin|date('Y-m-d') : '' }}</td>
-                <td>{{ reservation_logement.cinEtudiant }}</td>
-                <td>{{ reservation_logement.cinProprietaire }}</td>
-                <td>{{ reservation_logement.idLogement }}</td>
-                <td>
-                    <a href="{{ path('app_reservation_logement_show', {'id': reservation_logement.id}) }}">show</a>
-                    <a href="{{ path('app_reservation_logement_edit', {'id': reservation_logement.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="8">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ path('app_reservation_logement_new') }}">Create new</a>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="section-heading">
+                    <h2><i class="fas fa-bed mr-2"></i>Vos Réservations de Logement</h2>
+                    <a href="{{ path('app_reservation_logement_new') }}" class="btn btn-success float-right">
+                        <i class="fas fa-plus"></i> Nouvelle Réservation
+                    </a>
+                </div>
+                
+                <!-- View Options -->
+                <div class="view-options mb-4">
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn btn-outline-primary active" data-view="list">
+                            <i class="fas fa-list"></i> Liste
+                        </a>
+                        
+                        <!--<a href="{{ path('app_reservation_logement_statistics') }}" class="btn btn-outline-primary">-->
+                            <i class="fas fa-chart-bar"></i> Statistiques
+                        </a>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="status-filter btn-group ml-2" role="group">
+                        <a href="{{ path('app_reservation_logement_index') }}" class="btn btn-outline-secondary">Tous</a>
+                        <a href="{{ path('app_reservation_logement_index', {'status': 'confirmée'}) }}" 
+                           class="btn btn-outline-success">Confirmés</a>
+                        <a href="{{ path('app_reservation_logement_index', {'status': 'en_attente'}) }}" 
+                           class="btn btn-outline-warning">En attente</a>
+                        <a href="{{ path('app_reservation_logement_index', {'status': 'refusée'}) }}" 
+                           class="btn btn-outline-danger">Refusés</a>
+                    </div>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="reservation-content">
+                    <!-- List View (Default) -->
+                    <div class="reservation-list">
+                        {% for reservation in reservation_logements %}
+                        <div class="card reservation-card mb-3">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h5 class="card-title">
+                                            <i class="fas fa-bed mr-2"></i>Réservation 
+                                            <span class="badge badge-{{ 
+                                                reservation.status == 'confirmée' ? 'success' : 
+                                                (reservation.status == 'en_attente' ? 'warning' : 'danger') 
+                                            }}">
+                                                {{ reservation.status }}
+                                            </span>
+                                        </h5>
+                                        <div class="card-meta">
+                                            <span><i class="far fa-calendar-alt"></i> Du {{ reservation.dateDebut|date('d/m/Y') }}</span>
+                                            <span class="mx-3"><i class="far fa-calendar-alt"></i> Au {{ reservation.dateFin|date('d/m/Y') }}</span>
+                                            <span><i class="fas fa-home"></i> Logement #{{ reservation.idLogement }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-right">
+                                        <a href="{{ path('app_reservation_logement_show', {'id': reservation.id}) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-chevron-right"></i> Détails
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>Aucune réservation trouvée.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
