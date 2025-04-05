@@ -5,13 +5,27 @@ namespace App\Entity;
 use App\Enums\RoleUtilisateur;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 
+/*#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
+#[UniqueEntity(fields: ['cin'], message: 'Ce CIN est déjà enregistré.')]*/
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
-class Utilisateur 
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(length: 8, unique: true)]
+    #[Assert\Length(
+        exactly: 8,
+        exactMessage: 'Le CIN doit contenir exactement 8 chiffres.',
+    )]
+    #[Assert\Regex(
+        pattern: '/^\d+$/',
+        message: 'Le CIN ne doit contenir que des chiffres.'
+    )]
     private ?string $cin = null;
 
     #[ORM\Column(length: 50)]
@@ -116,28 +130,55 @@ class Utilisateur
     }
 
     public function getRole(): ?RoleUtilisateur
-    {
-        return $this->role;
-    }
+{
+    return $this->role;
+}
 
-    public function setRole(RoleUtilisateur $role): static
-    {
-        $this->role = $role;
+public function getRoleValue(): ?string
+{
+    return $this->role?->value;
+}
 
-        return $this;
-    }
+public function setRole(RoleUtilisateur $role): static
+{
+    $this->role = $role;
+    return $this;
+}
 
     public function getResetCode(): ?string
     {
         return $this->reset_code;
     }
+    public function getRoles(): array
+    {
+        if (!$this->role) {
+            return ['ROLE_USER']; // Default fallback role
+        }
+        
+        // Map your values to Symfony-compatible roles
+        $roleMap = [
+            'admin' => 'ROLE_ADMIN',
+            'propriétaire' => 'ROLE_PROPRIETAIRE',
+            'transporteur' => 'ROLE_TRANSPORTEUR',
+            'étudiant' => 'ROLE_ETUDIANT'
+        ];
+        
+        return [$roleMap[$this->role->value] ?? 'ROLE_USER'];
+    }
+    
+    // public function setRoles(RoleUtilisateur $role): static
+    // {
+    //     $this->role = $role;
 
+    //     return $this;
+    // }
     public function setResetCode(?string $reset_code): static
     {
         $this->reset_code = $reset_code;
 
         return $this;
     }
+    
 
     public function isBlocked(): ?bool
     {
@@ -162,4 +203,30 @@ class Utilisateur
 
         return $this;
     }
+   
+
+    public function eraseCredentials()
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+    }
+
+    public function getUserIdentifier(): string
+    {
+        // Return the unique identifier for the user (e.g., email)
+        return $this->email;
+    }
+    public function getPassword(): string
+{
+    return $this->mdp; // assuming your password field is called 'mdp'
+}
+    public function setPassword(string $mdp) : self
+    {
+        $this->mdp = $mdp;
+
+        return $this;
+    }
+    public function __construct()
+{
+    $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
+}
 }

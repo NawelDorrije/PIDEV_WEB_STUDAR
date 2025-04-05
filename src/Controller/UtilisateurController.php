@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 #[Route('/utilisateur')]
 final class UtilisateurController extends AbstractController
 {
@@ -22,19 +23,36 @@ final class UtilisateurController extends AbstractController
         ]);
     }
     #[Route('/new', name: 'app_utilisateur_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    public function new(
+        Request $request, 
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher  // Add this dependency
+    ): Response {
         $utilisateur = new Utilisateur();
         $form = $this->createForm(UtilisateurType::class, $utilisateur);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
+            // Hash the plain password before storing it
+            $hashedPassword = $passwordHasher->hashPassword(
+                $utilisateur,
+                $form->get('mdp')->getData()  // Get the plain password from the form
+            );
+            
+            $utilisateur->setMdp($hashedPassword);  // Set the hashed password
+            
+            // Set creation date
+            $utilisateur->setCreatedAt(new \DateTimeImmutable());
+            
             $entityManager->persist($utilisateur);
             $entityManager->flush();
-
+    
+            // Add flash message for success
+            $this->addFlash('success', 'Inscription réussie! Vous pouvez maintenant vous connecter.');
+    
             return $this->redirectToRoute('app_utilisateur_new', [], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('utilisateur/new.html.twig', [
             'utilisateur' => $utilisateur,
             'form' => $form,
@@ -84,21 +102,14 @@ final class UtilisateurController extends AbstractController
 
     #[Route('/signin', name: 'app_utilisateur_signin')]
     public function signin(AuthenticationUtils $authenticationUtils): Response
-{
-    // If user is already logged in, redirect them
-    if ($this->getUser()) {
-        return $this->redirectToRoute('app_home');
-    }
-
-    // Get the login error if there is one
-    $error = $authenticationUtils->getLastAuthenticationError();
+    {
+        if ($this->getUser()) {
+            return $this->redirectToRoute('app_home');
+        }
     
-    // Last username entered by the user
-    $lastUsername = $authenticationUtils->getLastUsername();
-
-    return $this->render('utilisateur/signin.html.twig', [
-        'last_username' => $lastUsername,
-        'error' => $error,
-    ]);
-}
+        return $this->render('utilisateur/signin.html.twig', [
+            'last_username' => $authenticationUtils->getLastUsername(),
+            'error' => $authenticationUtils->getLastAuthenticationError()
+        ]);
+    }
 }

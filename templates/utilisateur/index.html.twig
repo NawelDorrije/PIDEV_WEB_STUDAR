@@ -22,31 +22,9 @@
                 <th>actions</th>
             </tr>
         </thead>
-        <tbody>
-        {% for utilisateur in utilisateurs %}
-            <tr>
-             
-                <td>{{ utilisateur.cin }}</td>
-                <td>{{ utilisateur.nom }}</td>
-                <td>{{ utilisateur.prenom }}</td>
-                <td>{{ utilisateur.email }}</td>
-                <td>{{ utilisateur.mdp }}</td>
-                <td>{{ utilisateur.numTel }}</td>
-                <td>{{ utilisateur.role }}</td>
-                <td>{{ utilisateur.resetCode }}</td>
-                <td>{{ utilisateur.blocked ? 'Yes' : 'No' }}</td>
-                <td>{{ utilisateur.createdAt ? utilisateur.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-                <td>
-                    <a href="{{ path('app_utilisateur_show', {'cin': utilisateur.cin}) }}">show</a>
-                    <a href="{{ path('app_utilisateur_edit', {'cin': utilisateur.cin}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="11">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
+        
+        
+        <h1>ASLEMA</h1>
     </table>
 
     <a href="{{ path('app_utilisateur_new') }}">Create new</a>

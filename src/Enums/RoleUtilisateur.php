@@ -8,6 +8,4 @@ enum RoleUtilisateur: string
     case TRANSPORTEUR = 'transporteur';
     case ETUDIANT = 'étudiant';
     case ADMIN = 'admin';
-   
-
 }

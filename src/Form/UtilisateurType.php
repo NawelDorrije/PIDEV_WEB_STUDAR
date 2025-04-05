@@ -8,6 +8,8 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use App\Enums\RoleUtilisateur;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Validator\Constraints\Length;
 class UtilisateurType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -17,7 +19,10 @@ class UtilisateurType extends AbstractType
              ->add('nom')
             ->add('prenom')
             ->add('email')
-            ->add('mdp')
+            ->add('mdp', PasswordType::class, [
+                'label' => 'Mot de passe',
+                'required' => true,
+            ])
             ->add('numTel')
             ->add('role', EnumType::class, [
                 'class' => RoleUtilisateur::class,

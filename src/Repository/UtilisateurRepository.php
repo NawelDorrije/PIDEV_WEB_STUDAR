@@ -15,7 +15,14 @@ class UtilisateurRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Utilisateur::class);
     }
-
+    public function loadUserByIdentifier(string $identifier): ?UserInterface
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.email = :email')
+            ->setParameter('email', $identifier)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
     //    /**
     //     * @return Utilisateur[] Returns an array of Utilisateur objects
     //     */
