@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\VoitureRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -15,10 +13,6 @@ class Voiture
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $idVoiture = null;
-
-    #[ORM\ManyToOne(inversedBy: 'voitures')]
-    #[ORM\JoinColumn(name: 'cin', referencedColumnName: 'cin', nullable: false)]
-    private ?Utilisateur $cin = null;
 
     #[ORM\Column(length: 20)]
     private ?string $model = null;
@@ -35,28 +29,9 @@ class Voiture
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $timestamp = null;
 
-    #[ORM\OneToMany(mappedBy: 'idVoiture', targetEntity: Transport::class, cascade: ['persist', 'remove'])]
-    private Collection $transports;
-
-    public function __construct()
-    {
-        $this->transports = new ArrayCollection();
-    }
-
     public function getIdVoiture(): ?int
     {
         return $this->idVoiture;
-    }
-
-    public function getCin(): ?Utilisateur
-    {
-        return $this->cin;
-    }
-
-    public function setCin(?Utilisateur $cin): static
-    {
-        $this->cin = $cin;
-        return $this;
     }
 
     public function getModel(): ?string
@@ -111,33 +86,6 @@ class Voiture
     public function setTimestamp(\DateTimeInterface $timestamp): static
     {
         $this->timestamp = $timestamp;
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Transport>
-     */
-    public function getTransports(): Collection
-    {
-        return $this->transports;
-    }
-
-    public function addTransport(Transport $transport): static
-    {
-        if (!$this->transports->contains($transport)) {
-            $this->transports->add($transport);
-            $transport->setIdVoiture($this);
-        }
-        return $this;
-    }
-
-    public function removeTransport(Transport $transport): static
-    {
-        if ($this->transports->removeElement($transport)) {
-            if ($transport->getIdVoiture() === $this) {
-                $transport->setIdVoiture(null);
-            }
-        }
         return $this;
     }
 }

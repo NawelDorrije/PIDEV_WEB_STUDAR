@@ -14,18 +14,6 @@ class Transport
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'transports')]
-    #[ORM\JoinColumn(name: 'id_voiture', referencedColumnName: 'id_voiture', nullable: false)]
-    private ?Voiture $idVoiture = null;
-
-    #[ORM\ManyToOne(inversedBy: 'transports')]
-    #[ORM\JoinColumn(name: 'cin', referencedColumnName: 'cin', nullable: false)]
-    private ?Utilisateur $cin = null;
-
-    #[ORM\ManyToOne(inversedBy: 'transports')]
-    #[ORM\JoinColumn(name: 'reservation_id', referencedColumnName: 'id', nullable: false)]
-    private ?ReservationTransport $reservationId = null;
-
     #[ORM\Column]
     private ?float $trajetEnKm = null;
 
@@ -41,39 +29,6 @@ class Transport
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getIdVoiture(): ?Voiture
-    {
-        return $this->idVoiture;
-    }
-
-    public function setIdVoiture(?Voiture $idVoiture): static
-    {
-        $this->idVoiture = $idVoiture;
-        return $this;
-    }
-
-    public function getCin(): ?Utilisateur
-    {
-        return $this->cin;
-    }
-
-    public function setCin(?Utilisateur $cin): static
-    {
-        $this->cin = $cin;
-        return $this;
-    }
-
-    public function getReservationId(): ?ReservationTransport
-    {
-        return $this->reservationId;
-    }
-
-    public function setReservationId(?ReservationTransport $reservationId): static
-    {
-        $this->reservationId = $reservationId;
-        return $this;
     }
 
     public function getTrajetEnKm(): ?float
