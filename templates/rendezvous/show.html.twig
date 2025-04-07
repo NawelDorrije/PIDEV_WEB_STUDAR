@@ -2,6 +2,133 @@
 
 {% block title %}Détails du Rendez-vous{% endblock %}
 
+{% block stylesheets %}
+<style>
+.section {
+    padding: 60px 0;
+    background-color: #f8f9fa; 
+}
+
+.container {
+    border-radius: 20px;
+}
+
+.rendezvous-details {
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: none;
+    overflow: hidden;
+    padding: 15px;
+}
+
+.rendezvous-details .card-header {
+    background-color: #F2F2F2;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 20px;
+}
+
+.rendezvous-details .card-header h3 {
+    color: #F25922;
+    font-weight: 700;
+    margin: 0;
+    padding: 8px 15px;
+    border-radius: 30px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.rendezvous-details .card-header h3 i {
+    margin-right: 8px;
+}
+
+.rendezvous-content {
+    padding: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.detail-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.detail-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 1rem;
+}
+
+.status-badge .badge {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.btn-modifier {
+    background-color: #4453A6;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-modifier:hover {
+    background-color: #3a4791;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(68, 83, 166, 0.3);
+}
+
+.btn-supprimer {
+    background-color: #F2811D;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-supprimer:hover {
+    background-color: #da7419;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
+}
+</style>
+{% endblock %}
+
 {% block body %}
 <section class="section">
     <div class="container">
@@ -9,60 +136,57 @@
             <div class="col-lg-8 offset-lg-2">
                 <div class="card rendezvous-details">
                     <div class="card-header">
-                        <h3>Rendez-vous</h3>
+                        <h3><i class="fas fa-calendar-alt"></i>Rendez-vous</h3>
                         <div class="status-badge">
-    <span class="badge bg-{{ 
-        rendezvou.status == 'confirmée' ? 'success' : 
-        (rendezvou.status == 'en_attente' ? 'warning' : 'danger') 
-    }}">
-        {{ rendezvou.status }}
-    </span>
-</div>
+                            <span class="badge bg-{{ 
+                                rendezvou.status == 'confirmée' ? 'success' : 
+                                (rendezvou.status == 'en_attente' ? 'warning' : 'danger') 
+                            }}">
+                                {{ rendezvou.status }}
+                            </span>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="details-grid">
-                            <div class="detail-item">
-    <span class="detail-label">Date:</span>
-    <span class="detail-value">
-        {{ rendezvou.date ? rendezvou.date|date('d/m/Y') : 'Non définie' }}
-    </span>
-</div>
-<div class="detail-item">
-    <span class="detail-label">Heure:</span>
-    <span class="detail-value">
-        {{ rendezvou.heure ?? 'Non définie' }}
-    </span>
-</div>
-                            <div class="detail-item">
-                                <span class="detail-label">CIN Propriétaire:</span>
-                                <span class="detail-value">{{ rendezvou.cinProprietaire }}</span>
+                        <div class="rendezvous-content">
+                            <div class="details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Date:</span>
+                                    <span class="detail-value">
+                                        {{ rendezvou.date ? rendezvou.date|date('d/m/Y') : 'Non définie' }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Heure:</span>
+                                    <span class="detail-value">
+                                        {{ rendezvou.heure ?? 'Non définie' }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">CIN Propriétaire:</span>
+                                    <span class="detail-value">{{ rendezvou.cinProprietaire }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">CIN Étudiant:</span>
+                                    <span class="detail-value">{{ rendezvou.cinEtudiant }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Logement:</span>
+                                    <span class="detail-value">{{ rendezvou.idLogement }}</span>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">CIN Étudiant:</span>
-                                <span class="detail-value">{{ rendezvou.cinEtudiant }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Logement:</span>
-                                <span class="detail-value">{{ rendezvou.idLogement }}</span>
+                            
+                            <div class="action-buttons">
+                                <a href="{{ path('app_rendezvous_edit', {'id': rendezvou.id}) }}" 
+                                   class="btn btn-modifier {{ not rendezvou.isModifiable() ? 'disabled' : '' }}"
+                                   {% if not rendezvou.isModifiable() %}
+                                       title="Modification impossible pour les rendez-vous confirmés ou refusés"
+                                   {% endif %}>
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                                
+                                {{ include('rendezvous/_delete_form.html.twig', {'button_class': 'btn-supprimer'}) }}
                             </div>
                         </div>
-                        
-                        <div class="action-buttons mt-4">
-    <a href="{{ path('app_rendezvous_edit', {'id': rendezvou.id}) }}" 
-       class="btn btn-primary {{ not rendezvou.isModifiable() ? 'disabled' : '' }}"
-       {% if not rendezvou.isModifiable() %}
-           title="Modification impossible pour les rendez-vous confirmés ou refusés"
-       {% endif %}>
-        <i class="fas fa-edit"></i> Modifier
-    </a>
-    
-    {{ include('rendezvous/_delete_form.html.twig') }}
-    
-    <a href="{{ path('app_rendezvous_index') }}" 
-       class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Retour à la liste
-    </a>
-</div>
                     </div>
                 </div>
             </div>

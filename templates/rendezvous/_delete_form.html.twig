@@ -2,7 +2,7 @@
       class="delete-form"
       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous?') && {{ rendezvou.isDeletable() ? 'true' : 'false' }};">
     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ rendezvou.id) }}">
-    <button class="btn btn-danger {{ not rendezvou.isDeletable() ? 'disabled' : '' }}"
+    <button class="btn-supprimer {{ not rendezvou.isDeletable() ? 'disabled' : '' }}"
             {% if not rendezvou.isDeletable() %}
                 title="{% if rendezvou.status == 'refusée' %}Suppression impossible pour les rendez-vous refusés{% else %}Suppression impossible moins de 12h avant le rendez-vous{% endif %}"
             {% endif %}>

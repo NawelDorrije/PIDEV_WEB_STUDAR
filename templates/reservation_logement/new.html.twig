@@ -2,10 +2,227 @@
 
 {% block title %}New ReservationLogement{% endblock %}
 
+{% block stylesheets %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
+  
+  .logement-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+  }
+
+  .logement-container {
+    background: #FFE8D6; /* Light pastel orange */
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2);
+    border: 1px solid #FFD1A8;
+  }
+
+  .logement-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    color: #F25922;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-size: 1.7em;
+  }
+
+  .logement-title i {
+    font-size: 1.2em;
+    color: #F25922;
+  }
+
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+  }
+
+  .form-group {
+    flex: 0 0 50%;
+    padding: 0 15px;
+    margin-bottom: 25px;
+    position: relative;
+  }
+
+  .form-group label {
+    position: absolute;
+    left: 25px;
+    top: 15px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    background: white;
+    padding: 0 5px;
+    border-radius: 4px;
+  }
+
+  .logement-input {
+    width: 100%;
+    height: 55px;
+    border: 2px solid #FFD1A8;
+    border-radius: 8px;
+    padding: 15px 20px;
+    background: white;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .logement-input:focus {
+    border-color: #4453A6;
+    outline: none;
+  }
+
+  .logement-input:focus + label,
+  .logement-input:not(:placeholder-shown) + label {
+    top: -10px;
+    left: 20px;
+    font-size: 12px;
+    color: #4453A6;
+    background: white;
+    padding: 0 5px;
+  }
+
+  .logement-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+  }
+
+  .logement-btn-save {
+    background-color: #4453A6;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(68, 83, 166, 0.3);
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 16px;
+  }
+
+  
+  .logement-btn-save:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(68, 83, 166, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    .form-group {
+      flex: 0 0 100%;
+    }
+    
+    .logement-container {
+      padding: 30px;
+    }
+    
+    .logement-title {
+      font-size: 24px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .logement-action-buttons {
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .logement-btn-save,
+    .logement-btn-cancel {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block body %}
-    <h1>Create new ReservationLogement</h1>
-
-    {{ include('reservation_logement/_form.html.twig') }}
-
-    <a href="{{ path('app_reservation_logement_index') }}">back to list</a>
+<section class="logement-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="logement-container">
+                    <h1 class="logement-title">
+                        <i class="fas fa-home"></i>
+                        Nouvelle Réservation Logement
+                    </h1>
+                    
+                    {{ form_start(form, {'attr': {'class': 'logement-form'}}) }}
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_widget(form.dateDebut, {
+                                    'attr': {
+                                        'class': 'logement-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.dateDebut) }}
+                            </div>
+                            <div class="form-group">
+                                {{ form_widget(form.dateFin, {
+                                    'attr': {
+                                        'class': 'logement-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.dateFin) }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_widget(form.cinProprietaire, {
+                                    'attr': {
+                                        'class': 'logement-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.cinProprietaire) }}
+                            </div>
+                            <div class="form-group">
+                                {{ form_widget(form.cinEtudiant, {
+                                    'attr': {
+                                        'class': 'logement-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.cinEtudiant) }}
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_widget(form.idLogement, {
+                                    'attr': {
+                                        'class': 'logement-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.idLogement) }}
+                            </div>
+                        </div>
+                        
+                        <div class="logement-action-buttons">
+                            <button type="submit" class="logement-btn-save">
+                                <i class="fas fa-save mr-2"></i> VALIDER LA RESERVATION
+                            </button>
+                            <a href="{{ path('app_reservation_logement_index') }}" class="logement-btn-cancel">
+                            </a>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

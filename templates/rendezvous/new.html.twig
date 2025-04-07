@@ -2,33 +2,199 @@
 
 {% block title %}New Rendezvous{% endblock %}
 
+{% block stylesheets %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
+  
+  .rendezvous-section {
+    padding: 40px 0;
+  background-color: #f8f9fa;  }
+
+  .rendezvous-container {
+    background: #FFE8D6; /* Light pastel orange */
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2); /* Softer shadow */
+    border: 1px solid #FFD1A8; /* Light orange border */
+  }
+
+  .rendezvous-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    color: #F25922; /* Darker orange for contrast */
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .rendezvous-title i {
+    font-size: 1.2em;
+    color: #F25922;
+  }
+
+  /* Rest of your existing styles... */
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+  }
+
+  .form-group {
+    flex: 0 0 50%;
+    padding: 0 15px;
+    margin-bottom: 25px;
+    position: relative;
+  }
+
+  .form-group label {
+    position: absolute;
+    left: 25px;
+    top: 15px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    background: white;
+    padding: 0 5px;
+    border-radius: 4px;
+  }
+
+  .rendezvous-input {
+    width: 100%;
+    height: 55px;
+    border: 2px solid #FFD1A8; /* Light orange border */
+    border-radius: 8px;
+    padding: 15px 20px;
+    background: white;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .rendezvous-input:focus {
+    border-color: #4453A6;
+    outline: none;
+  }
+
+  .rendezvous-input:focus + label,
+  .rendezvous-input:not(:placeholder-shown) + label {
+    top: -10px;
+    left: 20px;
+    font-size: 12px;
+    color: #4453A6;
+    background: white;
+    padding: 0 5px;
+  }
+
+  .rendezvous-btn {
+    background-color: #4453A6;
+    color: white;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(68, 83, 166, 0.3);
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 16px;
+  }
+
+  .rendezvous-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(68, 83, 166, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    .form-group {
+      flex: 0 0 100%;
+    }
+    
+    .rendezvous-container {
+      padding: 30px;
+    }
+    
+    .rendezvous-title {
+      font-size: 24px;
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block body %}
-<section class="section">
+<section class="rendezvous-section">
     <div class="container">
-        <div class="row">
-            <div class="col-lg-8 offset-lg-2">
-                <div class="form-container">
-                    <h2 class="text-center mb-5">Planifier un Rendez-vous</h2>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="rendezvous-container">
+                    <h2 class="rendezvous-title">
+                        <i class="fas fa-calendar-alt"></i>
+                        Planifier un Rendez-vous
+                    </h2>
                     
                     {{ form_start(form, {'attr': {'class': 'rendezvous-form'}}) }}
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form_row(form.date, {'attr': {'class': 'form-control'}}) }}
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_widget(form.date, {
+                                    'attr': {
+                                        'class': 'rendezvous-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.date) }}
                             </div>
-                            <div class="col-md-6">
-                              {{ form_row(form.heure, {
-    'attr': {'class': 'form-control'},
-    'label': 'Heure'
-}) }}
+                            <div class="form-group">
+                                {{ form_widget(form.heure, {
+                                    'attr': {
+                                        'class': 'rendezvous-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.heure) }}
                             </div>
                         </div>
                         
-                        {{ form_row(form.cinProprietaire, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_row(form.cinEtudiant, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_row(form.idLogement, {'attr': {'class': 'form-control'}}) }}
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_widget(form.cinProprietaire, {
+                                    'attr': {
+                                        'class': 'rendezvous-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.cinProprietaire) }}
+                            </div>
+                            <div class="form-group">
+                                {{ form_widget(form.cinEtudiant, {
+                                    'attr': {
+                                        'class': 'rendezvous-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.cinEtudiant) }}
+                            </div>
+                        </div>
                         
-                        <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                        <div class="form-row">
+                            <div class="form-group">
+                                {{ form_widget(form.idLogement, {
+                                    'attr': {
+                                        'class': 'rendezvous-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
+                                {{ form_label(form.idLogement) }}
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-5">
+                            <button type="submit" class="rendezvous-btn">
                                 <i class="fas fa-calendar-check mr-2"></i> Valider le Rendez-vous
                             </button>
                         </div>

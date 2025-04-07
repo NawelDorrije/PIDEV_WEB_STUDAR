@@ -2,10 +2,10 @@
       class="delete-form d-inline"
       onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réservation?') && {{ reservation_logement.isDeletable() ? 'true' : 'false' }};">
     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reservation_logement.id) }}">
-    <button class="btn btn-danger {{ not reservation_logement.isDeletable() ? 'disabled' : '' }}"
+    <button class="btn-supprimer {{ not reservation_logement.isDeletable() ? 'disabled' : '' }}"
             {% if not reservation_logement.isDeletable() %}
                 title="{% if reservation_logement.status == 'refusée' %}Suppression impossible pour les réservations refusées{% else %}Suppression impossible moins de 24h avant le début{% endif %}"
             {% endif %}>
-        <i class="fas fa-trash"></i> Supprimer
+        <i class="fas fa-trash"></i> Annuler
     </button>
 </form>

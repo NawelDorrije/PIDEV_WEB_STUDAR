@@ -1,48 +1,195 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Reservation Transport{% endblock %}
+{% block title %}Détails de la Réservation Transport{% endblock %}
+
+{% block stylesheets %}
+<style>
+.section {
+    padding: 60px 0;
+    background-color: #f8f9fa; 
+}
+
+.container {
+    border-radius: 20px;
+}
+
+.reservation-details {
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: none;
+    overflow: hidden;
+    padding: 15px;
+}
+
+.reservation-details .card-header {
+    background-color: #F2F2F2;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 20px;
+}
+
+.reservation-details .card-header h3 {
+    color: #F25922;
+    font-weight: 700;
+    margin: 0;
+    padding: 8px 15px;
+    border-radius: 30px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.reservation-details .card-header h3 i {
+    margin-right: 8px;
+}
+
+.reservation-content {
+    padding: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.detail-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.detail-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 1rem;
+}
+
+.status-badge .badge {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.btn-primary {
+    background-color: #4453A6;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #3a4791;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(68, 83, 166, 0.3);
+}
+
+
+
+
+.btn-supprimer {
+    background-color: #F2811D;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-supprimer:hover {
+    background-color: #da7419;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
+}
+</style>
+{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1>Reservation Transport</h1>
-
-        <table class="table">
-            <tbody>
-                <tr>
-                    <th>Id</th>
-                    <td>{{ reservation_transport.id }}</td>
-                </tr>
-                <tr>
-                    <th>AdresseDepart</th>
-                    <td>{{ reservation_transport.adresseDepart }}</td>
-                </tr>
-                <tr>
-                    <th>AdresseDestination</th>
-                    <td>{{ reservation_transport.adresseDestination }}</td>
-                </tr>
-                <tr>
-                    <th>TempsArrivage</th>
-                    <td>{{ reservation_transport.tempsArrivage }}</td>
-                </tr>
-                <tr>
-                    <th>Status</th>
-                    <td>{{ reservation_transport.status }}</td>
-                </tr>
-                <tr>
-                    <th>CinEtudiant</th>
-                    <td>{{ reservation_transport.cinEtudiant }}</td>
-                </tr>
-                <tr>
-                    <th>CinTransporteur</th>
-                    <td>{{ reservation_transport.cinTransporteur }}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="d-flex gap-2">
-            <a href="{{ path('app_reservation_transport_index') }}" class="btn btn-secondary">Back to list</a>
-            <a href="{{ path('app_reservation_transport_edit', {'id': reservation_transport.id}) }}" class="btn btn-warning">Edit</a>
-            {{ include('reservation_transport/_delete_form.html.twig') }}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card reservation-details">
+                    <div class="card-header">
+                        <h3><i class="fas fa-car"></i>Réservation de Transport</h3>
+                        <div class="status-badge">
+                            <span class="badge bg-{{ 
+                                reservation_transport.status == 'confirmée' ? 'success' : 
+                                (reservation_transport.status == 'en_attente' ? 'warning' : 'danger') 
+                            }}">
+                                {{ reservation_transport.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="reservation-content">
+                            <div class="details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Adresse de Départ:</span>
+                                    <span class="detail-value">{{ reservation_transport.adresseDepart }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Adresse de Destination:</span>
+                                    <span class="detail-value">{{ reservation_transport.adresseDestination }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Temps d'Arrivage:</span>
+                                    <span class="detail-value">{{ reservation_transport.tempsArrivage }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">CIN Transporteur:</span>
+                                    <span class="detail-value">{{ reservation_transport.cinTransporteur }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">CIN Étudiant:</span>
+                                    <span class="detail-value">{{ reservation_transport.cinEtudiant }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <a href="{{ path('app_reservation_transport_edit', {'id': reservation_transport.id}) }}" 
+                                   class="btn btn-primary {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
+                                   {% if not reservation_transport.isModifiable() %}
+                                       title="Modification impossible pour les réservations confirmées ou refusées"
+                                   {% endif %}>
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                                
+                                {{ include('reservation_transport/_delete_form.html.twig') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</section>
 {% endblock %}
