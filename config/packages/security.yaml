@@ -22,9 +22,11 @@ security:
             form_login:
                 login_path: app_utilisateur_signin
                 check_path: app_login_check
-                username_parameter: 'email'  # Matches your form field name
-                password_parameter: 'password'  # Matches your form field name
+                username_parameter: 'email'
+                password_parameter: 'password'
                 enable_csrf: true
+                failure_path: app_utilisateur_signin  # Add this line to redirect back to login on failure
+                failure_forward: false
             logout:
                 path: app_logout  # The route name for logout
                 target: app_utilisateur_signin  # Where to redirect after logout

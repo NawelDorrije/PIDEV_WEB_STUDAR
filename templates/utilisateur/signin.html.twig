@@ -90,6 +90,23 @@
     font-weight: 500;
     margin-top: 8px;
 }
+/* Add this to your existing styles */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.form-check-input {
+    margin: 0; /* Remove default margin */
+    width: auto; /* Don't force full width */
+}
+
+.form-check-label {
+    margin: 0; /* Remove default margin */
+    white-space: nowrap; /* Prevent text wrapping */
+}
 
         .row-page{
             height: 500px;
@@ -183,11 +200,7 @@
 </div>
             <!-- Right Column - Form -->
             <div class="col-lg-6 right-column">
-                {% if error %}
-                    <div class="alert alert-danger">
-                        {{ error.messageKey|trans(error.messageData, 'security') }}
-                    </div>
-                {% endif %}
+               
                 
                 <h3 class="center-title">Connectez-vous !</h3>
                 
@@ -214,11 +227,16 @@
                             placeholder="Mot de passe"
                             required
                         >
+                        {% if error %}
+                        <div style="color: red;" class="alert alert-danger">
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                        </div>
+                    {% endif %}
                     </div>
             
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" name="_remember_me" class="form-check-input" id="rememberMe">
-                        <label class="form-check-label" for="rememberMe">Se souvenir de moi</label>
+                    <div class="mb-3 form-check" style="display: flex; align-items: center;">
+                        <input type="checkbox" name="_remember_me" class="form-check-input" id="rememberMe" style="margin-right: 8px;">
+                        <label class="form-check-label" for="rememberMe" style="margin: 0;">Se souvenir de moi</label>
                     </div>
             
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
@@ -233,6 +251,9 @@
                     
                     <div class="center">
                         <a href="{{ path('app_utilisateur_new') }}" style="text-decoration: underline;">Vous n'avez pas de compte ? Inscrivez-vous</a>
+                    </div>
+                    <div class="center">
+                        <a  style="text-decoration: underline;">Mot de passe oublié ?</a>
                     </div>
                 </form>
             </div>

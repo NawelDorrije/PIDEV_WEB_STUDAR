@@ -97,7 +97,7 @@ figure, header, nav, section, article, aside, footer, figcaption {
   height: 0;
 }
 .logo{
-  width: 150px;
+  width: 180px;
   height: 80px;
 }
 .nav {
@@ -510,6 +510,8 @@ Header Style
   -o-transition: all 0.3s ease 0s;
   transition: all 0.3s ease 0s;
   display: inline-block;
+  margin-top: 6px;
+
 }
 
 .header-area .main-nav .logo h1 {
