@@ -1,0 +1,247 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Mon Panier
+{% endblock %}
+
+{% block body %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    .cart-wrapper {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 40px 0;
+    }
+
+    .product-card {
+        background: white;
+        border-radius: 12px;
+        transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .product-image {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        position: sticky;
+        top: 20px;
+    }
+
+    .checkout-btn {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border: none;
+        transition: transform 0.2s;
+    }
+
+    .checkout-btn:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #4f46e5, #4338ca);
+    }
+
+    .remove-btn {
+        color: #dc2626;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.2rem;
+    }
+
+    .remove-btn:hover {
+        color: #991b1b;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border: none;
+    }
+
+    .btn-confirm:hover {
+        background: linear-gradient(135deg, #4f46e5, #4338ca);
+    }
+</style>
+
+<div class="cart-wrapper">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Cart Items Section -->
+            <div class="col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">Votre Panier</h4>
+                    <span class="text-muted">{{ lignesPanier|length }} article{% if lignesPanier|length > 1 %}s{% endif %}</span>
+                </div>
+
+                <!-- Product Cards -->
+                {% if lignesPanier|length > 0 %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for ligne in lignesPanier %}
+                            <div class="product-card p-3 shadow-sm">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        <img src="{% if ligne.meuble.image %}{{ asset('images/' ~ ligne.meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
+                                             alt="{{ ligne.meuble.nom }}" 
+                                             class="product-image">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <h6 class="mb-1">{{ ligne.meuble.nom }}</h6>
+                                        <p class="text-muted mb-0">{{ ligne.meuble.description|length > 50 ? ligne.meuble.description|slice(0, 50) ~ '...' : ligne.meuble.description }}</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="fw-bold">{{ ligne.meuble.prix }} TND</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <form action="{{ path('app_gestion_meubles_ligne_panier_remove', {'id': ligne.id}) }}" method="POST">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('remove_' ~ ligne.id) }}">
+                                            <button type="submit" class="btn remove-btn p-0 border-0 bg-transparent">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center" role="alert">
+                        Votre panier est vide.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Summary Section -->
+            <div class="col-lg-4">
+                <div class="summary-card p-4 shadow-sm">
+                    <h5 class="mb-4">Résumé de la commande</h5>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Sous-total</span>
+                        <span>{{ total }} TND</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Livraison</span>
+                        <span>À confirmer</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="fw-bold">Total</span>
+                        <span class="fw-bold">{{ total }} TND</span>
+                    </div>
+
+                    <!-- Bouton pour ouvrir la modal -->
+                    {% if lignesPanier|length > 0 %}
+                        <button class="btn btn-primary checkout-btn w-100 mb-3" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                            Procéder au paiement
+                        </button>
+                    {% else %}
+                        <button class="btn btn-primary checkout-btn w-100 mb-3" disabled>
+                            Procéder au paiement
+                        </button>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-center gap-2">
+                        <i class="bi bi-shield-check text-success"></i>
+                        <small class="text-muted">Paiement sécurisé (à la livraison ou par carte)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour choisir le mode de paiement -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">Choisir le mode de paiement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm" action="{{ path('app_gestion_meubles_panier_confirm_checkout') }}" method="POST">
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="cardPayment" value="card" checked>
+                            <label class="form-check-label" for="cardPayment">
+                                Paiement par carte
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="deliveryPayment" value="delivery">
+                            <label class="form-check-label" for="deliveryPayment">
+                                Paiement à la livraison
+                            </label>
+                        </div>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-confirm" id="confirmPayment">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour le paiement à la livraison -->
+<div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deliveryModalLabel">Confirmer la commande</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Montant total :</strong> {{ total }} TND</p>
+                <form id="deliveryForm" action="{{ path('app_gestion_meubles_panier_confirm_checkout') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Adresse de livraison</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+                    </div>
+                    <input type="hidden" name="payment_method" value="delivery">
+                    <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" form="deliveryForm" class="btn btn-confirm">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const confirmPaymentBtn = document.getElementById('confirmPayment');
+        const paymentForm = document.getElementById('paymentForm');
+        const deliveryModal = new bootstrap.Modal(document.getElementById('deliveryModal'));
+        const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+
+        confirmPaymentBtn.addEventListener('click', function () {
+            const selectedMethod = paymentForm.querySelector('input[name="payment_method"]:checked').value;
+            
+            if (selectedMethod === 'delivery') {
+                paymentModal.hide();
+                deliveryModal.show();
+            } else {
+                paymentForm.submit(); // Soumet directement pour le paiement par carte
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{# templates/gestion_meubles/commande/liste.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Commandes de l'acheteur {{ cin_acheteur }}{% endblock %}
+
+{% block body %}
+    <div class="commandes-container">
+        <h1>Liste des commandes</h1>
+
+        {% for message in app.flashes('warning') %}
+            <div class="alert alert-warning">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {% if commandes|length > 0 %}
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Paiement</th>
+                        <th>Montant</th>
+                        <th>Adresse</th>
+                        <th>Action
+                            <button type="button" class="btn badge" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Annulation possible avant 24h de confirmation de la commande">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                        </th>
+                    </tr>
+                    <tr class="filter-row">
+                        <th><input type="text" class="filter-input" id="filter-code" placeholder="Code"></th>
+                        <th><input type="date" class="filter-input" id="filter-date"></th>
+                        <th>
+                            <select class="filter-input" id="filter-statut">
+                                <option value="">Statut</option>
+                                <option value="En attente">En attente</option>
+                                <option value="Payée">Payée</option>
+                                <option value="Livrée">Livrée</option>
+                                <option value="Annulee">Annulée</option>
+                            </select>
+                        </th>
+                        <th>
+                            <select class="filter-input" id="filter-paiement">
+                                <option value="">Paiement</option>
+                                <option value="Stripe">Stripe</option>
+                                <option value="Paiement a la livraison">Paiement à la livraison</option>
+                            </select>
+                        </th>
+                        <th><input type="number" class="filter-input" id="filter-montant" placeholder="Min"></th>
+                        <th><input type="text" class="filter-input" id="filter-adresse" placeholder="Adresse"></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="commandes-body">
+                    {% for commande in commandes %}
+                        <tr>
+                            <td>{{ commande.id }}</td>
+                            <td>{{ commande.dateCommande|date('d/m/Y H:i') }}</td>
+                            <td>
+                                <span class="payment-badge" style="background: 
+                                    {% if commande.statut == 'ANNULEE' %}#e74c3c
+                                    {% elseif commande.statut == 'PAYÉE' %}#2ecc71
+                                    {% elseif commande.statut == 'EN_ATTENTE' %}#f39c12
+                                    {% elseif commande.statut == 'LIVRÉE' %}#3498db
+                                    {% endif %}">
+                                    {{ commande.statut|lower|replace({'_': ' '})|capitalize }}
+                                </span>
+                            </td>                              
+                            <td>
+                                <span class="payment-badge" style="background: 
+                                    {% if commande.methodePaiement == 'Stripe' %}#8e44ad
+                                    {% elseif commande.methodePaiement == 'Paiement_a_la_livraison' %}#16a085
+                                    {% endif %}">
+                                    {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}
+                                </span>
+                            </td>
+                            <td>{{ commande.montantTotal|number_format(2, ',', ' ') }} TND</td>
+                            <td>{{ commande.adresseLivraison|default('Non spécifiée') }}</td>
+                            <td><button class="btn-cancel">Annuler</button></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucune commande à afficher.</p>
+        {% endif %}
+        <!-- Conteneur pour le message dynamique -->
+        <p id="no-results" style="display: none;">Aucune commande ne correspond aux filtres.</p>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const filters = {
+                code: document.getElementById('filter-code'),
+                date: document.getElementById('filter-date'),
+                statut: document.getElementById('filter-statut'),
+                paiement: document.getElementById('filter-paiement'),
+                montant: document.getElementById('filter-montant'),
+                adresse: document.getElementById('filter-adresse')
+            };
+
+            const rows = document.querySelectorAll('#commandes-body tr');
+            const noResultsMessage = document.getElementById('no-results');
+
+            Object.values(filters).forEach(filter => {
+                filter.addEventListener('input', applyFilters);
+            });
+
+            function applyFilters() {
+                let visibleRows = 0;
+
+                rows.forEach(row => {
+                    const cells = row.getElementsByTagName('td');
+                    const code = cells[0].textContent;
+                    const date = cells[1].textContent;
+                    const statut = cells[2].textContent;
+                    const paiement = cells[3].textContent;
+                    const montant = parseFloat(cells[4].textContent.replace(/[^\d,]/g, '').replace(',', '.'));
+                    const adresse = cells[5].textContent;
+
+                    const show = (!filters.code.value || code.includes(filters.code.value)) &&
+                        (!filters.date.value || date.includes(filters.date.value)) &&
+                        (!filters.statut.value || statut.toLowerCase().includes(filters.statut.value.toLowerCase())) &&
+                        (!filters.paiement.value || paiement.toLowerCase().includes(filters.paiement.value.toLowerCase())) &&
+                        (!filters.montant.value || montant >= parseFloat(filters.montant.value)) &&
+                        (!filters.adresse.value || adresse.toLowerCase().includes(filters.adresse.value.toLowerCase()));
+
+                    row.style.display = show ? '' : 'none';
+                    if (show) visibleRows++;
+                });
+
+                // Afficher ou masquer le message sans toucher au tableau
+                if (visibleRows === 0) {
+                    noResultsMessage.style.display = 'block';
+                } else {
+                    noResultsMessage.style.display = 'none';
+                }
+            }
+        });
+    </script>
+{% endblock %}
