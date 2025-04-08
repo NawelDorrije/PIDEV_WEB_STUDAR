@@ -31,6 +31,53 @@ font & reset css
 reset
 --------------------------------------------- 
 */
+
+
+/* ------------------------------------ start code nawel -------------------------------- */
+/* public/css/style.css */
+.form-container {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #214799;
+  box-shadow: 0 0 5px rgba(33, 71, 153, 0.3);
+}
+
+textarea.form-control {
+  resize: vertical;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+/* ---------------------------------  end code nawel   ------------------------------------- */
+
+
 html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, div
 pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q,
 s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li,
@@ -50,7 +97,7 @@ figure, header, nav, section, article, aside, footer, figcaption {
   height: 0;
 }
 .logo{
-  width: 150px;
+  width: 180px;
   height: 80px;
 }
 .nav {
@@ -463,6 +510,8 @@ Header Style
   -o-transition: all 0.3s ease 0s;
   transition: all 0.3s ease 0s;
   display: inline-block;
+  margin-top: 6px;
+
 }
 
 .header-area .main-nav .logo h1 {

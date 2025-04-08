@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
+    <style>
+     
+
+
+    </style>
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -87,7 +92,13 @@
 
                                 <li><a href="{{ path('app_home') }}">Chat AI</a></li>
                                 <li><a href="{{ path('app_home') }}"><i class="fa fa-calendar"></i></a></li>
-                                <li><a href="{{ path('app_home') }}"><i class="fa fa-user"></i></a></li> <!-- Icône de profil -->
+                                <!-- <li><a href="{{ path('app_utilisateur_show') }}"><i class="fa fa-user"></i></a></li> Icône de profil -->
+                                {% if app.user %}
+                                <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
+                            {% else %}
+                                <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
+                            {% endif %}                                <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
+                                
                             </ul>
 
                             <a class='menu-trigger'>
