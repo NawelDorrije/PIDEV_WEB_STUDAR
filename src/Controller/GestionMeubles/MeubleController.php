@@ -46,7 +46,6 @@ final class MeubleController extends AbstractController
             'meubles' => $meubles,
         ]);
     }
-
     #[Route('/meubles/ajouter', name: 'app_gestion_meuble_ajouter', methods: ['GET', 'POST'])]
     public function ajouter(Request $request): Response
     {
@@ -55,31 +54,39 @@ final class MeubleController extends AbstractController
         $meuble->setCinVendeur('14450157');
         $meuble->setStatut('disponible');
         $meuble->setCategorie('occasion');
-
+    
         $form = $this->createForm(MeubleType::class, $meuble);
         $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $imageFile = $form->get('image')->getData();
-            if ($imageFile) {
-                // Valider le fichier uploadé
+    
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+                $imageFile = $form->get('image')->getData();
+                
+                if (!$imageFile) {
+                    $this->addFlash('error', 'Veuillez sélectionner une image');
+                    return $this->redirectToRoute('app_gestion_meuble_ajouter');
+                }
+    
+                // Validation du fichier
                 $constraint = new File([
                     'maxSize' => '5M',
-                    'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
-                    'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF).',
+                    'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                    'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP).',
                 ]);
+                
                 $violations = $this->validator->validate($imageFile, $constraint);
-
+    
                 if (count($violations) > 0) {
                     foreach ($violations as $violation) {
                         $this->addFlash('error', $violation->getMessage());
                     }
                     return $this->redirectToRoute('app_gestion_meuble_ajouter');
                 }
-
+    
+                // Traitement de l'image
                 $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
-
+                $newFilename = $originalFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+    
                 try {
                     $imageFile->move(
                         $this->getParameter('images_directory'),
@@ -87,25 +94,169 @@ final class MeubleController extends AbstractController
                     );
                     $meuble->setImage($newFilename);
                 } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
+                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : '.$e->getMessage());
                     return $this->redirectToRoute('app_gestion_meuble_ajouter');
                 }
+    
+                $this->meubleRepository->save($meuble);
+                $this->addFlash('success', 'Meuble ajouté avec succès !');
+                return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
             } else {
-                $meuble->setImage(null);
+                // Récupérer toutes les erreurs du formulaire
+                $errors = $form->getErrors(true);
+                foreach ($errors as $error) {
+                    $this->addFlash('error', $error->getMessage());
+                }
             }
-
-            $this->meubleRepository->save($meuble);
-
-            $this->addFlash('success', 'Meuble ajouté avec succès !');
-            return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
         }
-
+    
         return $this->render('gestion_meubles/meuble/form.html.twig', [
             'form' => $form->createView(),
             'meuble' => $meuble,
             'is_edit' => false,
         ]);
     }
+    
+    #[Route('/meubles/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
+    public function modifier(Request $request, Meuble $meuble): Response
+    {
+        if ($meuble->getCinVendeur() !== "14450157") {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
+        }
+    
+        if ($meuble->getStatut() === 'indisponible') {
+            $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
+            return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+        }
+    
+        $oldImage = $meuble->getImage();
+        $form = $this->createForm(MeubleType::class, $meuble, [
+            'validation_groups' => ['Default', 'edit']
+        ]);
+        
+        $form->handleRequest($request);
+    
+        if ($form->isSubmitted()) {
+            if ($form->isValid()) {
+                $imageFile = $form->get('image')->getData();
+                
+                // Si nouvelle image est uploadée
+                if ($imageFile) {
+                    // Validation du fichier
+                    $constraint = new File([
+                        'maxSize' => '5M',
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                        'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP).',
+                    ]);
+                    
+                    $violations = $this->validator->validate($imageFile, $constraint);
+    
+                    if (count($violations) > 0) {
+                        foreach ($violations as $violation) {
+                            $this->addFlash('error', $violation->getMessage());
+                        }
+                        return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+                    }
+    
+                    $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                    $newFilename = $originalFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+    
+                    try {
+                        $imageFile->move(
+                            $this->getParameter('images_directory'),
+                            $newFilename
+                        );
+                        // Supprimer l'ancienne image si elle existe
+                        if ($oldImage && file_exists($this->getParameter('images_directory').'/'.$oldImage)) {
+                            unlink($this->getParameter('images_directory').'/'.$oldImage);
+                        }
+                        $meuble->setImage($newFilename);
+                    } catch (FileException $e) {
+                        $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : '.$e->getMessage());
+                        return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+                    }
+                } else {
+                    // Si aucune nouvelle image n'est uploadée, conserver l'ancienne
+                    $meuble->setImage($oldImage);
+                }
+    
+                $this->meubleRepository->save($meuble);
+                $this->addFlash('success', 'Meuble modifié avec succès !');
+                return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+            } else {
+                // Récupérer toutes les erreurs du formulaire
+                $errors = $form->getErrors(true);
+                foreach ($errors as $error) {
+                    $this->addFlash('error', $error->getMessage());
+                }
+            }
+        }
+    
+        return $this->render('gestion_meubles/meuble/form.html.twig', [
+            'form' => $form->createView(),
+            'meuble' => $meuble,
+            'is_edit' => true,
+        ]);
+    }
+    // #[Route('/meubles/ajouter', name: 'app_gestion_meuble_ajouter', methods: ['GET', 'POST'])]
+    // public function ajouter(Request $request): Response
+    // {
+    //     $meuble = new Meuble();
+    //     $meuble->setDateEnregistrement(new \DateTime());
+    //     $meuble->setCinVendeur('14450157');
+    //     $meuble->setStatut('disponible');
+    //     $meuble->setCategorie('occasion');
+
+    //     $form = $this->createForm(MeubleType::class, $meuble);
+    //     $form->handleRequest($request);
+
+    //     if ($form->isSubmitted() && $form->isValid()) {
+    //         $imageFile = $form->get('image')->getData();
+    //         if ($imageFile) {
+    //             // Valider le fichier uploadé
+    //             $constraint = new File([
+    //                 'maxSize' => '5M',
+    //                 'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
+    //                 'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF).',
+    //             ]);
+    //             $violations = $this->validator->validate($imageFile, $constraint);
+
+    //             if (count($violations) > 0) {
+    //                 foreach ($violations as $violation) {
+    //                     $this->addFlash('error', $violation->getMessage());
+    //                 }
+    //                 return $this->redirectToRoute('app_gestion_meuble_ajouter');
+    //             }
+
+    //             $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+    //             $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+
+    //             try {
+    //                 $imageFile->move(
+    //                     $this->getParameter('images_directory'),
+    //                     $newFilename
+    //                 );
+    //                 $meuble->setImage($newFilename);
+    //             } catch (FileException $e) {
+    //                 $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
+    //                 return $this->redirectToRoute('app_gestion_meuble_ajouter');
+    //             }
+    //         } else {
+    //             $meuble->setImage(null);
+    //         }
+
+    //         $this->meubleRepository->save($meuble);
+
+    //         $this->addFlash('success', 'Meuble ajouté avec succès !');
+    //         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+    //     }
+
+    //     return $this->render('gestion_meubles/meuble/form.html.twig', [
+    //         'form' => $form->createView(),
+    //         'meuble' => $meuble,
+    //         'is_edit' => false,
+    //     ]);
+    // }
 
     #[Route('/mes-meubles', name: 'app_gestion_meubles_mes_meubles')]
     public function consulterMesMeubles(): Response
@@ -140,73 +291,73 @@ final class MeubleController extends AbstractController
         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
     }
 
-    #[Route('/meubles/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
-    public function modifier(Request $request, Meuble $meuble): Response
-    {
-        if ($meuble->getCinVendeur() !== "14450157") {
-            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
-        }
+    // #[Route('/meubles/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
+    // public function modifier(Request $request, Meuble $meuble): Response
+    // {
+    //     if ($meuble->getCinVendeur() !== "14450157") {
+    //         throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
+    //     }
 
-        if ($meuble->getStatut() === 'indisponible') {
-            $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
-            return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
-        }
+    //     if ($meuble->getStatut() === 'indisponible') {
+    //         $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
+    //         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+    //     }
 
-        $form = $this->createForm(MeubleType::class, $meuble);
-        $form->handleRequest($request);
+    //     $form = $this->createForm(MeubleType::class, $meuble);
+    //     $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $imageFile = $form->get('image')->getData();
-            if ($imageFile) {
-                // Valider le fichier uploadé
-                $constraint = new File([
-                    'maxSize' => '5M',
-                    'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
-                    'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF).',
-                ]);
-                $violations = $this->validator->validate($imageFile, $constraint);
+    //     if ($form->isSubmitted() && $form->isValid()) {
+    //         $imageFile = $form->get('image')->getData();
+    //         if ($imageFile) {
+    //             // Valider le fichier uploadé
+    //             $constraint = new File([
+    //                 'maxSize' => '5M',
+    //                 'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
+    //                 'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF).',
+    //             ]);
+    //             $violations = $this->validator->validate($imageFile, $constraint);
 
-                if (count($violations) > 0) {
-                    foreach ($violations as $violation) {
-                        $this->addFlash('error', $violation->getMessage());
-                    }
-                    return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
-                }
+    //             if (count($violations) > 0) {
+    //                 foreach ($violations as $violation) {
+    //                     $this->addFlash('error', $violation->getMessage());
+    //                 }
+    //                 return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+    //             }
 
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+    //             $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+    //             $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
 
-                try {
-                    $imageFile->move(
-                        $this->getParameter('images_directory'),
-                        $newFilename
-                    );
-                    // Supprimer l'ancienne image si elle existe
-                    if ($meuble->getImage()) {
-                        $oldImagePath = $this->getParameter('images_directory') . '/' . $meuble->getImage();
-                        if (file_exists($oldImagePath)) {
-                            unlink($oldImagePath);
-                        }
-                    }
-                    $meuble->setImage($newFilename);
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
-                    return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
-                }
-            }
+    //             try {
+    //                 $imageFile->move(
+    //                     $this->getParameter('images_directory'),
+    //                     $newFilename
+    //                 );
+    //                 // Supprimer l'ancienne image si elle existe
+    //                 if ($meuble->getImage()) {
+    //                     $oldImagePath = $this->getParameter('images_directory') . '/' . $meuble->getImage();
+    //                     if (file_exists($oldImagePath)) {
+    //                         unlink($oldImagePath);
+    //                     }
+    //                 }
+    //                 $meuble->setImage($newFilename);
+    //             } catch (FileException $e) {
+    //                 $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
+    //                 return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+    //             }
+    //         }
 
-            $this->meubleRepository->save($meuble);
+    //         $this->meubleRepository->save($meuble);
 
-            $this->addFlash('success', 'Meuble modifié avec succès !');
-            return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
-        }
+    //         $this->addFlash('success', 'Meuble modifié avec succès !');
+    //         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+    //     }
 
-        return $this->render('gestion_meubles/meuble/form.html.twig', [
-            'form' => $form->createView(),
-            'meuble' => $meuble,
-            'is_edit' => true,
-        ]);
-    }
+    //     return $this->render('gestion_meubles/meuble/form.html.twig', [
+    //         'form' => $form->createView(),
+    //         'meuble' => $meuble,
+    //         'is_edit' => true,
+    //     ]);
+    // }
 
 
     // #[Route('/meubles/a-vendre', name: 'app_gestion_meubles_a_vendre', methods: ['GET'])]

@@ -71,7 +71,7 @@ class MeubleRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('m')
             ->andWhere('m.cinVendeur = :cinVendeur')
             ->setParameter('cinVendeur', $cinVendeur)
-            ->orderBy('m.statut', 'ASC') // Les meubles disponibles (DISPONIBLE) avant les vendus (INDISPONIBLE)
+            ->orderBy('m.id', 'DESC') // <--- ici
             ->getQuery()
             ->getResult();
     }
@@ -91,6 +91,7 @@ class MeubleRepository extends ServiceEntityRepository
             ->setParameter('cinAcheteur', $cinAcheteur)
             ->setParameter('statut', 'disponible')
             ->setParameter('statutPanier', 'EN_COURS')
+            ->orderBy('m.id', 'DESC') // <--- ici
             ->getQuery()
             ->getResult();
     }

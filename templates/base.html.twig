@@ -7,14 +7,13 @@
         <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
-
         {% block css %}
-            <!-- Tu peux ajouter des styles supplémentaires ici dans les templates enfants -->
+            <!-- Styles personnalisés ajoutés ici -->
         {% endblock %}
     </head>
     <body>
@@ -59,7 +58,7 @@
                         <nav class="main-nav">
                             <!-- ***** Logo Start ***** -->
                             <a href="{{ path('app_home') }}" class="logo">
-                                <img class="logo" src="{{ asset('images/logo.png') }}" alt="Villa Agency">
+                                <img class="logo" src="{{ asset('images/logo.png') }}" alt="StuDar">
                             </a>
                             <!-- ***** Logo End ***** -->
 
@@ -67,32 +66,46 @@
                             <ul class="nav">
                                 <li><a href="{{ path('app_home') }}" class="active">Accueil</a></li>
 
-                                <!-- Services Dropdown -->
-                                <li class="dropdown">
-                                    <a href="#">Services <i class="fa fa-caret-down"></i></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ path('app_home') }}">Logements</a></li>
-                                        <li><a href="{{ path('app_home') }}">Meubles</a></li>
-                                        <li><a href="{{ path('app_home') }}">Transports</a></li>
+                                <!-- Services Dropdown avec Bootstrap -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu elegant-dropdown" aria-labelledby="servicesDropdown">
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Logements</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Meubles</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
                                     </ul>
                                 </li>
 
-                                <!-- Agenda Dropdown -->
-                                <li class="dropdown">
-                                    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ path('app_home') }}">Réservation des logements</a></li>
-                                        <li><a href="{{ path('app_home') }}">Réservation des transporteurs</a></li>
-                                        <li><a href="{{ path('app_home') }}">Rendez-vous</a></li>
+                                <!-- Agenda Dropdown avec Bootstrap -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="agendaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu elegant-dropdown" aria-labelledby="agendaDropdown">
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Réservation des logements</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Réservation des transporteurs</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Rendez-vous</a></li>
                                     </ul>
                                 </li>
 
                                 <li><a href="{{ path('app_home') }}">Chat AI</a></li>
-                                <li><a href="{{ path('app_gestion_meubles_lignes_panier') }}"><i class="fa fa-shopping-cart"></i></a></li>
-                                <li><a href="{{ path('app_home') }}"><i class="fa fa-user"></i></a></li> <!-- Icône de profil -->
+                                <li><a href="{{ path('app_gestion_meubles_lignes_panier') }}"><i class="bi bi-cart3"></i></a></li>
+                                <!-- Icône de profil améliorée -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link profile-icon" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-person-circle"></i>
+                                    </a>
+                                    <ul class="dropdown-menu elegant-dropdown profile-dropdown" aria-labelledby="profileDropdown">
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Mon profil</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Paramètres</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Déconnexion</a></li>
+                                    </ul>
+                                </li>
                             </ul>
 
-                            <a class='menu-trigger'>
+                            <a class="menu-trigger">
                                 <span>Menu</span>
                             </a>
                             <!-- ***** Menu End ***** -->
@@ -104,7 +117,7 @@
         <!-- ***** Header Area End ***** -->
 
         {% block body %}
-            <!-- Le contenu principal sera inséré ici par les templates enfants -->
+            <!-- Le contenu principal sera inséré ici -->
         {% endblock %}
 
         <footer>
@@ -120,9 +133,8 @@
             {{ encore_entry_script_tags('app') }}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
-
         {% block js %}
-            <!-- Tu peux ajouter des scripts supplémentaires ici dans les templates enfants -->
+            <!-- Scripts supplémentaires ici -->
         {% endblock %}
     </body>
 </html>

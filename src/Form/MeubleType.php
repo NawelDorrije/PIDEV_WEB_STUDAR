@@ -18,6 +18,8 @@ class MeubleType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $isEdit = $options['data'] && $options['data']->getId(); // Vérifie si c'est une modification
+
         $builder
             ->add('nom', null, [
                 'constraints' => [
@@ -29,12 +31,11 @@ class MeubleType extends AbstractType
                 ],
             ])
             ->add('description', TextareaType::class, [
-                'required' => false,
-                'constraints' => [
+                 'constraints' => [
                     new NotBlank(['message' => 'La description du meuble est obligatoire.']),
                     new Length([
-                        'min' => 3,
-                        'minMessage' => 'La description doit contenir au moins {{ limit }} caractères si elle est renseignée.',
+                        'min' => 10,
+                        'minMessage' => 'La description doit contenir au moins {{ limit }} caractères.',
                     ]),
                 ],
             ])
@@ -46,17 +47,14 @@ class MeubleType extends AbstractType
                 ],
             ])
             ->add('image', FileType::class, [
-                'required' => false, // L'image n'est pas obligatoire lors de la modification
-                'mapped' => false, // Le champ image n'est pas directement mappé à une propriété de l'entité
+                'required' => !$isEdit, // Obligatoire uniquement pour l'ajout
+                'mapped' => false,
                 'constraints' => [
                     new File([
                         'maxSize' => '5M',
-                        'mimeTypes' => [
-                            'image/jpeg',
-                            'image/png',
-                            'image/gif',
-                        ],
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
                         'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF).',
+                        'maxSizeMessage' => 'Le fichier est trop volumineux (max 5MB).',
                     ]),
                 ],
             ])

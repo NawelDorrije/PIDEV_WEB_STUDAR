@@ -4,130 +4,654 @@
     {{ is_edit ? 'Modifier un meuble' : 'Ajouter un meuble' }}
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: #4895ef;
+            --secondary-color: #3f37c9;
+            --accent-color: #f72585;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4bb543;
+            --error-color: #ff3333;
+        }
+        
+        .form-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, rgba(67, 97, 238, 0.1) 0%, rgba(72, 149, 239, 0.1) 100%);
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            z-index: 0;
+        }
+        
+        .form-section::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            left: -100px;
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, rgba(247, 37, 133, 0.05) 0%, rgba(67, 97, 238, 0.05) 100%);
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            z-index: 0;
+            animation: morph 8s ease-in-out infinite;
+        }
+        
+        @keyframes morph {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+        
+        .form-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #224a9f;
+            margin: 0;
+            background:#224a9f;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        
+        .form-header::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: #ec631f;
+            border-radius: 2px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-label i {
+            margin-right: 8px;
+            color: var(--primary-light);
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.2);
+        }
+        
+        .image-upload-container {
+            border: 2px dashed #e9ecef;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s;
+            background-color: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .image-upload-container:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.05);
+            transform: translateY(-3px);
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            object-fit: contain;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .image-preview:hover {
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .image-upload-container:hover .upload-icon {
+            transform: scale(1.1);
+            color: var(--accent-color);
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.85rem 2.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            transition: all 0.4s;
+            color: white;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+        }
+        
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(30deg);
+            transition: all 0.3s;
+        }
+        
+        .btn-submit:hover::after {
+            left: 100%;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            border-left: 5px solid;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .alert-success {
+            background-color: rgba(75, 181, 67, 0.15);
+            border-left-color: var(--success-color);
+            color: #2a6a24;
+        }
+        
+        .alert-danger {
+            background-color: rgba(255, 51, 51, 0.15);
+            border-left-color: var(--error-color);
+            color: #a12a2a;
+        }
+        
+        .invalid-feedback {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+        
+        .was-validated .form-control:invalid {
+            border-color: var(--error-color);
+            background-image: none;
+        }
+        
+        .was-validated .form-control:valid {
+            border-color: var(--success-color);
+        }
+        
+        .input-group-text {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        
+        /* Floating animation for decorative elements */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating-icon {
+            position: absolute;
+            opacity: 0.1;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-icon:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            font-size: 3rem;
+            color: var(--primary-color);
+            animation-delay: 0s;
+        }
+        
+        .floating-icon:nth-child(2) {
+            top: 70%;
+            right: 5%;
+            font-size: 4rem;
+            color: var(--accent-color);
+            animation-delay: 1s;
+        }
+        
+        .floating-icon:nth-child(3) {
+            bottom: 10%;
+            left: 15%;
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            animation-delay: 2s;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
-<div class="section">
+<section class="form-section">
+    <!-- Decorative floating icons -->
+    <i class="fas fa-couch floating-icon"></i>
+    <i class="fas fa-chair floating-icon"></i>
+    <i class="fas fa-table floating-icon"></i>
+    
     <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="form-container" style="background-color: #ffffff; padding: 20px; border-radius: 5px; margin-top:-80px">
-                    <h2 style="font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 20px;">
-                        {{ is_edit ? 'Modifier un Meuble' : 'Ajouter un Meuble' }}
-                    </h2>
-
-                    <!-- Afficher les messages flash -->
-                    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                        <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                        </symbol>
-                        <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-                        </symbol>
-                    </svg>
-
-                    {% for message in app.flashes('success') %}
-                        <div class="alert alert-success d-flex align-items-center" role="alert">
-                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Succès :"><use xlink:href="#check-circle-fill"/></svg>
-                            <div>{{ message }}</div>
-                        </div>
-                    {% endfor %}
-                    {% for message in app.flashes('error') %}
-                        <div class="alert alert-danger d-flex align-items-center" role="alert">
-                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Erreur :"><use xlink:href="#exclamation-triangle-fill"/></svg>
-                            <div>{{ message }}</div>
-                        </div>
-                    {% endfor %}
-
-                    <!-- Formulaire Symfony avec validation Bootstrap -->
-                    {{ form_start(form, {'attr': {'class': 'row g-3 needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
-
-                        <!-- Champ Nom -->
-                        <div class="col-md-6">
-                            {{ form_label(form.nom, 'Nom du meuble', {'label_attr': {'class': 'form-label'}}) }}
-                            {{ form_widget(form.nom, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le nom du meuble', 'required': 'required'}}) }}
-                            <div class="valid-feedback">Valide !</div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(form.nom) ?: 'Le nom du meuble est obligatoire et doit contenir au moins 3 caractères.' }}
-                            </div>
-                        </div>
-
-                        <!-- Champ Prix -->
-                        <div class="col-md-6">
-                            {{ form_label(form.prix, 'Prix', {'label_attr': {'class': 'form-label'}}) }}
-                            {{ form_widget(form.prix, {'attr': {'type': 'number', 'class': 'form-control', 'placeholder': 'Entrez le prix du meuble', 'step': '0.01', 'min': '0', 'required': 'required'}}) }}
-                            <div class="valid-feedback">Valide !</div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(form.prix) ?: 'Le prix doit être un nombre positif.' }}
-                            </div>
-                        </div>
-
-                        <!-- Champ Description -->
-                        <div class="col-md-12">
-                            {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
-                            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Entrez la description du meuble', 'rows': '4'}}) }}
-                            <div class="valid-feedback">Valide !</div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(form.description) ?: 'La description doit contenir au moins 3 caractères si elle est renseignée.' }}
-                            </div>
-                        </div>
-
-                        <!-- Champ Image -->
-                        <div class="col-md-12">
-                            {{ form_label(form.image, 'Image', {'label_attr': {'class': 'form-label'}}) }}
-                            <div class="image-preview-container" style="background: #e9edf4; padding: 10px; border-radius: 5px; display: flex; align-items: center;">
-                                <img id="image-preview" src="{% if is_edit and meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" alt="Aperçu de l'image" style="width: 200px; height: 150px; margin-right: 20px;">
-                                {{ form_widget(form.image, {'attr': {'type': 'file', 'class': 'form-control', 'accept': 'image/*', 'onchange': 'previewImage(event)', 'required': is_edit ? '' : 'required'}}) }}
-                                <div class="valid-feedback">Valide !</div>
-                                <div class="invalid-feedback">
-                                    {{ form_errors(form.image) ?: 'Veuillez choisir une image depuis votre ordinateur.' }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bouton -->
-                        <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-primary">
-                                {{ is_edit ? 'Modifier le meuble' : 'Ajouter le meuble' }}
-                            </button>
-                        </div>
-
-                    {{ form_end(form) }}
-                </div>
+        <div class="form-card">
+            <div class="form-header">
+                <h2>{{ is_edit ? 'Modifier un Meuble' : 'Créer un Nouveau Meuble' }}</h2>
             </div>
+
+            <!-- Flash messages -->
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                    <svg class="bi flex-shrink-0 me-3" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill"/></svg>
+                    <div>{{ message }}</div>
+                </div>
+            {% endfor %}
+            
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+                    <svg class="bi flex-shrink-0 me-3" width="24" height="24" role="img" aria-label="Error:"><use xlink:href="#exclamation-triangle-fill"/></svg>
+                    <div>{{ message }}</div>
+                </div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'class': 'row g-4 needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+
+                <!-- Nom field -->
+                <div class="col-md-6">
+                    {{ form_label(form.nom, 'Nom du meuble', {'label_attr': {'class': 'form-label'}}) }}
+                    <div class="input-icon">
+                        {{ form_widget(form.nom, {'attr': {'class': 'form-control', 'placeholder': 'Ex: Canapé en cuir', 'required': 'required'}}) }}
+                        <div class="invalid-feedback">
+                            {{ form_errors(form.nom) ?: 'Un nom valide est requis (min. 3 caractères)' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prix field -->
+                <div class="col-md-6">
+                    {{ form_label(form.prix, 'Prix', {'label_attr': {'class': 'form-label'}}) }}
+                    <div class="input-group">
+                        <span class="input-group-text">TND</span>
+                        {{ form_widget(form.prix, {'attr': {'class': 'form-control', 'placeholder': '0.00', 'step': '0.01', 'min': '0', 'required': 'required'}}) }}
+                    </div>
+                    <div class="invalid-feedback">
+                        {{ form_errors(form.prix) ?: 'Veuillez entrer un prix valide' }}
+                    </div>
+                </div>
+
+                <!-- Description field -->
+                <div class="col-12">
+                    {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Décrivez votre meuble en détail...', 'rows': '4'}}) }}
+                    <div class="invalid-feedback">
+                        {{ form_errors(form.description) ?: 'La description doit contenir au moins 10 caractères' }}
+                    </div>
+                </div>
+
+                <!-- Image field -->
+                {# <div class="col-12">
+                    <label class="form-label"><i class="fas fa-camera"></i> Image du meuble</label>
+                    <div class="image-upload-container" onclick="document.getElementById('{{ form.image.vars.id }}').click()">
+                        <img id="image-preview" src="{% if is_edit and meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}"{% endif %}" 
+                             alt="Aperçu de l'image" class="image-preview">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h5 class="mt-2 mb-1">Glissez-déposez votre image ici</h5>
+                        <p class="text-muted mb-0">ou cliquez pour sélectionner un fichier</p>
+                        <small class="text-muted">Formats supportés: JPG, PNG, WEBP (Max. 5MB)</small>
+                        {{ form_widget(form.image, {'attr': {'class': 'd-none', 'accept': 'image/*', 'onchange': 'previewImage(event)', 'required': is_edit ? '' : 'required'}}) }}
+                    </div>
+                    <div class="invalid-feedback d-block">
+                        {{ form_errors(form.image) ?: 'Veuillez sélectionner une image' }}
+                    </div>
+                </div> #}
+<!-- Image field -->
+<div class="col-12">
+    <label class="form-label"><i class="fas fa-camera"></i> Image du meuble</label>
+    <div class="image-upload-container" onclick="document.getElementById('{{ form.image.vars.id }}').click()">
+        <img id="image-preview" src="{% if is_edit and meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
+             alt="Aperçu de l'image" class="image-preview">
+        <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <h5 class="mt-2 mb-1">Glissez-déposez votre image ici</h5>
+        <p class="text-muted mb-0">ou cliquez pour sélectionner un fichier</p>
+        <small class="text-muted">Formats supportés: JPG, PNG, WEBP (Max. 5MB)</small>
+        {{ form_widget(form.image, {'attr': {'class': 'd-none', 'accept': 'image/*', 'onchange': 'previewImage(event)'}}) }}
+    </div>
+    {% if form.image.vars.errors|length > 0 %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.image.vars.errors %}
+                {{ error.message }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+                <!-- Submit button -->
+                <div class="col-12 text-center mt-4">
+                    <button type="submit" class="btn btn-submit px-5">
+                        <i class="fas fa-{{ is_edit ? 'save' : 'plus-circle' }} me-2"></i>
+                        {{ is_edit ? 'Mettre à jour' : 'Ajouter le meuble' }}
+                    </button>
+                </div>
+
+            {{ form_end(form) }}
         </div>
     </div>
-</div>
+</section>
 
-<!-- Script pour la validation Bootstrap -->
+<!-- SVG definitions for flash messages -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    </symbol>
+    <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+    </symbol>
+</svg>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Script for validation -->
 <script>
-    (function () {
-        'use strict';
-        const forms = document.querySelectorAll('.needs-validation');
-        Array.from(forms).forEach(form => {
-            form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
+  // Script for validation
+(function () {
+    'use strict';
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    // Désactiver la validation HTML5
+    forms.forEach(form => {
+        form.setAttribute('novalidate', 'novalidate');
+    });
+
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            let isValid = true;
+            
+            // Validation personnalisée
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                    
+                    // Créer le message d'erreur s'il n'existe pas déjà
+                    if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'Ce champ est obligatoire';
+                        field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                    }
+                } else {
+                    field.classList.remove('is-invalid');
                 }
+            });
+
+            // Validation de l'image seulement pour l'ajout
+            if (!form.dataset.edit) {
+                const imageInput = form.querySelector('input[type="file"]');
+                if (imageInput && !imageInput.files.length) {
+                    isValid = false;
+                    const errorDiv = imageInput.parentNode.querySelector('.invalid-feedback');
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Veuillez sélectionner une image';
+                        errorDiv.style.display = 'block';
+                    }
+                }
+            }
+
+            if (isValid) {
+                form.submit();
+            } else {
                 form.classList.add('was-validated');
-            }, false);
-        });
-    })();
+            }
+        }, false);
+    });
+})();
 </script>
 
-<!-- Script pour prévisualiser l'image -->
+<!-- Enhanced image preview script with drag and drop -->
 <script>
+(function () {
+        'use strict';
+        const form = document.querySelector('.needs-validation');
+
+        // Désactiver la validation HTML5 native
+        form.setAttribute('novalidate', 'novalidate');
+
+        // Gestion de la soumission
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            let isValid = true;
+
+            // Validation du champ "nom"
+            const nom = form.querySelector('#{{ form.nom.vars.id }}');
+            if (!nom.value.trim() || nom.value.length < 3) {
+                isValid = false;
+                nom.classList.add('is-invalid');
+                nom.nextElementSibling.style.display = 'block';
+            } else {
+                nom.classList.remove('is-invalid');
+                nom.classList.add('is-valid');
+                nom.nextElementSibling.style.display = 'none';
+            }
+
+            // Validation du champ "prix"
+            const prix = form.querySelector('#{{ form.prix.vars.id }}');
+            const prixValue = prix.value.trim();
+            if (!prixValue || isNaN(prixValue) || parseFloat(prixValue) < 0) {
+                isValid = false;
+                prix.classList.add('is-invalid');
+                prix.nextElementSibling.style.display = 'block';
+            } else {
+                prix.classList.remove('is-invalid');
+                prix.classList.add('is-valid');
+                prix.nextElementSibling.style.display = 'none';
+            }
+
+            // Validation du champ "description"
+            const description = form.querySelector('#{{ form.description.vars.id }}');
+            if (!description.value.trim() || description.value.length < 10) {
+                isValid = false;
+                description.classList.add('is-invalid');
+                description.nextElementSibling.style.display = 'block';
+            } else {
+                description.classList.remove('is-invalid');
+                description.classList.add('is-valid');
+                description.nextElementSibling.style.display = 'none';
+            }
+
+            // Validation du champ "image" (uniquement en création)
+            const image = form.querySelector('#{{ form.image.vars.id }}');
+            if (!{{ is_edit ? 'true' : 'false' }} && !image.files.length) {
+                isValid = false;
+                image.parentElement.nextElementSibling.style.display = 'block';
+            } else {
+                image.parentElement.nextElementSibling.style.display = 'none';
+            }
+
+            if (isValid) {
+                form.submit();
+            }
+        });
+
+        // Supprimer les messages d'erreur au focus
+        const inputs = form.querySelectorAll('.form-control, input[type="file"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.classList.remove('is-invalid');
+                const feedback = this.nextElementSibling || this.parentElement.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.style.display = 'none';
+                }
+            });
+
+            // Validation en temps réel pour le champ "prix" (nombres uniquement)
+            if (input.id === '{{ form.prix.vars.id }}') {
+                input.addEventListener('input', function() {
+                    const value = this.value;
+                    if (!/^\d*\.?\d*$/.test(value)) {
+                        this.value = value.replace(/[^0-9.]/g, '');
+                    }
+                });
+            }
+            if(input.id=== '{{ form.description.vars.id }}'){
+                input.addEventListener('input', function() {
+                    const value = this.value;
+                    if (value.length < 10) {
+                        this.classList.add('is-invalid');
+                        this.nextElementSibling.style.display = 'block';
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                        this.nextElementSibling.style.display = 'none';
+                    }
+                });
+            }
+        });
+    })();
     function previewImage(event) {
         const imagePreview = document.getElementById('image-preview');
         const file = event.target.files[0];
+        
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Le fichier est trop volumineux (max 5MB)');
+                return;
+            }
+            
+            if (!file.type.match('image.*')) {
+                alert('Veuillez sélectionner une image valide');
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
             };
             reader.readAsDataURL(file);
-        } else {
-            imagePreview.src = {% if is_edit and meuble.image %}"{{ asset('images/' ~ meuble.image) }}"{% else %}"{{ asset('images/downloadImage.png') }}"{% endif %};
+        }
+    }
+    
+    // Drag and drop functionality
+    const dropArea = document.querySelector('.image-upload-container');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('highlight');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        const input = document.getElementById('{{ form.image.vars.id }}');
+        
+        if (files.length) {
+            input.files = files;
+            const event = new Event('change');
+            input.dispatchEvent(event);
         }
     }
 </script>
 {% endblock %}
+
