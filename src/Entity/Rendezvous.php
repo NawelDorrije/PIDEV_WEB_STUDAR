@@ -18,18 +18,45 @@ class Rendezvous
     private ?int $id = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Assert\NotBlank(message: "La date est obligatoire")]
+    #[Assert\GreaterThanOrEqual(
+        "today", 
+        message: "La date doit être aujourd'hui ou dans le futur"
+    )]
     private ?\DateTimeInterface $date = null;
 
     #[ORM\Column(length: 50, nullable: true)]
-    private ?string $heure = null;
+#[Assert\NotBlank(message: "L'heure est obligatoire")]
+private ?string $heure = null; // Keep as string
 
     #[ORM\Column(name: 'cinEtudiant', length: 20, nullable: true)]
+    #[Assert\NotBlank(message: "Le CIN étudiant est obligatoire")]
+    #[Assert\Length(
+        min: 8,
+        max: 20,
+        minMessage: "Le CIN doit contenir au moins {{ limit }} caractères",
+        maxMessage: "Le CIN ne peut pas dépasser {{ limit }} caractères"
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9]+$/",
+        message: "Le CIN doit contenir uniquement des chiffres"
+    )]
     private ?string $cinEtudiant = null;
 
     #[ORM\Column(name: 'cinProprietaire', length: 8, nullable: true)]
+    #[Assert\NotBlank(message: "Le CIN propriétaire est obligatoire")]
+    #[Assert\Length(
+        exactly: 8,
+        exactMessage: "Le CIN propriétaire doit contenir exactement 8 caractères"
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9]+$/",
+        message: "Le CIN doit contenir uniquement des chiffres"
+    )]
     private ?string $cinProprietaire = null;
 
     #[ORM\Column(name: 'idLogement', length: 255, nullable: true)]
+    #[Assert\NotBlank(message: "L'identifiant du logement est obligatoire")]
     private ?string $idLogement = null;
     #[ORM\Column(
       type: 'string', 
@@ -67,12 +94,16 @@ class Rendezvous
         return $this->heure;
     }
 
-    public function setHeure(?string $heure): static
-    {
+    public function setHeure($heure): static
+{
+    if ($heure instanceof \DateTimeInterface) {
+        $this->heure = $heure->format('H:i');
+    } else {
         $this->heure = $heure;
-
-        return $this;
     }
+    
+    return $this;
+}
 
     public function getcinProprietaire(): ?string
     {

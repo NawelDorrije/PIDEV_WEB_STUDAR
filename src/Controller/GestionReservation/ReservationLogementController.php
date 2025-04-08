@@ -195,7 +195,6 @@ final class ReservationLogementController extends AbstractController
             ]
         );
     }
-  // src/Controller/ReservationLogementController.php
 
   // src/Controller/ReservationLogementController.php
 // src/Controller/ReservationLogementController.php
