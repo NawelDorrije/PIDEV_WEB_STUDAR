@@ -57,9 +57,10 @@ class Logement
         cascade: ['persist', 'remove']
     )]
     private Collection $imageLogements;
-
-    #[ORM\Column(length: 255)]
-    private ?string $utilisateur_cin = null;
+    #[ORM\ManyToOne(inversedBy: 'logements')]
+    #[ORM\JoinColumn(name: 'utilisateur_cin', referencedColumnName: 'cin')]
+    private ?Utilisateur $utilisateur_cin = null;
+  
    public function __construct()
    {
        $this->logementOptions = new ArrayCollection();
@@ -208,15 +209,17 @@ public function removeImageLogement(ImageLogement $imageLogement): static
     return $this;
 }
 
-public function getUtilisateurCin(): ?string
+public function getUtilisateurCin(): ?Utilisateur
 {
     return $this->utilisateur_cin;
 }
 
-public function setUtilisateurCin(string $utilisateur_cin): static
+public function setUtilisateurCin(?Utilisateur $utilisateur_cin): static
 {
     $this->utilisateur_cin = $utilisateur_cin;
 
     return $this;
 }
+
+
 }

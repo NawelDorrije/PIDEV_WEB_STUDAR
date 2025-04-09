@@ -5,6 +5,8 @@ doctrine:
         types:
             point: LongitudeOne\Spatial\DBAL\Types\Geometry\PointType
             statut: App\Doctrine\DBAL\Types\StatutType  
+            role_enum: App\Doctrine\DBAL\Types\RoleEnumType
+
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
         #server_version: '16'

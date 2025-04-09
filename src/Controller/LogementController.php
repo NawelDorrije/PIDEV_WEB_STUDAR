@@ -10,6 +10,7 @@ use App\Repository\LogementRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Bundle\SecurityBundle\Security;
 
 #[Route('/logement')]
 final class LogementController extends AbstractController
@@ -23,23 +24,35 @@ final class LogementController extends AbstractController
     }
 
     #[Route('/new', name: 'app_logement_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $logement = new Logement();
-        $form = $this->createForm(LogementType::class, $logement);
-        $form->handleRequest($request);
+   // src/Controller/LogementController.php
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($logement);
-            $entityManager->flush();
+public function new(Request $request, EntityManagerInterface $entityManager, Security $security): Response
+{
+    $logement = new Logement();
+    $form = $this->createForm(LogementType::class, $logement);
+    $form->handleRequest($request);
 
-            return $this->redirectToRoute('app_logement_index');
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Récupérer l'adresse du formulaire (champ non mappé)
+        $address = $form->get('address')->getData();
+        $logement->setAdresse($address); // Assigner à la propriété 'adresse'
+
+        // Associer l'utilisateur
+        $user = $security->getUser();
+        if ($user) {
+            $logement->setUtilisateurCin($user);
         }
 
-        return $this->render('logement/new.html.twig', [
-            'form' => $form->createView(),
-        ]);
+        $entityManager->persist($logement);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_logement_index');
     }
+
+    return $this->render('logement/new.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
 
     #[Route('/{id}', name: 'app_logement_show', methods: ['GET'])]
     public function show(Logement $logement): Response

@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Enums\RoleUtilisateur;
 use App\Repository\UtilisateurRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -55,6 +57,12 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $created_at = null;
+
+    /**
+     * @var Collection<int, Logement>
+     */
+    #[ORM\OneToMany(targetEntity: Logement::class, mappedBy: 'utilisateur_cin')]
+    private Collection $logements;
 
    
     
@@ -228,5 +236,36 @@ public function setRole(RoleUtilisateur $role): static
     public function __construct()
 {
     $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
+    $this->logements = new ArrayCollection();
 }
+
+    /**
+     * @return Collection<int, Logement>
+     */
+    public function getLogements(): Collection
+    {
+        return $this->logements;
+    }
+
+    public function addLogement(Logement $logement): static
+    {
+        if (!$this->logements->contains($logement)) {
+            $this->logements->add($logement);
+            $logement->setUtilisateurCin($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLogement(Logement $logement): static
+    {
+        if ($this->logements->removeElement($logement)) {
+            // set the owning side to null (unless already changed)
+            if ($logement->getUtilisateurCin() === $this) {
+                $logement->setUtilisateurCin(null);
+            }
+        }
+
+        return $this;
+    }
 }
