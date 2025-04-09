@@ -1,9 +1,10 @@
 // assets/app.js
 import $ from 'jquery';
+
 window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+// assets/app.js
+import 'bootstrap'; // Correct for Bootstrap 3
 
 // Importer FlexSlider depuis node_modules
 import './css/flex-slider.css'; // Remplace ./css/flex-slider.css

@@ -4,12 +4,13 @@ namespace App\Entity;
 
 use App\Enums\RoleUtilisateur;
 use App\Repository\UtilisateurRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-
 
 /*#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
 #[UniqueEntity(fields: ['cin'], message: 'Ce CIN est déjà enregistré.')]*/
@@ -40,8 +41,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $mdp = null;
 
-    #[ORM\Column(name: 'numTel',length: 15, nullable: true)]
-
+    #[ORM\Column(name: 'numTel', length: 15, nullable: true)]
     private ?string $numTel = null;
 
     #[ORM\Column(type: 'role_enum')]
@@ -56,17 +56,34 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $created_at = null;
 
-   
-    
+    /**
+     * @var Collection<int, Message>
+     */
+    #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'senderCin')]
+    private Collection $sentMessages;
+
+    /**
+     * @var Collection<int, Message>
+     */
+    #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'receiverCin')]
+    private Collection $receivedMessages;
+
+    public function __construct()
+    {
+        $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
+        $this->sentMessages = new ArrayCollection();
+        $this->receivedMessages = new ArrayCollection();
+    }
+
+    // Getters et setters pour les autres propriétés
     public function getCin(): ?string
     {
         return $this->cin;
     }
-    
+
     public function setCin(string $cin): static
     {
         $this->cin = $cin;
-
         return $this;
     }
 
@@ -78,9 +95,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPrenom(string $prenom): static
     {
         $this->prenom = $prenom;
-
         return $this;
     }
+
     public function getNom(): ?string
     {
         return $this->nom;
@@ -89,7 +106,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNom(string $nom): static
     {
         $this->nom = $nom;
-
         return $this;
     }
 
@@ -101,7 +117,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
@@ -113,7 +128,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setMdp(string $mdp): static
     {
         $this->mdp = $mdp;
-
         return $this;
     }
 
@@ -125,36 +139,36 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNumTel(?string $numTel): static
     {
         $this->numTel = $numTel;
-
         return $this;
     }
 
     public function getRole(): ?RoleUtilisateur
-{
-    return $this->role;
-}
+    {
+        return $this->role;
+    }
 
-public function getRoleValue(): ?string
-{
-    return $this->role?->value;
-}
+    public function getRoleValue(): ?string
+    {
+        return $this->role?->value;
+    }
 
-public function setRole(RoleUtilisateur $role): static
-{
-    $this->role = $role;
-    return $this;
-}
+    public function setRole(RoleUtilisateur $role): static
+    {
+        $this->role = $role;
+        return $this;
+    }
 
     public function getResetCode(): ?string
     {
         return $this->reset_code;
     }
+
     public function getRoles(): array
     {
         if (!$this->role) {
             return ['ROLE_USER']; // Default fallback role
         }
-        
+
         // Map your values to Symfony-compatible roles
         $roleMap = [
             'admin' => 'ROLE_ADMIN',
@@ -162,23 +176,15 @@ public function setRole(RoleUtilisateur $role): static
             'transporteur' => 'ROLE_TRANSPORTEUR',
             'étudiant' => 'ROLE_ETUDIANT'
         ];
-        
+
         return [$roleMap[$this->role->value] ?? 'ROLE_USER'];
     }
-    
-    // public function setRoles(RoleUtilisateur $role): static
-    // {
-    //     $this->role = $role;
 
-    //     return $this;
-    // }
     public function setResetCode(?string $reset_code): static
     {
         $this->reset_code = $reset_code;
-
         return $this;
     }
-    
 
     public function isBlocked(): ?bool
     {
@@ -188,7 +194,6 @@ public function setRole(RoleUtilisateur $role): static
     public function setBlocked(bool $blocked): static
     {
         $this->blocked = $blocked;
-
         return $this;
     }
 
@@ -200,10 +205,8 @@ public function setRole(RoleUtilisateur $role): static
     public function setCreatedAt(?\DateTimeImmutable $created_at): static
     {
         $this->created_at = $created_at;
-
         return $this;
     }
-   
 
     public function eraseCredentials()
     {
@@ -212,21 +215,77 @@ public function setRole(RoleUtilisateur $role): static
 
     public function getUserIdentifier(): string
     {
-        // Return the unique identifier for the user (e.g., email)
         return $this->email;
     }
+
     public function getPassword(): string
-{
-    return $this->mdp; // assuming your password field is called 'mdp'
-}
-    public function setPassword(string $mdp) : self
+    {
+        return $this->mdp;
+    }
+
+    public function setPassword(string $mdp): self
     {
         $this->mdp = $mdp;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Message>
+     */
+    public function getSentMessages(): Collection
+    {
+        return $this->sentMessages;
+    }
+
+    public function addSentMessage(Message $message): static
+    {
+        if (!$this->sentMessages->contains($message)) {
+            $this->sentMessages->add($message);
+            $message->setSenderCin($this);
+        }
 
         return $this;
     }
-    public function __construct()
-{
-    $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
-}
+
+    public function removeSentMessage(Message $message): static
+    {
+        if ($this->sentMessages->removeElement($message)) {
+            // set the owning side to null (unless already changed)
+            if ($message->getSenderCin() === $this) {
+                $message->setSenderCin(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Message>
+     */
+    public function getReceivedMessages(): Collection
+    {
+        return $this->receivedMessages;
+    }
+
+    public function addReceivedMessage(Message $message): static
+    {
+        if (!$this->receivedMessages->contains($message)) {
+            $this->receivedMessages->add($message);
+            $message->setReceiverCin($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReceivedMessage(Message $message): static
+    {
+        if ($this->receivedMessages->removeElement($message)) {
+            // set the owning side to null (unless already changed)
+            if ($message->getReceiverCin() === $this) {
+                $message->setReceiverCin(null);
+            }
+        }
+
+        return $this;
+    }
 }
