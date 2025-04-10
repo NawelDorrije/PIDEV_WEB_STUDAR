@@ -93,6 +93,28 @@
         {% endif %}
     </div>
 </div>
+        <!-- Barre de navigation verticale à gauche -->
+        <div class="nav-buttons">
+             <a href="{{ path('app_gestion_meubles_a_acheter') }}" class="nav-button" title="Offres de meubles">
+    <i class="bi bi-tag"></i>
+    <span class="nav-text">Offre des meubles</span>
+</a>
+            <a href="#" class="nav-button" title="Historique des transactions">
+                <i class="bi bi-clock-history"></i>
+                <span class="nav-text">Historique Commandes</span>
+            </a>
+            <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="nav-button" title="Voir mon panier">
+                <i class="bi bi-cart3"></i>
+                <span class="nav-text">Panier</span>
+            </a>
+           <a href="{{ path('app_gestion_meubles_meuble') }}" class="nav-button" title="Voir les statistiques">
+    <i class="bi bi-bar-chart"></i>
+    <span class="nav-text">Statistiques</span>
+</a>
+        </div>
+    </div>
+</div>
+
 
 <!-- Script pour masquer les flash messages après 5 secondes -->
 <script>

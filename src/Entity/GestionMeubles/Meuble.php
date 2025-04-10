@@ -2,6 +2,7 @@
 
 namespace App\Entity\GestionMeubles;
 
+use App\Entity\Utilisateur;
 use App\Repository\GestionMeubles\MeubleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -43,10 +44,10 @@ class Meuble
     #[Assert\Choice(choices: ["neuf", "occasion"], message: "La catégorie doit être 'neuf' ou 'occasion'.")]
     private ?string $categorie = null;
 
-    #[ORM\Column(length: 20)]
-    #[Assert\NotBlank(message: "Le CIN du vendeur est obligatoire.")]
-    #[Assert\Length(max: 20, maxMessage: "Le CIN du vendeur ne peut pas dépasser {{ limit }} caractères.")]
-    private ?string $cinVendeur = null;
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'meubles')]
+    #[ORM\JoinColumn(name: 'cin_vendeur', referencedColumnName: 'cin', nullable: false)]
+    #[Assert\NotBlank(message: "Le vendeur est obligatoire.")]
+    private ?Utilisateur $vendeur = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotBlank(message: "La date d'enregistrement est obligatoire.")]
@@ -56,7 +57,6 @@ class Meuble
     #[Assert\File(mimeTypes: ["image/jpeg", "image/png", "image/webp"], mimeTypesMessage: "Le fichier doit être une image valide (JPG, PNG, WEBP).")]
     private ?string $image = null;
 
-    // Relation One-to-Many avec LignePanier
     #[ORM\OneToMany(mappedBy: 'meuble', targetEntity: LignePanier::class, cascade: ['persist', 'remove'])]
     private Collection $lignesPanier;
 
@@ -65,34 +65,102 @@ class Meuble
         $this->lignesPanier = new ArrayCollection();
     }
 
-    // Getters et setters existants
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
-    public function getNom(): ?string { return $this->nom; }
-    public function setNom(string $nom): static { $this->nom = $nom; return $this; }
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
 
-    public function getDescription(): ?string { return $this->description; }
-    public function setDescription(?string $description): static { $this->description = $description; return $this; }
+    public function setNom(string $nom): self
+    {
+        $this->nom = $nom;
+        return $this;
+    }
 
-    public function getPrix(): ?float { return $this->prix; }
-    public function setPrix(float $prix): static { $this->prix = $prix; return $this; }
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
 
-    public function getStatut(): ?string { return $this->statut; }
-    public function setStatut(string $statut): static { $this->statut = $statut; return $this; }
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
 
-    public function getCategorie(): ?string { return $this->categorie; }
-    public function setCategorie(string $categorie): static { $this->categorie = $categorie; return $this; }
+    public function getPrix(): ?float
+    {
+        return $this->prix;
+    }
 
-    public function getCinVendeur(): ?string { return $this->cinVendeur; }
-    public function setCinVendeur(string $cinVendeur): static { $this->cinVendeur = $cinVendeur; return $this; }
+    public function setPrix(float $prix): self
+    {
+        $this->prix = $prix;
+        return $this;
+    }
 
-    public function getDateEnregistrement(): ?\DateTime { return $this->dateEnregistrement; }
-    public function setDateEnregistrement(\DateTime $dateEnregistrement): static { $this->dateEnregistrement = $dateEnregistrement; return $this; }
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
 
-    public function getImage(): ?string { return $this->image; }
-    public function setImage(?string $image): static { $this->image = $image; return $this; }
+    public function setStatut(string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
 
-    // Méthodes pour la relation One-to-Many avec LignePanier
+    public function getCategorie(): ?string
+    {
+        return $this->categorie;
+    }
+
+    public function setCategorie(string $categorie): self
+    {
+        $this->categorie = $categorie;
+        return $this;
+    }
+
+    public function getVendeur(): ?Utilisateur
+    {
+        return $this->vendeur;
+    }
+
+    public function setVendeur(?Utilisateur $vendeur): self
+    {
+        $this->vendeur = $vendeur;
+        return $this;
+    }
+
+    public function getDateEnregistrement(): ?\DateTime
+    {
+        return $this->dateEnregistrement;
+    }
+
+    public function setDateEnregistrement(\DateTime $dateEnregistrement): self
+    {
+        $this->dateEnregistrement = $dateEnregistrement;
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): self
+    {
+        $this->image = $image;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, LignePanier>
+     */
     public function getLignesPanier(): Collection
     {
         return $this->lignesPanier;
@@ -102,7 +170,7 @@ class Meuble
     {
         if (!$this->lignesPanier->contains($lignePanier)) {
             $this->lignesPanier->add($lignePanier);
-            $lignePanier->setMeuble($this); // Assure la bidirectionnalité
+            $lignePanier->setMeuble($this);
         }
         return $this;
     }

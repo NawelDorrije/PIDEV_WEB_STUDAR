@@ -29,7 +29,7 @@ class PanierRepository extends ServiceEntityRepository
         // }
 
         // Vérification panier existant
-        $existingPanier = $this->findPanierEnCours($panier->getCinAcheteur());
+        $existingPanier = $this->findPanierEnCours($panier->getAcheteur());
         if ($existingPanier && $existingPanier->getId() !== $panier->getId()) {
             throw new \LogicException('L\'acheteur a déjà un panier en cours.');
         }
@@ -65,20 +65,30 @@ class PanierRepository extends ServiceEntityRepository
         }
     }
 
-    public function findPanierEnCours(string $cinAcheteur): ?Panier
-    {
-        return $this->createQueryBuilder('p')
-            ->where('p.cinAcheteur = :cin')
-            ->andWhere('p.statut = :statut')
-            ->setParameter('cin', $cinAcheteur)
-            ->setParameter('statut', Panier::STATUT_EN_COURS)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
+    // public function findPanierEnCours(string $cinAcheteur): ?Panier
+    // {
+    //     return $this->createQueryBuilder('p')
+    //         ->where('p.cinAcheteur = :cin')
+    //         ->andWhere('p.statut = :statut')
+    //         ->setParameter('cin', $cinAcheteur)
+    //         ->setParameter('statut', Panier::STATUT_EN_COURS)
+    //         ->getQuery()
+    //         ->getOneOrNullResult();
+    // }
+    public function findPanierEnCours(Utilisateur $acheteur): ?Panier
+{
+    return $this->createQueryBuilder('p')
+        ->where('p.acheteur = :acheteur')
+        ->andWhere('p.statut = :statut')
+        ->setParameter('acheteur', $acheteur)
+        ->setParameter('statut', Panier::STATUT_EN_COURS)
+        ->getQuery()
+        ->getOneOrNullResult();
+}
 
-    public function getPanierIdByCinAcheteur(string $cinAcheteur): ?int
+    public function getPanierIdByCinAcheteur(Utilisateur $acheteur): ?int
     {
-        $panier = $this->findPanierEnCours($cinAcheteur);
+        $panier = $this->findPanierEnCours($acheteur);
         return $panier?->getId() ?? null;
     }
 

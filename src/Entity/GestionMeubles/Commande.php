@@ -2,6 +2,7 @@
 
 namespace App\Entity\GestionMeubles;
 
+use App\Entity\Utilisateur;
 use App\Repository\GestionMeubles\CommandeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,6 +22,10 @@ class Commande
 
     #[ORM\Column(type: 'string', length: 8)]
     private ?string $cinAcheteur = null;
+
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'commandes')]
+    #[ORM\JoinColumn(name: 'cin_acheteur', referencedColumnName: 'cin', nullable: false, onDelete: 'CASCADE')]
+    private ?Utilisateur $acheteur = null;
 
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateCommande = null;
@@ -46,7 +51,6 @@ class Commande
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $raisonAnnulation = null;
 
-    // Constantes pour les statuts et méthodes de paiement
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
     public const STATUT_PAYEE = 'PAYÉE';
     public const STATUT_LIVREE = 'LIVRÉE';
@@ -60,7 +64,20 @@ class Commande
         $this->dateCommande = new \DateTime();
     }
 
-    // Getters et setters
+    // Getters et setters pour $acheteur
+    public function getAcheteur(): ?Utilisateur
+    {
+        return $this->acheteur;
+    }
+
+    public function setAcheteur(?Utilisateur $acheteur): self
+    {
+        $this->acheteur = $acheteur;
+        $this->cinAcheteur = $acheteur?->getCin();
+        return $this;
+    }
+
+    // Autres getters et setters
     public function getId(): ?int
     {
         return $this->id;

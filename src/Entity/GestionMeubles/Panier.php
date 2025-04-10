@@ -19,6 +19,10 @@ class Panier
     #[ORM\Column(type: 'string', length: 20)]
     private ?string $cinAcheteur = null;
 
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+    #[ORM\JoinColumn(name: 'cin_acheteur', referencedColumnName: 'cin', onDelete: 'CASCADE')]
+    private ?Utilisateur $acheteur = null;
+
     #[ORM\Column(type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $dateAjout = null;
 
@@ -33,40 +37,34 @@ class Panier
 
     #[ORM\OneToMany(mappedBy: 'panier', targetEntity: LignePanier::class, cascade: ['persist', 'remove'])]
     private Collection $lignesPanier;
-
+    #[ORM\OneToMany(mappedBy: 'panier', targetEntity: Commande::class, cascade: ['persist', 'remove'])]
+    private Collection $commandes;
     public function __construct()
     {
         $this->dateAjout = new \DateTime();
         $this->lignesPanier = new ArrayCollection();
+        $this->commandes = new ArrayCollection(); // Initialisation des commandes
     }
+
     public const STATUT_EN_COURS = 'EN_COURS';
     public const STATUT_VALIDE = 'VALIDE';
     public const STATUT_ANNULE = 'ANNULE';
-    // Getters et setters
-    public function getLignesPanier(): Collection
+
+    // Getters et setters pour $acheteur
+    public function getAcheteur(): ?Utilisateur
     {
-        return $this->lignesPanier;
+        return $this->acheteur;
     }
 
-    public function addLignePanier(LignePanier $lignePanier): self
+    public function setAcheteur(?Utilisateur $acheteur): self
     {
-        if (!$this->lignesPanier->contains($lignePanier)) {
-            $this->lignesPanier->add($lignePanier);
-            $lignePanier->setPanier($this);
-        }
+        $this->acheteur = $acheteur;
+        // Synchronise cinAcheteur avec l'utilisateur
+        $this->cinAcheteur = $acheteur?->getCin();
         return $this;
     }
 
-    public function removeLignePanier(LignePanier $lignePanier): self
-    {
-        if ($this->lignesPanier->removeElement($lignePanier)) {
-            if ($lignePanier->getPanier() === $this) {
-                $lignePanier->setPanier(null);
-            }
-        }
-        return $this;
-    }
-
+    // Garde les autres getters/setters existants
     public function getId(): ?int
     {
         return $this->id;
@@ -94,12 +92,12 @@ class Panier
         return $this;
     }
 
-    public function getStatut(): ?string // Correction du nom de la méthode
+    public function getStatut(): ?string
     {
         return $this->statut;
     }
 
-    public function setStatut(?string $statut): self // Correction du nom de la méthode
+    public function setStatut(?string $statut): self
     {
         $this->statut = $statut;
         return $this;
@@ -127,6 +125,53 @@ class Panier
         return $this;
     }
 
+    public function getLignesPanier(): Collection
+    {
+        return $this->lignesPanier;
+    }
+
+    public function addLignePanier(LignePanier $lignePanier): self
+    {
+        if (!$this->lignesPanier->contains($lignePanier)) {
+            $this->lignesPanier->add($lignePanier);
+            $lignePanier->setPanier($this);
+        }
+        return $this;
+    }
+
+    public function removeLignePanier(LignePanier $lignePanier): self
+    {
+        if ($this->lignesPanier->removeElement($lignePanier)) {
+            if ($lignePanier->getPanier() === $this) {
+                $lignePanier->setPanier(null);
+            }
+        }
+        return $this;
+    }
+// Getters et setters pour $commandes
+public function getCommandes(): Collection
+{
+    return $this->commandes;
+}
+
+public function addCommande(Commande $commande): self
+{
+    if (!$this->commandes->contains($commande)) {
+        $this->commandes->add($commande);
+        $commande->setPanier($this);
+    }
+    return $this;
+}
+
+public function removeCommande(Commande $commande): self
+{
+    if ($this->commandes->removeElement($commande)) {
+        if ($commande->getPanier() === $this) {
+            $commande->setPanier(null);
+        }
+    }
+    return $this;
+}
     public function __toString(): string
     {
         return sprintf(
@@ -134,10 +179,9 @@ class Panier
             $this->id ?? 0,
             $this->cinAcheteur ?? '',
             $this->dateAjout?->format('Y-m-d H:i:s') ?? '',
-            $this->statut ?? '', // Correction : $statut est une string, pas un enum avec ->value
+            $this->statut ?? '',
             $this->dateValidation?->format('Y-m-d H:i:s') ?? '',
             $this->dateAnnulation?->format('Y-m-d H:i:s') ?? ''
         );
     }
-    
 }

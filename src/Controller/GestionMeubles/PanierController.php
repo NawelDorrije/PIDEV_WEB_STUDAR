@@ -3,6 +3,7 @@
 namespace App\Controller\GestionMeubles;
 
 use App\Entity\GestionMeubles\Panier;
+use App\Entity\Utilisateur;
 use App\Repository\GestionMeubles\LignePanierRepository;
 use App\Repository\GestionMeubles\PanierRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -39,15 +40,15 @@ final class PanierController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         try {
-            $cinAcheteur = $request->request->get('cin_acheteur');
-            if (!$cinAcheteur) {
-                throw new \InvalidArgumentException('Le CIN de l\'acheteur est requis');
+            $utilisateur = $this->getUser();
+            if (!$utilisateur instanceof Utilisateur) {
+                throw new \InvalidArgumentException('Vous devez être connecté pour créer un panier');
             }
-
+    
             $panier = new Panier();
-            $panier->setCinAcheteur($cinAcheteur);
+            $panier->setAcheteur($utilisateur); // Utilise la relation
             $this->panierRepository->save($panier, true);
-
+    
             return $this->json([
                 'message' => 'Panier créé avec succès',
                 'id' => $panier->getId()
@@ -61,8 +62,10 @@ final class PanierController extends AbstractController
     #[Route('/lignes', name: 'app_gestion_meubles_lignes_panier', methods: ['GET'])]
     public function voirLignesPanier(): Response
     {
+        $utilisateur = $this->getUser();
+
         $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin() pour récupérer l'utilisateur connecté
-        $panier = $this->panierRepository->findPanierEnCours($cinAcheteur);
+        $panier = $this->panierRepository->findPanierEnCours($utilisateur);
     
         $cartCount = 0; // Initialisation du compteur
         if ($panier) {
@@ -99,7 +102,9 @@ final class PanierController extends AbstractController
     public function confirmCheckout(Request $request): Response
     {
         $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin()
-        $panier = $this->panierRepository->findPanierEnCours($cinAcheteur);
+        $utilisateur = $this->getUser();
+
+        $panier = $this->panierRepository->findPanierEnCours($utilisateur);
 
         if (!$panier || !$this->lignePanierRepository->findByPanierId($panier->getId())) {
             $this->addFlash('error', 'Votre panier est vide ou introuvable.');
@@ -201,7 +206,9 @@ final class PanierController extends AbstractController
     public function findPanierEnCours(string $cin): JsonResponse
     {
         // Code inchangé
-        $panier = $this->panierRepository->findPanierEnCours($cin);
+        $utilisateur = $this->getUser();
+
+        $panier = $this->panierRepository->findPanierEnCours($utilisateur);
         if (!$panier) {
             return $this->json([
                 'message' => 'Aucun panier en cours trouvé'

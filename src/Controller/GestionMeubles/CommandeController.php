@@ -2,6 +2,7 @@
 
 namespace App\Controller\GestionMeubles;
 
+use App\Entity\Utilisateur;
 use App\Repository\GestionMeubles\CommandeRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -33,4 +34,23 @@ final class CommandeController extends AbstractController
             'cin_acheteur' => $cin,
         ]);
     }
+    #[Route('/gestion/meubles/commandes/mes-commandes', name: 'app_gestion_meubles_mes_commandes')]
+public function mesCommandes(): Response
+{
+    $utilisateur = $this->getUser();
+    if (!$utilisateur instanceof Utilisateur) {
+        throw $this->createAccessDeniedException('Vous devez être connecté.');
+    }
+
+    $commandes = $this->commandeRepository->findByAcheteur($utilisateur);
+
+    if (empty($commandes)) {
+        $this->addFlash('warning', 'Aucune commande trouvée.');
+    }
+
+    return $this->render('gestion_meubles/commande/liste.html.twig', [
+        'commandes' => $commandes,
+        'cin_acheteur' => $utilisateur->getCin(),
+    ]);
+}
 }
