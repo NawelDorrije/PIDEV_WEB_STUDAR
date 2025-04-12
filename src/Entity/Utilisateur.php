@@ -12,6 +12,8 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use App\Entity\Rendezvous;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use App\Entity\ReservationTransport;
+use App\Entity\ReservationLogement;
 
 
 
@@ -71,6 +73,17 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\OneToMany(targetEntity: Rendezvous::class, mappedBy: 'etudiant')]
     private Collection $rendezvousAsEtudiant;
+
+    #[ORM\OneToMany(targetEntity: ReservationLogement::class, mappedBy: 'proprietaire')]
+    private Collection $reservationsAsProprietaire;
+
+    #[ORM\OneToMany(targetEntity: ReservationLogement::class, mappedBy: 'etudiant')]
+    private Collection $reservationsAsEtudiant;
+    #[ORM\OneToMany(targetEntity: ReservationTransport::class, mappedBy: 'transporteur')]
+    private Collection $reservationsAsTransporteur;
+
+    #[ORM\OneToMany(targetEntity: ReservationTransport::class, mappedBy: 'etudiant')]
+    private Collection $reservationsTransportAsEtudiant;
     
 
 
@@ -246,6 +259,11 @@ public function setRole(RoleUtilisateur $role): static
     $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
     $this->rendezvousAsProprietaire = new ArrayCollection();
     $this->rendezvousAsEtudiant = new ArrayCollection();
+    $this->reservationsAsProprietaire = new ArrayCollection();
+    $this->reservationsAsEtudiant = new ArrayCollection();
+    $this->reservationsAsTransporteur = new ArrayCollection();
+    $this->reservationsTransportAsEtudiant = new ArrayCollection();
+
 }
 
 public function getRendezvousAsProprietaire(): Collection
@@ -300,4 +318,101 @@ public function removeRendezvousAsEtudiant(Rendezvous $rendezvous): self
     }
     return $this;
 }
+
+public function getReservationsAsProprietaire(): Collection
+{
+    return $this->reservationsAsProprietaire;
+}
+
+public function addReservationsAsProprietaire(ReservationLogement $reservation): self
+{
+    if (!$this->reservationsAsProprietaire->contains($reservation)) {
+        $this->reservationsAsProprietaire->add($reservation);
+        $reservation->setProprietaire($this);
+    }
+    return $this;
+}
+
+public function removeReservationsAsProprietaire(ReservationLogement $reservation): self
+{
+    if ($this->reservationsAsProprietaire->removeElement($reservation)) {
+        if ($reservation->getProprietaire() === $this) {
+            $reservation->setProprietaire(null);
+        }
+    }
+    return $this;
+}
+
+public function getReservationsAsEtudiant(): Collection
+{
+    return $this->reservationsAsEtudiant;
+}
+
+public function addReservationsAsEtudiant(ReservationLogement $reservation): self
+{
+    if (!$this->reservationsAsEtudiant->contains($reservation)) {
+        $this->reservationsAsEtudiant->add($reservation);
+        $reservation->setEtudiant($this);
+    }
+    return $this;
+}
+
+public function removeReservationsAsEtudiant(ReservationLogement $reservation): self
+{
+    if ($this->reservationsAsEtudiant->removeElement($reservation)) {
+        if ($reservation->getEtudiant() === $this) {
+            $reservation->setEtudiant(null);
+        }
+    }
+    return $this;
+}
+public function getReservationsAsTransporteur(): Collection
+    {
+        return $this->reservationsAsTransporteur;
+    }
+
+    public function addReservationsAsTransporteur(ReservationTransport $reservation): self
+    {
+        if (!$this->reservationsAsTransporteur->contains($reservation)) {
+            $this->reservationsAsTransporteur->add($reservation);
+            $reservation->setTransporteur($this);
+        }
+        return $this;
+    }
+
+    public function removeReservationsAsTransporteur(ReservationTransport $reservation): self
+    {
+        if ($this->reservationsAsTransporteur->removeElement($reservation)) {
+            if ($reservation->getTransporteur() === $this) {
+                $reservation->setTransporteur(null);
+            }
+        }
+        return $this;
+    }
+
+    public function getReservationsTransportAsEtudiant(): Collection
+    {
+        return $this->reservationsTransportAsEtudiant;
+    }
+
+    public function addReservationsTransportAsEtudiant(ReservationTransport $reservation): self
+    {
+        if (!$this->reservationsTransportAsEtudiant->contains($reservation)) {
+            $this->reservationsTransportAsEtudiant->add($reservation);
+            $reservation->setEtudiant($this);
+        }
+        return $this;
+    }
+
+    public function removeReservationsTransportAsEtudiant(ReservationTransport $reservation): self
+    {
+        if ($this->reservationsTransportAsEtudiant->removeElement($reservation)) {
+            if ($reservation->getEtudiant() === $this) {
+                $reservation->setEtudiant(null);
+            }
+        }
+        return $this;
+    }
+
+
 }

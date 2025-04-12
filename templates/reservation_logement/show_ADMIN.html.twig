@@ -122,9 +122,9 @@
 }
 
 .btn-info:hover {
-    background-color: darkgreen;
+    background-color: green;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 100, 0, 0.3);
+    box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
 }
 .btn-supprimer {
     background-color: #F2811D;
@@ -142,11 +142,6 @@
     box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
 }
 
-.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-}
 </style>
 {% endblock %}
 
@@ -208,23 +203,7 @@
                                 </div>
                             </div>
                             
-                            <div class="action-buttons">
-                                <a href="{{ path('app_reservation_logement_edit', {'id': reservation_logement.id}) }}" 
-                                   class="btn btn-primary {{ not reservation_logement.isModifiable() ? 'disabled' : '' }}"
-                                   {% if not reservation_logement.isModifiable() %}
-                                       title="Modification impossible pour les réservations confirmées ou refusées"
-                                   {% endif %}>
-                                    <i class="fas fa-edit"></i> Modifier
-                                </a>
-                                
-                                <a href="{{ path('app_reservation_logement_generate_pdf', {'id': reservation_logement.id}) }}" 
-                                   class="btn btn-info {{ reservation_logement.status != 'confirmée' ? 'disabled' : '' }}"
-                                   {% if reservation_logement.status != 'confirmée' %}disabled{% endif %}>
-                                    <i class="fas fa-file-pdf"></i> Créer PDF Contrat
-                                </a>
-                                
-                                {{ include('reservation_logement/_delete_form.html.twig') }}
-                            </div>
+                            
                         </div>
                     </div>
                 </div>

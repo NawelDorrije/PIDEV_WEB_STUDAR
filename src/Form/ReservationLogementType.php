@@ -1,9 +1,11 @@
 <?php
-
 // src/Form/ReservationLogementType.php
 namespace App\Form;
 
 use App\Entity\ReservationLogement;
+use App\Entity\Utilisateur;
+use App\Repository\UtilisateurRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -21,8 +23,32 @@ class ReservationLogementType extends AbstractType
                 'widget' => 'single_text',
                 'required' => true,
             ])
-            ->add('cinProprietaire')
-            ->add('cinEtudiant')
+            ->add('proprietaire', EntityType::class, [
+                'class' => Utilisateur::class,
+                'choice_label' => function(Utilisateur $user) {
+                    return $user->getNom().' '.$user->getPrenom();
+                },
+                'query_builder' => function (UtilisateurRepository $er) {
+                    return $er->createQueryBuilder('u')
+                        ->where("u.role = 'propriétaire'")
+                        ->orderBy('u.nom', 'ASC');
+                },
+                'attr' => ['class' => 'logement-input'],
+                'label' => 'Propriétaire',
+            ])
+            ->add('etudiant', EntityType::class, [
+                'class' => Utilisateur::class,
+                'choice_label' => function(Utilisateur $user) {
+                    return $user->getNom().' '.$user->getPrenom();
+                },
+                'query_builder' => function (UtilisateurRepository $er) {
+                    return $er->createQueryBuilder('u')
+                        ->where("u.role = 'étudiant'")
+                        ->orderBy('u.nom', 'ASC');
+                },
+                'attr' => ['class' => 'logement-input'],
+                'label' => 'Étudiant',
+            ])
             ->add('idLogement');
     }
 

@@ -2,10 +2,11 @@
 
 namespace App\Entity;
 
-use App\Enums\GestionReservation\StatusReservation;
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\ReservationTransportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Utilisateur;
 
 #[ORM\Entity(repositoryClass: ReservationTransportRepository::class)]
 #[ORM\Table(name: 'reservation_transport')]
@@ -26,19 +27,19 @@ class ReservationTransport
     private ?string $tempsArrivage = null;
 
     #[ORM\Column(
-        name: 'status',
         type: 'string',
-        columnDefinition: "ENUM('confirmée', 'en_attente', 'refusée')",
-        nullable: true,
-        options: ['default' => 'en_attente']
+        columnDefinition: "ENUM('confirmée', 'en_attente', 'refusée') DEFAULT 'en_attente'",
+        nullable: false
     )]
-    private ?string $status = 'en_attente';
+    private string $status = 'en_attente';
 
-    #[ORM\Column(name: 'cinEtudiant', length: 8, nullable: true)]
-    private ?string $cinEtudiant = null;
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'reservationsTransportAsEtudiant')]
+    #[ORM\JoinColumn(name: 'cinEtudiant', referencedColumnName: 'cin')]
+    private ?Utilisateur $etudiant = null;
 
-    #[ORM\Column(name: 'cinTransporteur', length: 8, nullable: true)]
-    private ?string $cinTransporteur = null;
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'reservationsAsTransporteur')]
+    #[ORM\JoinColumn(name: 'cinTransporteur', referencedColumnName: 'cin')]
+    private ?Utilisateur $transporteur = null;
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $departureLat = null;
@@ -52,7 +53,11 @@ class ReservationTransport
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $destinationLng = null;
 
-    // Getters and Setters
+    public function __construct()
+    {
+        $this->status = 'en_attente';
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -102,25 +107,25 @@ class ReservationTransport
         return $this;
     }
 
-    public function getCinEtudiant(): ?string
+    public function getEtudiant(): ?Utilisateur
     {
-        return $this->cinEtudiant;
+        return $this->etudiant;
     }
 
-    public function setCinEtudiant(?string $cinEtudiant): static
+    public function setEtudiant(?Utilisateur $etudiant): self
     {
-        $this->cinEtudiant = $cinEtudiant;
+        $this->etudiant = $etudiant;
         return $this;
     }
 
-    public function getCinTransporteur(): ?string
+    public function getTransporteur(): ?Utilisateur
     {
-        return $this->cinTransporteur;
+        return $this->transporteur;
     }
 
-    public function setCinTransporteur(?string $cinTransporteur): static
+    public function setTransporteur(?Utilisateur $transporteur): self
     {
-        $this->cinTransporteur = $cinTransporteur;
+        $this->transporteur = $transporteur;
         return $this;
     }
 
@@ -168,53 +173,52 @@ class ReservationTransport
         return $this;
     }
 
-
     public function isModifiable(): bool
-{
-    return $this->status === 'en_attente';
-}
-
-public function isDeletable(): bool
-{
-    // Cannot delete refused reservations
-    if ($this->status === 'refusée') {
-        return false;
+    {
+        return $this->status === 'en_attente';
     }
-    
-    // Add any other business rules here
-    return true;
-}
 
-public function getDistance(): ?float
-{
-    if (!$this->hasCoordinates()) {
-        return null;
+    public function isDeletable(): bool
+    {
+        return $this->status !== 'refusée';
     }
-    
-    // Formule haversine pour calculer la distance en km
-    $latFrom = deg2rad($this->departureLat);
-    $lonFrom = deg2rad($this->departureLng);
-    $latTo = deg2rad($this->destinationLat);
-    $lonTo = deg2rad($this->destinationLng);
 
-    $latDelta = $latTo - $latFrom;
-    $lonDelta = $lonTo - $lonFrom;
+    public function getDistance(): ?float
+    {
+        if (!$this->hasCoordinates()) {
+            return null;
+        }
+        
+        $latFrom = deg2rad($this->departureLat);
+        $lonFrom = deg2rad($this->departureLng);
+        $latTo = deg2rad($this->destinationLat);
+        $lonTo = deg2rad($this->destinationLng);
 
-    $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-        cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-    
-    return $angle * 6371; // Rayon de la Terre en km
-}
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
 
-public function getEstimatedTime(): ?string
-{
-    $distance = $this->getDistance();
-    if ($distance === null) {
-        return null;
+        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+        
+        return $angle * 6371;
     }
-    
-    // Estimation: 1 minute par km (modifiable selon votre besoin)
-    $minutes = round($distance);
-    return $minutes . ' min';
-}
+
+    public function getEstimatedTime(): ?string
+    {
+        $distance = $this->getDistance();
+        if ($distance === null) {
+            return null;
+        }
+        
+        $minutes = round($distance);
+        return $minutes . ' min';
+    }
+
+    private function hasCoordinates(): bool
+    {
+        return $this->departureLat !== null &&
+               $this->departureLng !== null &&
+               $this->destinationLat !== null &&
+               $this->destinationLng !== null;
+    }
 }

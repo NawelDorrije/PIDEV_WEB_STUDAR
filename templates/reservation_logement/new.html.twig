@@ -12,7 +12,7 @@
   }
 
   .logement-container {
-    background: #FFE8D6; /* Light pastel orange */
+    background: #FFE8D6;
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2);
@@ -111,7 +111,6 @@
     text-transform: uppercase;
     font-size: 16px;
   }
-
   
   .logement-btn-save:hover{
     transform: translateY(-3px);
@@ -138,8 +137,7 @@
       gap: 15px;
     }
     
-    .logement-btn-save,
-    .logement-btn-cancel {
+    .logement-btn-save {
       width: 100%;
     }
   }
@@ -181,22 +179,22 @@
                         
                         <div class="form-row">
                             <div class="form-group">
-                                {{ form_widget(form.cinProprietaire, {
+                                {{ form_widget(form.proprietaire, {
                                     'attr': {
                                         'class': 'logement-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinProprietaire) }}
+                                {{ form_label(form.proprietaire) }}
                             </div>
                             <div class="form-group">
-                                {{ form_widget(form.cinEtudiant, {
+                                {{ form_widget(form.etudiant, {
                                     'attr': {
                                         'class': 'logement-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinEtudiant) }}
+                                {{ form_label(form.etudiant) }}
                             </div>
                         </div>
                         
@@ -216,8 +214,6 @@
                             <button type="submit" class="logement-btn-save">
                                 <i class="fas fa-save mr-2"></i> VALIDER LA RESERVATION
                             </button>
-                            <a href="{{ path('app_reservation_logement_index') }}" class="logement-btn-cancel">
-                            </a>
                         </div>
                     {{ form_end(form) }}
                 </div>

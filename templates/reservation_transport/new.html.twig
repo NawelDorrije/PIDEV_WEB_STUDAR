@@ -12,7 +12,7 @@
   }
 
   .transport-container {
-    background: #FFE8D6; /* Light pastel orange */
+    background: #FFE8D6;
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2);
@@ -112,10 +112,7 @@
     font-size: 16px;
   }
 
-  
-
-  .transport-btn-save:hover,
- {
+  .transport-btn-save:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(68, 83, 166, 0.4);
   }
@@ -140,8 +137,7 @@
       gap: 15px;
     }
     
-    .transport-btn-save,
-    .transport-btn-cancel {
+    .transport-btn-save {
       width: 100%;
     }
   }
@@ -192,25 +188,25 @@
                                 {{ form_label(form.tempsArrivage) }}
                             </div>
                             <div class="form-group">
-                                {{ form_widget(form.cinEtudiant, {
+                                {{ form_widget(form.etudiant, {
                                     'attr': {
                                         'class': 'transport-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinEtudiant) }}
+                                {{ form_label(form.etudiant) }}
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                {{ form_widget(form.cinTransporteur, {
+                                {{ form_widget(form.transporteur, {
                                     'attr': {
                                         'class': 'transport-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinTransporteur) }}
+                                {{ form_label(form.transporteur) }}
                             </div>
                         </div>
                         
@@ -218,8 +214,6 @@
                             <button type="submit" class="transport-btn-save">
                                 <i class="fas fa-save mr-2"></i> {{ edit_mode|default(false) ? 'Mettre à jour' : 'Valider la réservation' }}
                             </button>
-                            <a href="{{ path('app_reservation_transport_index') }}" class="transport-btn-cancel">
-                            </a>
                         </div>
                     {{ form_end(form) }}
                 </div>

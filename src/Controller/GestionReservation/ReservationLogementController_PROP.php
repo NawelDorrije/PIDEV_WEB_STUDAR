@@ -13,10 +13,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use TCPDF;
 use TCPDF2DBarcode;
 
-#[Route('/reservation/logement')]
-final class ReservationLogementController extends AbstractController
+#[Route('/reservation/logement_PROP')]
+final class ReservationLogementController_PROP extends AbstractController
 {
-    #[Route('/', name: 'app_reservation_logement_index', methods: ['GET'])]
+    #[Route('/', name: 'app_reservation_logement_index_PROP', methods: ['GET'])]
     public function index(Request $request, ReservationLogementRepository $reservationLogementRepository): Response
     {
         $status = $request->query->get('status');
@@ -27,80 +27,44 @@ final class ReservationLogementController extends AbstractController
             $reservations = $reservationLogementRepository->findAll();
         }
         
-        return $this->render('reservation_logement/index.html.twig', [
+        return $this->render('reservation_logement/index_PROP.html.twig', [
             'reservation_logements' => $reservations,
             'current_status' => $status
         ]);
     }
 
-    #[Route('/new', name: 'app_reservation_logement_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $reservationLogement = new ReservationLogement();
-        $form = $this->createForm(ReservationLogementType::class, $reservationLogement);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($reservationLogement);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_reservation_logement_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('reservation_logement/new.html.twig', [
-            'reservation_logement' => $reservationLogement,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_reservation_logement_show', methods: ['GET'])]
+    
+    #[Route('/{id}', name: 'app_reservation_logement_show_PROP', methods: ['GET'])]
     public function show(ReservationLogement $reservationLogement): Response
     {
-        return $this->render('reservation_logement/show.html.twig', [
+        return $this->render('reservation_logement/show_PROP.html.twig', [
             'reservation_logement' => $reservationLogement,
         ]);
     }
-
-    #[Route('/{id}/edit', name: 'app_reservation_logement_edit', methods: ['GET', 'POST'])]
-public function edit(Request $request, ReservationLogement $reservationLogement, EntityManagerInterface $entityManager): Response
-{
-    // Prevent editing if status is confirmed or refused
-    if (!$reservationLogement->isModifiable()) {
-        $this->addFlash('error', 'Les réservations confirmées ou refusées ne peuvent pas être modifiées');
-        return $this->redirectToRoute('app_reservation_logement_show_PROP', ['id' => $reservationLogement->getId()]);
-    }
-
-    $form = $this->createForm(ReservationLogementType::class, $reservationLogement);
-    $form->handleRequest($request);
-
-    if ($form->isSubmitted() && $form->isValid()) {
-        $entityManager->flush();
-
-        $this->addFlash('success', 'La réservation a été modifiée avec succès');
-        return $this->redirectToRoute('app_reservation_logement_index', [], Response::HTTP_SEE_OTHER);
-    }
-
-    return $this->render('reservation_logement/edit.html.twig', [
-        'reservation_logement' => $reservationLogement,
-        'form' => $form,
-    ]);
-}
-    #[Route('/{id}', name: 'app_reservation_logement_delete', methods: ['POST'])]
-    public function delete(Request $request, ReservationLogement $reservationLogement, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/accept', name: 'app_reservationLogement_accept', methods: ['POST'])]
+    public function accept(Request $request, ReservationLogement $reservationLogement, EntityManagerInterface $entityManager): Response
     {
-        if (!$reservationLogement->isDeletable()) {
-            $this->addFlash('error', 'Cette réservation ne peut pas être supprimée');
-            return $this->redirectToRoute('app_reservation_logement_show', ['id' => $reservationLogement->getId()]);
-        }
-
-        if ($this->isCsrfTokenValid('delete'.$reservationLogement->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($reservationLogement);
+        if ($this->isCsrfTokenValid('accept'.$reservationLogement->getId(), $request->request->get('_token'))) {
+          $reservationLogement->setStatus('confirmée');
             $entityManager->flush();
-            $this->addFlash('success', 'La réservation a été supprimée avec succès');
         }
-
-        return $this->redirectToRoute('app_reservation_logement_index', [], Response::HTTP_SEE_OTHER);
+    
+        return $this->redirectToRoute('app_reservation_logement_index_PROP');
     }
+    
+    #[Route('/{id}/reject', name: 'app_reservationLogement_reject', methods: ['POST'])]
+    public function reject(Request $request, ReservationLogement $reservationLogement, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('reject'.$reservationLogement->getId(), $request->request->get('_token'))) {
+          $reservationLogement->setStatus('refusée');
+            $entityManager->flush();
+        }
+    
+        return $this->redirectToRoute('app_reservation_logement_index_PROP');
+    }
+    
+
+    
 
     #[Route('/{id}/generate-pdf', name: 'app_reservation_logement_generate_pdf', methods: ['GET'])]
 public function generatePdf(ReservationLogement $reservation): Response
@@ -137,8 +101,8 @@ public function generatePdf(ReservationLogement $reservation): Response
         '________________';
     
     // Contract text with dynamic names
-    $contractText = "Entre M./Mme ".$proprietaireName." (Propriétaire)\n"
-        . "et M./Mme ".$locataireName." (Locataire), il est convenu ce qui suit :\n\n"
+    $contractText = "Entre M./Mme ".$proprietaireName." (Propriétaire)"
+        .      "et M./Mme ".$locataireName." (Locataire), il est convenu ce qui suit :\n\n"
         . "Objet : Le propriétaire loue le bien au locataire.\n"
         . "Durée : La location est consentie pour une durée déterminée, renouvelable annuellement\nsans préavis de trois mois.\n"
         . "Loyer : Montant fixé, payable à l'avance.\n"
@@ -204,22 +168,5 @@ public function generatePdf(ReservationLogement $reservation): Response
             'Content-Disposition' => 'attachment; filename="contrat_reservation_'.$reservation->getId().'.pdf"'
         ]
     );
-}
-
-  // src/Controller/ReservationLogementController.php
-// src/Controller/ReservationLogementController.php
-
-#[Route('/statistics/owner', name: 'app_reservation_logement_statistics_owner')]
-public function statisticsOwner(ReservationLogementRepository $repository): Response
-{
-    // Récupérer le CIN du propriétaire connecté (à adapter selon votre système d'authentification)
-    $cinProprietaire = $this->getUser()->getCin(); // Adaptez cette ligne
-    
-    $stats = $repository->getMonthlyStatisticsForOwner($cinProprietaire);
-    
-    return $this->render('reservation_logement/statistics_owner.html.twig', [
-        'stats' => $stats,
-        'max' => !empty($stats) ? max(array_column($stats, 'count')) : 0
-    ]);
 }
 }

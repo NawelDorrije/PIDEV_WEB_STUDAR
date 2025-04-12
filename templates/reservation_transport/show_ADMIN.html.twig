@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Détails de la Réservation{% endblock %}
+{% block title %}Détails de la Réservation Transport{% endblock %}
 
 {% block stylesheets %}
 <style>
@@ -111,21 +111,9 @@
     box-shadow: 0 5px 15px rgba(68, 83, 166, 0.3);
 }
 
-.btn-info {
-    background-color: green;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 50px;
-    font-weight: 600;
-    transition: all 0.3s;
-    color: white;
-}
 
-.btn-info:hover {
-    background-color: darkgreen;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 100, 0, 0.3);
-}
+
+
 .btn-supprimer {
     background-color: #F2811D;
     border: none;
@@ -141,12 +129,6 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
 }
-
-.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-}
 </style>
 {% endblock %}
 
@@ -157,13 +139,13 @@
             <div class="col-lg-8 offset-lg-2">
                 <div class="card reservation-details">
                     <div class="card-header">
-                        <h3><i class="fas fa-home"></i>Réservation de Logement</h3>
+                        <h3><i class="fas fa-car"></i>Réservation de Transport</h3>
                         <div class="status-badge">
                             <span class="badge bg-{{ 
-                                reservation_logement.status == 'confirmée' ? 'success' : 
-                                (reservation_logement.status == 'en_attente' ? 'warning' : 'danger') 
+                                reservation_transport.status == 'confirmée' ? 'success' : 
+                                (reservation_transport.status == 'en_attente' ? 'warning' : 'danger') 
                             }}">
-                                {{ reservation_logement.status }}
+                                {{ reservation_transport.status }}
                             </span>
                         </div>
                     </div>
@@ -171,22 +153,22 @@
                         <div class="reservation-content">
                             <div class="details-grid">
                                 <div class="detail-item">
-                                    <span class="detail-label">Date de début:</span>
-                                    <span class="detail-value">
-                                        {{ reservation_logement.dateDebut ? reservation_logement.dateDebut|date('d/m/Y') : 'Non définie' }}
-                                    </span>
+                                    <span class="detail-label">Adresse de Départ:</span>
+                                    <span class="detail-value">{{ reservation_transport.adresseDepart }}</span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Date de fin:</span>
-                                    <span class="detail-value">
-                                        {{ reservation_logement.dateFin ? reservation_logement.dateFin|date('d/m/Y') : 'Non définie' }}
-                                    </span>
+                                    <span class="detail-label">Adresse de Destination:</span>
+                                    <span class="detail-value">{{ reservation_transport.adresseDestination }}</span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Propriétaire:</span>
+                                    <span class="detail-label">Temps d'Arrivage:</span>
+                                    <span class="detail-value">{{ reservation_transport.tempsArrivage }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Transporteur::</span>
                                     <span class="detail-value">
-                                        {% if reservation_logement.proprietaire %}
-                                            {{ reservation_logement.proprietaire.nom }} {{ reservation_logement.proprietaire.prenom }}
+                                        {% if reservation_transport.transporteur %}
+                                            {{ reservation_transport.transporteur.nom }} {{ reservation_transport.transporteur.prenom }}
                                         {% else %}
                                             Non défini
                                         {% endif %}
@@ -195,36 +177,16 @@
                                 <div class="detail-item">
                                     <span class="detail-label">Étudiant:</span>
                                     <span class="detail-value">
-                                        {% if reservation_logement.etudiant %}
-                                            {{ reservation_logement.etudiant.nom }} {{ reservation_logement.etudiant.prenom }}
+                                        {% if reservation_transport.etudiant %}
+                                            {{ reservation_transport.etudiant.nom }} {{ reservation_transport.etudiant.prenom }}
                                         {% else %}
                                             Non défini
                                         {% endif %}
                                     </span>
                                 </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Logement:</span>
-                                    <span class="detail-value">{{ reservation_logement.idLogement }}</span>
-                                </div>
                             </div>
                             
-                            <div class="action-buttons">
-                                <a href="{{ path('app_reservation_logement_edit', {'id': reservation_logement.id}) }}" 
-                                   class="btn btn-primary {{ not reservation_logement.isModifiable() ? 'disabled' : '' }}"
-                                   {% if not reservation_logement.isModifiable() %}
-                                       title="Modification impossible pour les réservations confirmées ou refusées"
-                                   {% endif %}>
-                                    <i class="fas fa-edit"></i> Modifier
-                                </a>
-                                
-                                <a href="{{ path('app_reservation_logement_generate_pdf', {'id': reservation_logement.id}) }}" 
-                                   class="btn btn-info {{ reservation_logement.status != 'confirmée' ? 'disabled' : '' }}"
-                                   {% if reservation_logement.status != 'confirmée' %}disabled{% endif %}>
-                                    <i class="fas fa-file-pdf"></i> Créer PDF Contrat
-                                </a>
-                                
-                                {{ include('reservation_logement/_delete_form.html.twig') }}
-                            </div>
+                            
                         </div>
                     </div>
                 </div>

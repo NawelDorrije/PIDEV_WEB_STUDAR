@@ -2,42 +2,61 @@
 
 namespace App\Entity;
 
+use Symfony\Component\Validator\Constraints as Assert;
 use App\Repository\ReservationLogementRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Utilisateur;
 
 #[ORM\Entity(repositoryClass: ReservationLogementRepository::class)]
 #[ORM\Table(name: 'reservation_logement')]
 class ReservationLogement
 {
-  #[ORM\Id]
-  #[ORM\GeneratedValue]
-  #[ORM\Column]
-  private ?int $id = null;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
     #[ORM\Column(name: 'dateDebut', type: Types::DATE_MUTABLE, nullable: true)]
+    #[Assert\NotBlank(message: "La date de début est obligatoire")]
+    #[Assert\GreaterThanOrEqual(
+        "today", 
+        message: "La date de début doit être aujourd'hui ou dans le futur"
+    )]
     private ?\DateTimeInterface $dateDebut = null;
 
     #[ORM\Column(name: 'dateFin', type: Types::DATE_MUTABLE, nullable: true)]
+    #[Assert\NotBlank(message: "La date de fin est obligatoire")]
+    #[Assert\GreaterThan(
+        propertyPath: "dateDebut",
+        message: "La date de fin doit être après la date de début"
+    )]
     private ?\DateTimeInterface $dateFin = null;
 
     #[ORM\Column(
         type: 'string',
-        columnDefinition: "ENUM('confirmée', 'en_attente', 'refusée')",
-        nullable: true
+        columnDefinition: "ENUM('confirmée', 'en_attente', 'refusée') DEFAULT 'en_attente'",
+        nullable: false
     )]
     private string $status = 'en_attente';
-    
 
-    #[ORM\Column(name: 'cinEtudiant', length: 20, nullable: true)]
-private ?string $cinEtudiant = null;
+    #[ORM\Column(name: 'idLogement', length: 255, nullable: true)]
+    #[Assert\NotBlank(message: "L'identifiant du logement est obligatoire")]
+    private ?string $idLogement = null;
 
-#[ORM\Column(name: 'cinProprietaire', length: 8, nullable: true)]
-private ?string $cinProprietaire = null;
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'reservationsAsProprietaire')]
+    #[ORM\JoinColumn(name: 'cinProprietaire', referencedColumnName: 'cin')]
+    private ?Utilisateur $proprietaire = null;
 
-#[ORM\Column(name: 'idLogement', type: 'string', length: 255)]
-private string $idLogement;
-    // Getters and Setters
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'reservationsAsEtudiant')]
+    #[ORM\JoinColumn(name: 'cinEtudiant', referencedColumnName: 'cin')]
+    private ?Utilisateur $etudiant = null;
+
+    public function __construct()
+    {
+        $this->status = 'en_attente';
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -76,28 +95,6 @@ private string $idLogement;
         return $this;
     }
 
-    public function getCinEtudiant(): ?string
-    {
-        return $this->cinEtudiant;
-    }
-
-    public function setCinEtudiant(?string $cinEtudiant): static
-    {
-        $this->cinEtudiant = $cinEtudiant;
-        return $this;
-    }
-
-    public function getCinProprietaire(): ?string
-    {
-        return $this->cinProprietaire;
-    }
-
-    public function setCinProprietaire(?string $cinProprietaire): static
-    {
-        $this->cinProprietaire = $cinProprietaire;
-        return $this;
-    }
-
     public function getIdLogement(): ?string
     {
         return $this->idLogement;
@@ -109,7 +106,28 @@ private string $idLogement;
         return $this;
     }
 
-    // Add these methods similar to Rendezvous
+    public function getProprietaire(): ?Utilisateur
+    {
+        return $this->proprietaire;
+    }
+
+    public function setProprietaire(?Utilisateur $proprietaire): self
+    {
+        $this->proprietaire = $proprietaire;
+        return $this;
+    }
+
+    public function getEtudiant(): ?Utilisateur
+    {
+        return $this->etudiant;
+    }
+
+    public function setEtudiant(?Utilisateur $etudiant): self
+    {
+        $this->etudiant = $etudiant;
+        return $this;
+    }
+
     public function isModifiable(): bool
     {
         return $this->status === 'en_attente';

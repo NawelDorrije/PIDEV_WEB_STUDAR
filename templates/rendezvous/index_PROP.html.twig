@@ -178,12 +178,12 @@
                     
                     <!-- Filtres par statut -->
                     <div class="status-filter btn-group ml-2" role="group">
-                        <a href="{{ path('app_rendezvous_index') }}" class="btn btn-outline-secondary">Tous</a>
-                        <a href="{{ path('app_rendezvous_index', {'status': 'confirmée'}) }}" 
+                        <a href="{{ path('app_rendezvous_index_PROP') }}" class="btn btn-outline-secondary">Tous</a>
+                        <a href="{{ path('app_rendezvous_index_PROP', {'status': 'confirmée'}) }}" 
                            class="btn btn-outline-success">Confirmés</a>
-                        <a href="{{ path('app_rendezvous_index', {'status': 'en_attente'}) }}" 
+                        <a href="{{ path('app_rendezvous_index_PROP', {'status': 'en_attente'}) }}" 
                            class="btn btn-outline-warning">En attente</a>
-                        <a href="{{ path('app_rendezvous_index', {'status': 'refusée'}) }}" 
+                        <a href="{{ path('app_rendezvous_index_PROP', {'status': 'refusée'}) }}" 
                            class="btn btn-outline-danger">Refusés</a>
                     </div>
                 </div>
@@ -243,7 +243,7 @@
                                     </div>
                                     <div class="timeline-content card">
                                         <div class="card-body">
-                                            <a href="{{ path('app_rendezvous_show', {'id': rendezvou.id}) }}" 
+                                            <a href="{{ path('app_rendezvous_show_PROP', {'id': rendezvou.id}) }}" 
                                                class="floating-details-btn" title="Voir détails">
                                                 <i class="fas fa-chevron-right"></i>
                                             </a>
