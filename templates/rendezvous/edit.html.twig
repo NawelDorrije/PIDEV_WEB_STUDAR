@@ -137,12 +137,12 @@
                         
                         <div class="form-row">
                             <div class="form-group">
-                                {{ form_label(form.cinProprietaire) }}
-                                {{ form_widget(form.cinProprietaire, {'attr': {'class': 'rendezvous-edit-input'}}) }}
+                                {{ form_label(form.proprietaire) }}
+                                {{ form_widget(form.proprietaire, {'attr': {'class': 'rendezvous-edit-input'}}) }}
                             </div>
                             <div class="form-group">
-                                {{ form_label(form.cinEtudiant) }}
-                                {{ form_widget(form.cinEtudiant, {'attr': {'class': 'rendezvous-edit-input'}}) }}
+                                {{ form_label(form.etudiant) }}
+                                {{ form_widget(form.etudiant, {'attr': {'class': 'rendezvous-edit-input'}}) }}
                             </div>
                         </div>
                         
@@ -158,7 +158,7 @@
                                 <i class="fas fa-save mr-2"></i> Confirmer modifications
                             </button>
                             <a href="{{ path('app_rendezvous_index') }}" class="rendezvous-edit-btn-cancel">
-                                <i class="fas fa-arrow-left mr-2"></i> Annuler
+                                <i class="fas fa-arrow-left mr-2"></i> Retour à la liste
                             </a>
                         </div>
                     {{ form_end(form) }}

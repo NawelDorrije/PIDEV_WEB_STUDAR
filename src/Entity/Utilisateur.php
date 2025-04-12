@@ -9,6 +9,16 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Entity\Rendezvous;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+
+
+
+
+
+
+
 
 
 /*#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
@@ -56,8 +66,14 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $created_at = null;
 
-   
+    #[ORM\OneToMany(targetEntity: Rendezvous::class, mappedBy: 'proprietaire')]
+    private Collection $rendezvousAsProprietaire;
+
+    #[ORM\OneToMany(targetEntity: Rendezvous::class, mappedBy: 'etudiant')]
+    private Collection $rendezvousAsEtudiant;
     
+
+
     public function getCin(): ?string
     {
         return $this->cin;
@@ -228,5 +244,60 @@ public function setRole(RoleUtilisateur $role): static
     public function __construct()
 {
     $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
+    $this->rendezvousAsProprietaire = new ArrayCollection();
+    $this->rendezvousAsEtudiant = new ArrayCollection();
+}
+
+public function getRendezvousAsProprietaire(): Collection
+{
+    return $this->rendezvousAsProprietaire;
+}
+
+public function addRendezvousAsProprietaire(Rendezvous $rendezvous): self
+{
+    if (!$this->rendezvousAsProprietaire->contains($rendezvous)) {
+        $this->rendezvousAsProprietaire->add($rendezvous);
+        $rendezvous->setProprietaire($this);
+    }
+    return $this;
+}
+
+public function removeRendezvousAsProprietaire(Rendezvous $rendezvous): self
+{
+    if ($this->rendezvousAsProprietaire->removeElement($rendezvous)) {
+        // set the owning side to null (unless already changed)
+        if ($rendezvous->getProprietaire() === $this) {
+            $rendezvous->setProprietaire(null);
+        }
+    }
+    return $this;
+}
+
+/**
+ * @return Collection<int, Rendezvous>
+ */
+public function getRendezvousAsEtudiant(): Collection
+{
+    return $this->rendezvousAsEtudiant;
+}
+
+public function addRendezvousAsEtudiant(Rendezvous $rendezvous): self
+{
+    if (!$this->rendezvousAsEtudiant->contains($rendezvous)) {
+        $this->rendezvousAsEtudiant->add($rendezvous);
+        $rendezvous->setEtudiant($this);
+    }
+    return $this;
+}
+
+public function removeRendezvousAsEtudiant(Rendezvous $rendezvous): self
+{
+    if ($this->rendezvousAsEtudiant->removeElement($rendezvous)) {
+        // set the owning side to null (unless already changed)
+        if ($rendezvous->getEtudiant() === $this) {
+            $rendezvous->setEtudiant(null);
+        }
+    }
+    return $this;
 }
 }

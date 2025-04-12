@@ -187,31 +187,25 @@
                                 </div>
                             </div>
                             
-                            <div class="action-buttons">
-    {# Modifier button - only for 'en_attente' status #}
-    <a href="{{ path('app_rendezvous_edit', {'id': rendezvou.id}) }}" 
-       class="btn btn-modifier {{ not rendezvou.isModifiable() ? 'disabled' : '' }}"
-       {% if not rendezvou.isModifiable() %}
-           title="Modification impossible pour les rendez-vous confirmés ou refusés"
-       {% endif %}>
-        <i class="fas fa-edit"></i> Modifier
-    </a>
-    
-    {# Annuler button - conditional logic #}
-    {% if rendezvou.isDeletable() %}
-        <form method="post" action="{{ path('app_rendezvous_delete', {'id': rendezvou.id}) }}" 
-              onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous?');">
-            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ rendezvou.id) }}">
-            <button type="submit" class="btn btn-supprimer">
-                <i class="fas fa-times"></i> Annuler
-            </button>
-        </form>
-    {% else %}
-        <button class="btn btn-supprimer disabled" 
-                title="{% if rendezvou.status == 'refusée' %}Annulation impossible pour les rendez-vous refusés{% else %}Annulation impossible moins de 12h avant le rendez-vous{% endif %}">
-            <i class="fas fa-times"></i> Annuler
+                          <div class="action-buttons">
+    <form method="post" action="{{ path('app_rendezvous_accept', {'id': rendezvou.id}) }}" style="display: inline;">
+        <input type="hidden" name="_token" value="{{ csrf_token('accept' ~ rendezvou.id) }}">
+        <button type="submit" 
+                class="btn btn-modifier {{ not rendezvou.isModifiable() ? 'disabled' : '' }}"
+                {% if not rendezvou.isModifiable() %}disabled{% endif %}>
+            <i class="fas fa-check"></i> Accepter
         </button>
-    {% endif %}
+    </form>
+    
+<form method="post" action="{{ path('app_rendezvous_reject', {'id': rendezvou.id}) }}" 
+      onsubmit="return confirm('Êtes-vous sûr de vouloir refuser ce rendez-vous?');"
+      style="display: inline;">        <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ rendezvou.id) }}">
+        <button type="submit" 
+                class="btn btn-supprimer {{ not rendezvou.isModifiable() ? 'disabled' : '' }}"
+                {% if not rendezvou.isModifiable() %}disabled{% endif %}>
+            <i class="fas fa-times"></i> Refuser
+        </button>
+    </form>
 </div>
                         </div>
                     </div>

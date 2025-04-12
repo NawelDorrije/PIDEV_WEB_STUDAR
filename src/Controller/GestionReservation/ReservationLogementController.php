@@ -198,13 +198,18 @@ final class ReservationLogementController extends AbstractController
 
   // src/Controller/ReservationLogementController.php
 // src/Controller/ReservationLogementController.php
-#[Route('/statistics', name: 'app_reservation_logement_statistics')]
-public function statistics(ReservationLogementRepository $repo): Response
+
+#[Route('/statistics/owner', name: 'app_reservation_logement_statistics_owner')]
+public function statisticsOwner(ReservationLogementRepository $repository): Response
 {
-    $stats = $repo->getMonthlyStats();
+    // Récupérer le CIN du propriétaire connecté (à adapter selon votre système d'authentification)
+    $cinProprietaire = $this->getUser()->getCin(); // Adaptez cette ligne
     
-    return $this->render('reservation_logement/statistics.html.twig', [
-        'stats' => $stats
+    $stats = $repository->getMonthlyStatisticsForOwner($cinProprietaire);
+    
+    return $this->render('reservation_logement/statistics_owner.html.twig', [
+        'stats' => $stats,
+        'max' => !empty($stats) ? max(array_column($stats, 'count')) : 0
     ]);
 }
 }

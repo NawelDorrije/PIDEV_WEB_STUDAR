@@ -31,25 +31,29 @@ final class RendezvousController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_rendezvous_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $rendezvou = new Rendezvous();
-        $form = $this->createForm(RendezvousType::class, $rendezvou);
-        $form->handleRequest($request);
+  // src/Controller/GestionReservation/RendezvousController.php
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($rendezvou);
-            $entityManager->flush();
+#[Route('/new', name: 'app_rendezvous_new', methods: ['GET', 'POST'])]
+public function new(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $rendezvous = new Rendezvous();
+    $form = $this->createForm(RendezvousType::class, $rendezvous);
+    $form->handleRequest($request);
 
-            return $this->redirectToRoute('app_rendezvous_index', [], Response::HTTP_SEE_OTHER);
-        }
+    if ($form->isSubmitted() && $form->isValid()) {
+        // No need to manually set CINs - Doctrine handles it through relationships
+        $entityManager->persist($rendezvous);
+        $entityManager->flush();
 
-        return $this->render('rendezvous/new.html.twig', [
-            'rendezvou' => $rendezvou,
-            'form' => $form,
-        ]);
+        $this->addFlash('success', 'Rendez-vous créé avec succès');
+        return $this->redirectToRoute('app_rendezvous_index');
     }
+
+    return $this->render('rendezvous/new.html.twig', [
+        'rendezvous' => $rendezvous,
+        'form' => $form->createView(),
+    ]);
+}
 
     #[Route('/{id}', name: 'app_rendezvous_show', methods: ['GET'])]
     public function show(Rendezvous $rendezvou): Response
@@ -65,7 +69,7 @@ final class RendezvousController extends AbstractController
         // Prevent editing if status is confirmed or refused
         if (!$rendezvou->isModifiable()) {
             $this->addFlash('error', 'Les rendez-vous confirmés ou refusés ne peuvent pas être modifiés');
-            return $this->redirectToRoute('app_rendezvous_show', ['id' => $rendezvou->getId()]);
+            return $this->redirectToRoute('app_rendezvous_show', ['id' => $rendezvou->getId()], );
         }
 
         $form = $this->createForm(RendezvousType::class, $rendezvou);
@@ -75,7 +79,7 @@ final class RendezvousController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Le rendez-vous a été modifié avec succès');
-            return $this->redirectToRoute('app_rendezvous_show', ['id' => $rendezvou->getId()], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_rendezvous_index', ['id' => $rendezvou->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('rendezvous/edit.html.twig', [
@@ -102,4 +106,6 @@ final class RendezvousController extends AbstractController
 
         return $this->redirectToRoute('app_rendezvous_index', [], Response::HTTP_SEE_OTHER);
     }
+
+    
 }

@@ -14,26 +14,39 @@ class ReservationLogementRepository extends ServiceEntityRepository
         parent::__construct($registry, ReservationLogement::class);
     }
 
-  // src/Repository/ReservationLogementRepository.php
+    public function getMonthlyStatistics(): array
+    {
+        $results = $this->createQueryBuilder('r')
+            ->select([
+                'YEAR(r.dateDebut) as year',
+                'MONTH(r.dateDebut) as month',
+                'COUNT(r.id) as count'
+            ])
+            ->groupBy('year, month')
+            ->orderBy('year, month')
+            ->getQuery()
+            ->getResult();
 
-// src/Repository/ReservationLogementRepository.php
-// src/Repository/ReservationLogementRepository.php
-public function getMonthlyStats(): array
-{
-    $conn = $this->getEntityManager()->getConnection();
-    
-    $sql = "
-        SELECT 
-            DATE_FORMAT(date_debut, '%Y-%m') AS month,
-            COUNT(id) AS count
-        FROM reservation_logement
-        GROUP BY month
-        ORDER BY month
-    ";
-    
-    $stmt = $conn->executeQuery($sql);
-    return $stmt->fetchAllAssociative();
-}
+        return $this->formatStatistics($results);
+    }
+
+    private function formatStatistics(array $results): array
+    {
+        $monthNames = [
+            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+        ];
+
+        return array_map(function($item) use ($monthNames) {
+            return [
+                'year' => $item['year'],
+                'month' => $monthNames[$item['month']],
+                'month_num' => $item['month'],
+                'count' => $item['count']
+            ];
+        }, $results);
+    }
 }
 
     //    /**

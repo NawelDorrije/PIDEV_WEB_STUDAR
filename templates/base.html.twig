@@ -122,7 +122,12 @@
                                         <li><a class="dropdown-item" href="{{ path('app_home') }}">Déconnexion</a></li>
                                     </ul>
                                 </li>
-                                <li><a href="{{ path('app_home') }}"><i class="fa fa-calendar"></i></a></li>
+                                  <li class="nav-item">
+    <a href="{{ path('app_rendezvous_index') }}" class="nav-link">
+        <i class="far fa-calendar"></i>
+        <span class="badge badge-danger">3</span>
+    </a>
+</li>
                                 <!-- <li><a href="{{ path('app_utilisateur_show') }}"><i class="fa fa-user"></i></a></li> Icône de profil -->
                                 {% if app.user %}
                                 <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
@@ -136,12 +141,7 @@
                                 <span>Menu</span>
                             </a>
                             <!-- ***** Menu End ***** -->
-                            <li class="nav-item">
-    <a href="{{ path('app_rendezvous_index') }}" class="nav-link">
-        <i class="far fa-calendar"></i>
-        <span class="badge badge-danger">3</span>
-    </a>
-</li>
+                          
                         </nav>
                     </div>
                 </div>
