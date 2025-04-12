@@ -98,39 +98,6 @@ final class PanierController extends AbstractController
         return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
     }
 
-    #[Route('/confirm-checkout', name: 'app_gestion_meubles_panier_confirm_checkout', methods: ['POST'])]
-    public function confirmCheckout(Request $request): Response
-    {
-        $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin()
-        $utilisateur = $this->getUser();
-
-        $panier = $this->panierRepository->findPanierEnCours($utilisateur);
-
-        if (!$panier || !$this->lignePanierRepository->findByPanierId($panier->getId())) {
-            $this->addFlash('error', 'Votre panier est vide ou introuvable.');
-            return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
-        }
-
-        $paymentMethod = $request->request->get('payment_method');
-        $address = $request->request->get('address');
-
-        if ($paymentMethod === 'delivery' && empty($address)) {
-            $this->addFlash('error', 'Veuillez fournir une adresse pour le paiement à la livraison.');
-            return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
-        }
-
-        $panier->setStatut(Panier::STATUT_VALIDE);
-        $panier->setDateValidation(new \DateTime());
-        if ($paymentMethod === 'delivery') {
-            $this->addFlash('success', 'Commande confirmée avec paiement à la livraison. Adresse : ' . $address);
-        } else {
-            $this->addFlash('success', 'Commande confirmée avec paiement par carte.');
-            // Ici, vous pouvez intégrer une logique de paiement par carte (ex. Stripe)
-        }
-        $this->panierRepository->update($panier, true);
-
-        return $this->redirectToRoute('app_gestion_meubles_panier');
-    }
 
     #[Route('/{id}', name: 'app_gestion_meubles_panier_show', methods: ['GET'])]
     public function show(int $id): Response

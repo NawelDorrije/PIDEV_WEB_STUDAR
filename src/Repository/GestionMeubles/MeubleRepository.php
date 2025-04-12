@@ -18,11 +18,27 @@ class MeubleRepository extends ServiceEntityRepository
     }
 
     /**
-     * Sauvegarde un meuble dans la base de données
+     * Sauvegarde un nouveau meuble dans la base de données
      */
     public function save(Meuble $meuble, bool $flush = true): void
     {
         $this->getEntityManager()->persist($meuble);
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
+     * Modifie un meuble existant dans la base de données
+     */
+    public function edit(Meuble $meuble, bool $flush = true): void
+    {
+        // Vérifier si l'entité est gérée par Doctrine
+        if (!$this->getEntityManager()->contains($meuble)) {
+            throw new \LogicException('Le meuble n\'est pas géré par Doctrine. Assurez-vous qu\'il a été récupéré via le repository.');
+        }
+
+        // Pas besoin de persist ici, car l'entité est déjà gérée
         if ($flush) {
             $this->getEntityManager()->flush();
         }

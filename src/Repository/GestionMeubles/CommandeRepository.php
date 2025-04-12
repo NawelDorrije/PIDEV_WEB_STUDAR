@@ -37,32 +37,37 @@ class CommandeRepository extends ServiceEntityRepository
     public function ajouterCommande(Commande $commande): ?int
     {
         $this->entityManager->beginTransaction();
-
+    
         try {
-            // 1. Mettre à jour le statut du panier
+            // 1. Vérifier le panier
             $panier = $commande->getPanier();
             if (!$panier) {
                 throw new \Exception('Panier non trouvé.');
             }
+            if ($panier->getStatut() !== Panier::STATUT_EN_COURS) {
+                throw new \Exception('Le panier doit être en statut EN_COURS pour créer une commande.');
+            }
+    
+            // 2. Mettre à jour le statut du panier
             $panier->setStatut(Panier::STATUT_VALIDE);
             $panier->setDateValidation(new \DateTime());
             $this->entityManager->persist($panier);
-
-            // 2. Mettre à jour le statut des meubles associés au panier
+    
+            // 3. Mettre à jour le statut des meubles associés au panier
             $lignesPanier = $panier->getLignesPanier();
             foreach ($lignesPanier as $ligne) {
                 $meuble = $ligne->getMeuble();
                 $meuble->setStatut('indisponible');
                 $this->entityManager->persist($meuble);
             }
-
-            // 3. Ajouter la commande
+    
+            // 4. Ajouter la commande
             $this->entityManager->persist($commande);
             $this->entityManager->flush();
-
-            // 4. Valider la transaction
+    
+            // 5. Valider la transaction
             $this->entityManager->commit();
-
+    
             return $commande->getId();
         } catch (\Exception $e) {
             $this->entityManager->rollback();
@@ -217,5 +222,129 @@ class CommandeRepository extends ServiceEntityRepository
                 ->text($messageVendeur);
             $this->mailer->send($emailVendeur);
         }
+    }
+    public function getChiffreAffairesTotal(string $statut = '', string $periode = 'all'): float
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select('COALESCE(SUM(c.montantTotal), 0)')
+            ->where('c.statut != :annulee')
+            ->setParameter('annulee', Commande::STATUT_ANNULEE);
+
+        if ($statut) {
+            $qb->andWhere('c.statut = :statut')
+               ->setParameter('statut', $statut);
+        }
+
+        if ($periode === 'month') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+        } elseif ($periode === 'year') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
+        }
+
+        return (float) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function getTopVendeur(string $periode = 'all'): ?array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select('u.nom, u.prenom, u.cin, COALESCE(SUM(c.montantTotal), 0) as totalVentes')
+            ->leftJoin('c.panier', 'p')
+            ->leftJoin('p.lignesPanier', 'lp')
+            ->leftJoin('lp.meuble', 'm')
+            ->leftJoin('m.vendeur', 'u')
+            ->where('c.statut != :annulee')
+            ->setParameter('annulee', Commande::STATUT_ANNULEE)
+            ->groupBy('u.cin, u.nom, u.prenom')
+            ->orderBy('totalVentes', 'DESC')
+            ->setMaxResults(1);
+
+        if ($periode === 'month') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+        } elseif ($periode === 'year') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
+        }
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    public function getCommandesParStatut(string $periode = 'all'): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select('c.statut, COUNT(c.id) as nombre')
+            ->groupBy('c.statut');
+    
+        if ($periode === 'month') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+        } elseif ($periode === 'year') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
+        }
+    
+        $results = $qb->getQuery()->getResult();
+        $data = [
+            Commande::STATUT_EN_ATTENTE => 0,
+            Commande::STATUT_PAYEE => 0,
+            Commande::STATUT_LIVREE => 0,
+            Commande::STATUT_ANNULEE => 0,
+        ];
+        foreach ($results as $row) {
+            $data[$row['statut']] = (int) $row['nombre'];
+        }
+        return $data;
+    }
+
+    public function getChiffreAffairesParMois(string $periode = 'all'): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as mois, COALESCE(SUM(c.montantTotal), 0) as montant")
+            ->where('c.statut != :annulee')
+            ->setParameter('annulee', Commande::STATUT_ANNULEE)
+            ->groupBy('mois')
+            ->orderBy('mois', 'ASC');
+
+        if ($periode === 'month') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+        } elseif ($periode === 'year') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
+        }
+
+        $results = $qb->getQuery()->getResult();
+        $data = [];
+        foreach ($results as $row) {
+            $data[$row['mois']] = (float) $row['montant'];
+        }
+        return $data;
+    }
+
+    public function getVentesParJour(string $periode = 'all'): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select("DATE_FORMAT(c.dateCommande, '%Y-%m-%d') as date, COALESCE(SUM(c.montantTotal), 0) as montant")
+            ->where('c.statut != :annulee')
+            ->setParameter('annulee', Commande::STATUT_ANNULEE)
+            ->groupBy('date')
+            ->orderBy('date', 'ASC');
+
+        if ($periode === 'month') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+        } elseif ($periode === 'year') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
+        }
+
+        $results = $qb->getQuery()->getResult();
+        $data = [];
+        foreach ($results as $row) {
+            $data[$row['date']] = ['montant' => (float) $row['montant']];
+        }
+        return $data;
     }
 }

@@ -6,7 +6,6 @@ doctrine:
         #server_version: '16'
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
-   
         mapping_types:
             enum: string
             point: point
@@ -29,6 +28,9 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+        dql:
+            datetime_functions:
+                date_format: DoctrineExtensions\Query\Mysql\DateFormat
 
 when@test:
     doctrine:
@@ -48,13 +50,10 @@ when@prod:
                 type: pool
                 pool: doctrine.result_cache_pool
 
-    framework:
-        cache:
-            pools:
-                doctrine.result_cache_pool:
-                    adapter: cache.app
-                doctrine.system_cache_pool:
-                    adapter: cache.system
-
-    
-   
+framework:
+    cache:
+        pools:
+            doctrine.result_cache_pool:
+                adapter: cache.app
+            doctrine.system_cache_pool:
+                adapter: cache.system

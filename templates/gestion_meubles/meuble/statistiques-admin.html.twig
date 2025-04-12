@@ -1,0 +1,260 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques - Admin{% endblock %}
+
+{% block body %}
+<style>
+    /* Général */
+    .stats-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 1.5rem;
+    }
+
+   
+
+    /* Filtres */
+    .filters-container {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    .filter-select {
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        color: #1a1a1a;
+        width: 200px;
+        max-width: 100%;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+
+    /* Cartes KPI */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .kpi-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-5px);
+    }
+    .kpi-card i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    .kpi-card.meubles i {
+        color: #007bff;
+    }
+    .kpi-card.ca i {
+        color: #10b981;
+    }
+    .kpi-card.top-vendeur i {
+        color: #f97316;
+    }
+    .kpi-card.commandes i {
+        color: #3b82f6;
+    }
+    .kpi-card h3 {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: #4b5563;
+        margin-bottom: 0.5rem;
+    }
+    .kpi-card .value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+    .kpi-card .value.ca::after {
+        content: ' TND';
+        font-size: 1.2rem;
+        color: #10b981;
+    }
+
+    /* Graphiques */
+    .chart-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+    .chart-container h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+    }
+    .chart-container canvas {
+        max-width: 100%;
+    }
+
+    /* Calendrier */
+    #calendar {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+    .fc-daygrid-day-number {
+        font-size: 0.9rem;
+    }
+    .fc-event {
+        border: none !important;
+        color: #fff !important;
+        font-size: 0.85rem;
+        padding: 2px 5px;
+        border-radius: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filters-container {
+            flex-direction: column;
+        }
+        .filter-select {
+            width: 100%;
+        }
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="stats-container">
+    <h1>Statistiques</h1>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button" title="Consulter les meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Consulter les meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button" title="Consulter les commandes">
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Consulter les commandes</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button active" title="Voir les statistiques">
+            <i class="bi bi-bar-chart"></i>
+            <span class="nav-text">Statistiques</span>
+        </a>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-container">
+        <select class="filter-select" id="filtre-statut" onchange="applyFilters()">
+            <option value="" {% if filtreStatut == '' %}selected{% endif %}>Tous les statuts</option>
+            <option value="EN_ATTENTE" {% if filtreStatut == 'EN_ATTENTE' %}selected{% endif %}>En attente</option>
+            <option value="PAYÉE" {% if filtreStatut == 'PAYÉE' %}selected{% endif %}>Payée</option>
+            <option value="LIVRÉE" {% if filtreStatut == 'LIVRÉE' %}selected{% endif %}>Livrée</option>
+            <option value="ANNULEE" {% if filtreStatut == 'ANNULEE' %}selected{% endif %}>Annulée</option>
+        </select>
+        <select class="filter-select" id="filtre-periode" onchange="applyFilters()">
+            <option value="all" {% if filtrePeriode == 'all' %}selected{% endif %}>Toutes</option>
+            <option value="month" {% if filtrePeriode == 'month' %}selected{% endif %}>Mois courant</option>
+            <option value="year" {% if filtrePeriode == 'year' %}selected{% endif %}>Année courante</option>
+        </select>
+    </div>
+
+    <!-- Cartes KPI -->
+    <div class="kpi-grid">
+        <div class="kpi-card meubles">
+            <i class="bi bi-tag"></i>
+            <h3>Nombre de meubles</h3>
+            <div class="value">{{ nombreMeubles }}</div>
+        </div>
+        <div class="kpi-card ca">
+            <i class="bi bi-currency-dollar"></i>
+            <h3>Chiffre d'affaires</h3>
+            <div class="value ca">{{ chiffreAffaires|number_format(2, ',', ' ') }}</div>
+        </div>
+        <div class="kpi-card top-vendeur">
+            <i class="bi bi-person"></i>
+            <h3>Top vendeur</h3>
+            <div class="value">
+                {% if topVendeur %}
+                    {{ topVendeur.nom }} {{ topVendeur.prenom }} ({{ topVendeur.totalVentes|number_format(2, ',', ' ') }} TND)
+                {% else %}
+                    Aucun
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-card commandes">
+            <i class="bi bi-cart"></i>
+            <h3>Commandes par statut</h3>
+            <div class="value">
+                Payée: {{ commandesParStatut['PAYÉE'] }}<br>
+                Livrée: {{ commandesParStatut['LIVRÉE'] }}<br>
+                En attente: {{ commandesParStatut['EN_ATTENTE'] }}<br>
+                Annulée: {{ commandesParStatut['ANNULEE'] }}<br>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="chart-container">
+        <h2>Chiffre d'affaires par mois</h2>
+        {{ render_chart(caChart) }}
+    </div>
+    <div class="chart-container">
+        <h2>Répartition des commandes par statut</h2>
+        {{ render_chart(statutChart) }}
+    </div>
+
+    <!-- Calendrier -->
+    <div id="calendar"></div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Appliquer les filtres
+            function applyFilters() {
+                const statut = document.getElementById('filtre-statut').value;
+                const periode = document.getElementById('filtre-periode').value;
+                window.location.href = '{{ path('app_gestion_meubles_statistiques') }}?statut=' + statut + '&periode=' + periode;
+            }
+
+            // Initialiser le calendrier
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                events: {{ calendarEvents|json_encode|raw }},
+                eventMouseEnter: function(info) {
+                    info.el.style.cursor = 'pointer';
+                    // Vous pouvez ajouter un tooltip ici si besoin
+                }
+            });
+            calendar.render();
+        });
+    </script>
+{% endblock %}

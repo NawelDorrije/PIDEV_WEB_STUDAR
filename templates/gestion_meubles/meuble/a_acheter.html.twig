@@ -6,7 +6,7 @@
 
 {% block body %}
 <style>
-/* Pop-up Styles - Style cohérent avec les autres pop-ups */
+/* Pop-up Styles - Image à gauche, détails à droite */
 .popup-overlay {
     position: fixed;
     top: 0;
@@ -25,7 +25,7 @@
     background: #fff;
     border-radius: 12px;
     padding: 2rem;
-    max-width: 600px;
+    max-width: 800px;
     width: 90%;
     max-height: 85vh;
     overflow-y: auto;
@@ -34,29 +34,12 @@
     border-left: 4px solid #6366f1;
     transition: transform 0.3s ease;
     transform: scale(0.98);
+    display: flex;
+    gap: 2rem;
 }
 
 .popup-overlay.active .popup-content {
     transform: scale(1);
-}
-
-.popup-content h2 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    text-align: left;
-    position: relative;
-}
-
-.popup-content h2::after {
-    content: '';
-    position: absolute;
-    bottom: -0.5rem;
-    left: 0;
-    width: 40px;
-    height: 2px;
-    background: #10b981;
 }
 
 .popup-close {
@@ -83,11 +66,59 @@
 }
 
 .popup-details {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+}
+
+.popup-details .meuble-image-section {
+    flex: 0 0 45%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.popup-details .meuble-image-section h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0;
+    text-align: left;
+    position: relative;
+}
+
+.popup-details .meuble-image-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: #10b981;
+}
+
+.popup-details .meuble-image-section img {
+    max-height: 350px;
+    width: 100%;
+    max-width: 250px;
+    min-width: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    transition: transform 0.3s ease;
+}
+
+.popup-details .meuble-image-section img:hover {
+    transform: scale(1.03);
+}
+
+.popup-details .meuble-info {
+    flex: 1;
     font-size: 0.95rem;
     color: #4b5563;
 }
 
-.popup-details p {
+.popup-details .meuble-info p {
     margin: 0.5rem 0;
     padding: 0.5rem 0;
     display: flex;
@@ -96,29 +127,29 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
-.popup-details p:last-child {
+.popup-details .meuble-info p:last-child {
     border-bottom: none;
 }
 
-.popup-details i {
+.popup-details .meuble-info i {
     font-size: 1.1rem;
     color: #6b7280;
 }
 
-.popup-details .nom i { color: #6366f1; } /* Indigo pour Nom */
-.popup-details .description i { color: #f59e0b; } /* Orange pour Description */
-.popup-details .prix i { color: #10b981; } /* Vert pour Prix */
-.popup-details .statut i { color: #ef4444; } /* Rouge pour Statut */
-.popup-details .vendeur-nom i { color: #06b6d4; } /* Cyan pour Vendeur Nom */
-.popup-details .vendeur-email i { color: #06b6d4; } /* Cyan pour Vendeur Email */
-.popup-details .vendeur-tel i { color: #06b6d4; } /* Cyan pour Vendeur Téléphone */
+.popup-details .meuble-info .nom i { color: #6366f1; }
+.popup-details .meuble-info .description i { color: #f59e0b; }
+.popup-details .meuble-info .prix i { color: #10b981; }
+.popup-details .meuble-info .statut i { color: #ef4444; }
+.popup-details .meuble-info .vendeur-nom i { color: #06b6d4; }
+.popup-details .meuble-info .vendeur-email i { color: #06b6d4; }
+.popup-details .meuble-info .vendeur-tel i { color: #06b6d4; }
 
-.popup-details .prix span {
+.popup-details .meuble-info .prix span {
     color: #10b981;
     font-weight: 700;
 }
 
-.popup-details .statut span {
+.popup-details .meuble-info .statut span {
     background: #fef2f2;
     color: #ef4444;
     padding: 0.25rem 0.75rem;
@@ -127,10 +158,16 @@
     font-weight: 500;
 }
 
-.popup-details strong {
+.popup-details .meuble-info strong {
     color: #1f2937;
     font-weight: 600;
     flex: 0 0 35%;
+}
+
+/* Correction pour l'email long */
+.popup-details .meuble-info .vendeur-email span {
+    word-break: break-all; /* Force le retour à la ligne pour les longs emails */
+    overflow-wrap: break-word; /* Alternative pour compatibilité */
 }
 
 .popup-details .add-to-cart-form {
@@ -138,18 +175,19 @@
 }
 
 .popup-details .add-to-cart-form .btn-add-to-cart {
-    background: #6366f1;
+    background: #f97316; /* Fond orange */
     color: #fff;
-    border: none;
+    border: 2px solid #f97316; /* Bordure orange */
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease, border-color 0.3s ease;
     width: 100%;
 }
 
 .popup-details .add-to-cart-form .btn-add-to-cart:hover {
-    background: #4f46e5;
+    background: #ea580c; /* Orange plus foncé au survol */
+    border-color: #ea580c; /* Bordure orange plus foncée au survol */
 }
 
 @keyframes fadeIn {
@@ -157,38 +195,50 @@
     to { opacity: 1; }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .popup-content {
+        flex-direction: column;
         padding: 1.5rem;
-        max-height: 90vh;
     }
 
-    .popup-content h2 {
+    .popup-details .meuble-image-section {
+        flex: none;
+    }
+
+    .popup-details .meuble-image-section img {
+        max-height: 250px;
+        max-width: 100%;
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .popup-details .meuble-image-section h2 {
         font-size: 1.5rem;
     }
 
-    .popup-details p {
+    .popup-details .meuble-info p {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
 
-    .popup-details strong {
+    .popup-details .meuble-info strong {
         flex: none;
     }
 }
 
 /* Suppression des styles liés au toast et au blur */
 .blur-background {
-    display: none; /* Plus nécessaire avec la pop-up */
+    display: none;
 }
 </style>
 
 <div class="section meubles-a-vendre">
     <div class="container" style="position: relative; z-index: 1;">
-        <!-- Conteneur pour l'arrière-plan flou (plus utilisé, mais conservé pour compatibilité) -->
+        <!-- Conteneur pour l'arrière-plan flou (conservé pour compatibilité) -->
         <div class="blur-background" id="blurBackground"></div>
-        <!-- Conteneur pour les toasts (plus utilisé, mais conservé pour compatibilité) -->
+        <!-- Conteneur pour les toasts (conservé pour compatibilité) -->
         <div class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
         <div class="row">
@@ -279,7 +329,6 @@
         <div class="popup-overlay" id="meuble-popup">
             <div class="popup-content">
                 <button class="popup-close">×</button>
-                <h2>Détails du meuble</h2>
                 <div class="popup-details" id="meuble-popup-details">
                     <!-- Les détails seront injectés via JavaScript -->
                 </div>
@@ -292,7 +341,7 @@
                 <i class="bi bi-list-ul"></i>
                 <span class="nav-text">Mes meubles</span>
             </a>
-            <a href="#" class="nav-button" title="Historique des transactions">
+            <a href="{{ path('app_gestion_meubles_mes_commandes') }}"  class="nav-button" title="Historique des transactions">
                 <i class="bi bi-clock-history"></i>
                 <span class="nav-text">Historique Commandes</span>
             </a>
@@ -300,7 +349,7 @@
                 <i class="bi bi-cart3"></i>
                 <span class="nav-text">Panier</span>
             </a>
-            <a href="{{ path('app_gestion_meubles_meuble') }}" class="nav-button" title="Voir les statistiques">
+            <a class="nav-button" title="Voir les statistiques">
                 <i class="bi bi-bar-chart"></i>
                 <span class="nav-text">Statistiques</span>
             </a>
@@ -403,6 +452,7 @@ $(document).ready(function() {
                 vendeurPrenom: "{{ meuble.vendeur.prenom }}",
                 vendeurEmail: "{{ meuble.vendeur.email }}",
                 vendeurTel: "{{ meuble.vendeur.numTel }}",
+                image: "{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}",
                 csrf: "{{ csrf_token('add_to_cart_' ~ meuble.id) }}"
             }{% if not loop.last %},{% endif %}
         {% endfor %}
@@ -418,19 +468,25 @@ $(document).ready(function() {
                 const addToCartUrl = "{{ path('app_gestion_meubles_ajouter_panier', {'id': 'MEUBLE_ID'}) }}".replace('MEUBLE_ID', meuble.id);
                 
                 popupDetails.innerHTML = `
-                    <p class="nom"><i class="bi bi-tag-fill"></i> <strong>Nom:</strong> <span>${meuble.nom}</span></p>
-                    <p class="description"><i class="bi bi-file-text"></i> <strong>Description:</strong> <span>${meuble.description}</span></p>
-                    <p class="prix"><i class="bi bi-currency-dollar"></i> <strong>Prix:</strong> <span>${meuble.prix}</span></p>
-                    <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${meuble.statut}</span></p>
-                    <p class="vendeur-nom"><i class="bi bi-person"></i> <strong>Vendeur:</strong> <span>${meuble.vendeurPrenom} ${meuble.vendeurNom}</span></p>
-                    <p class="vendeur-email"><i class="bi bi-envelope"></i> <strong>Email:</strong> <span>${meuble.vendeurEmail}</span></p>
-                    <p class="vendeur-tel"><i class="bi bi-telephone"></i> <strong>Téléphone:</strong> <span>${meuble.vendeurTel}</span></p>
-                    <form action="${addToCartUrl}" method="POST" class="add-to-cart-form-popup">
-                        <input type="hidden" name="_token" value="${meuble.csrf}">
-                        <button type="submit" class="btn btn-add-to-cart">
-                            <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
-                        </button>
-                    </form>
+                    <div class="meuble-image-section">
+                        <h2>Détails du meuble</h2>
+                        <img src="${meuble.image}" alt="${meuble.nom}">
+                    </div>
+                    <div class="meuble-info">
+                        <p class="nom"><i class="bi bi-tag-fill"></i> <strong>Nom:</strong> <span>${meuble.nom}</span></p>
+                        <p class="description"><i class="bi bi-file-text"></i> <strong>Description:</strong> <span>${meuble.description}</span></p>
+                        <p class="prix"><i class="bi bi-currency-dollar"></i> <strong>Prix:</strong> <span>${meuble.prix}</span></p>
+                        <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${meuble.statut}</span></p>
+                        <p class="vendeur-nom"><i class="bi bi-person"></i> <strong>Vendeur:</strong> <span>${meuble.vendeurPrenom} ${meuble.vendeurNom}</span></p>
+                        <p class="vendeur-email"><i class="bi bi-envelope"></i> <strong>Email:</strong> <span>${meuble.vendeurEmail}</span></p>
+                        <p class="vendeur-tel"><i class="bi bi-telephone"></i> <strong>Téléphone:</strong> <span>${meuble.vendeurTel}</span></p>
+                        <form action="${addToCartUrl}" method="POST" class="add-to-cart-form-popup">
+                            <input type="hidden" name="_token" value="${meuble.csrf}">
+                            <button type="submit" class="btn btn-add-to-cart">
+                                <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
+                            </button>
+                        </form>
+                    </div>
                 `;
                 popup.style.display = 'flex';
                 popup.classList.add('active');

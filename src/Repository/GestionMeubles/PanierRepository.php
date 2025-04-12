@@ -16,29 +16,46 @@ class PanierRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Panier::class);
     }
-
     public function save(Panier $panier, bool $flush = false): void
     {
-        // Vérification du rôle étudiant (commentée comme dans l'original)
-        // $utilisateur = $this->getEntityManager()
-        //     ->getRepository(Utilisateur::class)
-        //     ->findOneBy(['cin' => $panier->getCinAcheteur()]);
-        
-        // if (!$utilisateur || $utilisateur->getRole() !== 'étudiant') {
-        //     throw new \LogicException('L\'acheteur doit être un étudiant.');
-        // }
-
+        $acheteur = $panier->getAcheteur();
+        if (!$acheteur instanceof Utilisateur) {
+            throw new \LogicException('Un acheteur valide doit être associé au panier.');
+        }
+    
         // Vérification panier existant
-        $existingPanier = $this->findPanierEnCours($panier->getAcheteur());
+        $existingPanier = $this->findPanierEnCours($acheteur);
         if ($existingPanier && $existingPanier->getId() !== $panier->getId()) {
             throw new \LogicException('L\'acheteur a déjà un panier en cours.');
         }
-
+    
         $this->getEntityManager()->persist($panier);
         if ($flush) {
             $this->getEntityManager()->flush();
         }
     }
+    // public function save(Panier $panier, bool $flush = false): void
+    // {
+    //     // Vérification du rôle étudiant (commentée comme dans l'original)
+    //     // $utilisateur = $this->getEntityManager()
+    //     //     ->getRepository(Utilisateur::class)
+    //     //     ->findOneBy(['cin' => $panier->getCinAcheteur()]);
+        
+    //     // if (!$utilisateur || $utilisateur->getRole() !== 'étudiant') {
+    //     //     throw new \LogicException('L\'acheteur doit être un étudiant.');
+    //     // }
+
+    //     // Vérification panier existant
+    //     $existingPanier = $this->findPanierEnCours($panier->getAcheteur());
+    //     if ($existingPanier && $existingPanier->getId() !== $panier->getId()) {
+    //         throw new \LogicException('L\'acheteur a déjà un panier en cours.');
+    //     }
+
+    //     $this->getEntityManager()->persist($panier);
+    //     if ($flush) {
+    //         $this->getEntityManager()->flush();
+    //     }
+    // }
 
     public function update(Panier $panier, bool $flush = false): void
     {

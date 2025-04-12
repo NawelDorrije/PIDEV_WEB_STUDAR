@@ -11,6 +11,7 @@ use App\Repository\GestionMeubles\LignePanierRepository;
 use App\Repository\GestionMeubles\MeubleRepository;
 use App\Repository\GestionMeubles\PanierRepository;
 use App\Repository\UtilisateurRepository;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,14 +44,24 @@ final class MeubleController extends AbstractController
         $this->utilisateurRepository = $utilisateurRepository;
     }
 
-    #[Route('/', name: 'app_gestion_meubles_meuble')]
-    public function index(): Response
+    #[Route('/admin', name: 'app_gestion_meubles_meuble_admin')]
+    public function index(Request $request, PaginatorInterface $paginator): Response
     {
-        $meubles = $this->meubleRepository->findAllMeubles();
+        // Récupérer tous les meubles avec leurs vendeurs associés
+        $queryBuilder = $this->meubleRepository->createQueryBuilder('m')
+            ->leftJoin('m.vendeur', 'v')
+            ->addSelect('v');
 
-        return $this->render('gestion_meubles/meuble/index.html.twig', [
+        // Paginer les résultats
+        $pagination = $paginator->paginate(
+            $queryBuilder, // Requête à paginer
+            $request->query->getInt('page', 1), // Numéro de page, par défaut 1
+            10 // Nombre d'éléments par page
+        );
+
+        return $this->render('gestion_meubles/meuble/liste_admin.html.twig', [
             'controller_name' => 'GestionMeubles/MeubleController',
-            'meubles' => $meubles,
+            'pagination' => $pagination,
         ]);
     }
 
@@ -127,7 +138,6 @@ final class MeubleController extends AbstractController
             'is_edit' => false,
         ]);
     }
-
     #[Route('/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
     public function modifier(Request $request, Meuble $meuble): Response
     {
@@ -135,76 +145,169 @@ final class MeubleController extends AbstractController
         if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
         }
-
+    
         if ($meuble->getStatut() === 'indisponible') {
             $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
             return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
         }
-
-        $oldImage = $meuble->getImage();
-        $form = $this->createForm(MeubleType::class, $meuble, [
-            'validation_groups' => ['Default', 'edit']
-        ]);
-
+    
+        $oldImage = $meuble->getImage(); // Sauvegarder l'ancienne image
+        $form = $this->createForm(MeubleType::class, $meuble);
+    
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
                 $imageFile = $form->get('image')->getData();
-
+    
+                // Gérer l'image uniquement si une nouvelle image est uploadée
                 if ($imageFile) {
                     $constraint = new File([
                         'maxSize' => '5M',
                         'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
                         'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP).',
                     ]);
-
+    
                     $violations = $this->validator->validate($imageFile, $constraint);
-
+    
                     if (count($violations) > 0) {
                         foreach ($violations as $violation) {
                             $this->addFlash('error', $violation->getMessage());
                         }
-                        return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+                        return $this->render('gestion_meubles/meuble/form.html.twig', [
+                            'form' => $form->createView(),
+                            'meuble' => $meuble,
+                            'is_edit' => true,
+                        ]);
                     }
-
+    
                     $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
                     $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
-
+    
                     try {
                         $imageFile->move(
                             $this->getParameter('images_directory'),
                             $newFilename
                         );
+                        // Supprimer l'ancienne image si elle existe
                         if ($oldImage && file_exists($this->getParameter('images_directory') . '/' . $oldImage)) {
                             unlink($this->getParameter('images_directory') . '/' . $oldImage);
                         }
                         $meuble->setImage($newFilename);
                     } catch (FileException $e) {
                         $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
-                        return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+                        return $this->render('gestion_meubles/meuble/form.html.twig', [
+                            'form' => $form->createView(),
+                            'meuble' => $meuble,
+                            'is_edit' => true,
+                        ]);
                     }
                 } else {
+                    // Si aucune nouvelle image n'est uploadée, conserver l'ancienne
                     $meuble->setImage($oldImage);
                 }
-
-                $this->meubleRepository->save($meuble);
+    
+                // Utiliser la méthode update pour l'édition
+                $this->meubleRepository->update($meuble);
                 $this->addFlash('success', 'Meuble modifié avec succès !');
                 return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
             } else {
+                // Afficher les erreurs de validation
                 $errors = $form->getErrors(true);
                 foreach ($errors as $error) {
                     $this->addFlash('error', $error->getMessage());
                 }
+                return $this->render('gestion_meubles/meuble/form.html.twig', [
+                    'form' => $form->createView(),
+                    'meuble' => $meuble,
+                    'is_edit' => true,
+                ]);
             }
         }
-
+    
         return $this->render('gestion_meubles/meuble/form.html.twig', [
             'form' => $form->createView(),
             'meuble' => $meuble,
             'is_edit' => true,
         ]);
     }
+    // #[Route('/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
+    // public function modifier(Request $request, Meuble $meuble): Response
+    // {
+    //     $utilisateur = $this->getUser();
+    //     if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
+    //         throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
+    //     }
+
+    //     if ($meuble->getStatut() === 'indisponible') {
+    //         $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
+    //         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+    //     }
+
+    //     $oldImage = $meuble->getImage();
+    //     $form = $this->createForm(MeubleType::class, $meuble, [
+    //         'validation_groups' => ['Default', 'edit']
+    //     ]);
+
+    //     $form->handleRequest($request);
+
+    //     if ($form->isSubmitted()) {
+    //         if ($form->isValid()) {
+    //             $imageFile = $form->get('image')->getData();
+
+    //             if ($imageFile) {
+    //                 $constraint = new File([
+    //                     'maxSize' => '5M',
+    //                     'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    //                     'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP).',
+    //                 ]);
+
+    //                 $violations = $this->validator->validate($imageFile, $constraint);
+
+    //                 if (count($violations) > 0) {
+    //                     foreach ($violations as $violation) {
+    //                         $this->addFlash('error', $violation->getMessage());
+    //                     }
+    //                     return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+    //                 }
+
+    //                 $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+    //                 $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+
+    //                 try {
+    //                     $imageFile->move(
+    //                         $this->getParameter('images_directory'),
+    //                         $newFilename
+    //                     );
+    //                     if ($oldImage && file_exists($this->getParameter('images_directory') . '/' . $oldImage)) {
+    //                         unlink($this->getParameter('images_directory') . '/' . $oldImage);
+    //                     }
+    //                     $meuble->setImage($newFilename);
+    //                 } catch (FileException $e) {
+    //                     $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
+    //                     return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
+    //                 }
+    //             } else {
+    //                 $meuble->setImage($oldImage);
+    //             }
+
+    //             $this->meubleRepository->save($meuble);
+    //             $this->addFlash('success', 'Meuble modifié avec succès !');
+    //             return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+    //         } else {
+    //             $errors = $form->getErrors(true);
+    //             foreach ($errors as $error) {
+    //                 $this->addFlash('error', $error->getMessage());
+    //             }
+    //         }
+    //     }
+
+    //     return $this->render('gestion_meubles/meuble/form.html.twig', [
+    //         'form' => $form->createView(),
+    //         'meuble' => $meuble,
+    //         'is_edit' => true,
+    //     ]);
+    // }
 
     #[Route('/mes-meubles', name: 'app_gestion_meubles_mes_meubles')]
     public function consulterMesMeubles(): Response
@@ -260,7 +363,6 @@ final class MeubleController extends AbstractController
 
         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
     }
-
     #[Route('/ajouter-au-panier/{id}', name: 'app_gestion_meubles_ajouter_panier', methods: ['POST'])]
     public function ajouterAuPanier(Request $request, int $id): JsonResponse
     {
@@ -268,41 +370,52 @@ final class MeubleController extends AbstractController
             if (!$this->isCsrfTokenValid('add_to_cart_' . $id, $request->request->get('_token'))) {
                 throw new \Exception('Token CSRF invalide');
             }
-
+    
             $utilisateur = $this->getUser();
             if (!$utilisateur instanceof Utilisateur) {
                 throw new \Exception('Vous devez être connecté pour ajouter au panier.');
             }
-
+    
             $meuble = $this->meubleRepository->find($id);
             if (!$meuble) {
                 throw new \Exception('Meuble non trouvé');
             }
-
+    
             if ($meuble->getStatut() !== 'disponible') {
                 throw new \Exception('Ce meuble n\'est plus disponible');
             }
-
+    
+            // Vérifier s'il existe un panier EN_COURS
             $panier = $this->panierRepository->findPanierEnCours($utilisateur);
+    
+            // Si un panier existe, vérifier son statut
+            if ($panier && $panier->getStatut() !== Panier::STATUT_EN_COURS) {
+                // Ne pas utiliser un panier VALIDE ou ANNULE
+                $panier = null;
+            }
+    
+            // Créer un nouveau panier si aucun panier EN_COURS n'existe
             if (!$panier) {
                 $panier = new Panier();
-                $panier->setCinAcheteur($utilisateur->getCin());
+                $panier->setAcheteur($utilisateur); // Utilise la relation pour synchroniser cinAcheteur
                 $panier->setStatut(Panier::STATUT_EN_COURS);
                 $panier->setDateAjout(new \DateTime());
                 $this->panierRepository->save($panier, true);
             }
-
+    
+            // Vérifier si le meuble est déjà dans le panier
             if ($this->lignePanierRepository->verifierProduitDansPanier($panier->getId(), $meuble->getId())) {
                 return $this->json([
                     'warning' => 'Ce meuble est déjà dans votre panier.'
                 ], Response::HTTP_CONFLICT);
             }
-
+    
+            // Ajouter le meuble au panier
             $lignePanier = new LignePanier();
             $lignePanier->setPanier($panier);
             $lignePanier->setMeuble($meuble);
             $this->lignePanierRepository->save($lignePanier, true);
-
+    
             return $this->json([
                 'message' => 'Le meuble a été ajouté à votre panier.',
                 'panier_id' => $panier->getId(),
@@ -315,4 +428,58 @@ final class MeubleController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
     }
+    // #[Route('/ajouter-au-panier/{id}', name: 'app_gestion_meubles_ajouter_panier', methods: ['POST'])]
+    // public function ajouterAuPanier(Request $request, int $id): JsonResponse
+    // {
+    //     try {
+    //         if (!$this->isCsrfTokenValid('add_to_cart_' . $id, $request->request->get('_token'))) {
+    //             throw new \Exception('Token CSRF invalide');
+    //         }
+
+    //         $utilisateur = $this->getUser();
+    //         if (!$utilisateur instanceof Utilisateur) {
+    //             throw new \Exception('Vous devez être connecté pour ajouter au panier.');
+    //         }
+
+    //         $meuble = $this->meubleRepository->find($id);
+    //         if (!$meuble) {
+    //             throw new \Exception('Meuble non trouvé');
+    //         }
+
+    //         if ($meuble->getStatut() !== 'disponible') {
+    //             throw new \Exception('Ce meuble n\'est plus disponible');
+    //         }
+
+    //         $panier = $this->panierRepository->findPanierEnCours($utilisateur);
+    //         if (!$panier) {
+    //             $panier = new Panier();
+    //             $panier->setCinAcheteur($utilisateur->getCin());
+    //             $panier->setStatut(Panier::STATUT_EN_COURS);
+    //             $panier->setDateAjout(new \DateTime());
+    //             $this->panierRepository->save($panier, true);
+    //         }
+
+    //         if ($this->lignePanierRepository->verifierProduitDansPanier($panier->getId(), $meuble->getId())) {
+    //             return $this->json([
+    //                 'warning' => 'Ce meuble est déjà dans votre panier.'
+    //             ], Response::HTTP_CONFLICT);
+    //         }
+
+    //         $lignePanier = new LignePanier();
+    //         $lignePanier->setPanier($panier);
+    //         $lignePanier->setMeuble($meuble);
+    //         $this->lignePanierRepository->save($lignePanier, true);
+
+    //         return $this->json([
+    //             'message' => 'Le meuble a été ajouté à votre panier.',
+    //             'panier_id' => $panier->getId(),
+    //             'meuble_nom' => $meuble->getNom(),
+    //             'redirect' => $this->generateUrl('app_gestion_meubles_a_acheter')
+    //         ], Response::HTTP_CREATED);
+    //     } catch (\Exception $e) {
+    //         return $this->json([
+    //             'error' => $e->getMessage()
+    //         ], Response::HTTP_BAD_REQUEST);
+    //     }
+    // }
 }
