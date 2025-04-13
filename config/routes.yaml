@@ -13,3 +13,6 @@ app_logout:
 connect_google_check:
     path: /connect/google/check
     controller: App\Controller\GoogleController::connectCheckAction
+app_utilisateur_complete_registration:
+    path: /complete-registration
+    controller: App\Controller\RegistrationController::completeRegistration

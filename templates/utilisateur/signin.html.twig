@@ -72,7 +72,7 @@
             border: none;
             padding: 12px 30px;
             border-radius: 12px;
-            width: 100%;
+            width: 460;
         }
 
         .contact-page .col-lg-6 {
@@ -246,7 +246,14 @@
 {% block body %}
 <div class="contact-page section">
     <div class="container">
+        {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
         <div class="row row-page">
+            
             <!-- Left Column -->
             <div class="col-lg-6">
                 <div class="benefit-item">
@@ -333,14 +340,14 @@
             
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
             
-                    <button type="submit" class="orange-button" id="submitButton">Se connecter</button>
+                    <button type="submit" style="width: 520px;" class="orange-button" id="submitButton">Se connecter</button>
                     
                     <div class="line-with-text">
                         <span class="line-text">Ou</span>
                     </div>
                     
                     <a href="{{ path('connect_google') }}" class="orange-button" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" alt="Google logo">
+                        <img src="{{ asset('images/googlelogo.png') }}" width="20" alt="Google logo">
                         Continuer avec Google
                     </a>                    
                     <div class="center">
@@ -363,7 +370,19 @@
     <script src="{{ asset('assets/js/owl-carousel.js') }}"></script>
     <script src="{{ asset('assets/js/counter.js') }}"></script>
     <script src="{{ asset('assets/js/custom.js') }}"></script>
-    
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+});
+</script>
     <!-- reCAPTCHA v3 -->
     <script src="https://www.google.com/recaptcha/api.js?render=6Lc85hUrAAAAAH4q1MhB4P1RPbxNK8O7Z7P5gp-v"></script>
     <script>

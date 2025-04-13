@@ -21,6 +21,17 @@
         {% endblock %}
     </head>
     <body>
+        {% for message in app.flashes('success-auto-fade') %}
+    <div class="auto-fade-alert alert alert-success">
+        {{ message }}
+    </div>
+{% endfor %}
+
+{% for message in app.flashes('error') %}
+    <div class="auto-fade-alert alert alert-danger">
+        {{ message }}
+    </div>
+{% endfor %}
         <!-- ***** Preloader Start ***** -->
         <div id="js-preloader" class="js-preloader">
             <div class="preloader-inner">
