@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\Image; // Ajoutez cette ligne pour les contraintes d'image
 use Symfony\Component\Form\Extension\Core\Type\FileType; // Ajoutez cette ligne
+use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 
 class UtilisateurType extends AbstractType
 {
@@ -24,7 +25,11 @@ class UtilisateurType extends AbstractType
             ->add('email')
             ->add('mdp', PasswordType::class, [
                 'label' => 'Mot de passe',
-                'required' => false,
+                'attr' => [
+                    'placeholder' => 'Mot de passe',
+                    'id' => 'password-field'
+                ],
+                'required' => true
             ])
             ->add('numTel')
             ->add('role', EnumType::class, [

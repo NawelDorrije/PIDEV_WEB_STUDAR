@@ -18,6 +18,8 @@ security:
             security: false
 
         main:
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator
             provider: app_user_provider
             form_login:
                 login_path: app_utilisateur_signin

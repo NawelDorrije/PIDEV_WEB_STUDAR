@@ -8,6 +8,11 @@ parameters:
      app.sender_name: 'Studar'
      images_directory: '%kernel.project_dir%/public/uploads/images'
 services:
+    App\Security\GoogleAuthenticator:
+        arguments:
+            - '@knpu.oauth2.registry'
+            - '@doctrine.orm.entity_manager'
+            - '@router.default'
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.

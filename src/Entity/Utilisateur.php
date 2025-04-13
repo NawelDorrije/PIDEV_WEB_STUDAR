@@ -82,7 +82,15 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+    // public function getUserIdentifier(): string
+    // {
+    //     return $this->email;
+    // }
     
+    // public function getRoles(): array
+    // {
+    //     return [$this->role->value];
+    // }
     public function getPrenom(): ?string
     {
         return $this->prenom;

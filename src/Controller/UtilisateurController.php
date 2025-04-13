@@ -227,21 +227,19 @@ public function new(
         return $this->redirectToRoute('app_utilisateur_index', [], Response::HTTP_SEE_OTHER);
     }
 
-   
     #[Route('/signin', name: 'app_utilisateur_signin')]
-public function signin(AuthenticationUtils $authenticationUtils): Response
-{
-    // Redirect only if user is fully authenticated (not just remembered)
-    if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
-        return $this->redirectToRoute('app_home');
+    public function signin(AuthenticationUtils $authenticationUtils): Response
+    {
+        // Redirect only if user is fully authenticated (not just remembered)
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return $this->redirectToRoute('app_home');
+        }
+        
+        return $this->render('utilisateur/signin.html.twig', [
+            'last_username' => $authenticationUtils->getLastUsername(),
+            'error' => $authenticationUtils->getLastAuthenticationError()
+        ]);
     }
-    
-    return $this->render('utilisateur/signin.html.twig', [
-        'last_username' => $authenticationUtils->getLastUsername(),
-        'error' => $authenticationUtils->getLastAuthenticationError()
-    ]);
-}
-
 #[Route('/forgotPassword', name: 'app_utilisateur_forgotPassword', methods: ['GET', 'POST'])]
 public function forgotPassword(
     Request $request,
