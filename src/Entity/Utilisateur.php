@@ -29,6 +29,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 50)]
     private ?string $nom = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $image = null;
+
     #[ORM\Column(length: 50)]
     private ?string $prenom = null;
 
@@ -91,7 +94,25 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->nom = $nom;
         return $this;
     }
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+    public function setImage(string $image): static
+    {
+        $this->image = $image;
 
+        return $this;
+    }
+    // public function getUserIdentifier(): string
+    // {
+    //     return $this->email;
+    // }
+    
+    // public function getRoles(): array
+    // {
+    //     return [$this->role->value];
+    // }
     public function getPrenom(): ?string
     {
         return $this->prenom;
