@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion Transport{% endblock %}
+
+{% block navbar %}
+    {{ parent() }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1>Gestion Transport</h1>
+
+        <div class="row mt-4">
+            <!-- Voitures Section -->
+            <div class="col-md-6">
+                <h2>Dernières Voitures</h2>
+                <div class="row">
+                    {% for voiture in voitures %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                {% if voiture.photo %}
+                                    <img src="{{ asset('uploads/voitures/' ~ voiture.photo) }}" class="card-img-top" alt="Car Image">
+                                {% else %}
+                                    <img src="{{ asset('uploads/voitures/default-car.jpg') }}" class="card-img-top" alt="Default Car Image">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">Voiture #{{ voiture.idVoiture }}</h5>
+                                    <p class="card-text">
+                                        Modèle: {{ voiture.model }}<br>
+                                        Numéro de série: {{ voiture.numSerie }}<br>
+                                        Disponibilité: {{ voiture.disponibilite.value }}
+                                    </p>
+                                    <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}" class="btn btn-primary">Voir détails</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <a href="{{ path('app_voiture_index') }}" class="btn btn-secondary">Voir toutes les voitures</a>
+            </div>
+
+            <!-- Transports Section -->
+            <div class="col-md-6">
+                <h2>Derniers Transports</h2>
+                <div class="row">
+                    {% for transport in transports %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Transport #{{ transport.id }}</h5>
+                                    <p class="card-text">
+                                        Trajet: {{ transport.trajetEnKm }} km<br>
+                                        Tarif: {{ transport.tarif }} €<br>
+                                        Status: {{ transport.status.value }}<br>
+                                        {% if transport.voiture %}
+                                            Voiture: #{{ transport.voiture.idVoiture }}
+                                        {% else %}
+                                            Voiture: Non assignée
+                                        {% endif %}
+                                    </p>
+                                    <a href="{{ path('app_transport_show', {'id': transport.id}) }}" class="btn btn-primary">Voir détails</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <a href="{{ path('app_transport_index') }}" class="btn btn-secondary">Voir tous les transports</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+            width: 100%;
+        }
+    </style>
+{% endblock %}

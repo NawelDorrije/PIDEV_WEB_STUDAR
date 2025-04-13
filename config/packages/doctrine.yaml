@@ -11,7 +11,10 @@ doctrine:
 
 # Add mapping for enum to string
         mapping_types:
-            enum: string
+           enum: string
+        types:
+           voiture_disponibilite: App\Doctrine\DBAL\Types\VoitureDisponibiliteType
+           transport_status: App\Doctrine\DBAL\Types\TransportStatusType
 
     orm:
         auto_generate_proxy_classes: true

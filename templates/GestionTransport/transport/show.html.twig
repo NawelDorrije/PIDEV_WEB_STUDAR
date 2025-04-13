@@ -21,7 +21,7 @@
             </tr>
             <tr>
                 <th>Status</th>
-                <td>{{ transport.status }}</td>
+                <td>{{ transport.status.value }}</td>
             </tr>
             <tr>
                 <th>Timestamp</th>
@@ -34,5 +34,5 @@
 
     <a href="{{ path('app_transport_edit', {'id': transport.id}) }}">edit</a>
 
-    {{ include('transport/_delete_form.html.twig') }}
+    {{ include('GestionTransport/transport/_delete_form.html.twig') }}
 {% endblock %}

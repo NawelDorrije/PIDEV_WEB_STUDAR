@@ -2,9 +2,14 @@
 
 namespace App\Entity;
 
+use App\Enums\GestionTransport\VoitureDisponibilite;
 use App\Repository\VoitureRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+
 
 #[ORM\Entity(repositoryClass: VoitureRepository::class)]
 class Voiture
@@ -20,14 +25,29 @@ class Voiture
     #[ORM\Column(length: 12)]
     private ?string $numSerie = null;
 
-    #[ORM\Column(length: 200)]
-    private ?string $photo = null;
+    #[ORM\Column(length: 200)]  
+    private ?string $photo;
+    
+    #[Vich\UploadableField(mapping: 'voiture_photos', fileNameProperty: 'photo')]
+    #[Assert\Image(
+        maxSize: '5M',
+        maxSizeMessage: 'The image is too large ({{ size }} {{ suffix }}). Maximum allowed is {{ limit }} {{ suffix }}.',
+        mimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
+        mimeTypesMessage: 'Please upload a valid image (JPEG, PNG, GIF).'
+    )]
+    private ?File $photoFile = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $disponibilite = null;
+    #[ORM\Column(type:'voiture_disponibilite', length: 50)]
+    private ?VoitureDisponibilite $disponibilite = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $timestamp = null;
+
+    public function __construct()
+    {
+        $this->disponibilite = VoitureDisponibilite::DISPONIBLE; 
+        $this->timestamp = new \DateTimeImmutable();
+    }
 
     public function getIdVoiture(): ?int
     {
@@ -67,12 +87,12 @@ class Voiture
         return $this;
     }
 
-    public function getDisponibilite(): ?string
+    public function getDisponibilite(): ?VoitureDisponibilite
     {
         return $this->disponibilite;
     }
 
-    public function setDisponibilite(string $disponibilite): static
+    public function setDisponibilite(?VoitureDisponibilite $disponibilite): static
     {
         $this->disponibilite = $disponibilite;
         return $this;
@@ -88,4 +108,17 @@ class Voiture
         $this->timestamp = $timestamp;
         return $this;
     }
+    public function setPhotoFile(?File $photo = null): void
+    {
+        $this->photoFile = $photo;
+
+        if (null !== $photo) {
+            $this->timestamp = new \DateTime();
+        }
+    }
+
+    public function getPhotoFile(): ?File
+    {
+        return $this->photo;
+    }  
 }

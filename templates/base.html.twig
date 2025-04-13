@@ -71,7 +71,7 @@
                                     <ul class="dropdown-menu">
                                         <li><a href="{{ path('app_home') }}">Logements</a></li>
                                         <li><a href="{{ path('app_home') }}">Meubles</a></li>
-                                        <li><a href="{{ path('app_home') }}">Transports</a></li>
+                                        <li><a href="{{ path('app_transport_home') }}">Gestion Transport</a></li>
                                     </ul>
                                 </li>
 
@@ -120,7 +120,19 @@
         {% endblock %}
 
         {% block js %}
-            <!-- Tu peux ajouter des scripts supplémentaires ici dans les templates enfants -->
+           <script>
+    function previewImage(input) {
+        const preview = document.getElementById('image-preview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script> <!-- Tu peux ajouter des scripts supplémentaires ici dans les templates enfants -->
         {% endblock %}
     </body>
 </html>

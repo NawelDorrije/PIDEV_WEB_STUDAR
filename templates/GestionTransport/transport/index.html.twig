@@ -1,9 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Transport index{% endblock %}
+{% block title %}Les Transports{% endblock %}
 
 {% block body %}
-    <h1>Transport index</h1>
+    <h1>Les Transports </h1>
 
     <table class="table">
         <thead>
@@ -22,7 +22,7 @@
                 <td>{{ transport.id }}</td>
                 <td>{{ transport.trajetEnKm }}</td>
                 <td>{{ transport.tarif }}</td>
-                <td>{{ transport.status }}</td>
+                <td>{{ transport.status.value }}</td>
                 <td>{{ transport.timestamp ? transport.timestamp|date('Y-m-d H:i:s') : '' }}</td>
                 <td>
                     <a href="{{ path('app_transport_show', {'id': transport.id}) }}">show</a>

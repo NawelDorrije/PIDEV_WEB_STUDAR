@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\GestionTransport;
 
 use App\Entity\Transport;
 use App\Form\TransportType;
@@ -17,7 +17,7 @@ final class TransportController extends AbstractController
     #[Route(name: 'app_transport_index', methods: ['GET'])]
     public function index(TransportRepository $transportRepository): Response
     {
-        return $this->render('transport/index.html.twig', [
+        return $this->render('GestionTransport/transport/index.html.twig', [
             'transports' => $transportRepository->findAll(),
         ]);
     }
@@ -36,7 +36,7 @@ final class TransportController extends AbstractController
             return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('transport/new.html.twig', [
+        return $this->render('GestionTransport/transport/new.html.twig', [
             'transport' => $transport,
             'form' => $form,
         ]);
@@ -45,7 +45,7 @@ final class TransportController extends AbstractController
     #[Route('/{id}', name: 'app_transport_show', methods: ['GET'])]
     public function show(Transport $transport): Response
     {
-        return $this->render('transport/show.html.twig', [
+        return $this->render('GestionTransport/transport/show.html.twig', [
             'transport' => $transport,
         ]);
     }
@@ -62,7 +62,7 @@ final class TransportController extends AbstractController
             return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('transport/edit.html.twig', [
+        return $this->render('GestionTransport/transport/edit.html.twig', [
             'transport' => $transport,
             'form' => $form,
         ]);

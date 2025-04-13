@@ -21,11 +21,19 @@
             </tr>
             <tr>
                 <th>Photo</th>
-                <td>{{ voiture.photo }}</td>
+                <td>
+                    {% if voiture.photo %}
+                        <img src="{{ asset('public/uploads/voitures' ~ voiture.photo) }}"
+                         alt="{{ voiture.model }}" 
+                         style="max-width: 300px; max-height: 300px; border-radius: 10px;">
+                    {% else %}
+                        No photo available
+                    {% endif %}
+                </td>
             </tr>
             <tr>
                 <th>Disponibilite</th>
-                <td>{{ voiture.disponibilite }}</td>
+                <td>{{ voiture.disponibilite.value }}</td>
             </tr>
             <tr>
                 <th>Timestamp</th>
@@ -38,5 +46,5 @@
 
     <a href="{{ path('app_voiture_edit', {'idVoiture': voiture.idVoiture}) }}">edit</a>
 
-    {{ include('voiture/_delete_form.html.twig') }}
+    {{ include('GestionTransport/voiture/_delete_form.html.twig') }}
 {% endblock %}

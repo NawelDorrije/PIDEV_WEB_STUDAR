@@ -1,9 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Voiture index{% endblock %}
+{% block title %}Les Vehicules{% endblock %}
 
 {% block body %}
-    <h1>Voiture index</h1>
+    <h1>Les Vehicules</h1>
 
     <table class="table">
         <thead>
@@ -23,8 +23,17 @@
                 <td>{{ voiture.idVoiture }}</td>
                 <td>{{ voiture.model }}</td>
                 <td>{{ voiture.numSerie }}</td>
-                <td>{{ voiture.photo }}</td>
-                <td>{{ voiture.disponibilite }}</td>
+                <td>{% if voiture.photo %}
+                        <img src="{{ asset('public/uploads/voitures/' ~ voiture.photo) }}" 
+                             alt="{{ voiture.model }}" 
+                             style="max-height: 100px; max-height: 100px;border-radius: 10px;">
+                    {% else %}
+                        <img src="{{ asset('public/uploads/voitures/default-car.jpg' ~ voiture.photo) }}"
+                                alt="{{ voiture.model }}" 
+                                style="max-height: 100px; max-height: 100px;"> 
+                    {% endif %}
+                </td>
+                <td>{{ voiture.disponibilite.value }}</td>
                 <td>{{ voiture.timestamp ? voiture.timestamp|date('Y-m-d H:i:s') : '' }}</td>
                 <td>
                     <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}">show</a>
