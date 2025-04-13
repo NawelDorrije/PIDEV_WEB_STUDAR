@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Logement index{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('app') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('app') }}
+    {{ parent() }}
+{% endblock %}
+
+{% block importmap %}
+    {{ importmap('app') }}
+{% endblock %}
+
+{% block body %}
+    <div class="properties section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 offset-lg-4">
+                    <div class="section-heading text-center">
+                        <h6>| Logement</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                {% for logement in logements %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="item">
+                        {# Display the first image if available, otherwise use a fallback #}
+                        {% set firstImage = logement.imageLogements|first %}
+                        <a href="{{ path('app_logement_show', {'id': logement.id}) }}">
+                            <img src="{{ firstImage ? firstImage.url : 'assets/images/property-03.jpg' }}" alt="Image de {{ logement.adresse }}">
+                        </a>
+                        <span class="category">{{ logement.type }}</span>
+                        <h6>{{ logement.prix }} €</h6>
+                        <h4><a href="{{ path('app_logement_show', {'id': logement.id}) }}">{{ logement.adresse }}</a></h4>
+                        <ul>
+                           
+                            <strong>Option:</strong> 
+                                <span>
+                                    {% set options = [] %}
+                                </span>
+
+                                <li>   {% for logement_option in logement.logementOptions %}
+                                        {% set options = options|merge([logement_option.option.nomOption]) %}
+                                    {% endfor %}
+                                    {{ options|join(', ') ?: 'Aucune option' }}
+                            </li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="{{ path('app_logement_show', {'id': logement.id}) }}">show</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <a href="{{ path('app_logement_new') }}">Create new</a>
+{% endblock %}
+
+{% block js %}
+    {# Scripts supplémentaires #}
+    <script src="{{ asset('js/isotope.min.js') }}"></script>
+    <script src="{{ asset('js/owl-carousel.js') }}"></script>
+    {{ parent() }}
+{% endblock %}

@@ -1,0 +1,243 @@
+/* Rendezvous Specific Styles */
+.section {
+  padding: 10px 0;
+  background-color: #f8f9fa; 
+
+}
+
+.form-container {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.rendezvous-cards {
+  margin-top: 30px;
+}
+
+.rendezvous-card {
+  margin-bottom: 20px;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: transform 0.3s;
+  width: 1000px;
+}
+
+.rendezvous-card:hover {
+  transform: translateY(-5px);
+}
+
+.rendezvous-details {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.detail-item {
+  margin-bottom: 15px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .details-grid {
+      grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+      flex-direction: column;
+  }
+  
+  .action-buttons .btn {
+      width: 100%;
+      margin-bottom: 10px;
+  }
+
+  Timeline Style
+.timeline {
+  position: relative;
+  padding-left: 50px;
+  margin: 30px 0;
+    margin-left: 150px;
+
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #007bff;
+  
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+
+}
+
+
+
+.timeline-content {
+  position: relative;
+  padding-left: 20px;
+  border-left: 3px solid #007bff;
+}
+
+.timeline-content::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 15px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #007bff;
+  border: 3px solid white;
+}
+
+
+/* Calendar View Styles */
+#calendar {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.fc-event {
+  cursor: pointer;
+  border: none;
+  font-size: 0.9em;
+  padding: 2px 4px;
+}
+
+.fc-daygrid-day-events {
+  min-height: 0;
+}
+
+.fc-daygrid-day-number {
+  padding: 4px;
+}
+
+.fc-day-today {
+  background-color: rgba(255, 220, 178, 0.3) !important;
+}
+
+/* Highlight dates with appointments */
+.fc-daygrid-day-has-events {
+  background-color: rgba(255, 170, 128, 0.2);
+}
+
+/* Status colors */
+.fc-event-confirmee { background-color: #4CAF50; }
+.fc-event-en_attente { background-color: #FFC107; }
+.fc-event-refusee { background-color: #F44336; }
+
+/* In your CSS file */
+.btn.disabled {
+  opacity: 0.65;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+}
+
+
+/* Status Badges */
+.badge-confirmed {
+  background-color: #1cc88a;
+}
+
+.badge-pending {
+  background-color: #f6c23e;
+}
+
+.badge-refused {
+  background-color: #e74a3b;
+}
+
+/* Transport Specific Styles */
+.transport-card {
+  border-left: 4px solid #6c757d;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.transport-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.route-info {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.departure, .arrival {
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 4px;
+}
+
+.map-controls {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+}
+
+/* Status specific colors */
+.transport-card.confirmée {
+  border-left-color: #28a745;
+}
+
+.transport-card.en_attente {
+  border-left-color: #ffc107;
+}
+
+.transport-card.refusée {
+  border-left-color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .route-info strong {
+    font-weight: 600;
+    color: #333;
+}
+  
+  .route-info i.fa-arrow-right {
+      transform: rotate(90deg);
+      margin: 5px 0;
+  }
+  
+}
+
+
+}

@@ -1,0 +1,285 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Meubles à vendre
+{% endblock %}
+
+{% block body %}
+<!-- Styles existants -->
+<style>
+    /* Vous pouvez ajouter ici des styles spécifiques si nécessaire */
+</style>
+
+<div class="section meubles-a-vendre">
+    <div class="container" style="position: relative; z-index: 1;">
+        <!-- Conteneur pour l'arrière-plan flou -->
+        <div class="blur-background" id="blurBackground"></div>
+        <!-- Conteneur pour les toasts, centré -->
+        <div class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="section-heading">
+                    <h6>| Meubles à vendre</h6>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages flash -->
+        <div class="row">
+            <div class="col-lg-12">
+                {% for message in app.flashes('success') %}
+                    <div class="alert alert-success d-flex align-items-center" role="alert" style="margin-bottom: 25px;">
+                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Succès :">
+                            <use xlink:href="#check-circle-fill"/>
+                        </svg>
+                        <div>{{ message }}</div>
+                    </div>
+                {% endfor %}
+                {% for message in app.flashes('error') %}
+                    <div class="alert alert-danger d-flex align-items-center" role="alert" style="margin-bottom: 25px;">
+                        <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Erreur :">
+                            <use xlink:href="#exclamation-triangle-fill"/>
+                        </svg>
+                        <div>{{ message }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Liste des meubles -->
+        <div class="row g-4"> <!-- Ajout de g-4 pour un espacement uniforme comme dans Mes Meubles -->
+            {% if meubles|length > 0 %}
+                {% for meuble in meubles %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="furniture-card">
+                            <!-- Image -->
+                            <div class="furniture-image">
+                                <img src="{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
+                                     alt="{{ meuble.nom }}" 
+                                     class="img-fluid">
+                                <span class="status-badge {{ meuble.statut == 'disponible' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ meuble.statut|capitalize }}
+                                </span>
+                            </div>
+
+                            <!-- Card Body -->
+                            <div class="furniture-body p-3">
+                                <h5 class="furniture-title">{{ meuble.nom }}</h5>
+                                <p class="furniture-price text-primary fw-bold">{{ meuble.prix }} TND</p>
+                                <ul class="furniture-details list-unstyled">
+                                    <li>
+                                        <strong>Description:</strong> 
+                                        {{ meuble.description|length > 80 ? meuble.description|slice(0, 80) ~ '...' : meuble.description }}
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Card Actions -->
+                            <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                                <form action="{{ path('app_gestion_meubles_ajouter_panier', {'id': meuble.id}) }}" method="POST" class="add-to-cart-form">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('add_to_cart_' ~ meuble.id) }}">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm add-to-cart-btn">
+                                        <i class="bi bi-cart-plus me-1"></i> Ajouter
+                                    </button>
+                                </form>
+                                <!-- Bouton Détail -->
+                                <button type="button" 
+                                        class="btn btn-outline-primary btn-sm btn-detail" 
+                                        data-meuble-id="{{ meuble.id }}"
+                                        data-meuble-nom="{{ meuble.nom }}"
+                                        data-meuble-prix="{{ meuble.prix }}"
+                                        data-meuble-statut="{{ meuble.statut|capitalize }}"
+                                        data-meuble-vendeur="{{ meuble.cinVendeur }}"
+                                        data-meuble-description="{{ meuble.description }}"
+                                        data-meuble-image="{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}"
+                                        data-meuble-csrf="{{ csrf_token('add_to_cart_' ~ meuble.id) }}"
+                                        onclick="showMeubleToast(this)">
+                                    <i class="bi bi-eye me-1"></i> Détail
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-lg-12">
+                    <div class="alert alert-info text-center" role="alert" style="font-size: 1.2rem; padding: 25px;">
+                        Aucun meuble disponible actuellement. Revenez pour découvrir nos nouveautés !
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Speed Dial -->
+        <div class="speed-dial">
+            <div class="dropdown dropup">
+                <button class="btn btn-floating dropdown-toggle" type="button" id="speedDialMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-plus-lg" style="font-size: 1.5rem;"></i>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="speedDialMenu">
+                    <li>
+                        <a class="dropdown-item" href="{{ path('app_gestion_meubles_mes_meubles') }}">
+                            <i class="bi bi-chair"></i> Consulter mes meubles
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item">
+                            <i class="bi bi-clock-history" ></i> Historique 
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ path('app_gestion_meubles_lignes_panier') }}">
+                            <i class="bi bi-cart3"></i> Panier
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ path('app_gestion_meubles_meuble') }}">
+                            <i class="bi bi-gear"></i> Gérer les meubles
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SVG pour les messages flash -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    </symbol>
+    <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+    </symbol>
+</svg>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.add-to-cart-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const $form = $(this);
+            const $button = $form.find('.add-to-cart-btn');
+            $button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ajout...');
+
+            $.ajax({
+                url: $form.attr('action'),
+                method: 'POST',
+                data: $form.serialize(),
+                success: function(response) {
+                    if (response.warning) {
+                        alert(response.warning);
+                        $button.html('<i class="bi bi-cart-plus me-1"></i> Ajouter').prop('disabled', false);
+                    } else {
+                        alert(response.message);
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        }
+                        $button.html('<i class="bi bi-cart-plus me-1"></i> Ajouter').prop('disabled', false);
+                    }
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Une erreur est survenue';
+                    alert('Erreur: ' + error);
+                    $button.html('<i class="bi bi-cart-plus me-1"></i> Ajouter').prop('disabled', false);
+                }
+            });
+        });
+    });
+
+    // Fonction pour afficher un toast avec les détails du meuble
+    function showMeubleToast(button) {
+        const meuble = {
+            id: button.getAttribute('data-meuble-id'),
+            nom: button.getAttribute('data-meuble-nom'),
+            prix: button.getAttribute('data-meuble-prix'),
+            statut: button.getAttribute('data-meuble-statut'),
+            vendeur: button.getAttribute('data-meuble-vendeur'),
+            description: button.getAttribute('data-meuble-description'),
+            image: button.getAttribute('data-meuble-image'),
+            csrf: button.getAttribute('data-meuble-csrf')
+        };
+
+        // Création du toast avec image à gauche et infos à droite
+        const toastHTML = `
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">${meuble.nom}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    <img src="${meuble.image}" alt="${meuble.nom}">
+                    <div class="info-container">
+                        <p><strong>Prix:</strong> ${meuble.prix} TND</p>
+                        <p><strong>Statut:</strong> ${meuble.statut}</p>
+                        <p><strong>Vendeur:</strong> ${meuble.vendeur}</p>
+                        <p><strong>Description:</strong> ${meuble.description}</p>
+                        <form action="${'{{ path("app_gestion_meubles_ajouter_panier", {"id": "__ID__"}) }}'.replace('__ID__', meuble.id)}" method="POST" class="add-to-cart-form-toast">
+                            <input type="hidden" name="_token" value="${meuble.csrf}">
+                            <button type="submit" class="btn-add-to-cart">
+                                <i class="bi bi-cart-plus"></i> Ajouter au panier
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Ajout du toast au conteneur
+        const toastContainer = document.querySelector('.toast-container');
+        toastContainer.innerHTML = toastHTML;
+
+        // Afficher l'arrière-plan flou
+        const blurBackground = document.getElementById('blurBackground');
+        blurBackground.style.display = 'block';
+
+        // Initialisation et affichage du toast
+        const toastElement = toastContainer.querySelector('.toast');
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: false
+        });
+        toast.show();
+
+        // Masquer l'arrière-plan flou lorsque le toast est fermé
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            blurBackground.style.display = 'none';
+        });
+
+        // Gestion du bouton "Ajouter au panier" dans le toast
+        $(toastElement).find('.add-to-cart-form-toast').on('submit', function(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $button = $form.find('.btn-add-to-cart');
+            $button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ajout...');
+
+            $.ajax({
+                url: $form.attr('action'),
+                method: 'POST',
+                data: $form.serialize(),
+                success: function(response) {
+                    if (response.warning) {
+                        alert(response.warning);
+                        $button.html('<i class="bi bi-cart-plus"></i> Ajouter au panier').prop('disabled', false);
+                    } else {
+                        alert(response.message);
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        }
+                        $button.html('<i class="bi bi-cart-plus"></i> Ajouter au panier').prop('disabled', false);
+                        toast.hide();
+                        blurBackground.style.display = 'none';
+                    }
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Une erreur est survenue';
+                    alert('Erreur: ' + error);
+                    $button.html('<i class="bi bi-cart-plus"></i> Ajouter au panier').prop('disabled', false);
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

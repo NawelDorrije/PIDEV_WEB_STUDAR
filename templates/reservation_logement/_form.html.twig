@@ -1,0 +1,36 @@
+{{ form_start(form) }}
+    <div class="form-row">
+        <div class="form-group">
+            {{ form_label(form.dateDebut) }}
+            {{ form_widget(form.dateDebut, {'attr': {'class': 'reservationlogement-edit-input'}}) }}
+        </div>
+        <div class="form-group">
+            {{ form_label(form.dateFin) }}
+            {{ form_widget(form.dateFin, {'attr': {'class': 'reservationlogement-edit-input'}}) }}
+        </div>
+    </div>
+    
+    <div class="form-row">
+        <div class="form-group">
+            {{ form_label(form.cinProprietaire) }}
+            {{ form_widget(form.cinProprietaire, {'attr': {'class': 'reservationlogement-edit-input'}}) }}
+        </div>
+        <div class="form-group">
+            {{ form_label(form.cinEtudiant) }}
+            {{ form_widget(form.cinEtudiant, {'attr': {'class': 'reservationlogement-edit-input'}}) }}
+        </div>
+    </div>
+    
+    <div class="form-row">
+        <div class="form-group">
+            {{ form_label(form.idLogement) }}
+            {{ form_widget(form.idLogement, {'attr': {'class': 'reservationlogement-edit-input'}}) }}
+        </div>
+    </div>
+    
+    <div class="reservationlogement-edit-action-buttons">
+        <button type="submit" class="reservationlogement-edit-btn-save">
+            <i class="fas fa-save mr-2"></i> {{ button_label|default('Enregistrer') }}
+        </button>
+    </div>
+{{ form_end(form) }}

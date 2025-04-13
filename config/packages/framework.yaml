@@ -5,6 +5,12 @@ framework:
     http_method_override: false
     handle_all_throwables: true
 
+    # HTTP Client Configuration
+    http_client:
+        default_options:
+            headers:
+                'User-Agent': 'YourAppName'
+
     # Enables session support. Note that the session will ONLY be started if you read or write from it.
     # Remove or comment this section to explicitly disable session support.
     session:
