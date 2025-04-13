@@ -30,20 +30,7 @@ final class VoitureController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $photo = $form->get('photo')->getData();
-
-            if ($photo) {
-                $newFilename = uniqid().'.'.$photo->guessExtension();
-                
-                $photo->move(
-                    $this->getParameter('photos_directory'),
-                    $newFilename
-                );
-                $voiture->setPhoto($newFilename);
-            } else {
-                $voiture->setPhoto('default-car.jpg');
-            }
-
+            // Default photo handled in Voiture entity constructor
             $entityManager->persist($voiture);
             $entityManager->flush();
 
@@ -67,33 +54,10 @@ final class VoitureController extends AbstractController
     #[Route('/{idVoiture}/edit', name: 'app_voiture_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Voiture $voiture, EntityManagerInterface $entityManager): Response
     {
-        $currentPhoto = $voiture->getPhoto();
         $form = $this->createForm(VoitureType::class, $voiture);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $photo = $form->get('photo')->getData();
-            
-            if ($photo) {
-                $newFilename = uniqid().'.'.$photo->guessExtension();
-                
-                try {
-                    $photo->move(
-                        $this->getParameter('photos_directory'),
-                        $newFilename
-                    );
-                    $voiture->setPhoto($newFilename);
-                    
-                    // Delete old photo if it exists and isn't default
-                    if ($currentPhoto && $currentPhoto !== 'default-car.jpg') {
-                        $this->deletePhotoFile($currentPhoto);
-                    }
-                } catch (\Exception $e) {
-                    $this->addFlash('error', 'File upload failed: '.$e->getMessage());
-                    return $this->redirectToRoute('app_voiture_edit', ['idVoiture' => $voiture->getIdVoiture()]);
-                }
-            }
-
             $entityManager->flush();
             return $this->redirectToRoute('app_voiture_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -109,11 +73,6 @@ final class VoitureController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete'.$voiture->getIdVoiture(), $request->getPayload()->getString('_token'))) {
             try {
-                // Delete photo file if it exists and isn't default
-                if ($voiture->getPhoto() && $voiture->getPhoto() !== 'default-car.jpg') {
-                    $this->deletePhotoFile($voiture->getPhoto());
-                }
-                
                 $entityManager->remove($voiture);
                 $entityManager->flush();
             } catch (\Exception $e) {
@@ -122,21 +81,5 @@ final class VoitureController extends AbstractController
         }
 
         return $this->redirectToRoute('app_voiture_index', [], Response::HTTP_SEE_OTHER);
-    }
-
-    /**
-     * Helper method to safely delete photo files
-     */
-    private function deletePhotoFile(string $filename): void
-    {
-        $photoPath = $this->getParameter('photos_directory').'/'.basename($filename);
-        
-        if (file_exists($photoPath)) {
-            try {
-                unlink($photoPath);
-            } catch (\Exception $e) {
-                $this->addFlash('warning', 'Could not delete photo file: '.$e->getMessage());
-            }
-        }
     }
 }

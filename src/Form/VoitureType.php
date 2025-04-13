@@ -3,14 +3,15 @@
 namespace App\Form;
 
 use App\Entity\Voiture;
+use App\Entity\Utilisateur;
 use App\Enums\GestionTransport\VoitureDisponibilite;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\Image;
-use Symfony\Component\Form\Extension\Core\Type\FileType;
-use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Doctrine\ORM\EntityRepository;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 
 class VoitureType extends AbstractType
@@ -18,36 +19,47 @@ class VoitureType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('idVoiture', null, [
-                'label' => 'ID Voiture',
+            ->add('utilisateur', EntityType::class, [
+                'class' => Utilisateur::class,
+                'choice_label' => function ($utilisateur) {
+                    if (!$utilisateur) {
+                        return '';
+                    }
+                    return sprintf('%s - %s %s', 
+                        $utilisateur->getCin(),
+                        $utilisateur->getNom(),
+                        $utilisateur->getPrenom()
+                    );
+                },
+                'label' => 'CIN Utilisateur',
+                'placeholder' => 'Sélectionner un utilisateur',
+                'required' => true,
+                'query_builder' => function (EntityRepository $er) {
+                    return $er->createQueryBuilder('u')
+                        ->orderBy('u.cin', 'ASC');
+                }
             ])
             ->add('model')
             ->add('numSerie')
-            ->add('photo', FileType::class, [
+            ->add('photoFile', VichImageType::class, [
                 'label' => 'Photo',
-                'mapped' => false, // Important - this field isn't mapped to the entity
                 'required' => false,
-                'constraints' => [
-                    new Image([
-                        'maxSize' => '5M',
-                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
-                        'mimeTypesMessage' => 'Please upload a valid image (JPEG, PNG, GIF)'
-                    ])
-                ], 'attr' => [
-                       'accept' => 'image/*'
-                ]
-         ])
-                 
-            ->add('disponibilite',  ChoiceType::class, [
+                'allow_delete' => false,
+                'download_uri' => false,
+                'image_uri' => true,
+                'attr' => ['accept' => 'image/*']
+            ])
+
+            ->add('disponibilite', ChoiceType::class, [
                 'choices' => array_combine(
-                        array_map(fn($case) => $case->value, VoitureDisponibilite::cases()),
-                        VoitureDisponibilite::cases()
-                    ),
+                    array_map(fn($case) => $case->value, VoitureDisponibilite::cases()),
+                    VoitureDisponibilite::cases()
+                ),
                 'choice_value' => function (?VoitureDisponibilite $disponibilite) {
-                        return $disponibilite?->value;
-                    },
+                    return $disponibilite?->value;
+                },
                 'attr' => ['class' => 'form-select']
-                ]);
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
