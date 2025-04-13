@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Knp\Component\Pager\PaginatorInterface;
+use Knp\Snappy\Pdf;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 use Symfony\UX\Chartjs\Model\Chart;
 
@@ -175,6 +177,7 @@ final class CommandeController extends AbstractController
     
         // Graphique : Chiffre d'affaires par mois
         $caParMoisData = $commandeRepository->getChiffreAffairesParMois($periode);
+        dump($caParMoisData); // Ajoutez ceci avant de configurer le graphique
         $caChart = $chartBuilder->createChart(Chart::TYPE_BAR);
         $caChart->setData([
             'labels' => array_keys($caParMoisData),
@@ -231,4 +234,37 @@ final class CommandeController extends AbstractController
             'filtrePeriode' => $periode,
         ]);
     }
+
+    // #[Route('/commande/{id}/pdf', name: 'app_gestion_meubles_commande_pdf', methods: ['GET'])]
+    // public function downloadPdf(
+    //     Commande $commande,
+    //     Pdf $knpSnappyPdf,
+    //     CommandeRepository $commandeRepository
+    // ): Response {
+    //     //$this->denyAccessUnlessGranted('ROLE_USER');
+
+    //     // Vérifier que la commande appartient à l'utilisateur
+    //     if ($commande->getAcheteur() !== $this->getUser()) {
+    //         throw $this->createAccessDeniedException('Vous ne pouvez pas accéder à cette commande.');
+    //     }
+
+    //     // Générer le HTML à partir du template
+    //     $html = $this->renderView('gestion_meubles/commande/bon_commande_pdf.html.twig', [
+    //         'commande' => $commande,
+    //     ]);
+
+    //     // Générer le PDF
+    //     $pdfContent = $knpSnappyPdf->getOutputFromHtml($html);
+
+    //     // Créer la réponse
+    //     $response = new Response($pdfContent);
+    //     $disposition = $response->headers->makeDisposition(
+    //         ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+    //         sprintf('bon-commande-%s.pdf', $commande->getId())
+    //     );
+    //     $response->headers->set('Content-Type', 'application/pdf');
+    //     $response->headers->set('Content-Disposition', $disposition);
+
+    //     return $response;
+    // }
 }

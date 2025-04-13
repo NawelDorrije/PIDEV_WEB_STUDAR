@@ -299,29 +299,29 @@ class CommandeRepository extends ServiceEntityRepository
     }
 
     public function getChiffreAffairesParMois(string $periode = 'all'): array
-    {
-        $qb = $this->createQueryBuilder('c')
-            ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as mois, COALESCE(SUM(c.montantTotal), 0) as montant")
-            ->where('c.statut != :annulee')
-            ->setParameter('annulee', Commande::STATUT_ANNULEE)
-            ->groupBy('mois')
-            ->orderBy('mois', 'ASC');
+{
+    $qb = $this->createQueryBuilder('c')
+        ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as mois, COALESCE(SUM(c.montantTotal), 0) as montant")
+        ->where('c.statut != :annulee')
+        ->setParameter('annulee', Commande::STATUT_ANNULEE)
+        ->groupBy('mois')
+        ->orderBy('mois', 'ASC');
 
-        if ($periode === 'month') {
-            $qb->andWhere('c.dateCommande >= :start')
-               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
-        } elseif ($periode === 'year') {
-            $qb->andWhere('c.dateCommande >= :start')
-               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
-        }
-
-        $results = $qb->getQuery()->getResult();
-        $data = [];
-        foreach ($results as $row) {
-            $data[$row['mois']] = (float) $row['montant'];
-        }
-        return $data;
+    if ($periode === 'month') {
+        $qb->andWhere('c.dateCommande >= :start')
+           ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+    } elseif ($periode === 'year') {
+        $qb->andWhere('c.dateCommande >= :start')
+           ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
     }
+
+    $results = $qb->getQuery()->getResult();
+    $data = [];
+    foreach ($results as $row) {
+        $data[$row['mois']] = (float) $row['montant'];
+    }
+    return $data;
+}
 
     public function getVentesParJour(string $periode = 'all'): array
     {

@@ -13,7 +13,7 @@
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
         {% block css %}
-            <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}">
+            {# <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}"> #}
         {% endblock %}
         <style>
             /* Général */
@@ -127,19 +127,7 @@
                                         <i class="bi bi-cart3"></i>
                                         <span class="cart-count">3</span>
                                     </a>
-                                </li>
-
-                                <!-- Profile Dropdown -->
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link profile-icon" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-person-circle"></i>
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Mon profil</a></li>
-                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Paramètres</a></li>
-                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Déconnexion</a></li>
-                                    </ul>
-                                </li>
+                                </li>            
 
                                 {% if app.user %}
                                     <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>

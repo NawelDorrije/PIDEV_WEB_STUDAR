@@ -504,7 +504,6 @@ Header Style
 .header-area .main-nav .nav li {
   padding-left: 10px;
   padding-right: 10px;
-  height: 100px;
   line-height: 100px;
 }
 
@@ -514,7 +513,6 @@ Header Style
   padding-right: 20px;
   font-weight: 500;
   font-size: 15px;
-  height: 40px;
   line-height: 40px;
   text-transform: capitalize;
   color: #1e1e1e;
@@ -539,8 +537,6 @@ Header Style
 .header-area .main-nav .nav li:last-child a i {
   background-color: #f35525;
   display: inline-block;
-  width: 40px;
-  height: 40px;
   text-align: center;
   line-height: 40px;
   margin-right: 10px;
@@ -574,7 +570,6 @@ Header Style
   position: absolute;
   top: 23px;
   width: 32px;
-  height: 40px;
   text-indent: -9999em;
   z-index: 99;
   right: 20px;
@@ -701,7 +696,6 @@ Header Style
   .background-header .main-nav .nav li a,
   .header-area .main-nav .nav li a {
     line-height: 50px;
-    height: 50px;
     font-weight: 400;
     color: #1e1e1e;
     background-color: #fff;
@@ -711,7 +705,6 @@ Header Style
   .header-area .main-nav .nav li {
     border-top: 1px solid #ddd;
     background-color: #f1f0fe;
-    height: 50px;
     border-radius: 0px 0px 25px 25px;
   }
   .header-area .main-nav .nav {
@@ -1785,14 +1778,14 @@ body {
     line-height: 44px;
   }
   .best-deal .tabs-content ul.nav-tabs li {
-    margin: 0px 5px;
+    margin: 0px 1px;
   }
   .properties ul.properties-filter li a {
     font-size: 14px;
-    padding: 10px 15px;
+    padding: 5px 5px;
   }
   .properties ul.properties-filter li {
-    margin: 5px;
+    margin: px;
   }
   .header-area .main-nav .nav li:last-child {
     display: none;

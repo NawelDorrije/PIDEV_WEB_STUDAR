@@ -3,117 +3,457 @@
 {% block title %}Home - StuDar{% endblock %}
 
 {% block body %}
-    <!-- Carousel -->
-    <div id="housingCarousel" class="carousel slide main-banner" data-bs-ride="carousel" >
-        <!-- Indicators/dots -->
-        <div class="carousel-indicators">
-            <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="0" class="active" aria-label="Slide 1"></button>
-            <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-            <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-        </div>
+<style>
+/* Styles pour les cartes (furniture-card utilisé pour toutes les sections) */
+.furniture-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-        <!-- The slideshow/carousel -->
-        <div class="carousel-inner" >
-            <div class="carousel-item active item-1" >
-                <div class="header-text">
-                    <span class="category">Tunisie</span>
-                    <h2>Trouvez le logement étudiant de vos rêves en quelques clics !<br> Des offres adaptées à votre budget et à vos besoins, où que vous soyez.</h2>
-                </div>
-            </div>
-            <div class="carousel-item item-2">
-                <div class="header-text">
-                    <span class="category">Tunisie</span>
-                    <h2>Décorez votre intérieur sans vous ruiner !<br> Découvrez des meubles d'occasion de qualité à des prix imbattables.</h2>
-                </div>
-            </div>
-            <div class="carousel-item item-3">
-                <div class="header-text">
-                    <span class="category">Tunis</span>
-                    <h2>Déménagez vos meubles en toute simplicité !<br>Trouvez des transporteurs fiables et économiques pour faciliter vos achats.</h2>
-                </div>
-            </div>
-        </div>
+.furniture-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
 
-        <!-- Left and right controls/icons -->
-        <button class="carousel-control-prev" type="button" data-bs-target="#housingCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#housingCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
-        </button>
+.furniture-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.furniture-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.furniture-image img:hover {
+    transform: scale(1.05);
+}
+
+.furniture-image .status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #fff;
+}
+
+.furniture-image .status-badge.bg-success {
+    background: #10b981;
+}
+
+.furniture-image .status-badge.bg-danger {
+    background: #ef4444;
+}
+
+.furniture-body {
+    padding: 1rem;
+}
+
+.furniture-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.furniture-price {
+    font-size: 1.1rem;
+    color: #10b981;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.furniture-details {
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.furniture-details li {
+    margin-bottom: 0.5rem;
+}
+
+.furniture-actions {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.furniture-actions .btn-outline-primary {
+    border-color: #6366f1;
+    color: #6366f1;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.furniture-actions .btn-outline-primary:hover {
+    background: #6366f1;
+    color: #fff;
+}
+
+/* Pop-up Styles - Image à gauche, détails à droite */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.popup-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 800px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border-left: 4px solid #6366f1;
+    transition: transform 0.3s ease;
+    transform: scale(0.98);
+    display: flex;
+    gap: 2rem;
+}
+
+.popup-overlay.active .popup-content {
+    transform: scale(1);
+}
+
+.popup-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6b7280;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s ease, background 0.3s ease;
+}
+
+.popup-close:hover {
+    color: #1f2937;
+    background: #e5e7eb;
+}
+
+.popup-details {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+}
+
+.popup-details .meuble-image-section {
+    flex: 0 0 45%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.popup-details .meuble-image-section h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0;
+    text-align: left;
+    position: relative;
+}
+
+.popup-details .meuble-image-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: #10b981;
+}
+
+.popup-details .meuble-image-section img {
+    max-height: 350px;
+    width: 100%;
+    max-width: 250px;
+    min-width: 250px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    transition: transform 0.3s ease;
+}
+
+.popup-details .meuble-image-section img:hover {
+    transform: scale(1.03);
+}
+
+.popup-details .meuble-info {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+.popup-details .meuble-info p {
+    margin: 0.5rem 0;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.popup-details .meuble-info p:last-child {
+    border-bottom: none;
+}
+
+.popup-details .meuble-info i {
+    font-size: 1.1rem;
+    color: #6b7280;
+}
+
+.popup-details .meuble-info .nom i { color: #6366f1; }
+.popup-details .meuble-info .description i { color: #f59e0b; }
+.popup-details .meuble-info .prix i { color: #10b981; }
+.popup-details .meuble-info .statut i { color: #ef4444; }
+.popup-details .meuble-info .vendeur-nom i { color: #06b6d4; }
+.popup-details .meuble-info .vendeur-email i { color: #06b6d4; }
+.popup-details .meuble-info .vendeur-tel i { color: #06b6d4; }
+
+.popup-details .meuble-info .prix span {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.popup-details .meuble-info .statut span {
+    background: #fef2f2;
+    color: #ef4444;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.popup-details .meuble-info strong {
+    color: #1f2937;
+    font-weight: 600;
+    flex: 0 0 35%;
+}
+
+.popup-details .add-to-cart-form {
+    margin-top: 1rem;
+}
+
+.popup-details .add-to-cart-form .btn-add-to-cart {
+    background: #f97316;
+    color: #fff;
+    border: 2px solid #f97316;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
+    width: 100%;
+}
+
+.popup-details .add-to-cart-form .btn-add-to-cart:hover {
+    background: #ea580c;
+    border-color: #ea580c;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .furniture-image img {
+        height: 180px;
+    }
+
+    .furniture-title {
+        font-size: 1.1rem;
+    }
+
+    .furniture-price {
+        font-size: 1rem;
+    }
+
+    .popup-content {
+        flex-direction: column;
+        padding: 1.5rem;
+    }
+
+    .popup-details .meuble-image-section {
+        flex: none;
+    }
+
+    .popup-details .meuble-image-section img {
+        max-height: 250px;
+        max-width: 100%;
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .popup-details .meuble-image-section h2 {
+        font-size: 1.5rem;
+    }
+
+    .popup-details .meuble-info p {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .popup-details .meuble-info strong {
+        flex: none;
+    }
+}
+</style>
+
+<!-- Carousel -->
+<div id="housingCarousel" class="carousel slide main-banner" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="0" class="active" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
     </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active item-1">
+            <div class="header-text">
+                <span class="category">Tunisie</span>
+                <h2>Trouvez le logement étudiant de vos rêves en quelques clics !<br> Des offres adaptées à votre budget et à vos besoins, où que vous soyez.</h2>
+            </div>
+        </div>
+        <div class="carousel-item item-2">
+            <div class="header-text">
+                <span class="category">Tunisie</span>
+                <h2>Décorez votre intérieur sans vous ruiner !<br> Découvrez des meubles d'occasion de qualité à des prix imbattables.</h2>
+            </div>
+        </div>
+        <div class="carousel-item item-3">
+            <div class="header-text">
+                <span class="category">Tunis</span>
+                <h2>Déménagez vos meubles en toute simplicité !<br>Trouvez des transporteurs fiables et économiques pour faciliter vos achats.</h2>
+            </div>
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#housingCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#housingCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
 
+<!-- Section Logement -->
 <div class="properties section">
     <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Logement</h6>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-01.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$2.264.000</h6>
-            <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
-            <ul>
-              <li>Bedrooms: <span>8</span></li>
-              <li>Bathrooms: <span>8</span></li>
-              <li>Area: <span>545m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>6 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
+        <div class="row">
+            <div class="col-lg-4 offset-lg-4">
+                <div class="section-heading text-center">
+                    <h6>| Logement</h6>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-02.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.180.000</h6>
-            <h4><a href="#">54 Mid Street Florida, OR 27001</a></h4>
-            <ul>
-              <li>Bedrooms: <span>6</span></li>
-              <li>Bathrooms: <span>5</span></li>
-              <li>Area: <span>450m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>8 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="furniture-card">
+                    <div class="furniture-image">
+                        <img src="{{ asset('assets/images/property-01.jpg') }}" alt="Luxury Villa" class="img-fluid">
+                        <span class="status-badge bg-success">Disponible</span>
+                    </div>
+                    <div class="furniture-body p-3">
+                        <h5 class="furniture-title">Luxury Villa</h5>
+                        <p class="furniture-price">$2.264.000</p>
+                        <ul class="furniture-details list-unstyled">
+                            <li><strong>Adresse:</strong> 18 New Street Miami, OR 97219</li>
+                            <li><strong>Chambres:</strong> 8</li>
+                            <li><strong>Salles de bain:</strong> 8</li>
+                            <li><strong>Surface:</strong> 545m²</li>
+                            <li><strong>Étages:</strong> 3</li>
+                            <li><strong>Parking:</strong> 6 places</li>
+                        </ul>
+                    </div>
+                    <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Planifier une visite</a>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-03.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.460.000</h6>
-            <h4><a href="#">26 Old Street Miami, OR 38540</a></h4>
-            <ul>
-              <li>Bedrooms: <span>5</span></li>
-              <li>Bathrooms: <span>4</span></li>
-              <li>Area: <span>225m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>10 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
+            <div class="col-lg-4 col-md-6">
+                <div class="furniture-card">
+                    <div class="furniture-image">
+                        <img src="{{ asset('assets/images/property-02.jpg') }}" alt="Luxury Villa" class="img-fluid">
+                        <span class="status-badge bg-success">Disponible</span>
+                    </div>
+                    <div class="furniture-body p-3">
+                        <h5 class="furniture-title">Luxury Villa</h5>
+                        <p class="furniture-price">$1.180.000</p>
+                        <ul class="furniture-details list-unstyled">
+                            <li><strong>Adresse:</strong> 54 Mid Street Florida, OR 27001</li>
+                            <li><strong>Chambres:</strong> 6</li>
+                            <li><strong>Salles de bain:</strong> 5</li>
+                            <li><strong>Surface:</strong> 450m²</li>
+                            <li><strong>Étages:</strong> 3</li>
+                            <li><strong>Parking:</strong> 8 places</li>
+                        </ul>
+                    </div>
+                    <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Planifier une visite</a>
+                    </div>
+                </div>
             </div>
-          </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="furniture-card">
+                    <div class="furniture-image">
+                        <img src="{{ asset('assets/images/property-03.jpg') }}" alt="Luxury Villa" class="img-fluid">
+                        <span class="status-badge bg-success">Disponible</span>
+                    </div>
+                    <div class="furniture-body p-3">
+                        <h5 class="furniture-title">Luxury Villa</h5>
+                        <p class="furniture-price">$1.460.000</p>
+                        <ul class="furniture-details list-unstyled">
+                            <li><strong>Adresse:</strong> 26 Old Street Miami, OR 38540</li>
+                            <li><strong>Chambres:</strong> 5</li>
+                            <li><strong>Salles de bain:</strong> 4</li>
+                            <li><strong>Surface:</strong> 225m²</li>
+                            <li><strong>Étages:</strong> 3</li>
+                            <li><strong>Parking:</strong> 10 places</li>
+                        </ul>
+                    </div>
+                    <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Planifier une visite</a>
+                    </div>
+                </div>
+            </div>
         </div>
-     
-      </div>
     </div>
-  </div>
-<div class="properties section">
+</div>
+
+<!-- Section Meubles -->
+<div class="properties section meubles-a-vendre">
     <div class="container">
         <div class="row">
             <div class="col-lg-4 offset-lg-4">
@@ -122,120 +462,316 @@
                 </div>
             </div>
         </div>
-        <div class="row">
-            {% for meuble in meubles|slice(0, 3) %}
-                <div class="col-lg-4 col-md-6">
-                    <div class="item">
-                        <a href="#"><img src="{{ asset('images/' ~ meuble.image) }}" alt="{{ meuble.nom }}"></a>
-                        <div class="item-content">
-                            <span class="category">{{ meuble.nom }}</span>
-                            <h4>{{ meuble.description|length > 50 ? meuble.description|slice(0, 50) ~ '...' : meuble.description }}</h4>
-                            <div class="price">{{ meuble.prix }} TND</div>
-                            <div class="main-button">
-                                <a href="#">Contacter</a>
+        <div class="row g-4">
+            {% if meubles|length > 0 %}
+                {% for meuble in meubles|slice(0, 3) %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="furniture-card" data-id="{{ meuble.id }}">
+                            <div class="furniture-image">
+                                <img src="{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
+                                     alt="{{ meuble.nom }}" 
+                                     class="img-fluid">
+                                <span class="status-badge {{ meuble.statut == 'disponible' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ meuble.statut|capitalize }}
+                                </span>
+                            </div>
+                            <div class="furniture-body p-3">
+                                <h5 class="furniture-title">{{ meuble.nom }}</h5>
+                                <p class="furniture-price">{{ meuble.prix }} TND</p>
+                                <ul class="furniture-details list-unstyled">
+                                    <li>
+                                        <strong>Description:</strong> 
+                                        {{ meuble.description|length > 80 ? meuble.description|slice(0, 80) ~ '...' : meuble.description }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                                {% if utilisateur %}
+                                    <form action="{{ path('app_gestion_meubles_ajouter_panier', {'id': meuble.id}) }}" method="POST" class="add-to-cart-form">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('add_to_cart_' ~ meuble.id) }}">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm add-to-cart-btn">
+                                            <i class="bi bi-cart-plus me-1"></i> Ajouter
+                                        </button>
+                                    </form>
+                                    <button type="button" 
+                                            class="btn btn-outline-primary btn-sm btn-detail" 
+                                            data-meuble-id="{{ meuble.id }}">
+                                        <i class="bi bi-eye me-1"></i> Détail
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('app_login') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-cart-plus me-1"></i> Connectez-vous pour ajouter
+                                    </a>
+                                    <a href="{{ path('app_login') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i> Connectez-vous pour voir
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
-                </div>
+                {% endfor %}
             {% else %}
                 <div class="col-12">
-                    <p>Aucun meuble disponible pour le moment.</p>
+                    <div class="alert alert-info text-center" role="alert" style="font-size: 1.2rem; padding: 25px;">
+                        Aucun meuble disponible pour le moment.
+                    </div>
                 </div>
-            {% endfor %}
+            {% endif %}
         </div>
     </div>
 </div>
-  <div class="properties section">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Transport</h6>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-01.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$2.264.000</h6>
-            <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
-            <ul>
-              <li>Bedrooms: <span>8</span></li>
-              <li>Bathrooms: <span>8</span></li>
-              <li>Area: <span>545m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>6 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-02.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.180.000</h6>
-            <h4><a href="#">54 Mid Street Florida, OR 27001</a></h4>
-            <ul>
-              <li>Bedrooms: <span>6</span></li>
-              <li>Bathrooms: <span>5</span></li>
-              <li>Area: <span>450m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>8 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-03.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.460.000</h6>
-            <h4><a href="#">26 Old Street Miami, OR 38540</a></h4>
-            <ul>
-              <li>Bedrooms: <span>5</span></li>
-              <li>Bathrooms: <span>4</span></li>
-              <li>Area: <span>225m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>10 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-     
-      </div>
-    </div>
-  </div>
-  <div class="video section">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Video View</h6>
-            <h2>Get Closer View & Different Feeling</h2>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="video-content">
+<!-- Section Transport -->
+<div class="properties section">
     <div class="container">
-      <div class="row">
-        <div class="col-lg-10 offset-lg-1">
-          <div class="video-frame">
-            <img src="assets/images/video-frame.jpg" alt="">
-            <a href="https://youtube.com" target="_blank"><i class="fa fa-play"></i></a>
-          </div>
+        <div class="row">
+            <div class="col-lg-4 offset-lg-4">
+                <div class="section-heading text-center">
+                    <h6>| Transport</h6>
+                </div>
+            </div>
         </div>
-      </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="furniture-card">
+                    <div class="furniture-image">
+                        <img src="{{ asset('assets/images/property-01.jpg') }}" alt="Transport Service 1" class="img-fluid">
+                        <span class="status-badge bg-success">Disponible</span>
+                    </div>
+                    <div class="furniture-body p-3">
+                        <h5 class="furniture-title">Transport Service 1</h5>
+                        <p class="furniture-price">$200</p>
+                        <ul class="furniture-details list-unstyled">
+                            <li><strong>Description:</strong> Service de transport fiable pour meubles volumineux</li>
+                            <li><strong>Ville:</strong> Tunis</li>
+                            <li><strong>Capacité:</strong> Jusqu'à 500kg</li>
+                        </ul>
+                    </div>
+                    <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Réserver</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="furniture-card">
+                    <div class="furniture-image">
+                        <img src="{{ asset('assets/images/property-02.jpg') }}" alt="Transport Service 2" class="img-fluid">
+                        <span class="status-badge bg-success">Disponible</span>
+                    </div>
+                    <div class="furniture-body p-3">
+                        <h5 class="furniture-title">Transport Service 2</h5>
+                        <p class="furniture-price">$150</p>
+                        <ul class="furniture-details list-unstyled">
+                            <li><strong>Description:</strong> Transport rapide pour petits meubles</li>
+                            <li><strong>Ville:</strong> Sfax</li>
+                            <li><strong>Capacité:</strong> Jusqu'à 300kg</li>
+                        </ul>
+                    </div>
+                    <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Réserver</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="furniture-card">
+                    <div class="furniture-image">
+                        <img src="{{ asset('assets/images/property-03.jpg') }}" alt="Transport Service 3" class="img-fluid">
+                        <span class="status-badge bg-success">Disponible</span>
+                    </div>
+                    <div class="furniture-body p-3">
+                        <h5 class="furniture-title">Transport Service 3</h5>
+                        <p class="furniture-price">$250</p>
+                        <ul class="furniture-details list-unstyled">
+                            <li><strong>Description:</strong> Transport longue distance pour meubles</li>
+                            <li><strong>Ville:</strong> Sousse</li>
+                            <li><strong>Capacité:</strong> Jusqu'à 800kg</li>
+                        </ul>
+                    </div>
+                    <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                        <a href="#" class="btn btn-outline-primary btn-sm">Réserver</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
+
+<!-- Section Vidéo -->
+<div class="video section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 offset-lg-4">
+                <div class="section-heading text-center">
+                    <h6>| Video View</h6>
+                    <h2>Get Closer View & Different Feeling</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="video-content">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                <div class="video-frame">
+                    <img src="{{ asset('assets/images/video-frame.jpg') }}" alt="">
+                    <a href="https://youtube.com" target="_blank"><i class="fa fa-play"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pop-up pour les détails du meuble -->
+<div class="popup-overlay" id="meuble-popup">
+    <div class="popup-content">
+        <button class="popup-close">×</button>
+        <div class="popup-details" id="meuble-popup-details">
+            <!-- Les détails seront injectés via JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+// Gestion AJAX pour l'ajout au panier
+$(document).ready(function() {
+    $('.add-to-cart-form').on('submit', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $button = $form.find('.add-to-cart-btn');
+        $button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ajout...');
+
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            success: function(response) {
+                if (response.warning) {
+                    alert(response.warning);
+                    $button.html('<i class="bi bi-cart-plus me-1"></i> Ajouter').prop('disabled', false);
+                } else {
+                    alert(response.message);
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    }
+                    $button.html('<i class="bi bi-cart-plus me-1"></i> Ajouter').prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.error : 'Une erreur est survenue';
+                alert('Erreur: ' + error);
+                $button.html('<i class="bi bi-cart-plus me-1"></i> Ajouter').prop('disabled', false);
+            }
+        });
+    });
+
+    // Gestion AJAX pour l'ajout au panier depuis la pop-up
+    $(document).on('submit', '.add-to-cart-form-popup', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $button = $form.find('.btn-add-to-cart');
+        $button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Ajout...');
+
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            success: function(response) {
+                if (response.warning) {
+                    alert(response.warning);
+                    $button.html('<i class="bi bi-cart-plus me-2"></i>Ajouter au panier').prop('disabled', false);
+                } else {
+                    alert(response.message);
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    }
+                    $button.html('<i class="bi bi-cart-plus me-2"></i>Ajouter au panier').prop('disabled', false);
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.error : 'Une erreur est survenue';
+                alert('Erreur: ' + error);
+                $button.html('<i class="bi bi-cart-plus me-2"></i>Ajouter au panier').prop('disabled', false);
+            }
+        });
+    });
+
+    // Gestion de la pop-up pour les meubles
+    const cards = document.querySelectorAll('.btn-detail');
+    const popup = document.getElementById('meuble-popup');
+    const popupDetails = document.getElementById('meuble-popup-details');
+    const popupClose = document.querySelector('#meuble-popup .popup-close');
+
+    // Données des meubles
+    const meublesData = {
+        {% for meuble in meubles %}
+            "{{ meuble.id }}": {
+                id: "{{ meuble.id }}",
+                nom: "{{ meuble.nom }}",
+                description: "{{ meuble.description|default('Non fournie') }}",
+                prix: "{{ meuble.prix|number_format(2, ',', ' ') }} TND",
+                statut: "{{ meuble.statut|capitalize }}",
+                vendeurNom: "{{ meuble.vendeur.nom }}",
+                vendeurPrenom: "{{ meuble.vendeur.prenom }}",
+                vendeurEmail: "{{ meuble.vendeur.email }}",
+                vendeurTel: "{{ meuble.vendeur.numTel }}",
+                image: "{% if meuble.image %}{{ asset('images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}",
+                csrf: "{{ csrf_token('add_to_cart_' ~ meuble.id) }}"
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // Afficher la pop-up
+    cards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            const meubleId = card.getAttribute('data-meuble-id');
+            const meuble = meublesData[meubleId];
+            if (meuble) {
+                const addToCartUrl = "{{ path('app_gestion_meubles_ajouter_panier', {'id': 'MEUBLE_ID'}) }}".replace('MEUBLE_ID', meuble.id);
+                
+                popupDetails.innerHTML = `
+                    <div class="meuble-image-section">
+                        <h2>Détails du meuble</h2>
+                        <img src="${meuble.image}" alt="${meuble.nom}">
+                    </div>
+                    <div class="meuble-info">
+                        <p class="nom"><i class="bi bi-tag-fill"></i> <strong>Nom:</strong> <span>${meuble.nom}</span></p>
+                        <p class="description"><i class="bi bi-file-text"></i> <strong>Description:</strong> <span>${meuble.description}</span></p>
+                        <p class="prix"><i class="bi bi-currency-dollar"></i> <strong>Prix:</strong> <span>${meuble.prix}</span></p>
+                        <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${meuble.statut}</span></p>
+                        <p class="vendeur-nom"><i class="bi bi-person"></i> <strong>Vendeur:</strong> <span>${meuble.vendeurPrenom} ${meuble.vendeurNom}</span></p>
+                        <p class="vendeur-email"><i class="bi bi-envelope"></i> <strong>Email:</strong> <span>${meuble.vendeurEmail}</span></p>
+                        <p class="vendeur-tel"><i class="bi bi-telephone"></i> <strong>Téléphone:</strong> <span>${meuble.vendeurTel}</span></p>
+                        <form action="${addToCartUrl}" method="POST" class="add-to-cart-form-popup">
+                            <input type="hidden" name="_token" value="${meuble.csrf}">
+                            <button type="submit" class="btn btn-add-to-cart">
+                                <i class="bi bi-cart-plus me-2"></i>Ajouter au panier
+                            </button>
+                        </form>
+                    </div>
+                `;
+                popup.style.display = 'flex';
+                popup.classList.add('active');
+            }
+        });
+    });
+
+    // Fermer la pop-up
+    popupClose.addEventListener('click', () => {
+        popup.style.display = 'none';
+        popup.classList.remove('active');
+    });
+
+    // Fermer la pop-up en cliquant à l'extérieur
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) {
+            popup.style.display = 'none';
+            popup.classList.remove('active');
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -185,36 +185,36 @@ public function isDeletable(): bool
     return true;
 }
 
-public function getDistance(): ?float
-{
-    if (!$this->hasCoordinates()) {
-        return null;
-    }
+// public function getDistance(): ?float
+// {
+//     if (!$this->hasCoordinates()) {
+//         return null;
+//     }
     
-    // Formule haversine pour calculer la distance en km
-    $latFrom = deg2rad($this->departureLat);
-    $lonFrom = deg2rad($this->departureLng);
-    $latTo = deg2rad($this->destinationLat);
-    $lonTo = deg2rad($this->destinationLng);
+//     // Formule haversine pour calculer la distance en km
+//     $latFrom = deg2rad($this->departureLat);
+//     $lonFrom = deg2rad($this->departureLng);
+//     $latTo = deg2rad($this->destinationLat);
+//     $lonTo = deg2rad($this->destinationLng);
 
-    $latDelta = $latTo - $latFrom;
-    $lonDelta = $lonTo - $lonFrom;
+//     $latDelta = $latTo - $latFrom;
+//     $lonDelta = $lonTo - $lonFrom;
 
-    $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-        cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+//     $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+//         cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
     
-    return $angle * 6371; // Rayon de la Terre en km
-}
+//     return $angle * 6371; // Rayon de la Terre en km
+// }
 
-public function getEstimatedTime(): ?string
-{
-    $distance = $this->getDistance();
-    if ($distance === null) {
-        return null;
-    }
+// public function getEstimatedTime(): ?string
+// {
+//     $distance = $this->getDistance();
+//     if ($distance === null) {
+//         return null;
+//     }
     
-    // Estimation: 1 minute par km (modifiable selon votre besoin)
-    $minutes = round($distance);
-    return $minutes . ' min';
-}
+//     // Estimation: 1 minute par km (modifiable selon votre besoin)
+//     $minutes = round($distance);
+//     return $minutes . ' min';
+// }
 }
