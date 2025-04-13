@@ -1,0 +1,154 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .profile-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin: 30px auto 20px;
+            width: 800px;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 30px;
+            border: 3px solid #f35525;
+        }
+        .profile-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin: 30px auto 20px; /* Center the container */
+            width: 1000px;
+        }
+        .profile-row {
+            display: flex
+;
+    align-items: center;
+    padding: 5px 35px;
+    border-bottom: e;
+    padding-left: 67px;
+    height: 110px;
+    width: 1000px;
+
+        }
+        .profile-row:last-child {
+            border-bottom: none;
+        }
+        .profile-icon {
+            width: 59px;
+            height: 57px;
+            margin-right: 99px;
+        }
+        .profile-content {
+            flex-grow: 1;
+        }
+        .profile-label {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 5px;
+            width: 200px;
+        }
+        .profile-value {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center; /* This centers the buttons */
+            margin: 30px auto; /* Center the container and add vertical spacing */
+            gap: 15px;
+            width: 800px; /* Match profile container width */
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            min-width: 120px; /* Equal width for both buttons */
+        }
+        .btn-primary {
+            background-color: #f35525;
+            color: white;
+            border: none;
+        }
+        .btn-secondary {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container profile-container">
+
+      <!-- First Name Row -->
+    <div class="profile-row">
+        {% if utilisateur.image %}
+        <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
+        {% else %}
+        <div class="profile-avatar" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-user" style="font-size: 40px; color: #777;"></i>
+        </div>
+    {% endif %}       
+     <div class="profile-content">
+            <div class="profile-label">Prénom</div>
+            <div class="profile-value">{{ utilisateur.prenom }}</div>
+        </div>
+        <div class="profile-content">
+            <div class="profile-label">Nom</div>
+            <div class="profile-value">{{ utilisateur.nom }}</div>
+        </div>
+    </div>
+    <div class="profile-row">
+        <img src="{{ asset('images/id-icon.png') }}" alt="CIN" class="profile-icon">
+        <div class="profile-content">
+            <div class="profile-label">CIN</div>
+            <div class="profile-value">{{ utilisateur.cin }}</div>
+        </div>
+        <img style="width: 55px;height: 40px;" src="{{ asset('images/email-icon.png') }}" alt="Email" class="profile-icon">
+        <div class="profile-content">
+            <div class="profile-label">Email</div>
+            <div class="profile-value">{{ utilisateur.email }}</div>
+        </div>
+    </div>
+
+
+    <!-- Phone Row -->
+    <div class="profile-row">
+        <img src="{{ asset('images/phone-icon1.png') }}" alt="Phone" class="profile-icon">
+        <div class="profile-content">
+            <div class="profile-label">Numéro de téléphone</div>
+            <div class="profile-value">{{ utilisateur.numTel }}</div>
+        </div>
+        <img src="{{ asset('images/role-icon.png') }}" alt="Role" class="profile-icon">
+        <div class="profile-content">
+            <div class="profile-label">Role</div>
+            <div class="profile-value">{{ utilisateur.role.value }}</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="button-container">
+    <a href="{{ path('app_utilisateur_edit', {'cin': utilisateur.cin}) }}" class="btn btn-primary">Modifier</a>
+    <a href="{{ path('app_utilisateur_index') }}" class="btn btn-secondary">Retourner</a>
+</div>
+{% endblock %}

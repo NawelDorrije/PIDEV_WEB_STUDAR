@@ -1,0 +1,323 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit User Profile{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .edit-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin: 30px auto 20px;
+            width: 800px;
+        }
+        
+        .edit-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Profile Picture Section */
+        .avatar-upload-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #f35525;
+            flex-shrink: 0;
+        }
+        
+        .avatar-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #f35525;
+            color: #777;
+            font-size: 30px;
+            flex-shrink: 0;
+        }
+        
+        .file-upload-wrapper {
+            flex-grow: 1;
+        }
+        
+        .file-upload-field {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px 15px;
+            background: #f9f9f9;
+        }
+        
+        .file-upload-btn {
+            background: #f35525;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 15px;
+            white-space: nowrap;
+        }
+        
+        .file-name {
+            font-size: 14px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        /* Form Fields */
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .form-control-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+            font-size: 16px;
+        }
+        
+        .readonly-field {
+            background-color: #f9f9f9;
+            color: #666;
+        }
+        
+        /* Buttons */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            min-width: 120px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .btn-primary {
+            background-color: #f35525;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #e04b1b;
+        }
+        
+        .btn-secondary {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e9e9e9;
+        }
+        
+        /* Error Messages */
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="edit-container">
+    <div class="edit-header">
+        <h4>Modifier votre profile</h4>
+    </div>
+
+    {{ form_start(form, {
+        'attr': {
+            'class': 'user-edit-form',
+            'enctype': 'multipart/form-data'
+        },
+        'method': 'POST',
+        'action': path('app_utilisateur_edit', {'cin': utilisateur.cin})
+    }) }}
+    
+    {{ form_widget(form._token) }}
+    
+    <!-- Profile Picture Upload - Now inline -->
+    <div class="avatar-upload-container">
+        {% if utilisateur.image %}
+            <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" 
+                 alt="Profile Image" 
+                 class="profile-avatar"
+                 id="avatar-preview">
+        {% else %}
+            <div class="avatar-placeholder" id="avatar-preview">
+                <i class="fas fa-user"></i>
+            </div>
+        {% endif %}
+        
+        <div class="file-upload-wrapper">
+            <div class="file-upload-field">
+                <label class="file-upload-btn">
+                    Choose File
+                    {{ form_widget(form.imageFile, {
+                        'attr': {
+                            'class': 'file-input',
+                            'onchange': 'updateFileName(this)'
+                        }
+                    }) }}
+                </label>
+                <span id="file-name" class="file-name">No file chosen</span>
+            </div>
+            {% if form.imageFile.vars.errors %}
+                <div class="error-message">
+                    {% for error in form.imageFile.vars.errors %}
+                        <div>{{ error.message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Form Fields with Icons -->
+    <div class="form-group">
+        <i class="fas fa-id-card form-control-icon"></i>
+        {{ form_widget(form.cin, {'attr': {
+            'class': 'form-control readonly-field',
+            'readonly': 'readonly',
+            'placeholder': 'CIN'
+        }}) }}
+    </div>
+    
+    <div class="form-group">
+        <i class="fas fa-user form-control-icon"></i>
+        {{ form_widget(form.nom, {
+            'attr': {
+                'class': 'form-control',
+                'placeholder': 'Last Name'
+            }
+        }) }}
+    </div>
+    
+    <div class="form-group">
+        <i class="fas fa-user form-control-icon"></i>
+        {{ form_widget(form.prenom, {
+            'attr': {
+                'class': 'form-control',
+                'placeholder': 'First Name'
+            }
+        }) }}
+    </div>
+    
+    <div class="form-group">
+        <i class="fas fa-envelope form-control-icon"></i>
+        {{ form_widget(form.email, {
+            'attr': {
+                'class': 'form-control',
+                'placeholder': 'Email',
+                'pattern': '[^ @]*@[^ @]*'
+            }
+        }) }}
+    </div>
+    
+    <div class="form-group">
+        <i class="fas fa-phone form-control-icon"></i>
+        {{ form_widget(form.numTel, {
+            'attr': {
+                'class': 'form-control',
+                'placeholder': 'Phone Number'
+            }
+        }) }}
+    </div>
+    
+    <div class="form-group">
+        <i class="fas fa-user-tag form-control-icon"></i>
+        {{ form_widget(form.role, {
+            'attr': {
+                'class': 'form-control readonly-field',
+                'readonly': 'readonly',
+                'placeholder': 'Role'
+            }
+        }) }}
+    </div>
+    
+    <div class="button-container">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Enregistrer
+        </button>
+        <a href="{{ path('app_utilisateur_show', {'cin': utilisateur.cin}) }}" 
+           class="btn btn-secondary">
+           <i class="fas fa-times"></i> Annuler
+        </a>
+    </div>
+    
+    {{ form_end(form, {'render_rest': false}) }}
+</div>
+
+<script>
+    function updateFileName(input) {
+        const fileName = input.files[0] ? input.files[0].name : "No file chosen";
+        document.getElementById('file-name').textContent = fileName;
+        
+        // Update image preview
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            const preview = document.getElementById('avatar-preview');
+            
+            reader.onload = function(e) {
+                if (preview.tagName === 'DIV') {
+                    const newImg = document.createElement('img');
+                    newImg.src = e.target.result;
+                    newImg.className = 'profile-avatar';
+                    newImg.id = 'avatar-preview';
+                    preview.parentNode.replaceChild(newImg, preview);
+                } else {
+                    preview.src = e.target.result;
+                }
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+{% endblock %}
