@@ -227,19 +227,53 @@ public function new(
         return $this->redirectToRoute('app_utilisateur_index', [], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/signin', name: 'app_utilisateur_signin')]
-    public function signin(AuthenticationUtils $authenticationUtils): Response
-    {
-        // Redirect only if user is fully authenticated (not just remembered)
-        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+//     #[Route('/signin', name: 'app_utilisateur_signin')]
+// public function signin(AuthenticationUtils $authenticationUtils): Response
+// {
+//     // If user is already authenticated and has ROLE_ADMIN, redirect to dashboard
+//     if ($this->isGranted('ADMIN')) {
+//         return $this->redirectToRoute('app_dashboard');
+//     }
+//     // If user is authenticated but not admin, redirect to home
+//     elseif ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+//         return $this->redirectToRoute('app_home');
+//     }
+    
+//     return $this->render('utilisateur/signin.html.twig', [
+//         'last_username' => $authenticationUtils->getLastUsername(),
+//         'error' => $authenticationUtils->getLastAuthenticationError()
+//     ]);
+// }
+// src/Controller/UtilisateurController.php
+#[Route('/signin', name: 'app_utilisateur_signin')]
+public function signin(AuthenticationUtils $authenticationUtils): Response
+{
+    // If user is already logged in, redirect based on role
+    if ($this->getUser()) {
+        dump($this->getUser()->getRole()); // Debug: check the role value
+        dump($this->getUser()->getRoles()); // Debug: check Symfony roles
+        
+        // If-else condition for redirection
+        if ($this->getUser()->getRole() === RoleUtilisateur::ADMIN) {
+            return $this->redirectToRoute('app_admin_dashboard');
+        } else {
             return $this->redirectToRoute('app_home');
         }
-        
-        return $this->render('utilisateur/signin.html.twig', [
-            'last_username' => $authenticationUtils->getLastUsername(),
-            'error' => $authenticationUtils->getLastAuthenticationError()
-        ]);
     }
+    
+    return $this->render('utilisateur/signin.html.twig', [
+        'last_username' => $authenticationUtils->getLastUsername(),
+        'error' => $authenticationUtils->getLastAuthenticationError()
+    ]);
+}
+// In your UtilisateurController
+#[Route('/dashboard', name: 'app_admin_dashboard')]
+public function dashboard(): Response
+{
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
+    return $this->render('dashboard.html.twig');
+}
 #[Route('/forgotPassword', name: 'app_utilisateur_forgotPassword', methods: ['GET', 'POST'])]
 public function forgotPassword(
     Request $request,

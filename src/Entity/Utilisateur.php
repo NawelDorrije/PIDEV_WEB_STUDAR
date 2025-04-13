@@ -173,20 +173,18 @@ public function setRole(RoleUtilisateur $role): static
     public function getRoles(): array
     {
         if (!$this->role) {
-            return ['ROLE_USER']; // Default fallback role
+            return ['ROLE_ETUDIANT']; // Default role
         }
         
-        // Map your values to Symfony-compatible roles
-        $roleMap = [
-            'admin' => 'ROLE_ADMIN',
-            'propriétaire' => 'ROLE_PROPRIETAIRE',
-            'transporteur' => 'ROLE_TRANSPORTEUR',
-            'étudiant' => 'ROLE_ETUDIANT'
-        ];
-        
-        return [$roleMap[$this->role->value] ?? 'ROLE_USER'];
+        // Map enum values to Symfony roles
+        return match($this->role) {
+            RoleUtilisateur::ADMIN => ['ROLE_ADMIN'],
+            RoleUtilisateur::PROPRIETAIRE => ['ROLE_PROPRIETAIRE'],
+            RoleUtilisateur::TRANSPORTEUR => ['ROLE_TRANSPORTEUR'],
+            RoleUtilisateur::ETUDIANT => ['ROLE_ETUDIANT'],
+            default => ['ROLE_ETUDIANT']
+        };
     }
-    
     // public function setRoles(RoleUtilisateur $role): static
     // {
     //     $this->role = $role;

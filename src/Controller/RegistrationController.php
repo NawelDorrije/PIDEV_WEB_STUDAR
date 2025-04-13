@@ -44,8 +44,8 @@ class RegistrationController extends AbstractController
                 $session->remove('google_user_data');
                 
                 // Use the same addFlash method for consistency
-                $this->addFlash('success', 'Votre compte a été créé avec succès');
-                
+// In your RegistrationController
+$this->addFlash('success', 'Votre compte a été créé avec succès! Vous pouvez maintenant vous connecter.');                
                 return $this->redirectToRoute('app_utilisateur_signin');
                 
             } catch (\Exception $e) {
