@@ -177,6 +177,24 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->reset_code;
     }
+    public function getRoles(): array
+    {
+        if (!$this->role) {
+            return ['ROLE_ETUDIANT']; // Default role
+        }
+        
+        // Map enum values to Symfony roles
+        return match($this->role) {
+            RoleUtilisateur::ADMIN => ['ROLE_ADMIN'],
+            RoleUtilisateur::PROPRIETAIRE => ['ROLE_PROPRIETAIRE'],
+            RoleUtilisateur::TRANSPORTEUR => ['ROLE_TRANSPORTEUR'],
+            RoleUtilisateur::ETUDIANT => ['ROLE_ETUDIANT'],
+            default => ['ROLE_ETUDIANT']
+        };
+    }
+    // public function setRoles(RoleUtilisateur $role): static
+    // {
+    //     $this->role = $role;
 
     public function setResetCode(?string $reset_code): self
     {

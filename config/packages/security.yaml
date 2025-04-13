@@ -1,7 +1,9 @@
 security:
+    # security.yaml
     role_hierarchy:
-        ROLE_ADMIN: ['ROLE_PROPRIETAIRE', 'ROLE_TRANSPORTEUR']
+        ROLE_ADMIN: ['ROLE_PROPRIETAIRE', 'ROLE_TRANSPORTEUR', 'ROLE_ETUDIANT']
         ROLE_PROPRIETAIRE: ['ROLE_ETUDIANT']
+        ROLE_TRANSPORTEUR: ['ROLE_ETUDIANT']
     password_hashers:
         App\Entity\Utilisateur:
             algorithm: auto
@@ -29,6 +31,8 @@ security:
                 enable_csrf: true
                 failure_path: app_utilisateur_signin  # Add this line to redirect back to login on failure
                 failure_forward: false
+                success_handler: App\Security\AuthenticationSuccessHandler
+
             logout:
                 path: app_logout  # The route name for logout
                 target: app_utilisateur_signin  # Where to redirect after logout
@@ -45,6 +49,7 @@ security:
          - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
          - { path: ^/verify-reset-code, roles: PUBLIC_ACCESS }
          - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+         - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 
