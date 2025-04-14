@@ -7,7 +7,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LogementOptionsRepository::class)]
 #[ORM\Table(name: "logement_options")]
-#[ORM\IdClass(LogementOptionsId::class)]
 class LogementOptions
 {
     #[ORM\Id]
@@ -17,7 +16,7 @@ class LogementOptions
 
     #[ORM\Id]
     #[ORM\ManyToOne(inversedBy: 'logementOptions')]
-    #[ORM\JoinColumn(name: "id_option", referencedColumnName: "id_option", nullable: true)] // Changed to nullable: true
+    #[ORM\JoinColumn(name: "id_option", referencedColumnName: "id_option", nullable: true)]
     private ?Options $option = null;
 
     #[ORM\Column(type: "boolean", nullable: true)]
