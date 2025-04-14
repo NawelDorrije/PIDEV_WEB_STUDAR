@@ -20,6 +20,7 @@ security:
             security: false
 
         main:
+            user_checker: App\Security\BlockedUserChecker
             custom_authenticators:
                 - App\Security\GoogleAuthenticator
             provider: app_user_provider
@@ -52,6 +53,7 @@ security:
          - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
+         - { path: ^/admin/user/\d+/toggle-block, roles: ROLE_ADMIN, methods: POST }
 
 when@test:
     security:

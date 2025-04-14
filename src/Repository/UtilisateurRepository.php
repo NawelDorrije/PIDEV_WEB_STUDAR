@@ -47,4 +47,12 @@ class UtilisateurRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+    public function getUserCountByRole(): array
+{
+    return $this->createQueryBuilder('u')
+        ->select('u.role, COUNT(u.id) as count')
+        ->groupBy('u.role')
+        ->getQuery()
+        ->getResult();
+}
 }
