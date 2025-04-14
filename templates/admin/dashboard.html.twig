@@ -1,31 +1,500 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Utilisateur index{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Main layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Fixed sidebar */
+        .admin-sidebar {
+            width: 80px;
+            background-color: white;
+            color: white;
+            padding: 20px 10px;
+            position: fixed;
+            height: 100vh;
+            transition: width 0.3s;
+            overflow: hidden;
+            z-index: 1000;
+        }
+        
+        .admin-sidebar:hover {
+            width: 250px;
+            z-index: 1000;
+            position: fixed;
+
+
+        }
+        
+        .admin-content {
+            margin-left: 80px;
+            padding: 30px;
+            flex: 1;
+            transition: margin-left 0.3s;
+            background-color: white;
+        }
+        
+        .admin-sidebar:hover ~ .admin-content {
+            margin-left: 250px;
+        }
+        
+        /* Sidebar navigation with icons */
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin-top: 30px;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 15px;
+            white-space: nowrap;
+        }
+        
+        .sidebar-nav a {
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover, 
+        .sidebar-nav a.active {
+            background-color: #f35525;
+            color: white;
+        }
+        
+        .sidebar-nav i {
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(243, 85, 37, 0.1);
+            border-radius: 50%;
+            margin-right: 15px;
+            transition: all 0.3s;
+            color: #f35525;
+        }
+        
+        .sidebar-nav a:hover i,
+        .sidebar-nav a.active i {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+            color: white;
+        }
+        
+        .sidebar-nav .nav-text {
+            opacity: 0;
+            transition: opacity 0.2s;
+            transition-delay: 0.1s;
+            font-weight: 500;
+        }
+        
+        .admin-sidebar:hover .nav-text {
+            opacity: 1;
+        }
+        
+        /* Table styling */
+        .user-table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .user-table th {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .user-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
+            vertical-align: middle;
+        }
+        
+        .user-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .user-table tr:hover td {
+            background-color: #f8f9fa;
+        }
+        
+        /* Action buttons */
+        .action-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+        }
+        .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+     /* Filter Section Styles */
+     .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .filter-title {
+            font-size: 1.1rem;
+            color: #495057;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            background-color: white;
+            color: #495057;
+            transition: border-color 0.3s;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #f35525;
+            box-shadow: 0 0 0 2px rgba(243, 85, 37, 0.2);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-btn {
+            background-color: #f35525;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e04b20;
+        }
+        
+        .reset-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+        }
+        
+        .reset-btn:hover {
+            color: #f35525;
+        }
+
+    .pagination a {
+        color: #f35525;
+        padding: 8px 16px;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        margin: 0 4px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+    
+    .pagination a.active {
+        background-color: #f35525;
+        color: white;
+        border-color: #f35525;
+    }
+    
+    .pagination a:hover:not(.active) {
+        background-color: #f8f9fa;
+    }
+        .action-btn:hover {
+            color: #f35525;
+            transform: scale(1.1);
+        }
+        
+        .block-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+        }
+        
+        .block-btn.unblocked {
+            color: #28a745;
+        }
+        
+        .block-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Status badge */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-blocked {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+{% endblock %}
 
 {% block body %}
-    <h1>this is dashobard</h1>
+<div class="admin-container">
+    <!-- Fixed Sidebar -->
+    <div class="admin-sidebar">
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a  href="{{ path('app_admin_statistique') }}" >
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="nav-text">Statistiques</span>
+                </a>
+            </li>
+           
+            <li>
+                <a href="#">
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-text">Paramètres</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-               
-                <th>Cin</th>
-                <th>nom</th>
-                <th>Prenom</th>
-                <th>Email</th>
-                <th>Mdp</th>
-                <th>NumTel</th>
-                <th>Role</th>
-                <th>Reset_code</th>
-                <th>Blocked</th>
-                <th>Created_at</th>
-                <th>actions</th>
-            </tr>
-        </thead>
+    <!-- Main Content -->
+    <div class="admin-content">
+        <h3 style="margin-left: 400px;" class="center">Liste des Utilisateurs</h3>
+        <div class="filter-section">
+            <form method="get" class="filter-form">
+                
+                <div class="filter-group">
+                    <select name="role" id="role" class="filter-select">
+                        <option value="">Tous les rôles</option>
+                        <option value="admin" {{ roleFilter == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="propriétaire" {{ roleFilter == 'propriétaire' ? 'selected' : '' }}>Propriétaire</option>
+                        <option value="transporteur" {{ roleFilter == 'transporteur' ? 'selected' : '' }}>Transporteur</option>
+                        <option value="étudiant" {{ roleFilter == 'étudiant' ? 'selected' : '' }}>Étudiant</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <select name="blocked" id="blocked" class="filter-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="0" {{ blockedFilter == '0' ? 'selected' : '' }}>Actifs seulement</option>
+                        <option value="1" {{ blockedFilter == '1' ? 'selected' : '' }}>Bloqués seulement</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="filter-btn">
+                        <i class="fas fa-filter"></i> Appliquer
+                    </button>
+                    
+                    {% if roleFilter or blockedFilter is not null %}
+                        <a href="{{ path('app_admin_dashboard') }}" class="reset-btn">
+                            <i class="fas fa-times"></i> Réinitialiser
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
         
-        
-        <h1>ASLEMA Admin </h1>
-    </table>
+        <div class="user-table-container">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in utilisateur %}
+                    <tr>
+                        <td> 
+                            {% if user.image %}
+                            <img src="{{ asset('uploads/images/' ~ user.image) }}" 
+                                 alt="Profile Image" 
+                                 class="profile-avatar"
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                            <div class="profile-avatar" style="width: 50px; height: 50px; background-color: #f5f5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user" style="font-size: 20px; color: #777;"></i>
+                            </div>
+                            {% endif %} 
+                        </td>
+                        <td>{{ user.nom }}</td>
+                        <td>{{ user.prenom }}</td>
+                        <td>{{ user.role.value }}</td>
+                        <td>
+                            <span class="status-badge {{ user.blocked ? 'status-blocked' : 'status-active' }}">
+                                {{ user.blocked ? 'Bloqué' : 'Actif' }}
+                            </span>
+                        </td>
+                        <td style="margin-right: 200px;"  class="center">
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button class="block-btn {{ user.blocked ? 'blocked' : 'unblocked' }}"
+                                data-user-id="{{ user.cin }}"
+                                onclick="toggleBlock(this)"
+                                title="{{ user.blocked ? 'Débloquer' : 'Bloquer' }}">
+                            <i class="fas {{ user.blocked ? 'fa-unlock' : 'fa-lock' }}"></i>
+                        </button>
+                                <a  href="{{ path('app_utilisateur_show', {'cin': user.cin}) }}" 
+                                   class="action-btn"
+                                   title="Voir détails">
+                                    <i style="margin-left:80px ;margin-right: 40px;" class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">Aucun utilisateur trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                {{ knp_pagination_render(utilisateur) }}
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- <a href="{{ path('app_utilisateur_new') }}">Create new</a> -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all block buttons
+        const blockButtons = document.querySelectorAll('.block-btn');
+        
+        // Add click event to each button
+        blockButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                toggleBlockStatus(this);
+            });
+        });
+    });
+
+    function toggleBlockStatus(button) {
+        const userId = button.getAttribute('data-user-id');
+        const icon = button.querySelector('i');
+        const statusBadge = button.closest('tr').querySelector('.status-badge');
+        
+        // Get CSRF token from meta tag (make sure you have this in your base template)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        fetch(`/admin/user/${userId}/toggle-block`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Toggle button classes
+                button.classList.toggle('blocked');
+                button.classList.toggle('unblocked');
+                
+                // Toggle icon
+                icon.classList.toggle('fa-lock');
+                icon.classList.toggle('fa-unlock');
+                
+                // Toggle status badge
+                statusBadge.classList.toggle('status-blocked');
+                statusBadge.classList.toggle('status-active');
+                statusBadge.textContent = data.blocked ? 'Bloqué' : 'Actif';
+                
+                // Update tooltip
+                button.setAttribute('title', data.blocked ? 'Débloquer' : 'Bloquer');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue lors de la mise à jour du statut.');
+        });
+    }
+</script>
 {% endblock %}

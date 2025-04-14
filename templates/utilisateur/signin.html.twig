@@ -307,8 +307,15 @@
     </script>
 {% endfor %}
 {% block body %}
+
 <div class="contact-page section">
     <div class="container">
+        {% for flash_error in app.flashes('error') %}
+        <div class="alert alert-danger" role="alert">
+            {{ flash_error }}
+            <a  class="alert-link">Contactez l'administrateur</a>
+        </div>
+    {% endfor %}
         {# Flash messages container - positioned at the top #}
         <div id="flash-messages" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
             {% for type, messages in app.flashes %}

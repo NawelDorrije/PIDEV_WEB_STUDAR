@@ -89,7 +89,7 @@ public function new(
             $entityManager->flush();
             
             $this->addFlash('success', 'Inscription réussie!');
-            return $this->redirectToRoute('app_utilisateur_new');
+            return $this->redirectToRoute('app_utilisateur_signin');
         }
     }
 
@@ -252,17 +252,12 @@ public function signin(AuthenticationUtils $authenticationUtils): Response
 {
     // If user is already logged in, redirect based on role
     if ($this->getUser()) {
-        dump($this->getUser()->getRole()); // Debug: check the role value
-        dump($this->getUser()->getRoles()); // Debug: check Symfony roles
-        
-        // If-else condition for redirection
-        if ($this->getUser()->getRole() === RoleUtilisateur::ADMIN) {
-            return $this->redirectToRoute('app_admin_dashboard');
-        } else {
-            return $this->redirectToRoute('app_home');
-        }
+        return match($this->getUser()->getRole()) {
+            RoleUtilisateur::ADMIN => $this->redirectToRoute('app_admin_dashboard'),
+            default => $this->redirectToRoute('app_home')
+        };
     }
-    
+
     return $this->render('utilisateur/signin.html.twig', [
         'last_username' => $authenticationUtils->getLastUsername(),
         'error' => $authenticationUtils->getLastAuthenticationError()
