@@ -10,28 +10,39 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Knp\Component\Pager\PaginatorInterface;
 use TCPDF;
 use TCPDF2DBarcode;
 
 #[Route('/reservation/logement')]
 final class ReservationLogementController extends AbstractController
 {
-    #[Route('/', name: 'app_reservation_logement_index', methods: ['GET'])]
-    public function index(Request $request, ReservationLogementRepository $reservationLogementRepository): Response
-    {
-        $status = $request->query->get('status');
-        
-        if ($status) {
-            $reservations = $reservationLogementRepository->findBy(['status' => $status]);
-        } else {
-            $reservations = $reservationLogementRepository->findAll();
-        }
-        
-        return $this->render('reservation_logement/index.html.twig', [
-            'reservation_logements' => $reservations,
-            'current_status' => $status
-        ]);
-    }
+  #[Route('/', name: 'app_reservation_logement_index', methods: ['GET'])]
+  public function index(
+      Request $request, 
+      ReservationLogementRepository $reservationLogementRepository
+  ): Response
+  {
+      $status = $request->query->get('status');
+      
+      // Create query builder
+      $queryBuilder = $reservationLogementRepository->createQueryBuilder('r')
+          ->orderBy('r.dateDebut', 'DESC');
+      
+      // Apply status filter if provided
+      if ($status) {
+          $queryBuilder->andWhere('r.status = :status')
+              ->setParameter('status', $status);
+      }
+      
+      // Get all results (JavaScript will handle pagination)
+      $reservations = $queryBuilder->getQuery()->getResult();
+  
+      return $this->render('reservation_logement/index.html.twig', [
+          'reservation_logements' => $reservations,
+          'current_status' => $status
+      ]);
+  }
 
     #[Route('/new', name: 'app_reservation_logement_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response

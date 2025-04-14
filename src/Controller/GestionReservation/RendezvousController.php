@@ -15,28 +15,55 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Knp\Component\Pager\PaginatorInterface;
+
 
 #[Route('/rendezvous')]
 final class RendezvousController extends AbstractController
 {
-  #[Route('/', name: 'app_rendezvous_index', methods: ['GET'])]
-  public function index(Request $request, RendezvousRepository $rendezvousRepository, LogementRepository $logementRepository): Response
-  {
-      $status = $request->query->get('status');
-      
-      if ($status) {
-          $rendezvouses = $rendezvousRepository->findBy(['status' => $status]);
-      } else {
-          $rendezvouses = $rendezvousRepository->findAll();
-      }
-      
-      return $this->render('rendezvous/index.html.twig', [
-          'rendezvouses' => $rendezvouses,
-          'current_status' => $status,
-          'logement_repo' => $logementRepository
-      ]);
-  }
+    #[Route('/', name: 'app_rendezvous_index', methods: ['GET'])]
+    public function index(
+        Request $request, 
+        RendezvousRepository $rendezvousRepository, 
+        LogementRepository $logementRepository,
+        PaginatorInterface $paginator
+    ): Response
+    {
+        // Get filter parameters from request
+        $status = $request->query->get('status');
+        $dateFilter = $request->query->get('date');
+        
+        // Create query builder
+        $queryBuilder = $rendezvousRepository->createQueryBuilder('r')
+            ->orderBy('r.date', 'DESC');
+        
+        // Apply filters
+        if ($status) {
+            $queryBuilder->andWhere('r.status = :status')
+                ->setParameter('status', $status);
+        }
+        
+        if ($dateFilter) {
+            $queryBuilder->andWhere('r.date = :date')
+                ->setParameter('date', new \DateTime($dateFilter));
+        }
+        
+        // Paginate the query
+        $rendezvouses = $paginator->paginate(
+            $queryBuilder->getQuery(),
+            $request->query->getInt('page', 1),
+            10 // Items per page
+        );
 
+        return $this->render('rendezvous/index.html.twig', [
+            'rendezvouses' => $rendezvouses,
+            'current_status' => $status,
+            'date_filter' => $dateFilter,
+            'logement_repo' => $logementRepository
+        ]);
+    }
+    
+    
     #[Route('/new', name: 'app_rendezvous_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {

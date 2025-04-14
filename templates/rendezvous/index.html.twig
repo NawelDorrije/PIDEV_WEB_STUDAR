@@ -72,8 +72,7 @@
         overflow: visible;
         margin-bottom: 20px;
         border: none;
-                  margin-left:130px;
-
+        margin-left:130px;
     }
 
     
@@ -106,8 +105,7 @@
         font-weight: 500;
     }
     .card-body h5 {
-              color: #4453A6;
-
+        color: #4453A6;
     }
     
     /* Options de vue */
@@ -133,21 +131,68 @@
         box-shadow: 0 5px 15px rgba(179, 153, 212, 0.4);
     }
     .timeline-item timeline-date {
-  position: absolute;
-  left: -50px;
-  width: 40px;
-  text-align: right;
-  font-size: 0.9rem;
-  color: #6c757d;
-  margin-left: 150px;
-
-
-}
+        position: absolute;
+        left: -50px;
+        width: 40px;
+        text-align: right;
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-left: 150px;
+    }
     
     @keyframes pop {
         0% { transform: scale(1); }
         50% { transform: scale(1.05); }
         100% { transform: scale(1); }
+    }
+
+    /* Slider styles */
+    .rendezvous-slider {
+        position: relative;
+        min-height: 400px;
+    }
+    
+    .rendezvous-slide {
+        transition: all 0.5s ease;
+    }
+    
+    .hidden-slide {
+        display: none;
+    }
+    
+    /* Controls styles */
+    .slider-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+    }
+    
+    .btn-prev, .btn-next {
+        background-color: #4453A6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin: 0 10px;
+    }
+    
+    .btn-prev:hover, .btn-next:hover {
+        background-color: #3a4878;
+    }
+    
+    .btn-prev:disabled, .btn-next:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .page-indicator {
+        font-weight: bold;
+        color: #4453A6;
+        min-width: 100px;
+        text-align: center;
     }
 </style>
 {% endblock %}
@@ -158,11 +203,11 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="section-heading d-flex justify-content-between align-items-center mb-4">
-    <h2 style="color:rgb(94, 68, 166);"><i class="far fa-calendar-alt mr-2 outline-primary"></i>Vos Rendez-vous</h2>
-    <a href="{{ path('app_rendezvous_new') }}" class="btn btn-nouveau float-right">
-        <i class="fas fa-plus"></i> Nouveau Rendez-vous
-    </a>
-</div>
+                    <h2 style="color:rgb(94, 68, 166);"><i class="far fa-calendar-alt mr-2 outline-primary"></i>Vos Rendez-vous</h2>
+                    <a href="{{ path('app_rendezvous_new') }}" class="btn btn-nouveau float-right">
+                        <i class="fas fa-plus"></i> Nouveau Rendez-vous
+                    </a>
+                </div>
                 
                 <!-- Options de vue -->
                 <div class="view-options mb-4">
@@ -191,45 +236,62 @@
                 </div>
                 
                 <!-- Contenu principal -->
-                  <div class="rendezvous-content">
+                <div class="rendezvous-content">
                     <!-- Vue Liste -->
                     <div class="rendezvous-list">
-                        {% for rendezvou in rendezvouses %}
-                        <div class="card rendezvous-card">
-                            <div class="card-body">
-                                <a href="{{ path('app_rendezvous_show', {'id': rendezvou.id}) }}" 
-                                   class="floating-details-btn" title="Voir détails">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                                <h5 class="card-title">
-                                    <i class="far fa-calendar-check mr-2"></i>Rendez-vous 
-                                    <span class="badge badge-{{ 
-                                        rendezvou.status == 'confirmée' ? 'success' : 
-                                        (rendezvou.status == 'en_attente' ? 'warning' : 'danger') 
-                                    }}">
-                                        {{ rendezvou.status }}
-                                    </span>
-                                </h5>
-                                <div class="card-meta">
-                                    <div><i class="far fa-calendar-alt"></i> {{ rendezvou.date|date('d/m/Y') }}</div>
-                                    <div><i class="far fa-clock"></i> {{ rendezvou.heure|date('H:i') }}</div>
-                                    <div><i class="fas fa-user-tie"></i> {{ rendezvou.proprietaire ? rendezvou.proprietaire.nom ~ ' ' ~ rendezvou.proprietaire.prenom : 'Non défini' }}</div>
-                                    <div><i class="fas fa-home"></i> 
-                                        {% if rendezvou.idLogement is iterable %}
-                                            {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
-                                        {% else %}
-                                            {% set logement = logement_repo.find(rendezvou.idLogement) %}
-                                            {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
-                                        {% endif %}
+                        <div class="rendezvous-slider">
+                            {% for rendezvou in rendezvouses %}
+                                <div class="rendezvous-slide {% if loop.index > 4 %}hidden-slide{% endif %}">
+                                    <div class="card rendezvous-card">
+                                        <div class="card-body">
+                                            <a href="{{ path('app_rendezvous_show', {'id': rendezvou.id}) }}" 
+                                               class="floating-details-btn" title="Voir détails">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                            <h5 class="card-title">
+                                                <i class="far fa-calendar-check mr-2"></i>Rendez-vous 
+                                                <span class="badge badge-{{ 
+                                                    rendezvou.status == 'confirmée' ? 'success' : 
+                                                    (rendezvou.status == 'en_attente' ? 'warning' : 'danger') 
+                                                }}">
+                                                    {{ rendezvou.status }}
+                                                </span>
+                                            </h5>
+                                            <div class="card-meta">
+                                                <div><i class="far fa-calendar-alt"></i> {{ rendezvou.date|date('d/m/Y') }}</div>
+                                                <div><i class="far fa-clock"></i> {{ rendezvou.heure }}</div>
+                                                <div><i class="fas fa-home"></i> 
+                                                    {% if rendezvou.idLogement is iterable %}
+                                                        {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
+                                                    {% else %}
+                                                        {{ rendezvou.idLogement }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle mr-2"></i>Aucun rendez-vous trouvé.
+                                </div>
+                            {% endfor %}
                         </div>
-                        {% else %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle mr-2"></i>Aucun rendez-vous trouvé.
+                        
+                        <!-- Contrôles de pagination -->
+                        {% if rendezvouses|length > 4 %}
+                        <div class="slider-controls">
+                            <button class="btn btn-prev" disabled>
+                                <i class="fas fa-chevron-left"></i> Précédent
+                            </button>
+                            <span class="page-indicator mx-3">
+                                Page <span class="current-page">1</span>/<span class="total-pages">{{ ((rendezvouses|length)/4)|round(0, 'ceil') }}</span>
+                            </span>
+                            <button class="btn btn-next {% if rendezvouses|length <= 4 %}disabled{% endif %}">
+                                Suivant <i class="fas fa-chevron-right"></i>
+                            </button>
                         </div>
-                        {% endfor %}
+                        {% endif %}
                     </div>
                     
                     <!-- Vue Calendrier (masquée par défaut) -->
@@ -243,7 +305,7 @@
                             {% for rendezvou in rendezvouses|sort((a, b) => a.date <=> b.date) %}
                                 <div class="timeline-item">
                                     <div class="timeline-date">
-                                        {{ rendezvou.date|date('d/m/Y') }} • {{ rendezvou.heure|date('H:i') }}
+                                        {{ rendezvou.date|date('d/m/Y') }} • {{ rendezvou.heure }}
                                     </div>
                                     <div class="timeline-content card">
                                         <div class="card-body">
@@ -258,11 +320,10 @@
                                             </span>
                                             <div class="card-meta mt-3">
                                                 <div><i class="fas fa-home"></i> 
-                                                    {% if rendezvou.idLogement is iterable %}
-                                                        {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
+                                                    {% if rendezvou.idLogement %}
+                                                        {{ rendezvou.idLogement }}
                                                     {% else %}
-                                                        {% set logement = logement_repo.find(rendezvou.idLogement) %}
-                                                        {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
+                                                        Non défini
                                                     {% endif %}
                                                 </div>
                                             </div>
@@ -283,6 +344,87 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Slider pagination functionality
+            const slides = document.querySelectorAll('.rendezvous-slide');
+            const btnPrev = document.querySelector('.btn-prev');
+            const btnNext = document.querySelector('.btn-next');
+            const currentPageEl = document.querySelector('.current-page');
+            const totalPages = Math.ceil({{ rendezvouses|length }}/4);
+            
+            let currentPage = 1;
+            
+            // Initial setup
+            updateSlider();
+            
+            // Navigation handlers
+            if (btnNext) {
+                btnNext.addEventListener('click', function() {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        updateSlider();
+                    }
+                });
+            }
+            
+            if (btnPrev) {
+                btnPrev.addEventListener('click', function() {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        updateSlider();
+                    }
+                });
+            }
+            
+            // Swipe functionality (mobile)
+            const slider = document.querySelector('.rendezvous-slider');
+            if (slider) {
+                let touchStartX = 0;
+                let touchEndX = 0;
+                
+                slider.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, false);
+                
+                slider.addEventListener('touchend', function(e) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, false);
+                
+                function handleSwipe() {
+                    if (touchEndX < touchStartX && currentPage < totalPages) {
+                        // Swipe left - next
+                        currentPage++;
+                        updateSlider();
+                    }
+                    
+                    if (touchEndX > touchStartX && currentPage > 1) {
+                        // Swipe right - prev
+                        currentPage--;
+                        updateSlider();
+                    }
+                }
+            }
+            
+            function updateSlider() {
+                // Hide all slides
+                slides.forEach(slide => {
+                    slide.classList.add('hidden-slide');
+                });
+                
+                // Show current page slides
+                const startIndex = (currentPage - 1) * 4;
+                const endIndex = startIndex + 4;
+                
+                for (let i = startIndex; i < endIndex && i < slides.length; i++) {
+                    slides[i].classList.remove('hidden-slide');
+                }
+                
+                // Update controls
+                if (currentPageEl) currentPageEl.textContent = currentPage;
+                if (btnPrev) btnPrev.disabled = currentPage === 1;
+                if (btnNext) btnNext.disabled = currentPage === totalPages;
+            }
+
             // Initialisation du calendrier
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -302,13 +444,14 @@
                             color: '#4CAF50',
                             extendedProps: {
                                 status: '{{ rendezvou.status }}',
-                                heure: '{{ rendezvou.heure|date('H:i') }}',
-                                logement: '{% if rendezvou.idLogement is iterable %}{{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}{% else %}{% set logement = logement_repo.find(rendezvou.idLogement) %}{{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}{% endif %}'
+                                heure: '{{ rendezvou.heure }}',
+                                logement: '{{ rendezvou.idLogement is iterable ? (rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id) : rendezvou.idLogement }}'
                             }
                         }{% if not loop.last %},{% endif %}
                         {% endif %}
                     {% endfor %}
                 ],
+
                 eventDidMount: function(info) {
                     // Style basé sur le statut
                     if (info.event.extendedProps.status === 'confirmée') {
