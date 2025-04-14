@@ -29,6 +29,8 @@ final class PanierController extends AbstractController
     #[Route('/', name: 'app_gestion_meubles_panier', methods: ['GET'])]
     public function index(): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
         $paniers = $this->panierRepository->findAll();
         return $this->render('gestion_meubles/panier/index.html.twig', [
             'controller_name' => 'GestionMeubles/PanierController',
@@ -39,6 +41,9 @@ final class PanierController extends AbstractController
     #[Route('/create', name: 'app_gestion_meubles_panier_create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         try {
             $utilisateur = $this->getUser();
             if (!$utilisateur instanceof Utilisateur) {
@@ -60,8 +65,12 @@ final class PanierController extends AbstractController
         }
     }
     #[Route('/lignes', name: 'app_gestion_meubles_lignes_panier', methods: ['GET'])]
+
     public function voirLignesPanier(): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         $utilisateur = $this->getUser();
 
         $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin() pour récupérer l'utilisateur connecté
@@ -88,6 +97,9 @@ final class PanierController extends AbstractController
     #[Route('/lignes/{id}/remove', name: 'app_gestion_meubles_ligne_panier_remove', methods: ['POST'])]
     public function removeLigne(int $id): Response
     {
+        
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
         $ligne = $this->lignePanierRepository->find($id);
         if ($ligne) {
             $this->lignePanierRepository->remove($ligne, true);
@@ -102,6 +114,9 @@ final class PanierController extends AbstractController
     #[Route('/{id}', name: 'app_gestion_meubles_panier_show', methods: ['GET'])]
     public function show(int $id): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         $panier = $this->panierRepository->find($id);
         if (!$panier) {
             throw $this->createNotFoundException('Panier non trouvé');
@@ -114,6 +129,10 @@ final class PanierController extends AbstractController
     #[Route('/{id}/edit', name: 'app_gestion_meubles_panier_edit', methods: ['PUT'])]
     public function edit(Request $request, int $id): JsonResponse
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+        
+
         // Code inchangé
         try {
             $panier = $this->panierRepository->find($id);
@@ -149,7 +168,9 @@ final class PanierController extends AbstractController
 
     #[Route('/{id}', name: 'app_gestion_meubles_panier_delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
-    {
+    {        
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
         // Code inchangé
         try {
             $panier = $this->panierRepository->find($id);
@@ -172,6 +193,9 @@ final class PanierController extends AbstractController
     #[Route('/en-cours/{cin}', name: 'app_gestion_meubles_panier_en_cours', methods: ['GET'])]
     public function findPanierEnCours(string $cin): JsonResponse
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         // Code inchangé
         $utilisateur = $this->getUser();
 

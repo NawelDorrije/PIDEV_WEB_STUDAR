@@ -44,74 +44,27 @@ final class CommandeController extends AbstractController
         $this->chartBuilder = $chartBuilder;
     }
     #[Route('/admin/commandes', name: 'app_gestion_meubles_commandes_admin')]
-    public function listeCommandesAdmin(Request $request, PaginatorInterface $paginator, ChartBuilderInterface $chartBuilder): Response
+    public function listeCommandesAdmin(Request $request, PaginatorInterface $paginator): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        // Vérifier que l'utilisateur est admin
+       $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        // Filtres
-        $statut = $request->query->get('statut', '');
-        $periode = $request->query->get('periode', 'all');
-
-        // Construire la requête de base
+        // Récupérer toutes les commandes avec leurs acheteurs associés
         $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
             ->leftJoin('c.acheteur', 'a')
             ->addSelect('a');
-
-        // Appliquer les filtres
-        if ($statut) {
-            $queryBuilder->andWhere('c.statut = :statut')
-                ->setParameter('statut', $statut);
-        }
-
-        if ($periode !== 'all') {
-            $dateDebut = new \DateTime();
-            switch ($periode) {
-                case 'week':
-                    $dateDebut->modify('-1 week');
-                    break;
-                case 'month':
-                    $dateDebut->modify('-1 month');
-                    break;
-                case 'year':
-                    $dateDebut->modify('-1 year');
-                    break;
-            }
-            $queryBuilder->andWhere('c.dateCommande >= :dateDebut')
-                ->setParameter('dateDebut', $dateDebut);
-        }
 
         // Paginer les résultats
         $pagination = $paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
-            10
+            10 // 10 commandes par page
         );
-
-        // Statistiques
-        $chiffreAffaires = $this->commandeRepository->getChiffreAffairesTotal($statut, $periode);
-        $commandesParStatut = $this->commandeRepository->getCommandesParStatut($periode);
-
-        // Graphique : Répartition des commandes par statut
-        $statutChart = $chartBuilder->createChart(Chart::TYPE_PIE);
-        $statutChart->setData([
-            'labels' => array_keys($commandesParStatut),
-            'datasets' => [
-                [
-                    'data' => array_values($commandesParStatut),
-                    'backgroundColor' => ['#ef4444', '#10b981', '#3b82f6', '#6b7280'],
-                ],
-            ],
-        ]);
 
         return $this->render('gestion_meubles/commande/liste_admin.html.twig', [
             'pagination' => $pagination,
-            'chiffreAffaires' => $chiffreAffaires,
-            'statutChart' => $statutChart,
-            'filtreStatut' => $statut,
-            'filtrePeriode' => $periode,
         ]);
     }
-
 
     // Autres méthodes existantes inchangées
     #[Route('/gestion/meubles/commandes/acheteur/{cin}', name: 'app_gestion_meubles_commandes_acheteur')]

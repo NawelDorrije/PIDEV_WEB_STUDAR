@@ -69,7 +69,8 @@ final class MeubleController extends AbstractController
 
     #[Route('/ajouter', name: 'app_gestion_meuble_ajouter', methods: ['GET', 'POST'])]
     public function ajouter(Request $request): Response
-    {
+    {         
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
         $meuble = new Meuble();
         $meuble->setDateEnregistrement(new \DateTime());
         $meuble->setStatut('disponible');
@@ -143,6 +144,7 @@ final class MeubleController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
     public function modifier(Request $request, Meuble $meuble): Response
     {
+        
         $utilisateur = $this->getUser();
         if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');

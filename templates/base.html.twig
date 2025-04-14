@@ -102,7 +102,7 @@
                                                 Services
                                             </a>
                                             <ul class="dropdown-menu" aria-labelledby="servicesDropdownAdmin">
-                                                <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_home') }}">Meubles</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Logements</a></li>
                                             </ul>
@@ -131,6 +131,7 @@
                                             </a>
                                             <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Logements</a></li>
+                                                
                                                 <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_a_acheter') }}">Meubles</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
                                             </ul>
@@ -151,12 +152,15 @@
                                         <li><a href="{{ path('app_home') }}">Chat AI</a></li>
 
                                         <!-- Cart Icon with Static Item Count -->
+                                       {% if is_granted('ROLE_ETUDIANT') %}
+
                                         <li>
                                             <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="cart-icon">
                                                 <i class="bi bi-cart3"></i>
                                                 <span class="cart-count">{{ cart_service.cartCount }}</span>
                                             </a>
                                         </li>            
+                                    {% endif %}
 
                                         {% if app.user %}
                                             <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>

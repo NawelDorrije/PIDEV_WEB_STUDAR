@@ -25,6 +25,7 @@ class CartService
 
     public function getCartCount(): int
     {
+        
         $utilisateur = $this->security->getUser();
         if (!$utilisateur instanceof Utilisateur) {
             return 0;
