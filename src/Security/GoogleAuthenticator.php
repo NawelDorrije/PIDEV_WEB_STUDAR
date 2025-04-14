@@ -41,34 +41,69 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
     // src/Security/GoogleAuthenticator.php
 // src/Security/GoogleAuthenticator.php
+// public function authenticate(Request $request): Passport
+// {
+//     $client = $this->clientRegistry->getClient('google');
+//     $accessToken = $this->fetchAccessToken($client);
+
+//     return new SelfValidatingPassport(
+//         new UserBadge($accessToken->getToken(), function() use ($accessToken, $client) {
+//             /** @var GoogleUser $googleUser */
+//             $googleUser = $client->fetchUserFromToken($accessToken);
+            
+//             $user = $this->entityManager->getRepository(Utilisateur::class)
+//                 ->findOneBy(['email' => $googleUser->getEmail()]);
+
+//             if (!$user) {
+//                 throw new CustomUserMessageAuthenticationException(
+//                     'Vous n\'avez pas un compte avec cette email. Veuillez vous inscrire d\'abord.'
+//                 );
+//             }
+
+//             return $user;
+//         })
+//     );
+// }
 public function authenticate(Request $request): Passport
 {
     $client = $this->clientRegistry->getClient('google');
     $accessToken = $this->fetchAccessToken($client);
 
     return new SelfValidatingPassport(
-        new UserBadge($accessToken->getToken(), function() use ($accessToken, $client) {
+        new UserBadge($accessToken->getToken(), function() use ($accessToken, $client, $request) {
             /** @var GoogleUser $googleUser */
             $googleUser = $client->fetchUserFromToken($accessToken);
             
             $user = $this->entityManager->getRepository(Utilisateur::class)
                 ->findOneBy(['email' => $googleUser->getEmail()]);
 
-            if (!$user) {
-                throw new CustomUserMessageAuthenticationException(
-                    'Vous n\'avez pas un compte avec cette email. Veuillez vous inscrire d\'abord.'
-                );
+            // If user exists, log them in
+            if ($user) {
+                return $user;
             }
 
-            return $user;
+            // Store Google user data in session for registration completion
+            $request->getSession()->set('google_user_data', [
+                'email' => $googleUser->getEmail(),
+                'firstName' => $googleUser->getFirstName(),
+                'lastName' => $googleUser->getLastName()
+            ]);
+
+            throw new CustomUserMessageAuthenticationException(
+                'complete_registration'
+            );
         })
     );
 }
-    public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
-    {
-        return new RedirectResponse($this->urlGenerator->generate('app_home'));
-    }
 
+public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
+{
+    // Add welcome message for returning users
+    $request->getSession()->getFlashBag()->add(
+        'success-auto-fade', 
+        'Connexion réussie avec Google'
+    );        return new RedirectResponse($this->urlGenerator->generate('app_home'));
+}
     // public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     // {
     //     if ($exception instanceof CustomUserMessageAuthenticationException) {
@@ -81,11 +116,20 @@ public function authenticate(Request $request): Passport
     //         Response::HTTP_UNAUTHORIZED
     //     );
     // }
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
+//     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
+// {
+//     if ($exception instanceof CustomUserMessageAuthenticationException) {
+//         $request->getSession()->getFlashBag()->add('error', $exception->getMessageKey());
+//     }
+//     return new RedirectResponse($this->urlGenerator->generate('app_utilisateur_signin'));
+// }
+public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
 {
-    if ($exception instanceof CustomUserMessageAuthenticationException) {
-        $request->getSession()->getFlashBag()->add('error', $exception->getMessageKey());
+    if ($exception->getMessageKey() === 'complete_registration') {
+        return new RedirectResponse($this->urlGenerator->generate('app_utilisateur_complete_registration'));
     }
+    
+    $request->getSession()->getFlashBag()->add('error', $exception->getMessageKey());
     return new RedirectResponse($this->urlGenerator->generate('app_utilisateur_signin'));
 }
 }

@@ -4,9 +4,20 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-  photos_directory: '%kernel.project_dir%/public/uploads/photos'
-  voiture_photos_directory: '%photos_directory%'
+    images_directory: '%kernel.project_dir%/assets/images'
+    photos_directory: '%kernel.project_dir%/public/uploads/photos'
+    voiture_photos_directory: '%photos_directory%'
+    
+
 services:
+    App\Security\GoogleAuthenticator:
+        arguments:
+            - '@knpu.oauth2.registry'
+            - '@doctrine.orm.entity_manager'
+            - '@router.default'
+        
+
+  
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -21,6 +32,19 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    # Configuration explicite pour CommandeRepository
+    App\Repository\GestionMeubles\CommandeRepository:
+        arguments:
+            $registry: '@doctrine'                  # ManagerRegistry
+            $entityManager: '@doctrine.orm.entity_manager'  # EntityManagerInterface
+            $mailer: '@mailer'                      # MailerInterface
+
+    # Configuration explicite pour CartService
+    App\Service\CartService:
+        arguments:
+            $panierRepository: '@App\Repository\GestionMeubles\PanierRepository'
+            $lignePanierRepository: '@App\Repository\GestionMeubles\LignePanierRepository'
+            $security: '@security.helper'
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     App\Controller\GestionTransport\HomeController:

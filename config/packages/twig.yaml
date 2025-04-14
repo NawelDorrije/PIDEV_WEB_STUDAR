@@ -1,5 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        cart_service: '@App\Service\CartService'
 
 when@test:
     twig:

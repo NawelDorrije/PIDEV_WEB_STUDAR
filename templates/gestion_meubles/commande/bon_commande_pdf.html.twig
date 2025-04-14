@@ -1,0 +1,180 @@
+{# templates/gestion_meubles/commande/bon_commande_pdf.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bon de Commande #{{ commande.id }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1f2937;
+            font-size: 12pt;
+            line-height: 1.5;
+        }
+        .container {
+            width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24pt;
+            color: #6366f1;
+            margin: 0;
+        }
+        .header .info {
+            text-align: right;
+            font-size: 10pt;
+            color: #4b5563;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            font-size: 16pt;
+            color: #1f2937;
+            border-left: 4px solid #10b981;
+            padding-left: 10px;
+            margin-bottom: 10px;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 10pt;
+        }
+        .details-grid strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+        .details-grid .highlight {
+            color: #10b981;
+            font-weight: 700;
+        }
+        .details-grid .statut {
+            background: #fef2f2;
+            color: #ef4444;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 10pt;
+        }
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        table th {
+            background: #6366f1;
+            color: #fff;
+            font-weight: 600;
+        }
+        table td {
+            background: #f8f9fa;
+        }
+        .total {
+            text-align: right;
+            font-size: 14pt;
+            font-weight: 700;
+            color: #10b981;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 8pt;
+            color: #6b7280;
+            margin-top: 30px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+        }
+        @media print {
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bon de Commande #{{ commande.id }}</h1>
+            <div class="info">
+                <p>Date d'émission : {{ "now"|date('d/m/Y') }}</p>
+                <p>Client : {{ commande.acheteur.nom }} {{ commande.acheteur.prenom }} (CIN: {{ commande.cinAcheteur }})</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Informations de la Commande</h2>
+            <div class="details-grid">
+                <div>
+                    <strong>Date de commande :</strong> {{ commande.dateCommande|date('d/m/Y H:i') }}
+                </div>
+                <div>
+                    <strong>Statut :</strong> <span class="statut">{{ commande.statut|lower|replace({'_': ' '})|capitalize }}</span>
+                </div>
+                <div>
+                    <strong>Méthode de paiement :</strong> {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}
+                </div>
+                <div>
+                    <strong>Adresse de livraison :</strong> {{ commande.adresseLivraison|default('Non spécifiée') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Articles</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Meuble</th>
+                        <th>Prix Unitaire</th>
+                        <th>Vendeur</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ligne in commande.panier.lignesPanier %}
+                        <tr>
+                            <td>{{ ligne.meuble.nom|default('Meuble inconnu') }}</td>
+                            <td>{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND</td>
+                            <td>{{ ligne.meuble.vendeur.nom|default('Inconnu') }} {{ ligne.meuble.vendeur.prenom|default('') }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="3">Aucun article</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="total">
+            Total : {{ commande.montantTotal|number_format(2, ',', ' ') }} TND
+        </div>
+
+        <div class="footer">
+            <p>Merci pour votre achat !</p>
+            <p>Contact : support@votre-entreprise.com | (+216) 12 345 678</p>
+        </div>
+    </div>
+</body>
+</html>

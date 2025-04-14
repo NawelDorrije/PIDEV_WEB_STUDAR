@@ -65,5 +65,6 @@ public function reject(Request $request, Rendezvous $rendezvou, EntityManagerInt
     return $this->redirectToRoute('app_rendezvous_index_PROP');
 }
 
+
     
 }

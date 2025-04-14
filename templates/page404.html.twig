@@ -1,0 +1,146 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Page non trouvée - 404{% endblock %}
+
+{% block body %}
+    <div class="container text-center py-5">
+        <!-- Decorative Circle -->
+        <div class="error-circle"></div>
+
+        <!-- Error Code -->
+        <h1 class="error-title">404</h1>
+
+        <!-- Subtitle -->
+        <h2 class="error-subtitle">Oups ! Page non trouvée</h2>
+
+        <!-- Message -->
+        <p class="error-message">
+            Il semble que la page que vous cherchez n'existe pas ou a été déplacée.<br>
+            Pas de panique, revenons à l'essentiel !
+        </p>
+
+        <!-- Back to Home Button -->
+        <a href="{{ path('app_gestion_meubles_mes_meubles') }}" class="btn-home">
+            <i class="fas fa-home me-2"></i> Retour à l'accueil
+        </a>
+    </div>
+
+    <style>
+        /* Variables */
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #f72585;
+            --text-dark: #212529;
+            --text-muted: #6c757d;
+        }
+
+        /* Background and Layout */
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Decorative Circle */
+        .error-circle {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+        }
+
+        /* Error Code */
+        .error-title {
+            font-size: 8rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            animation: bounce 2s infinite;
+            margin-bottom: 0;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Subtitle */
+        .error-subtitle {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 1rem 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Message */
+        .error-message {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Button */
+        .btn-home {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-home:hover {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3);
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 576px) {
+            .error-title {
+                font-size: 5rem;
+            }
+            .error-subtitle {
+                font-size: 1.4rem;
+            }
+            .error-message {
+                font-size: 0.9rem;
+            }
+            .error-circle {
+                width: 300px;
+                height: 300px;
+            }
+            .btn-home {
+                padding: 0.5rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

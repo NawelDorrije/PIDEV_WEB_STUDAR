@@ -3,6 +3,7 @@
 namespace App\Controller\GestionMeubles;
 
 use App\Entity\GestionMeubles\Panier;
+use App\Entity\Utilisateur;
 use App\Repository\GestionMeubles\LignePanierRepository;
 use App\Repository\GestionMeubles\PanierRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,6 +29,8 @@ final class PanierController extends AbstractController
     #[Route('/', name: 'app_gestion_meubles_panier', methods: ['GET'])]
     public function index(): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
         $paniers = $this->panierRepository->findAll();
         return $this->render('gestion_meubles/panier/index.html.twig', [
             'controller_name' => 'GestionMeubles/PanierController',
@@ -38,16 +41,19 @@ final class PanierController extends AbstractController
     #[Route('/create', name: 'app_gestion_meubles_panier_create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         try {
-            $cinAcheteur = $request->request->get('cin_acheteur');
-            if (!$cinAcheteur) {
-                throw new \InvalidArgumentException('Le CIN de l\'acheteur est requis');
+            $utilisateur = $this->getUser();
+            if (!$utilisateur instanceof Utilisateur) {
+                throw new \InvalidArgumentException('Vous devez être connecté pour créer un panier');
             }
-
+    
             $panier = new Panier();
-            $panier->setCinAcheteur($cinAcheteur);
+            $panier->setAcheteur($utilisateur); // Utilise la relation
             $this->panierRepository->save($panier, true);
-
+    
             return $this->json([
                 'message' => 'Panier créé avec succès',
                 'id' => $panier->getId()
@@ -59,10 +65,16 @@ final class PanierController extends AbstractController
         }
     }
     #[Route('/lignes', name: 'app_gestion_meubles_lignes_panier', methods: ['GET'])]
+
     public function voirLignesPanier(): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
+        $utilisateur = $this->getUser();
+
         $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin() pour récupérer l'utilisateur connecté
-        $panier = $this->panierRepository->findPanierEnCours($cinAcheteur);
+        $panier = $this->panierRepository->findPanierEnCours($utilisateur);
     
         $cartCount = 0; // Initialisation du compteur
         if ($panier) {
@@ -85,6 +97,9 @@ final class PanierController extends AbstractController
     #[Route('/lignes/{id}/remove', name: 'app_gestion_meubles_ligne_panier_remove', methods: ['POST'])]
     public function removeLigne(int $id): Response
     {
+        
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
         $ligne = $this->lignePanierRepository->find($id);
         if ($ligne) {
             $this->lignePanierRepository->remove($ligne, true);
@@ -95,41 +110,13 @@ final class PanierController extends AbstractController
         return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
     }
 
-    #[Route('/confirm-checkout', name: 'app_gestion_meubles_panier_confirm_checkout', methods: ['POST'])]
-    public function confirmCheckout(Request $request): Response
-    {
-        $cinAcheteur = "14450157"; // À remplacer par $this->getUser()->getCin()
-        $panier = $this->panierRepository->findPanierEnCours($cinAcheteur);
-
-        if (!$panier || !$this->lignePanierRepository->findByPanierId($panier->getId())) {
-            $this->addFlash('error', 'Votre panier est vide ou introuvable.');
-            return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
-        }
-
-        $paymentMethod = $request->request->get('payment_method');
-        $address = $request->request->get('address');
-
-        if ($paymentMethod === 'delivery' && empty($address)) {
-            $this->addFlash('error', 'Veuillez fournir une adresse pour le paiement à la livraison.');
-            return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
-        }
-
-        $panier->setStatut(Panier::STATUT_VALIDE);
-        $panier->setDateValidation(new \DateTime());
-        if ($paymentMethod === 'delivery') {
-            $this->addFlash('success', 'Commande confirmée avec paiement à la livraison. Adresse : ' . $address);
-        } else {
-            $this->addFlash('success', 'Commande confirmée avec paiement par carte.');
-            // Ici, vous pouvez intégrer une logique de paiement par carte (ex. Stripe)
-        }
-        $this->panierRepository->update($panier, true);
-
-        return $this->redirectToRoute('app_gestion_meubles_panier');
-    }
 
     #[Route('/{id}', name: 'app_gestion_meubles_panier_show', methods: ['GET'])]
     public function show(int $id): Response
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         $panier = $this->panierRepository->find($id);
         if (!$panier) {
             throw $this->createNotFoundException('Panier non trouvé');
@@ -142,6 +129,10 @@ final class PanierController extends AbstractController
     #[Route('/{id}/edit', name: 'app_gestion_meubles_panier_edit', methods: ['PUT'])]
     public function edit(Request $request, int $id): JsonResponse
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+        
+
         // Code inchangé
         try {
             $panier = $this->panierRepository->find($id);
@@ -177,7 +168,9 @@ final class PanierController extends AbstractController
 
     #[Route('/{id}', name: 'app_gestion_meubles_panier_delete', methods: ['DELETE'])]
     public function delete(int $id): JsonResponse
-    {
+    {        
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
         // Code inchangé
         try {
             $panier = $this->panierRepository->find($id);
@@ -200,8 +193,13 @@ final class PanierController extends AbstractController
     #[Route('/en-cours/{cin}', name: 'app_gestion_meubles_panier_en_cours', methods: ['GET'])]
     public function findPanierEnCours(string $cin): JsonResponse
     {
+        $this->denyAccessUnlessGranted('ROLE_ETUDIANT');
+
+
         // Code inchangé
-        $panier = $this->panierRepository->findPanierEnCours($cin);
+        $utilisateur = $this->getUser();
+
+        $panier = $this->panierRepository->findPanierEnCours($utilisateur);
         if (!$panier) {
             return $this->json([
                 'message' => 'Aucun panier en cours trouvé'

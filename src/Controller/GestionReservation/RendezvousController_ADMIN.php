@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/rendezvous_ADMIN')]
 final class RendezvousController_ADMIN extends AbstractController
 {
+  
     #[Route('/', name: 'app_rendezvous_index_ADMIN', methods: ['GET'])]
     public function index(Request $request, RendezvousRepository $rendezvousRepository): Response
     {

@@ -148,44 +148,29 @@
                     </div>
                     <div class="card-body">
                         <div class="rendezvous-content">
-                            <div class="details-grid">
-                                <div class="detail-item">
-                                    <span class="detail-label">Date:</span>
-                                    <span class="detail-value">
-                                        {{ rendezvou.date ? rendezvou.date|date('d/m/Y') : 'Non définie' }}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Heure:</span>
-                                    <span class="detail-value">
-                                        {{ rendezvou.heure ?? 'Non définie' }}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Propriétaire:</span>
-                                    <span class="detail-value">
-                                        {% if rendezvou.proprietaire %}
-                                            {{ rendezvou.proprietaire.nom }} {{ rendezvou.proprietaire.prenom }}
-                                        {% else %}
-                                            Non défini
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Étudiant:</span>
-                                    <span class="detail-value">
-                                        {% if rendezvou.etudiant %}
-                                            {{ rendezvou.etudiant.nom }} {{ rendezvou.etudiant.prenom }}
-                                        {% else %}
-                                            Non défini
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Logement:</span>
-                                    <span class="detail-value">{{ rendezvou.idLogement }}</span>
-                                </div>
-                            </div>
+                            {# Update the details-grid section with: #}
+<div class="details-grid">
+    <div class="detail-item">
+        <span class="detail-label">Date:</span>
+        <span class="detail-value">{{ rendezvou.date|date('d/m/Y') }}</span>
+    </div>
+    <div class="detail-item">
+        <span class="detail-label">Heure:</span>
+        <span class="detail-value">{{ rendezvou.heure }}</span>
+    </div>
+    <div class="detail-item">
+        <span class="detail-label">Propriétaire:</span>
+        <span class="detail-value">{{ rendezvou.getProprietaireName() }}</span>
+    </div>
+    <div class="detail-item">
+        <span class="detail-label">Étudiant:</span>
+        <span class="detail-value">{{ rendezvou.getEtudiantName() }}</span>
+    </div>
+    <div class="detail-item">
+        <span class="detail-label">Logement:</span>
+        <span class="detail-value">{{ rendezvou.getLogementAddress(logement_repo) }}</span>
+    </div>
+</div>
                             
                             <div class="action-buttons">
     {# Modifier button - only for 'en_attente' status #}

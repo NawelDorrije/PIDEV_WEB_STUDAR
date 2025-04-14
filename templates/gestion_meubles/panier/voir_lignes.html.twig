@@ -19,6 +19,7 @@
         background: white;
         border-radius: 12px;
         transition: transform 0.2s;
+        cursor: pointer; /* Indique que la carte est cliquable */
     }
 
     .product-card:hover {
@@ -73,10 +74,234 @@
     .btn-confirm:hover {
         background: linear-gradient(135deg, #4f46e5, #4338ca);
     }
+
+    /* Pop-up Styles */
+    .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .popup-content {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        position: relative;
+        border-left: 4px solid #6366f1;
+        transition: transform 0.3s ease;
+        transform: scale(0.98);
+    }
+
+    .popup-overlay.active .popup-content {
+        transform: scale(1);
+    }
+
+    .popup-content h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        text-align: left;
+        position: relative;
+    }
+
+    .popup-content h2::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 0;
+        width: 40px;
+        height: 2px;
+        background: #10b981;
+    }
+
+    .popup-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.3s ease, background 0.3s ease;
+    }
+
+    .popup-close:hover {
+        color: #1f2937;
+        background: #e5e7eb;
+    }
+
+    .popup-details {
+        font-size: 0.95rem;
+        color: #4b5563;
+    }
+
+    .popup-details p {
+        margin: 0.5rem 0;
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .popup-details p:last-child {
+        border-bottom: none;
+    }
+
+    .popup-details i {
+        font-size: 1.1rem;
+        color: #6b7280;
+    }
+
+    .popup-details .nom i { color: #6366f1; }
+    .popup-details .description i { color: #f59e0b; }
+    .popup-details .prix i { color: #10b981; }
+    .popup-details .statut i { color: #ef4444; }
+    .popup-details .categorie i { color: #8b5cf6; }
+    .popup-details .vendeur i { color: #06b6d4; }
+    .popup-details .date i { color: #3b82f6; }
+
+    .popup-details .prix span {
+        color: #10b981;
+        font-weight: 700;
+    }
+
+    .popup-details .statut span {
+        background: #fef2f2;
+        color: #ef4444;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .popup-details strong {
+        color: #1f2937;
+        font-weight: 600;
+        flex: 0 0 35%;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @media (max-width: 480px) {
+        .popup-content {
+            padding: 1.5rem;
+            max-height: 90vh;
+        }
+
+        .popup-content h2 {
+            font-size: 1.5rem;
+        }
+
+        .popup-details p {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .popup-details strong {
+            flex: none;
+        }
+    }
+
+    /* Navigation verticale */
+    .nav-buttons {
+        position: fixed;
+        top: 100px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        z-index: 1000;
+    }
+
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #fff;
+        color: #4b5563;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+
+    .nav-button:hover {
+        background: #6366f1;
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    .nav-button i {
+        font-size: 1.2rem;
+    }
+
+    .nav-text {
+        display: inline;
+    }
+
+    @media (max-width: 768px) {
+        .nav-buttons {
+            position: static;
+            flex-direction: row;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .nav-text {
+            display: none;
+        }
+
+        .nav-button i {
+            font-size: 1.5rem;
+        }
+    }
 </style>
 
 <div class="cart-wrapper">
     <div class="container">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
         <div class="row g-4">
             <!-- Cart Items Section -->
             <div class="col-lg-8">
@@ -89,7 +314,7 @@
                 {% if lignesPanier|length > 0 %}
                     <div class="d-flex flex-column gap-3">
                         {% for ligne in lignesPanier %}
-                            <div class="product-card p-3 shadow-sm">
+                            <div class="product-card p-3 shadow-sm" data-id="{{ ligne.id }}">
                                 <div class="row align-items-center">
                                     <div class="col-md-2">
                                         <img src="{% if ligne.meuble.image %}{{ asset('images/' ~ ligne.meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" 
@@ -160,88 +385,178 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal pour choisir le mode de paiement -->
-<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="paymentModalLabel">Choisir le mode de paiement</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="paymentForm" action="{{ path('app_gestion_meubles_panier_confirm_checkout') }}" method="POST">
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="cardPayment" value="card" checked>
-                            <label class="form-check-label" for="cardPayment">
-                                Paiement par carte
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="deliveryPayment" value="delivery">
-                            <label class="form-check-label" for="deliveryPayment">
-                                Paiement à la livraison
-                            </label>
-                        </div>
-                    </div>
-                    <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-confirm" id="confirmPayment">Confirmer</button>
+    <!-- Pop-up pour les détails du meuble -->
+    <div class="popup-overlay" id="meuble-popup">
+        <div class="popup-content">
+            <button class="popup-close">×</button>
+            <h2>Détails du meuble</h2>
+            <div class="popup-details" id="meuble-popup-details">
+                <!-- Les détails seront injectés via JavaScript -->
             </div>
         </div>
     </div>
-</div>
 
-<!-- Modal pour le paiement à la livraison -->
-<div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deliveryModalLabel">Confirmer la commande</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Montant total :</strong> {{ total }} TND</p>
-                <form id="deliveryForm" action="{{ path('app_gestion_meubles_panier_confirm_checkout') }}" method="POST">
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Adresse de livraison</label>
-                        <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
-                    </div>
-                    <input type="hidden" name="payment_method" value="delivery">
-                    <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="submit" form="deliveryForm" class="btn btn-confirm">Confirmer</button>
+    <!-- Modal pour choisir le mode de paiement -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Choisir le mode de paiement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="paymentForm" action="{{ path('app_gestion_meubles_panier_confirm_checkout') }}" method="POST">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" id="cardPayment" value="card" checked>
+                                <label class="form-check-label" for="cardPayment">
+                                    Paiement par carte
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment_method" id="deliveryPayment" value="delivery">
+                                <label class="form-check-label" for="deliveryPayment">
+                                    Paiement à la livraison
+                                </label>
+                            </div>
+                        </div>
+                        <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-confirm" id="confirmPayment">Confirmer</button>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- Modal pour le paiement à la livraison -->
+    <div class="modal fade" id="deliveryModal" tabindex="-1" aria-labelledby="deliveryModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deliveryModalLabel">Confirmer la commande</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Montant total :</strong> {{ total }} TND</p>
+                    <form id="deliveryForm" action="{{ path('app_gestion_meubles_panier_confirm_checkout') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse de livraison</label>
+                            <textarea class="form-control" id="address" name="address" rows="3" required placeholder="Entrez votre adresse de livraison"></textarea>
+                        </div>
+                        <input type="hidden" name="payment_method" value="delivery">
+                        <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" form="deliveryForm" class="btn btn-confirm">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation verticale -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_mes_meubles') }}" class="nav-button" title="Consulter mes meubles">
+            <i class="bi bi-list-ul"></i>
+            <span class="nav-text">Mes meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_a_acheter') }}" class="nav-button" title="Offres de meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Offre des meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_mes_commandes') }}" class="nav-button" title="Historique des commandes">
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Historique Commandes</span>
+        </a>
+        <a  class="nav-button" title="Voir les statistiques">
+            <i class="bi bi-bar-chart"></i>
+            <span class="nav-text">Statistiques</span>
+        </a>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const confirmPaymentBtn = document.getElementById('confirmPayment');
-        const paymentForm = document.getElementById('paymentForm');
-        const deliveryModal = new bootstrap.Modal(document.getElementById('deliveryModal'));
-        const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmPaymentBtn = document.getElementById('confirmPayment');
+    const paymentForm = document.getElementById('paymentForm');
+    const deliveryModal = new bootstrap.Modal(document.getElementById('deliveryModal'));
 
-        confirmPaymentBtn.addEventListener('click', function () {
-            const selectedMethod = paymentForm.querySelector('input[name="payment_method"]:checked').value;
+    // Gestion de la pop-up pour les meubles dans le panier
+    const cards = document.querySelectorAll('.product-card');
+    const popup = document.getElementById('meuble-popup');
+    const popupDetails = document.getElementById('meuble-popup-details');
+    const popupClose = document.querySelector('#meuble-popup .popup-close');
+
+    // Données des meubles dans le panier
+    const meublesData = {
+        {% for ligne in lignesPanier %}
+            "{{ ligne.id }}": {
+                id: "{{ ligne.meuble.id }}",
+                nom: "{{ ligne.meuble.nom }}",
+                description: "{{ ligne.meuble.description|default('Non fournie') }}",
+                prix: "{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND",
+                statut: "{{ ligne.meuble.statut|capitalize }}",
+                categorie: "{{ ligne.meuble.categorie|capitalize }}",
+                vendeur: "{{ ligne.meuble.vendeur.nom }} {{ ligne.meuble.vendeur.prenom }} (CIN: {{ ligne.meuble.vendeur.cin }})",
+                dateEnregistrement: "{{ ligne.meuble.dateEnregistrement|date('d/m/Y H:i') }}"
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // Afficher la pop-up au clic sur une carte
+    cards.forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-btn')) return; // Ignorer le clic sur le bouton supprimer
             
-            if (selectedMethod === 'delivery') {
-                paymentModal.hide();
-                deliveryModal.show();
-            } else {
-                paymentForm.submit(); // Soumet directement pour le paiement par carte
+            const ligneId = card.getAttribute('data-id');
+            const meuble = meublesData[ligneId];
+            if (meuble) {
+                popupDetails.innerHTML = `
+                    <p class="nom"><i class="bi bi-tag-fill"></i> <strong>Nom:</strong> <span>${meuble.nom}</span></p>
+                    <p class="description"><i class="bi bi-file-text"></i> <strong>Description:</strong> <span>${meuble.description}</span></p>
+                    <p class="prix"><i class="bi bi-currency-dollar"></i> <strong>Prix:</strong> <span>${meuble.prix}</span></p>
+                    <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${meuble.statut}</span></p>
+                    <p class="categorie"><i class="bi bi-box"></i> <strong>Catégorie:</strong> <span>${meuble.categorie}</span></p>
+                    <p class="vendeur"><i class="bi bi-person"></i> <strong>Vendeur:</strong> <span>${meuble.vendeur}</span></p>
+                    <p class="date"><i class="bi bi-calendar"></i> <strong>Date d'enregistrement:</strong> <span>${meuble.dateEnregistrement}</span></p>
+                `;
+                popup.style.display = 'flex';
+                popup.classList.add('active');
             }
         });
     });
+
+    // Fermer la pop-up
+    popupClose.addEventListener('click', () => {
+        popup.style.display = 'none';
+        popup.classList.remove('active');
+    });
+
+    // Fermer la pop-up en cliquant à l'extérieur
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) {
+            popup.style.display = 'none';
+            popup.classList.remove('active');
+        }
+    });
+
+    // Gestion du paiement
+    confirmPaymentBtn.addEventListener('click', function () {
+        const selectedMethod = paymentForm.querySelector('input[name="payment_method"]:checked').value;
+        
+        if (selectedMethod === 'delivery') {
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            deliveryModal.show();
+        } else {
+            paymentForm.submit(); // Soumet directement pour le paiement par carte
+        }
+    });
+});
 </script>
 {% endblock %}

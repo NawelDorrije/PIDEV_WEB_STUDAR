@@ -8,6 +8,8 @@ use App\Repository\RendezvousRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Utilisateur;
+use App\Repository\LogementRepository;
+
 
 
 
@@ -61,9 +63,7 @@ private ?string $heure = null; // Keep as string
     // )]
     // private ?string $cinProprietaire = null;
 
-    #[ORM\Column(name: 'idLogement', length: 255, nullable: true)]
-    #[Assert\NotBlank(message: "L'identifiant du logement est obligatoire")]
-    private ?string $idLogement = null;
+  
     #[ORM\Column(
       type: 'string', 
       columnDefinition: "ENUM('confirmée', 'en_attente', 'refusée') DEFAULT 'en_attente'", 
@@ -79,6 +79,10 @@ private ?string $heure = null; // Keep as string
     #[ORM\ManyToOne(targetEntity: Utilisateur::class, inversedBy: 'rendezvousAsEtudiant')]
     #[ORM\JoinColumn(name: 'cinEtudiant', referencedColumnName: 'cin')]
     private ?Utilisateur $etudiant = null;
+  
+    #[ORM\Column(name: 'idLogement', length: 255, nullable: true)]
+    #[Assert\NotBlank(message: "L'identifiant du logement est obligatoire")]
+    private ?string $idLogement = null;
 
 
   public function __construct()
@@ -192,6 +196,7 @@ public function setEtudiant(?Utilisateur $etudiant): self
     return $this;
 }
 
+
 // In App\Entity\Rendezvous.php
 
 public function isModifiable(): bool
@@ -228,5 +233,24 @@ public function isDeletable(): bool
     } catch (\Exception $e) {
         return true; // Fallback if datetime calculation fails
     }
+}
+public function getLogementAddress(LogementRepository $logementRepository): string
+{
+    if (is_numeric($this->idLogement)) {
+        $logement = $logementRepository->find($this->idLogement);
+        return $logement ? $logement->getAdresse() : 'Logement #'.$this->idLogement;
+    }
+    
+    return $this->idLogement; // fallback if it's already a string
+}
+
+public function getProprietaireName(): string
+{
+    return $this->proprietaire ? $this->proprietaire->getNom().' '.$this->proprietaire->getPrenom() : 'Non défini';
+}
+
+public function getEtudiantName(): string
+{
+    return $this->etudiant ? $this->etudiant->getNom().' '.$this->etudiant->getPrenom() : 'Non défini';
 }
 }
