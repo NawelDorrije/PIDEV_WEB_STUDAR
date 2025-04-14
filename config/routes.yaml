@@ -1,4 +1,6 @@
 # config/routes.yaml
+_liip_imagine:
+    resource: "@LiipImagineBundle/Resources/config/routing.yaml"
 controllers:
     resource:
         path: ../src/Controller/
@@ -24,3 +26,7 @@ connect_google_check:
 app_utilisateur_complete_registration:
     path: /complete-registration
     controller: App\Controller\RegistrationController::completeRegistration
+    type: attribute 
+app_home:
+    path: /Home
+    controller: App\Controller\HomeController::index

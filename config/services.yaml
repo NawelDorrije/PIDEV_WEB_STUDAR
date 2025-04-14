@@ -5,6 +5,9 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     images_directory: '%kernel.project_dir%/assets/images'
+    photos_directory: '%kernel.project_dir%/public/uploads/photos'
+    voiture_photos_directory: '%photos_directory%'
+    
 
 services:
     App\Security\GoogleAuthenticator:
@@ -12,7 +15,9 @@ services:
             - '@knpu.oauth2.registry'
             - '@doctrine.orm.entity_manager'
             - '@router.default'
+        
 
+  
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -40,3 +45,10 @@ services:
             $panierRepository: '@App\Repository\GestionMeubles\PanierRepository'
             $lignePanierRepository: '@App\Repository\GestionMeubles\LignePanierRepository'
             $security: '@security.helper'
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+    App\Controller\GestionTransport\HomeController:
+        public: true
+        tags: ['controller.service_arguments']
+        autowire: true
+        autoconfigure: true

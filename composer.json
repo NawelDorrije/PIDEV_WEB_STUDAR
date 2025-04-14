@@ -20,6 +20,8 @@
         "karser/karser-recaptcha3-bundle": "^0.2.1",
         "knplabs/knp-paginator-bundle": "^6.8",
         "knplabs/knp-snappy-bundle": "^1.10",
+        "liip/imagine-bundle": "^2.13",
+
         "knpuniversity/oauth2-client-bundle": "^2.18",
         "league/oauth2-google": "*",
         "longitude-one/doctrine-spatial": "^5.0",
@@ -56,12 +58,13 @@
         "symfony/ux-twig-component": "^2.24",
         "symfony/validator": "6.4.*",
         "symfony/web-link": "6.4.*",
+        "symfony/uid": "6.4.*",
+
         "symfony/webpack-encore-bundle": "^2.2",
         "symfony/yaml": "6.4.*",
-        "tecnickcom/tcpdf": "^6.9",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/string-extra": "^3.20",
-        "twig/twig": "^2.12|^3.0"
+        "twig/twig": "^2.12|^3.0",
+        "vich/uploader-bundle": "*"
     },
     "config": {
         "allow-plugins": {

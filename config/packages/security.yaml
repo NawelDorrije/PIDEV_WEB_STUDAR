@@ -55,6 +55,11 @@ security:
 
 when@test:
     security:
+        firewalls:
+            main:
+                logout:
+                    path: app_logout
+                    target: app_transport_home
         password_hashers:
             # By default, password hashers are resource intensive and take time. This is
             # important to generate secure password hashes. In tests however, secure hashes
