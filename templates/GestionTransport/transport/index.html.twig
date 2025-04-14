@@ -3,23 +3,25 @@
 {% block title %}Les Transports{% endblock %}
 
 {% block body %}
-    <h1>Les Transports </h1>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
+    <div class="container mt-5">
+        <div class="properties">
+            <div class="item">
+                <h4 class="mb-4">Liste des Transports</h4>
+                <table class="table table-bordered table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Id</th>
                 <th>TrajetEnKm</th>
                 <th>Tarif</th>
                 <th>Status</th>
                 <th>Timestamp</th>
                 <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for transport in transports %}
-            <tr>
-                <td>{{ transport.id }}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transport in transports %}
+                            <tr>
+                                <td>{{ transport.id }}</td>
                 <td>{{ transport.trajetEnKm }}</td>
                 <td>{{ transport.tarif }}</td>
                 <td>{{ transport.status.value }}</td>
@@ -28,14 +30,16 @@
                     <a href="{{ path('app_transport_show', {'id': transport.id}) }}">show</a>
                     <a href="{{ path('app_transport_edit', {'id': transport.id}) }}">edit</a>
                 </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="6">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="{{ path('app_transport_new') }}">Create new</a>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">Aucun transport trouvé.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <a href="{{ path('app_transport_new') }}">Create new</a>
+            </div>
+        </div>
+    </div>
 {% endblock %}

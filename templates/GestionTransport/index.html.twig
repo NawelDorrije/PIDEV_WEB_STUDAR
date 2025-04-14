@@ -13,7 +13,7 @@
         <div class="row mt-4">
             <!-- Voitures Section -->
             <div class="col-md-6">
-                <h2>Dernières Voitures</h2>
+                <h2 class="mb-4">Dernières Voitures</h2>
                 <div class="row">
                     {% for voiture in voitures %}
                         <div class="col-md-4 mb-3">
@@ -41,7 +41,7 @@
 
             <!-- Transports Section -->
             <div class="col-md-6">
-                <h2>Derniers Transports</h2>
+                <h2 class="mb-4">Derniers Transports</h2>
                 <div class="row">
                     {% for transport in transports %}
                         <div class="col-md-4 mb-3">
@@ -73,10 +73,55 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-body {
+            text-align: center;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .card-text {
+            color: #7a7a7a;
+            font-size: 0.95rem;
+        }
+
         .card-img-top {
             height: 200px;
             object-fit: cover;
-            width: 100%;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+        }
+
+        .btn-primary {
+            background-color: #ff5a3c;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #e04d30;
+        }
+
+        .btn-secondary {
+            background-color: #f3f3f3;
+            color: #333;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
         }
     </style>
 {% endblock %}
