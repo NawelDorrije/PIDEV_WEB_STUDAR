@@ -1,32 +1,136 @@
 {% extends 'base.html.twig' %}
 
+{% block title %}Statistiques des Réservations{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .chart-container {
+        height: 400px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .stat-card .card-body {
+        padding: 20px;
+    }
+    .stat-card h5 {
+        color: #4453A6;
+    }
+    .table-responsive {
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
-<div class="container mt-4">
-    <h2>Monthly Reservation Statistics</h2>
-    
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Month</th>
-                <th>Reservations</th>
-                <th>Chart</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stat in stats %}
-                <tr>
-                    <td>{{ stat.month }}</td>
-                    <td>{{ stat.count }}</td>
-                    <td>
-                        <div class="progress" style="height: 20px">
-                            <div class="progress-bar bg-primary" 
-                                 style="width: {{ (stat.count/max(stats|column('count')))*100 }}%">
-                            </div>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 style="color:rgb(94, 68, 166);">
+                        <i class="fas fa-chart-bar mr-2"></i>Statistiques de Vos Réservations
+                    </h2>
+                    <a href="{{ path('app_reservation_logement_index') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left mr-2"></i> Retour aux réservations
+                    </a>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Réservations par Mois</h5>
+                        <div class="chart-container">
+                            <canvas id="reservationChart"></canvas>
                         </div>
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Détails des Réservations</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Année</th>
+                                        <th>Mois</th>
+                                        <th>Nombre de Réservations</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in stats %}
+                                    <tr>
+                                        <td>{{ stat.year }}</td>
+                                        <td>{{ stat.month }}</td>
+                                        <td>
+                                            <div class="progress">
+                                                <div class="progress-bar" 
+                                                     role="progressbar" 
+                                                     style="width: {{ (stat.count / max) * 100 }}%" 
+                                                     aria-valuenow="{{ stat.count }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="{{ max }}">
+                                                    {{ stat.count }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">Aucune donnée statistique disponible</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('reservationChart').getContext('2d');
+    
+    // Préparer les données pour le graphique
+    const labels = {{ stats|map(stat => stat.month ~ ' ' ~ stat.year)|json_encode|raw }};
+    const data = {{ stats|map(stat => stat.count)|json_encode|raw }};
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nombre de réservations',
+                data: data,
+                backgroundColor: 'rgba(68, 83, 166, 0.7)',
+                borderColor: 'rgba(68, 83, 166, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

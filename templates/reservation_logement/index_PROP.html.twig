@@ -1,0 +1,222 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Réservations de Logement{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Style général */
+    .section {
+        padding: 60px 0;
+        background-color: #f8f9fa;
+    }
+    
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* Bouton flottant */
+    .floating-details-btn {
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: #4453A6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+    
+    .floating-details-btn:hover {
+        background: #3a4791;
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .floating-details-btn::after {
+        content: "Voir détails";
+        position: absolute;
+        right: 45px;
+        white-space: nowrap;
+        background: #4453A6;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .floating-details-btn:hover::after {
+        opacity: 1;
+    }
+    
+    /* Carte de réservation */
+    .reservation-card {
+        position: relative;
+        padding-right: 30px;
+        overflow: visible;
+        margin-bottom: 20px;
+        border: none;
+          width: 1000px;
+          margin-left:130px;
+
+
+
+    }
+    
+    .card-title {
+        color: #4453A6;
+        margin-bottom: 15px;
+    }
+    
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .card-meta-div {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+    
+    .card-meta i {
+        margin-right: 8px;
+        color: #F2811D;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        font-weight: 500;
+    }
+    
+    /* Options de vue */
+    .view-options {
+        margin-bottom: 30px;
+    }
+    
+    .btn-group {
+        margin-right: 10px;
+    }
+    
+    /* Pastel purple animated button */
+    .btn-nouveau {
+        background-color: #B399D4;
+        color: white;
+        border: none;
+        animation: pop 2s infinite;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nouveau:hover {
+        background-color: #9F7FDB;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(179, 153, 212, 0.4);
+    }
+    
+    @keyframes pop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="section-heading d-flex justify-content-between align-items-center mb-4">
+                    <h2 style="color:rgb(94, 68, 166);"><i class="fas fa-bed mr-2"></i>Vos Réservations de Logement</h2>
+                    
+                </div>
+                
+                <!-- Options de vue -->
+                <div class="view-options mb-4">
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn btn-outline-primary active" data-view="list">
+                            <i class="fas fa-list"></i> Liste
+                        </a>
+                        
+                      {# <li class="{{ app.request.get('_route') == 'app_reservation_logement_statistics_owner' ? 'active' }}">
+    <a href="{{ path('app_reservation_logement_statistics_owner') }}">
+        <i class="fas fa-chart-pie mr-2"></i> Mes Statistiques
+    </a> #}
+</li>
+                    </div>
+                    
+                    <!-- Filtres par statut -->
+                    <div class="status-filter btn-group ml-2" role="group">
+                        <a href="{{ path('app_reservation_logement_index_PROP') }}" class="btn btn-outline-secondary">Tous</a>
+                        <a href="{{ path('app_reservation_logement_index_PROP', {'status': 'confirmée'}) }}" 
+                           class="btn btn-outline-success">Confirmés</a>
+                        <a href="{{ path('app_reservation_logement_index_PROP', {'status': 'en_attente'}) }}" 
+                           class="btn btn-outline-warning">En attente</a>
+                        <a href="{{ path('app_reservation_logement_index_PROP', {'status': 'refusée'}) }}" 
+                           class="btn btn-outline-danger">Refusés</a>
+                    </div>
+                </div>
+                
+                <!-- Contenu principal -->
+                <div class="reservation-content">
+                    <!-- Vue Liste -->
+                    <div class="reservation-list">
+                        {% for reservation in reservation_logements %}
+                        <div class="card reservation-card">
+                            <div class="card-body">
+                                <a href="{{ path('app_reservation_logement_show_PROP', {'id': reservation.id}) }}" 
+                                   class="floating-details-btn" title="Voir détails">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                                <h5 class="card-title" style="color:rgb(49, 69, 149);" >
+                                    <i class="fas fa-bed mr-2"></i>Réservation 
+                                    <span class="badge badge-{{ 
+                                        reservation.status == 'confirmée' ? 'success' : 
+                                        (reservation.status == 'en_attente' ? 'warning' : 'danger') 
+                                    }}">
+                                        {{ reservation.status }}
+                                    </span>
+                                </h5>
+                                <div class="card-meta">
+                                    <div class="card-meta-div">
+                                        <i class="far fa-calendar-alt"></i> Du {{ reservation.dateDebut|date('d/m/Y') }}
+                                    </div>
+                                    <div class="card-meta-div">
+                                        <i class="far fa-calendar-alt"></i> Au {{ reservation.dateFin|date('d/m/Y') }}
+                                    </div>
+                                    <div class="card-meta-div">
+                                        <i class="fas fa-home"></i> 
+                                        {% if reservation.idLogement is iterable %}
+                                            {{ reservation.idLogement.adresse ?? 'Logement #' ~ reservation.idLogement.id }}
+                                        {% else %}
+                                            {{ reservation.idLogement }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>Aucune réservation trouvée.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

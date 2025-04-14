@@ -111,7 +111,15 @@
     box-shadow: 0 5px 15px rgba(68, 83, 166, 0.3);
 }
 
-
+.btn-modifier {
+    background-color: #4453A6;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
 
 
 .btn-supprimer {
@@ -128,6 +136,11 @@
     background-color: #da7419;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
+}
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 </style>
 {% endblock %}
@@ -165,24 +178,36 @@
                                     <span class="detail-value">{{ reservation_transport.tempsArrivage }}</span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">CIN Transporteur:</span>
-                                    <span class="detail-value">{{ reservation_transport.cinTransporteur }}</span>
+                                    <span class="detail-label">Transporteur::</span>
+                                    <span class="detail-value">
+                                        {% if reservation_transport.transporteur %}
+                                            {{ reservation_transport.transporteur.nom }} {{ reservation_transport.transporteur.prenom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">CIN Étudiant:</span>
-                                    <span class="detail-value">{{ reservation_transport.cinEtudiant }}</span>
+                                    <span class="detail-label">Étudiant:</span>
+                                    <span class="detail-value">
+                                        {% if reservation_transport.etudiant %}
+                                            {{ reservation_transport.etudiant.nom }} {{ reservation_transport.etudiant.prenom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
                             
                             <div class="action-buttons">
                                 <a href="{{ path('app_reservation_transport_edit', {'id': reservation_transport.id}) }}" 
-                                   class="btn btn-primary {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
+                                   class="btn btn-modifier {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
                                    {% if not reservation_transport.isModifiable() %}
                                        title="Modification impossible pour les réservations confirmées ou refusées"
                                    {% endif %}>
                                     <i class="fas fa-edit"></i> Modifier
                                 </a>
-                                
+                            
                                 {{ include('reservation_transport/_delete_form.html.twig') }}
                             </div>
                         </div>

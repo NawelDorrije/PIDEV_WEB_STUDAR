@@ -1,0 +1,152 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Logement{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map;
+let marker;
+
+function initMap() {
+    const initialLat = {{ logement.localisation.y ?? 36.8065 }};
+    const initialLng = {{ logement.localisation.x ?? 10.1815 }};
+    
+    map = L.map('map').setView([initialLat, initialLng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    marker = L.marker([initialLat, initialLng], {
+        draggable: true
+    }).addTo(map);
+
+    map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        updateFields(e.latlng);
+    });
+
+    marker.on('dragend', function(e) {
+        updateFields(marker.getLatLng());
+    });
+}
+
+function updateFields(latlng) {
+    document.getElementById('latitude').value = latlng.lat;
+    document.getElementById('longitude').value = latlng.lng;
+}
+
+window.onload = initMap;
+</script>
+{% endblock %}
+
+{% block body %}
+<div class="contact-page section">
+    <div class="container">
+        <div class="row row-page">
+            <div class="col-lg-12 right-column">
+                <h1 class="center">Modifier ce Logement</h1>
+
+                {{ form_start(form, {'attr': {'id': 'contact-form'}}) }}
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="col-lg-12">
+                            {{ form_widget(form.nbrChambre, {
+                                'attr': {
+                                    'placeholder': 'Number of Rooms',
+                                    'class': 'form-control' ~ (form.nbrChambre.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'required': 'required'
+                                }
+                            }) }}
+                            {{ form_errors(form.nbrChambre) }}
+                        </div>
+
+                        <div class="col-lg-12">
+                            {{ form_widget(form.prix, {
+                                'attr': {
+                                    'placeholder': 'Price (€)',
+                                    'class': 'form-control' ~ (form.prix.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'required': 'required'
+                                }
+                            }) }}
+                            {{ form_errors(form.prix) }}
+                        </div>
+
+                        <div class="col-lg-12">
+                            {{ form_widget(form.type, {
+                                'attr': {
+                                    'placeholder': 'Property Type',
+                                    'class': 'form-control' ~ (form.type.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'required': 'required'
+                                }
+                            }) }}
+                            {{ form_errors(form.type) }}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="col-lg-12">
+                            {{ form_widget(form.address, {
+                                'attr': {
+                                    'placeholder': 'Address (optional)',
+                                    'class': 'form-control'
+                                }
+                            }) }}
+                        </div>
+
+                        <div class="col-lg-12">
+                            {{ form_widget(form.latitude, {
+                                'attr': {
+                                    'id': 'latitude',
+                                    'class': 'd-none'
+                                }
+                            }) }}
+                        </div>
+
+                        <div class="col-lg-12">
+                            {{ form_widget(form.longitude, {
+                                'attr': {
+                                    'id': 'longitude',
+                                    'class': 'd-none'
+                                }
+                            }) }}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        {{ form_widget(form.description, {
+                            'attr': {
+                                'placeholder': 'Description',
+                                'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                'rows': 5,
+                                'required': 'required'
+                            }
+                        }) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+
+                    <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
+
+                    <div class="col-lg-12" style="margin-top: 20px;">
+                        <button type="submit" class="orange-button">Update</button>
+                    </div>
+                </div>
+                {{ form_end(form) }}
+
+                <div class="center" style="margin-top: 20px;">
+                    <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to list
+                    </a>
+                </div>
+
+                {{ include('logement/_delete_form.html.twig') }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

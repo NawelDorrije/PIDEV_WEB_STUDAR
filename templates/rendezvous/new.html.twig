@@ -6,22 +6,38 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
   
+  /* Dans votre section stylesheets */
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.is-invalid + label {
+    color: #dc3545 !important;
+}
   .rendezvous-section {
     padding: 40px 0;
-  background-color: #f8f9fa;  }
+    background-color: #f8f9fa;
+  }
 
   .rendezvous-container {
-    background: #FFE8D6; /* Light pastel orange */
+    background: #FFE8D6;
     padding: 40px;
     border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2); /* Softer shadow */
-    border: 1px solid #FFD1A8; /* Light orange border */
+    box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2);
+    border: 1px solid #FFD1A8;
   }
 
   .rendezvous-title {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
-    color: #F25922; /* Darker orange for contrast */
+    color: #F25922;
     letter-spacing: 2px;
     text-align: center;
     margin-bottom: 40px;
@@ -37,7 +53,6 @@
     color: #F25922;
   }
 
-  /* Rest of your existing styles... */
   .form-row {
     display: flex;
     flex-wrap: wrap;
@@ -66,7 +81,7 @@
   .rendezvous-input {
     width: 100%;
     height: 55px;
-    border: 2px solid #FFD1A8; /* Light orange border */
+    border: 2px solid #FFD1A8;
     border-radius: 8px;
     padding: 15px 20px;
     background: white;
@@ -109,6 +124,18 @@
     box-shadow: 0 8px 20px rgba(68, 83, 166, 0.4);
   }
 
+  .rendezvous-btn-cancel {
+    display: inline-block;
+    margin-left: 15px;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 600;
+    border: 1px solid #4453A6;
+    color: #4453A6;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
   @media (max-width: 768px) {
     .form-group {
       flex: 0 0 100%;
@@ -123,9 +150,15 @@
       flex-direction: column;
       gap: 8px;
     }
+    
+    .rendezvous-btn, .rendezvous-btn-cancel {
+      width: 100%;
+      margin: 5px 0;
+    }
   }
 </style>
 {% endblock %}
+
 
 {% block body %}
 <section class="rendezvous-section">
@@ -138,8 +171,12 @@
                         Planifier un Rendez-vous
                     </h2>
                     
-                    {{ form_start(form, {'attr': {'class': 'rendezvous-form'}}) }}
-                        <div class="form-row">
+{{ form_start(form, {
+    'attr': {
+        'class': 'rendezvous-form',
+        'novalidate': 'novalidate'  
+    }
+}) }}                        <div class="form-row">
                             <div class="form-group">
                                 {{ form_widget(form.date, {
                                     'attr': {
@@ -162,34 +199,32 @@
                         
                         <div class="form-row">
                             <div class="form-group">
-                                {{ form_widget(form.cinProprietaire, {
+                                {{ form_widget(form.proprietaire, {
                                     'attr': {
-                                        'class': 'rendezvous-input',
+                                        'class': 'rendezvous-input proprietaire-select',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinProprietaire) }}
+                                {{ form_label(form.proprietaire) }}
                             </div>
+                            
                             <div class="form-group">
-                                {{ form_widget(form.cinEtudiant, {
-                                    'attr': {
-                                        'class': 'rendezvous-input',
-                                        'placeholder': ' '
-                                    }
-                                }) }}
-                                {{ form_label(form.cinEtudiant) }}
+                                <select id="logement-select" class="rendezvous-input logement-select" disabled>
+                                    <option value="">Sélectionnez un propriétaire d'abord</option>
+                                </select>
+                                {{ form_widget(form.idLogement) }}
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
-                                {{ form_widget(form.idLogement, {
+                                {{ form_widget(form.etudiant, {
                                     'attr': {
                                         'class': 'rendezvous-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.idLogement) }}
+                                {{ form_label(form.etudiant) }}
                             </div>
                         </div>
                         
@@ -197,6 +232,9 @@
                             <button type="submit" class="rendezvous-btn">
                                 <i class="fas fa-calendar-check mr-2"></i> Valider le Rendez-vous
                             </button>
+                            <a href="{{ path('app_rendezvous_index') }}" class="rendezvous-btn-cancel">
+                                Annuler
+                            </a>
                         </div>
                     {{ form_end(form) }}
                 </div>
@@ -204,4 +242,199 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation du formulaire
+    const form = document.querySelector('.rendezvous-form');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Validation de la date
+            const dateInput = form.querySelector('#{{ form.date.vars.id }}');
+            if (!dateInput.value) {
+                showError(dateInput, 'La date est obligatoire');
+                isValid = false;
+            } else {
+                const selectedDate = new Date(dateInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const maxDate = new Date();
+                maxDate.setMonth(maxDate.getMonth() + 3);
+                
+                if (selectedDate < today) {
+                    showError(dateInput, 'La date doit être aujourd\'hui ou dans le futur');
+                    isValid = false;
+                } else if (selectedDate > maxDate) {
+                    showError(dateInput, 'La date ne peut pas être plus de 3 mois dans le futur');
+                    isValid = false;
+                } else {
+                    clearError(dateInput);
+                }
+            }
+            
+            // Validation de l'heure
+            const heureSelect = form.querySelector('#{{ form.heure.vars.id }}_hour');
+            const minuteSelect = form.querySelector('#{{ form.heure.vars.id }}_minute');
+            
+            if (!heureSelect.value || !minuteSelect.value) {
+                showError(heureSelect, 'L\'heure est obligatoire');
+                isValid = false;
+            } else {
+                const heure = parseInt(heureSelect.value);
+                if (heure < 8 || heure > 19) {
+                    showError(heureSelect, 'Les rendez-vous doivent être entre 8h et 19h');
+                    isValid = false;
+                } else {
+                    clearError(heureSelect);
+                }
+            }
+            
+            // Validation du propriétaire
+            const proprietaireSelect = form.querySelector('#{{ form.proprietaire.vars.id }}');
+            if (!proprietaireSelect.value) {
+                showError(proprietaireSelect, 'Le propriétaire est obligatoire');
+                isValid = false;
+            } else {
+                clearError(proprietaireSelect);
+            }
+            
+            // Validation de l'étudiant
+            const etudiantSelect = form.querySelector('#{{ form.etudiant.vars.id }}');
+            if (!etudiantSelect.value) {
+                showError(etudiantSelect, 'L\'étudiant est obligatoire');
+                isValid = false;
+            } else {
+                clearError(etudiantSelect);
+            }
+            
+            // Validation du logement
+            const logementInput = form.querySelector('#{{ form.idLogement.vars.id }}');
+            if (!logementInput.value) {
+                showError(logementInput, 'Le logement est obligatoire');
+                isValid = false;
+            } else {
+                clearError(logementInput);
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                // Scroll to first error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+        
+        // Fonctions utilitaires
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            
+            let errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                formGroup.appendChild(errorDiv);
+            }
+            
+            errorDiv.textContent = message;
+            input.classList.add('is-invalid');
+        }
+        
+        function clearError(input) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            
+            const errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            
+            input.classList.remove('is-invalid');
+        }
+    }
+    
+    // Gestion des logements (existant)
+    const proprietaireSelect = document.querySelector('.proprietaire-select');
+    const logementSelect = document.querySelector('.logement-select');
+    const logementIdInput = document.querySelector('.logement-id');
+
+    if (proprietaireSelect && logementSelect && logementIdInput) {
+        proprietaireSelect.addEventListener('change', function() {
+            const proprietaireCin = this.value;
+            
+            if (!proprietaireCin) {
+                logementSelect.innerHTML = '<option value="">Sélectionnez un propriétaire d\'abord</option>';
+                logementSelect.disabled = true;
+                logementIdInput.value = '';
+                return;
+            }
+
+            fetch(`/rendezvous/get-logements/${proprietaireCin}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(logements => {
+                    logementSelect.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Sélectionnez un logement';
+                    logementSelect.appendChild(defaultOption);
+
+                    logements.forEach(logement => {
+                        const option = document.createElement('option');
+                        option.value = logement.id;
+                        option.textContent = logement.adresse;
+                        logementSelect.appendChild(option);
+                    });
+
+                    logementSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching logements:', error);
+                    logementSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+                });
+        });
+
+        logementSelect.addEventListener('change', function() {
+            logementIdInput.value = this.value;
+            clearError(logementIdInput);
+        });
+        
+        // Validation initiale si le formulaire a des erreurs
+        {% if not form.vars.valid %}
+            {% for error in form.date.vars.errors %}
+                showError(document.querySelector('#{{ form.date.vars.id }}'), '{{ error.message }}');
+            {% endfor %}
+            
+            {% for error in form.heure.vars.errors %}
+                showError(document.querySelector('#{{ form.heure.vars.id }}_hour'), '{{ error.message }}');
+            {% endfor %}
+            
+            {% for error in form.proprietaire.vars.errors %}
+                showError(document.querySelector('#{{ form.proprietaire.vars.id }}'), '{{ error.message }}');
+            {% endfor %}
+            
+            {% for error in form.etudiant.vars.errors %}
+                showError(document.querySelector('#{{ form.etudiant.vars.id }}'), '{{ error.message }}');
+            {% endfor %}
+            
+            {% for error in form.idLogement.vars.errors %}
+                showError(document.querySelector('#{{ form.idLogement.vars.id }}'), '{{ error.message }}');
+            {% endfor %}
+        {% endif %}
+    }
+});
+</script>
 {% endblock %}

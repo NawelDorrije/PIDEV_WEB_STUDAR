@@ -122,9 +122,9 @@
 }
 
 .btn-info:hover {
-    background-color: green;
+    background-color: darkgreen;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
+    box-shadow: 0 5px 15px rgba(0, 100, 0, 0.3);
 }
 .btn-supprimer {
     background-color: #F2811D;
@@ -142,6 +142,11 @@
     box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
 }
 
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 </style>
 {% endblock %}
 
@@ -178,12 +183,24 @@
                                     </span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">CIN Propriétaire:</span>
-                                    <span class="detail-value">{{ reservation_logement.cinProprietaire }}</span>
+                                    <span class="detail-label">Propriétaire:</span>
+                                    <span class="detail-value">
+                                        {% if reservation_logement.proprietaire %}
+                                            {{ reservation_logement.proprietaire.nom }} {{ reservation_logement.proprietaire.prenom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">CIN Étudiant:</span>
-                                    <span class="detail-value">{{ reservation_logement.cinEtudiant }}</span>
+                                    <span class="detail-label">Étudiant:</span>
+                                    <span class="detail-value">
+                                        {% if reservation_logement.etudiant %}
+                                            {{ reservation_logement.etudiant.nom }} {{ reservation_logement.etudiant.prenom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <div class="detail-item">
                                     <span class="detail-label">Logement:</span>
@@ -201,14 +218,12 @@
                                 </a>
                                 
                                 <a href="{{ path('app_reservation_logement_generate_pdf', {'id': reservation_logement.id}) }}" 
-                                   class="btn btn-info">
+                                   class="btn btn-info {{ reservation_logement.status != 'confirmée' ? 'disabled' : '' }}"
+                                   {% if reservation_logement.status != 'confirmée' %}disabled{% endif %}>
                                     <i class="fas fa-file-pdf"></i> Créer PDF Contrat
                                 </a>
                                 
                                 {{ include('reservation_logement/_delete_form.html.twig') }}
-                                
-                                
-                                </a>
                             </div>
                         </div>
                     </div>

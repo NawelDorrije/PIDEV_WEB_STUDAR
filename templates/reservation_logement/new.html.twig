@@ -6,13 +6,32 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
   
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.is-invalid + label {
+    color: #dc3545 !important;
+}
+
+/* Pour les champs date */
+input[type="date"].is-invalid {
+    background-image: none;
+}
   .logement-section {
     padding: 80px 0;
     background-color: #f8f9fa;
   }
 
   .logement-container {
-    background: #FFE8D6; /* Light pastel orange */
+    background: #FFE8D6;
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2);
@@ -111,7 +130,6 @@
     text-transform: uppercase;
     font-size: 16px;
   }
-
   
   .logement-btn-save:hover{
     transform: translateY(-3px);
@@ -138,8 +156,7 @@
       gap: 15px;
     }
     
-    .logement-btn-save,
-    .logement-btn-cancel {
+    .logement-btn-save {
       width: 100%;
     }
   }
@@ -181,22 +198,22 @@
                         
                         <div class="form-row">
                             <div class="form-group">
-                                {{ form_widget(form.cinProprietaire, {
+                                {{ form_widget(form.proprietaire, {
                                     'attr': {
                                         'class': 'logement-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinProprietaire) }}
+                                {{ form_label(form.proprietaire) }}
                             </div>
                             <div class="form-group">
-                                {{ form_widget(form.cinEtudiant, {
+                                {{ form_widget(form.etudiant, {
                                     'attr': {
                                         'class': 'logement-input',
                                         'placeholder': ' '
                                     }
                                 }) }}
-                                {{ form_label(form.cinEtudiant) }}
+                                {{ form_label(form.etudiant) }}
                             </div>
                         </div>
                         
@@ -216,8 +233,6 @@
                             <button type="submit" class="logement-btn-save">
                                 <i class="fas fa-save mr-2"></i> VALIDER LA RESERVATION
                             </button>
-                            <a href="{{ path('app_reservation_logement_index') }}" class="logement-btn-cancel">
-                            </a>
                         </div>
                     {{ form_end(form) }}
                 </div>
@@ -225,4 +240,175 @@
         </div>
     </div>
 </section>
+{% endblock %}
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.logement-form');
+    
+    if (form) {
+        // Désactiver la validation HTML5
+        form.setAttribute('novalidate', 'novalidate');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+            
+            // Validation date de début
+            const dateDebut = document.getElementById('{{ form.dateDebut.vars.id }}');
+            if (!dateDebut.value) {
+                showError(dateDebut, 'La date de début est obligatoire');
+                isValid = false;
+            } else {
+                const selectedDate = new Date(dateDebut.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (selectedDate <= today) {
+                    showError(dateDebut, 'La date de début doit être dans le futur');
+                    isValid = false;
+                } else {
+                    clearError(dateDebut);
+                }
+            }
+            
+            // Validation date de fin
+            const dateFin = document.getElementById('{{ form.dateFin.vars.id }}');
+            if (!dateFin.value) {
+                showError(dateFin, 'La date de fin est obligatoire');
+                isValid = false;
+            } else if (dateDebut.value && new Date(dateFin.value) <= new Date(dateDebut.value)) {
+                showError(dateFin, 'La date de fin doit être après la date de début');
+                isValid = false;
+            } else if (dateDebut.value) {
+                const diffDays = Math.floor((new Date(dateFin.value) - new Date(dateDebut.value)) / (1000 * 60 * 60 * 24));
+                if (diffDays < 30) {
+                    showError(dateFin, 'La durée minimum de réservation est de 30 jours');
+                    isValid = false;
+                } else {
+                    clearError(dateFin);
+                }
+            }
+            
+            // Validation propriétaire
+            const proprietaire = document.getElementById('{{ form.proprietaire.vars.id }}');
+            if (!proprietaire.value) {
+                showError(proprietaire, 'Le propriétaire est obligatoire');
+                isValid = false;
+            } else {
+                clearError(proprietaire);
+            }
+            
+            // Validation étudiant
+            const etudiant = document.getElementById('{{ form.etudiant.vars.id }}');
+            if (!etudiant.value) {
+                showError(etudiant, 'L\'étudiant est obligatoire');
+                isValid = false;
+            } else {
+                clearError(etudiant);
+            }
+            
+            // Validation logement
+            const logement = document.getElementById('{{ form.idLogement.vars.id }}');
+            if (!logement.value) {
+                showError(logement, 'Le logement est obligatoire');
+                isValid = false;
+            } else {
+                clearError(logement);
+            }
+            
+            if (isValid) {
+                form.submit();
+            } else {
+                // Scroll to first error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+        
+        // Validation en temps réel
+        const inputs = form.querySelectorAll('.logement-input, input[type="date"]');
+        inputs.forEach(input => {
+            input.addEventListener('blur', validateField);
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                const errorDiv = this.closest('.form-group')?.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+            });
+        });
+        
+        function validateField(e) {
+            const input = e.target;
+            
+            if (input.id === '{{ form.dateDebut.vars.id }}') {
+                if (!input.value) {
+                    showError(input, 'La date de début est obligatoire');
+                } else if (new Date(input.value) <= new Date()) {
+                    showError(input, 'La date de début doit être dans le futur');
+                } else {
+                    clearError(input);
+                }
+            }
+            
+            if (input.id === '{{ form.dateFin.vars.id }}') {
+                const dateDebut = document.getElementById('{{ form.dateDebut.vars.id }}');
+                if (!input.value) {
+                    showError(input, 'La date de fin est obligatoire');
+                } else if (dateDebut.value && new Date(input.value) <= new Date(dateDebut.value)) {
+                    showError(input, 'La date de fin doit être après la date de début');
+                } else if (dateDebut.value) {
+                    const diffDays = Math.floor((new Date(input.value) - new Date(dateDebut.value)) / (1000 * 60 * 60 * 24));
+                    if (diffDays < 30) {
+                        showError(input, 'La durée minimum de réservation est de 30 jours');
+                    } else {
+                        clearError(input);
+                    }
+                }
+            }
+            
+            if (input.id === '{{ form.proprietaire.vars.id }}' && !input.value) {
+                showError(input, 'Le propriétaire est obligatoire');
+            }
+            
+            if (input.id === '{{ form.etudiant.vars.id }}' && !input.value) {
+                showError(input, 'L\'étudiant est obligatoire');
+            }
+            
+            if (input.id === '{{ form.idLogement.vars.id }}' && !input.value) {
+                showError(input, 'Le logement est obligatoire');
+            }
+        }
+        
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            
+            let errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                formGroup.appendChild(errorDiv);
+            }
+            
+            errorDiv.textContent = message;
+            input.classList.add('is-invalid');
+        }
+        
+        function clearError(input) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            
+            const errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            
+            input.classList.remove('is-invalid');
+        }
+    }
+});
+</script>
 {% endblock %}

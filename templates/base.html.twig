@@ -104,19 +104,30 @@
                                             <ul class="dropdown-menu" aria-labelledby="servicesDropdownAdmin">
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Meubles</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_home') }}">Logements</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
                                             </ul>
                                         </li>
-                                          <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
-                                                <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
-                                            </ul>
-                                        </li>
+                                        <li class="dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
+    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
+    <ul class="dropdown-menu">
+        <li class="{{ app.request.get('_route') == 'app_rendezvous_index' ? 'active' }}">
+            <a href="{{ path('app_rendezvous_index') }}">
+                <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
+            </a>
+        </li>
+         <li class="{{ app.request.get('_route') == 'app_reservation_logement_index' ? 'active' }}">
+            <a href="{{ path('app_reservation_logement_index') }}">
+                <i class="fas fa-bed mr-2"></i> Réservation des logements
+            </a>
+        </li>
+<li class="{{ app.request.get('_route') == 'app_reservation_transport_index' ? 'active' }}">
+    <a href="{{ path('app_reservation_transport_index') }}">
+        <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
+    </a>
+</li>        
+    </ul>
+
+</li>
 
 
                                         <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
@@ -131,7 +142,7 @@
                                             </a>
                                             <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Logements</a></li>
-                                                
+
                                                 <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_a_acheter') }}">Meubles</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
                                             </ul>
