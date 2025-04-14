@@ -12,11 +12,11 @@ services:
             - '@knpu.oauth2.registry'
             - '@doctrine.orm.entity_manager'
             - '@router.default'
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -34,4 +34,9 @@ services:
             $entityManager: '@doctrine.orm.entity_manager'  # EntityManagerInterface
             $mailer: '@mailer'                      # MailerInterface
 
-    
+    # Configuration explicite pour CartService
+    App\Service\CartService:
+        arguments:
+            $panierRepository: '@App\Repository\GestionMeubles\PanierRepository'
+            $lignePanierRepository: '@App\Repository\GestionMeubles\LignePanierRepository'
+            $security: '@security.helper'

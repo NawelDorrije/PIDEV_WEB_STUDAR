@@ -46,7 +46,9 @@ final class MeubleController extends AbstractController
 
     #[Route('/admin', name: 'app_gestion_meubles_meuble_admin')]
     public function index(Request $request, PaginatorInterface $paginator): Response
-    {
+    {    
+            $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
         // Récupérer tous les meubles avec leurs vendeurs associés
         $queryBuilder = $this->meubleRepository->createQueryBuilder('m')
             ->leftJoin('m.vendeur', 'v')

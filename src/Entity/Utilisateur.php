@@ -300,21 +300,21 @@ public function removeCommande(Commande $commande): self
 }
     // Méthodes de l'interface UserInterface
 
-    public function getRoles(): array
-    {
-        if (!$this->role) {
-            return ['ROLE_USER'];
-        }
+    // public function getRoles(): array
+    // {
+    //     if (!$this->role) {
+    //         return ['ROLE_USER'];
+    //     }
 
-        $roleMap = [
-            'admin' => 'ROLE_ADMIN',
-            'propriétaire' => 'ROLE_PROPRIETAIRE',
-            'transporteur' => 'ROLE_TRANSPORTEUR',
-            'étudiant' => 'ROLE_ETUDIANT'
-        ];
+    //     $roleMap = [
+    //         'admin' => 'ROLE_ADMIN',
+    //         'propriétaire' => 'ROLE_PROPRIETAIRE',
+    //         'transporteur' => 'ROLE_TRANSPORTEUR',
+    //         'étudiant' => 'ROLE_ETUDIANT'
+    //     ];
 
-        return [$roleMap[$this->role->value] ?? 'ROLE_USER'];
-    }
+    //     return [$roleMap[$this->role->value] ?? 'ROLE_USER'];
+    // }
 
     public function eraseCredentials(): void
     {
