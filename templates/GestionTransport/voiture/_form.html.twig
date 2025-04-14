@@ -1,26 +1,27 @@
 {{ form_start(form) }}
-  {{ form_row(form.idVoiture)}}
+    {# {{ form_row(form.idVoiture)}} #}
+     {{ form_row(form.utilisateur) }}
     {{ form_row(form.model) }}
     {{ form_row(form.numSerie) }}
     {{ form_row(form.disponibilite) }}
 
-    {# Custom photo file field with preview #}
-      {% if form.photoFile is defined %}
+    {# Custom image file field with preview #}
+    {% if form.imageFile is defined %}
     <div class="form-group">
-        {{ form_label(form.photoFile) }}
-        {{ form_widget(form.photoFile) }}
-        {{ form_errors(form.photoFile) }}
+        {{ form_label(form.imageFile) }}
+        {{ form_widget(form.imageFile) }}
+        {{ form_errors(form.imageFile) }}
         
-        {# Show current photo if editing #}
-        {% if form.vars.data and form.vars.data.photo %}
+        {# Show current image if editing #}
+        {% if form.vars.data and form.vars.data.image %}
             <div class="mt-2">
-                    <img src="{{ asset('uploads/voitures/' ~ form.vars.data.photo) }}" 
-                         style="max-height: 150px;" 
-                         class="img-thumbnail">
-                </div>
+                <img src="{{ vich_uploader_asset(form.vars.data, 'imageFile') }}" 
+                     style="max-height: 150px;" 
+                     class="img-thumbnail">
+            </div>
         {% endif %}
     </div>
-      {% endif %}
+    {% endif %}
 
     <button class="btn btn-primary mt-3">{{ button_label|default('Save') }}</button>
 {{ form_end(form) }}

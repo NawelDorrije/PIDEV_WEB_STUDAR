@@ -1,24 +1,30 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\GestionTransport;
 
-use App\Repository\TransportRepository;
-use App\Entity\Voiture;
+use App\Repository\GestionTransport\TransportRepository;
+use App\Entity\GestionTransport\Voiture;
 use App\Enums\GestionTransport\TransportStatus;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\ReservationTransport;
 
 #[ORM\Entity(repositoryClass: TransportRepository::class)]
+#[ORM\Table(name: 'transport')]
 class Transport
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
+    #[ORM\Column(name: 'id', type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Voiture::class)]
+    #[ORM\ManyToOne(targetEntity: Voiture::class, inversedBy: 'transports')]
     #[ORM\JoinColumn(name: 'id_voiture', referencedColumnName: 'id_voiture', nullable: false)]
     private ?Voiture $voiture = null;
+
+    #[ORM\OneToOne(targetEntity: ReservationTransport::class)]
+    #[ORM\JoinColumn(name: 'reservation_id', referencedColumnName: 'id', nullable: false)]
+    private ?ReservationTransport $reservation = null;
 
     #[ORM\Column]
     private ?float $trajetEnKm = null;
@@ -93,5 +99,33 @@ class Transport
     {
         $this->timestamp = $timestamp;
         return $this;
+    }
+
+    public function __construct() {
+        $this->timestamp = new \DateTime(); 
+    }
+    
+
+
+    public function getReservation(): ?ReservationTransport
+    {
+        return $this->reservation;
+    }
+
+    public function setReservation(?ReservationTransport $reservation): static
+    {
+        $this->reservation = $reservation;
+        return $this;
+    }
+
+    // The address fields will be accessed through the reservation
+    public function getAdresseDepart(): ?string
+    {
+        return $this->reservation?->getAdresseDepart();
+    }
+
+    public function getAdresseDestination(): ?string
+    {
+        return $this->reservation?->getAdresseDestination();
     }
 }

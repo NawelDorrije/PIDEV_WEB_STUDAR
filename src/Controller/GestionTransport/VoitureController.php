@@ -2,9 +2,9 @@
 
 namespace App\Controller\GestionTransport;
 
-use App\Entity\Voiture;
-use App\Form\VoitureType;
-use App\Repository\VoitureRepository;
+use App\Entity\GestionTransport\Voiture;
+use App\Form\GestionTransport\VoitureType;
+use App\Repository\GestionTransport\VoitureRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,10 +44,12 @@ final class VoitureController extends AbstractController
     }
 
     #[Route('/{idVoiture}', name: 'app_voiture_show', methods: ['GET'])]
+    // In your show/edit/list methods, replace any reference to 'photo' with 'image'
     public function show(Voiture $voiture): Response
     {
         return $this->render('GestionTransport/voiture/show.html.twig', [
             'voiture' => $voiture,
+            'image_path' => $voiture->getImage()
         ]);
     }
 

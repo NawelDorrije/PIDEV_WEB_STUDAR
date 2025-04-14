@@ -2,8 +2,8 @@
 
 namespace App\Controller\GestionTransport;
 
-use App\Repository\VoitureRepository;
-use App\Repository\TransportRepository;
+use App\Repository\GestionTransport\VoitureRepository;
+use App\Repository\GestionTransport\TransportRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;

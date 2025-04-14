@@ -20,14 +20,14 @@
                 <td>{{ voiture.numSerie }}</td>
             </tr>
             <tr>
-                <th>Photo</th>
+                <th>Image</th>
                 <td>
-                    {% if voiture.photo %}
-                        <img src="{{ asset('public/uploads/voitures' ~ voiture.photo) }}"
-                         alt="{{ voiture.model }}" 
-                         style="max-width: 300px; max-height: 300px; border-radius: 10px;">
+                    {% if voiture.image %}
+                        <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}"
+                             alt="{{ voiture.model }}" 
+                             style="max-width: 300px; max-height: 300px; border-radius: 10px;">
                     {% else %}
-                        No photo available
+                        No image available
                     {% endif %}
                 </td>
             </tr>

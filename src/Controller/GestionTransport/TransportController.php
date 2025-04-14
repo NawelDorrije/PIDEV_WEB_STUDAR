@@ -2,9 +2,10 @@
 
 namespace App\Controller\GestionTransport;
 
-use App\Entity\Transport;
-use App\Form\TransportType;
-use App\Repository\TransportRepository;
+use App\Entity\GestionTransport\Transport;
+use App\Form\GestionTransport\TransportType;
+use App\Repository\GestionTransport\TransportRepository;
+use App\Service\DistanceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,13 +24,24 @@ final class TransportController extends AbstractController
     }
 
     #[Route('/new', name: 'app_transport_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, DistanceService $distanceService): Response
     {
         $transport = new Transport();
         $form = $this->createForm(TransportType::class, $transport);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $reservation = $transport->getReservation();
+            $depart = $reservation->getAdresseDepart();
+            $arrivee = $reservation->getAdresseDestination();
+
+            $distanceKm = $distanceService->calculateDistanceKm($depart, $arrivee);
+            $transport->setTrajetEnKm($distanceKm);
+
+            // Example tarif calculation
+            $tarif = $distanceKm * 0.5;
+            $transport->setTarif($tarif);
+
             $entityManager->persist($transport);
             $entityManager->flush();
 

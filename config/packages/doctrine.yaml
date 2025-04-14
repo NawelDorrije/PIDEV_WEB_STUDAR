@@ -9,9 +9,11 @@ doctrine:
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
 
-# Add mapping for enum to string
+        schema_filter: ~^(voiture|transport|utilisateur|reservation_transport)$~
+
         mapping_types:
            enum: string
+           point: point
         types:
            voiture_disponibilite: App\Doctrine\DBAL\Types\VoitureDisponibiliteType
            transport_status: App\Doctrine\DBAL\Types\TransportStatusType

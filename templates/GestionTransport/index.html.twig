@@ -18,10 +18,10 @@
                     {% for voiture in voitures %}
                         <div class="col-md-4 mb-3">
                             <div class="card">
-                                {% if voiture.photo %}
-                                    <img src="{{ asset('uploads/voitures/' ~ voiture.photo) }}" class="card-img-top" alt="Car Image">
+                                {% if voiture.image %}
+                                    <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}" class="card-img-top" alt="Car Image">
                                 {% else %}
-                                    <img src="{{ asset('uploads/voitures/default-car.jpg') }}" class="card-img-top" alt="Default Car Image">
+                                    <img src="{{ asset('uploads/images/default-car.jpg') }}" class="card-img-top" alt="Default Car Image">
                                 {% endif %}
                                 <div class="card-body">
                                     <h5 class="card-title">Voiture #{{ voiture.idVoiture }}</h5>

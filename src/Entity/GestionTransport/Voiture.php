@@ -1,15 +1,17 @@
 <?php
 
-namespace App\Entity;
+namespace App\Entity\GestionTransport;
 
 use App\Enums\GestionTransport\VoitureDisponibilite;
-use App\Repository\VoitureRepository;
+use App\Repository\GestionTransport\VoitureRepository;
 use App\Entity\Utilisateur;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: VoitureRepository::class)]
 #[Vich\Uploadable]
@@ -30,17 +32,17 @@ class Voiture
     #[ORM\Column(length: 12)]
     private ?string $numSerie = null;
 
-    #[ORM\Column(length: 200, nullable: true)]  
-    private ?string $photo = null;
+    #[ORM\Column(name: 'image', length: 200, nullable: true)]
+    private ?string $image = null;
     
-    #[Vich\UploadableField(mapping: 'voiture_photos', fileNameProperty: 'photo')]
+    #[Vich\UploadableField(mapping: 'voiture_photos', fileNameProperty: 'image')]
     #[Assert\Image(
         maxSize: '5M',
         maxSizeMessage: 'The image is too large ({{ size }} {{ suffix }}). Maximum allowed is {{ limit }} {{ suffix }}.',
         mimeTypes: ['image/jpeg', 'image/png', 'image/gif'],
         mimeTypesMessage: 'Please upload a valid image (JPEG, PNG, GIF).'
     )]
-    private ?File $photoFile = null;
+    private ?File $imageFile = null;
 
     #[ORM\Column(type: 'voiture_disponibilite', length: 50)]
     private ?VoitureDisponibilite $disponibilite = null;
@@ -48,37 +50,40 @@ class Voiture
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $timestamp = null;
 
+    #[ORM\OneToMany(mappedBy: 'voiture', targetEntity: Transport::class, orphanRemoval: true)]
+    private Collection $transports;
+
     public function __construct()
-    {
+    { 
+        $this->transports = new ArrayCollection();
         $this->disponibilite = VoitureDisponibilite::DISPONIBLE; 
         $this->timestamp = new \DateTimeImmutable();
-        $this->photo = 'default-car.jpg';
+        $this->image = 'default-car.jpg';
     }
 
-    // Photo file handling methods
-    public function setPhotoFile(?File $photoFile = null): void
+    // Update getter/setter methods
+    public function setImageFile(?File $imageFile = null): void
     {
-        $this->photoFile = $photoFile;
+        $this->imageFile = $imageFile;
 
-        if (null !== $photoFile) {
+        if (null !== $imageFile) {
             $this->timestamp = new \DateTime();
         }
     }
 
-    public function getPhotoFile(): ?File
+    public function getImageFile(): ?File
     {
-        return $this->photoFile;
+        return $this->imageFile;
     }
 
-    // Photo filename methods
-    public function getPhoto(): ?string
+    public function getImage(): ?string
     {
-        return $this->photo;
+        return $this->image;
     }
 
-    public function setPhoto(?string $photo): void
+    public function setImage(?string $image): void
     {
-        $this->photo = $photo;
+        $this->image = $image;
     }
 
     // Standard getters and setters
@@ -145,6 +150,33 @@ class Voiture
     public function setTimestamp(\DateTimeInterface $timestamp): static
     {
         $this->timestamp = $timestamp;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Transport>
+     */
+    public function getTransports(): Collection
+    {
+        return $this->transports;
+    }
+
+    public function addTransport(Transport $transport): static
+    {
+        if (!$this->transports->contains($transport)) {
+            $this->transports->add($transport);
+            $transport->setVoiture($this);
+        }
+        return $this;
+    }
+
+    public function removeTransport(Transport $transport): static
+    {
+        if ($this->transports->removeElement($transport)) {
+            if ($transport->getVoiture() === $this) {
+                $transport->setVoiture(null);
+            }
+        }
         return $this;
     }
 }
