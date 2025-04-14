@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Entity\Logement;
 use App\Form\LogementType;
+
 use App\Repository\LogementRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -90,4 +91,6 @@ public function new(Request $request, EntityManagerInterface $entityManager, Sec
 
         return $this->redirectToRoute('app_logement_index');
     }
+  
+
 }

@@ -117,10 +117,11 @@ public function generatePdf(ReservationLogement $reservation): Response
     $pdf->AddPage();
     
     // Add logo (replace with your actual logo path)
-    $logoPath = $this->getParameter('kernel.project_dir').'/public/images/logo.png';
-    if (file_exists($logoPath)) {
-        $pdf->Image($logoPath, 15, 15, 30, 0, 'PNG');
-    }
+    // Add logo (replace with your actual logo path)
+$logoPath = $this->getParameter('kernel.project_dir').'/assets/images/logo.png';
+if (file_exists($logoPath)) {
+    $pdf->Image($logoPath, 15, 15, 30, 0, 'PNG');
+}
     
     // Title
     $pdf->SetFont('helvetica', 'B', 16);

@@ -191,7 +191,7 @@
                 </div>
                 
                 <!-- Contenu principal -->
-                <div class="rendezvous-content">
+                  <div class="rendezvous-content">
                     <!-- Vue Liste -->
                     <div class="rendezvous-list">
                         {% for rendezvou in rendezvouses %}
@@ -212,12 +212,14 @@
                                 </h5>
                                 <div class="card-meta">
                                     <div><i class="far fa-calendar-alt"></i> {{ rendezvou.date|date('d/m/Y') }}</div>
-                                    <div><i class="far fa-clock"></i> {{ rendezvou.heure }}</div>
+                                    <div><i class="far fa-clock"></i> {{ rendezvou.heure|date('H:i') }}</div>
+                                    <div><i class="fas fa-user-tie"></i> {{ rendezvou.proprietaire ? rendezvou.proprietaire.nom ~ ' ' ~ rendezvou.proprietaire.prenom : 'Non défini' }}</div>
                                     <div><i class="fas fa-home"></i> 
                                         {% if rendezvou.idLogement is iterable %}
                                             {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
                                         {% else %}
-                                            {{ rendezvou.idLogement }}
+                                            {% set logement = logement_repo.find(rendezvou.idLogement) %}
+                                            {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
                                         {% endif %}
                                     </div>
                                 </div>
@@ -241,7 +243,7 @@
                             {% for rendezvou in rendezvouses|sort((a, b) => a.date <=> b.date) %}
                                 <div class="timeline-item">
                                     <div class="timeline-date">
-                                        {{ rendezvou.date|date('d/m/Y') }} • {{ rendezvou.heure }}
+                                        {{ rendezvou.date|date('d/m/Y') }} • {{ rendezvou.heure|date('H:i') }}
                                     </div>
                                     <div class="timeline-content card">
                                         <div class="card-body">
@@ -259,7 +261,8 @@
                                                     {% if rendezvou.idLogement is iterable %}
                                                         {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
                                                     {% else %}
-                                                        {{ rendezvou.idLogement }}
+                                                        {% set logement = logement_repo.find(rendezvou.idLogement) %}
+                                                        {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
                                                     {% endif %}
                                                 </div>
                                             </div>
@@ -291,23 +294,21 @@
                     right: 'dayGridMonth,dayGridWeek'
                 },
                 events: [
-                  
-    {% for rendezvou in rendezvouses %}
-        {% if rendezvou.status == 'confirmée' %}
-        {
-            title: 'RDV Confirmé',
-            start: '{{ rendezvou.date|date('Y-m-d') }}',
-            color: '#4CAF50',
-            extendedProps: {
-                status: '{{ rendezvou.status }}',
-                heure: '{{ rendezvou.heure }}',
-                logement: '{{ rendezvou.idLogement is iterable ? (rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id) : rendezvou.idLogement }}'
-            }
-        }{% if not loop.last %},{% endif %}
-        {% endif %}
-    {% endfor %}
-],
-
+                    {% for rendezvou in rendezvouses %}
+                        {% if rendezvou.status == 'confirmée' %}
+                        {
+                            title: 'RDV Confirmé',
+                            start: '{{ rendezvou.date|date('Y-m-d') }}',
+                            color: '#4CAF50',
+                            extendedProps: {
+                                status: '{{ rendezvou.status }}',
+                                heure: '{{ rendezvou.heure|date('H:i') }}',
+                                logement: '{% if rendezvou.idLogement is iterable %}{{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}{% else %}{% set logement = logement_repo.find(rendezvou.idLogement) %}{{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}{% endif %}'
+                            }
+                        }{% if not loop.last %},{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                ],
                 eventDidMount: function(info) {
                     // Style basé sur le statut
                     if (info.event.extendedProps.status === 'confirmée') {
