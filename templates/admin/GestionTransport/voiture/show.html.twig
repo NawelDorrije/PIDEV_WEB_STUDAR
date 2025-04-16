@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails du Véhicule{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="mb-0">Détails du Véhicule #{{ voiture.idVoiture }}</h1>
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Image du véhicule</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                {% if voiture.image %}
+                                    <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}"
+                                         alt="{{ voiture.model }}" 
+                                         class="img-fluid rounded"
+                                         style="max-width: 400px;">
+                                {% else %}
+                                    <p class="text-muted">Aucune image disponible</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th class="w-25">Modèle</th>
+                                        <td>{{ voiture.model }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Numéro de série</th>
+                                        <td>{{ voiture.numSerie }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Disponibilité</th>
+                                        <td>
+                                            <span class="badge 
+                                                {% if voiture.disponibilite.value == 'Disponible' %}bg-success
+                                                {% elseif voiture.disponibilite.value == 'Non disponible' %}bg-warning
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ voiture.disponibilite.value }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Date d'ajout</th>
+                                        <td>{{ voiture.timestamp ? voiture.timestamp|date('d/m/Y H:i') : '' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                      
+                    
+                        <!-- End of section to remove -->
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <a href="{{ path('app_gestion_transport_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

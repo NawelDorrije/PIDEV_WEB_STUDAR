@@ -63,17 +63,33 @@ final class TransportController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_transport_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Transport $transport, EntityManagerInterface $entityManager): Response
-    {
+    public function edit(
+        Request $request, 
+        Transport $transport, 
+        EntityManagerInterface $entityManager,
+        DistanceService $distanceService
+    ): Response {
         $form = $this->createForm(TransportType::class, $transport);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
+            // Recalculate distance and tariff when reservation changes
+            $reservation = $transport->getReservation();
+            $depart = $reservation->getAdresseDepart();
+            $arrivee = $reservation->getAdresseDestination();
+    
+            $distanceKm = $distanceService->calculateDistanceKm($depart, $arrivee);
+            $transport->setTrajetEnKm($distanceKm);
+    
+            // Recalculate tariff
+            $tarif = $distanceKm * 0.5; // Adjust multiplier as needed
+            $transport->setTarif($tarif);
+    
             $entityManager->flush();
-
+    
             return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('GestionTransport/transport/edit.html.twig', [
             'transport' => $transport,
             'form' => $form,

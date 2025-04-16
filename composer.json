@@ -53,7 +53,7 @@
         "symfony/translation": "6.4.*",
         "symfony/twig-bundle": "6.4.*",
         "symfony/uid": "6.4.*",
-        "symfony/ux-chartjs": "^2.24",
+        "symfony/ux-chartjs": "*",
         "symfony/ux-turbo": "^2.23",
         "symfony/ux-twig-component": "^2.24",
         "symfony/validator": "6.4.*",
@@ -61,6 +61,7 @@
         "symfony/webpack-encore-bundle": "^2.2",
         "symfony/yaml": "6.4.*",
         "twig/extra-bundle": "^2.12|^3.0",
+        "twig/string-extra": "^3.20",
         "twig/twig": "^2.12|^3.0",
         "vich/uploader-bundle": "*"
     },

@@ -12,6 +12,11 @@ app_admin_dashboard:
     controller: App\Controller\Admin\DashboardController::dashboard
     methods: GET
 
+app_gestion_transport_dashboard:
+    path: /adminTransport
+    controller: App\Controller\Admin\GestionTransport\AdminTransportController::adminTransport
+    
+
 app_login_check:
     path: /login_check
     methods: [POST]

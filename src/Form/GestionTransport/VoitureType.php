@@ -5,46 +5,19 @@ namespace App\Form\GestionTransport;
 use App\Entity\GestionTransport\Voiture;
 use App\Enums\GestionTransport\VoitureDisponibilite;
 use App\Entity\Utilisateur;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\Regex;
-use Doctrine\ORM\EntityRepository;
 use Vich\UploaderBundle\Form\Type\VichImageType;
-use App\Enums\RoleUtilisateur;
-
-
 
 class VoitureType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-        ->add('utilisateur', EntityType::class, [
-            'class' => Utilisateur::class,
-            'choice_label' => function ($utilisateur) {
-                if (!$utilisateur) {
-                    return '';
-                }
-                return sprintf('%s - %s %s', 
-                    $utilisateur->getCin(),
-                    $utilisateur->getNom(),
-                    $utilisateur->getPrenom()
-                );
-            },
-            'label' => 'CIN Utilisateur',
-            'placeholder' => 'Sélectionner un transporteur',
-            'required' => true,
-            'query_builder' => function (EntityRepository $er) {
-                return $er->createQueryBuilder('u')
-                    ->where('u.role = :role')
-                    ->setParameter('role', RoleUtilisateur::TRANSPORTEUR)
-                    ->orderBy('u.cin', 'ASC');
-            },
-        ])
             ->add('model')
             ->add('numSerie', TextType::class, [
                 'constraints' => [
@@ -62,7 +35,6 @@ class VoitureType extends AbstractType
                 'download_uri' => false,
                 'imagine_pattern' => 'squared_thumbnail_small'
             ])
-
             ->add('disponibilite', ChoiceType::class, [
                 'choices' => array_combine(
                     array_map(fn($case) => $case->value, VoitureDisponibilite::cases()),

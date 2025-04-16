@@ -3,11 +3,11 @@
 {% block title %}Edit Transport{% endblock %}
 
 {% block body %}
-    <h1>Edit Transport</h1>
+    
 
     {{ include('GestionTransport/transport/_form.html.twig', {'button_label': 'Update'}) }}
 
-    <a href="{{ path('app_transport_index') }}">back to list</a>
+   
 
-    {{ include('GestionTransport/transport/_delete_form.html.twig') }}
+    
 {% endblock %}

@@ -3,6 +3,7 @@
 namespace App\Controller\GestionTransport;
 
 use App\Entity\GestionTransport\Voiture;
+use App\Entity\Utilisateur;
 use App\Form\GestionTransport\VoitureType;
 use App\Repository\GestionTransport\VoitureRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -10,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+
 
 #[Route('/voiture')]
 final class VoitureController extends AbstractController
@@ -25,24 +27,31 @@ final class VoitureController extends AbstractController
     #[Route('/new', name: 'app_voiture_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        $user = $this->getUser();
+        
+        if (!$user instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour accéder à cette page');
+        }
+    
         $voiture = new Voiture();
+        $voiture->setUtilisateur($user); // Set the user here
+    
         $form = $this->createForm(VoitureType::class, $voiture);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
-            // Default photo handled in Voiture entity constructor
             $entityManager->persist($voiture);
             $entityManager->flush();
-
+    
             return $this->redirectToRoute('app_voiture_index', [], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('GestionTransport/voiture/new.html.twig', [
             'voiture' => $voiture,
-            'form' => $form,
+            'form' => $form->createView(),
+            'current_user' => $user // Pass user to template
         ]);
     }
-
     #[Route('/{idVoiture}', name: 'app_voiture_show', methods: ['GET'])]
     // In your show/edit/list methods, replace any reference to 'photo' with 'image'
     public function show(Voiture $voiture): Response

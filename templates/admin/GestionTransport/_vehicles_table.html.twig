@@ -1,0 +1,40 @@
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Modèle</th>
+                <th>Numéro de série</th>
+                <th>Disponibilité</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for voiture in voitures %}
+                <tr>
+                    <td>{{ voiture.idVoiture }}</td>
+                    <td>{{ voiture.model }}</td>
+                    <td>{{ voiture.numSerie }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if voiture.disponibilite.value == 'Disponible' %}bg-success
+                            {% elseif voiture.disponibilite.value == 'Non disponible' %}bg-warning
+                            {% else %}bg-secondary{% endif %}">
+                            {{ voiture.disponibilite.value }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ path('admin_voiture_show', {'idVoiture': voiture.idVoiture}) }}" 
+                           class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No vehicles found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

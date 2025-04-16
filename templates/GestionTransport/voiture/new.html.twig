@@ -1,11 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Voiture{% endblock %}
+{% block title %}Nouveau véhicule{% endblock %}
 
 {% block body %}
-    <h1>Create new Voiture</h1>
-
-    {{ include('GestionTransport/voiture/_form.html.twig') }}
-
-    <a href="{{ path('app_voiture_index') }}">back to list</a>
+    {{ include('GestionTransport/voiture/_form.html.twig', {
+        'form': form,
+        'button_label': 'Enregistrer'
+    }) }}
 {% endblock %}

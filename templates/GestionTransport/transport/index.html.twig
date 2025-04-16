@@ -1,44 +1,91 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Les Transports{% endblock %}
+{% block title %}Mes Transports{% endblock %}
 
 {% block body %}
     <div class="container mt-5">
-        <div class="properties">
-            <div class="item">
-                <h4 class="mb-4">Liste des Transports</h4>
-                <table class="table table-bordered table-striped">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Id</th>
-                <th>TrajetEnKm</th>
-                <th>Tarif</th>
-                <th>Status</th>
-                <th>Timestamp</th>
-                <th>actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Mes Transports</h1>
+            <a href="{{ path('app_transport_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Créer un transport
+            </a>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Trajet (km)</th>
+                                <th>Tarif</th>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Voiture</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         {% for transport in transports %}
+                            {% if transport.voiture and transport.voiture.utilisateur and transport.voiture.utilisateur.cin == app.user.cin %}
                             <tr>
                                 <td>{{ transport.id }}</td>
-                <td>{{ transport.trajetEnKm }}</td>
-                <td>{{ transport.tarif }}</td>
-                <td>{{ transport.status.value }}</td>
-                <td>{{ transport.timestamp ? transport.timestamp|date('Y-m-d H:i:s') : '' }}</td>
-                <td>
-                    <a href="{{ path('app_transport_show', {'id': transport.id}) }}">show</a>
-                    <a href="{{ path('app_transport_edit', {'id': transport.id}) }}">edit</a>
-                </td>
+                                <td>{{ transport.trajetEnKm }} km</td>
+                                <td>{{ transport.tarif }} €</td>
+                                <td>
+                                    <span class="badge 
+        {% if transport.status.value == 'Complété' %}bg-success
+        {% elseif transport.status.value == 'Actif' %}bg-warning
+        {% else %}bg-secondary{% endif %}">
+        {{ transport.status.value }}
+    </span>
+                                </td>
+                                <td>{{ transport.timestamp ? transport.timestamp|date('d/m/Y H:i') : '' }}</td>
+                                <td>
+                                    {% if transport.voiture %}
+                                        {{ transport.voiture.model }} ({{ transport.voiture.numSerie }})
+                                    {% else %}
+                                        <span class="text-muted">Non assignée</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ path('app_transport_show', {'id': transport.id}) }}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_transport_edit', {'id': transport.id}) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="post" action="{{ path('app_transport_delete', {'id': transport.id}) }}" 
+                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce transport ?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ transport.id) }}">
+                                            <button type="submit" class="btn btn-link text-danger p-0 border-0" style="background: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
+                            {% endif %}
                         {% else %}
                             <tr>
-                                <td colspan="4" class="text-center">Aucun transport trouvé.</td>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-truck fa-3x mb-3"></i>
+                                        <p>Aucun transport enregistré</p>
+                                        <a href="{{ path('app_transport_new') }}" class="btn btn-primary mt-2">
+                                            Créer votre premier transport
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
-                <a href="{{ path('app_transport_new') }}">Create new</a>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
