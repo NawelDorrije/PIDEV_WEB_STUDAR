@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <style>
-     
-
-
-    </style>
     <head>
-<!-- In base.html.twig, inside the <head> -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -19,7 +13,48 @@
         {% endblock %}
 
         {% block css %}
-            <!-- Tu peux ajouter des styles supplémentaires ici dans les templates enfants -->
+            <style>
+                html, body {
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                    overflow: hidden; /* Prevent scrolling on the body */
+
+                }
+                .sub-header {
+                    height: 50px;
+                    background-color: #e0e0e0;
+                    position: fixed;
+                    top: 0;
+                    width: 100%;
+                    z-index: 1000;
+                }
+                .header-area.header-sticky {
+                    height: 70px;
+                    background-color: #f8f8f8;
+                    position: fixed;
+                    top: 50px;
+                    width: 100%;
+                    z-index: 1000;
+                }
+                main {
+                    margin-top: 120px; /* sub-header (50px) + header (70px) */
+                    margin-bottom: 30px; /* footer (30px) */
+                    height: calc(100vh - 120px - 30px);
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden; /* Prevent main from causing scrollbars */
+                }
+                footer {
+                    
+                    height: 30px;
+                    background-color: #f8f8f8;
+                    position: fixed;
+                    bottom: 0;
+                    width: 100%;
+                    z-index: 1000;
+                }
+            </style>
         {% endblock %}
     </head>
     <body>
@@ -94,13 +129,12 @@
 
                                 <li><a href="{{ path('app_home') }}">Chat AI</a></li>
                                 <li><a href="{{ path('app_home') }}"><i class="fa fa-calendar"></i></a></li>
-                                <!-- <li><a href="{{ path('app_utilisateur_show') }}"><i class="fa fa-user"></i></a></li> Icône de profil -->
                                 {% if app.user %}
-                                <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
-                            {% else %}
-                                <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
-                            {% endif %}                                <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
-                                
+                                    <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
+                                {% else %}
+                                    <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
+                                {% endif %}
+                                <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
                             </ul>
 
                             <a class='menu-trigger'>
@@ -114,18 +148,20 @@
         </header>
         <!-- ***** Header Area End ***** -->
 
-        {% block body %}
-            <!-- Le contenu principal sera inséré ici par les templates enfants -->
-        {% endblock %}
+        <main>
+            {% block body %}
+                <!-- Le contenu principal sera inséré ici par les templates enfants -->
+            {% endblock %}
+        </main>
 
-        <footer>
+        {# <footer>
             <div class="container">
-                <div class="col-lg-8">
+                <div class="col-lg-4">
                     <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
                     Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
                 </div>
             </div>
-        </footer>
+        </footer> #}
 
         {% block javascripts %}
             {{ encore_entry_script_tags('app') }}

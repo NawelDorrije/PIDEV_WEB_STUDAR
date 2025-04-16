@@ -30,3 +30,8 @@
     .list-group-item a:hover {
         text-decoration: underline;
     }
+    .header-sticky {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }

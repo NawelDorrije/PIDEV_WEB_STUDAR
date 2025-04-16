@@ -4,551 +4,31 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <style>
-        /* Bootstrap import (keeping it external for simplicity) */
-        @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
-
-        /* Styles for the chat page */
-        .chat-container {
-            min-height: calc(100vh - 200px);
-            display: flex;
-            flex-direction: row;
-            background-color: #f7f7f7;
-            box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .06), 0 2px 5px 0 rgba(0, 0, 0, .2);
-            margin: 0;
-            padding: 0;
-            position: relative;
-        }
-
-        .app-one {
-            display: flex;
-            flex-direction: row;
-            width: 100%;
-            height: 100%;
-            min-height: inherit;
-        }
-
-        .side {
-            padding: 0;
-            margin: 0;
-            height: 100%;
-            flex: 0 0 auto;
-            display: block !important;
-        }
-
-        .side-one {
-            padding: 0;
-            margin: 0;
-            height: 100%;
-            width: 100%;
-            z-index: 1;
-            position: relative;
-            display: block;
-            top: 0;
-        }
-
-        .side-two {
-            padding: 0;
-            margin: 0;
-            height: 100%;
-            width: 100%;
-            z-index: 2;
-            position: relative;
-            top: -100%;
-            left: -100%;
-            transition: left 0.3s ease;
-        }
-
-        .heading {
-            padding: 10px 16px 10px 15px;
-            margin: 0;
-            height: 60px;
-            width: 100%;
-            background-color: #eee;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .heading-avatar {
-            padding: 0;
-            cursor: pointer;
-            flex: 0 0 auto;
-        }
-
-        .heading-avatar-icon {
-            display: inline-block;
-        }
-
-        .heading-avatar-icon img {
-            border-radius: 50%;
-            height: 32px;
-            width: 32px;
-            max-height: 32px;
-            max-width: 32px;
-            object-fit: cover;
-        }
-
-        .heading-name {
-            padding: 0 !important;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .heading-name-meta {
-            font-weight: 700;
-            font-size: 100%;
-            padding: 5px;
-            padding-bottom: 0;
-            text-align: left;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #000;
-            display: block;
-        }
-
-        .heading-online {
-            display: none;
-            padding: 0 5px;
-            font-size: 12px;
-            color: #93918f;
-        }
-
-        .heading-compose {
-            padding: 0;
-        }
-
-        .heading-compose i {
-            text-align: center;
-            padding: 5px;
-            color: #93918f;
-            cursor: pointer;
-        }
-
-        .heading-dot {
-            padding: 0;
-            margin-left: 10px;
-        }
-
-        .heading-dot i {
-            text-align: right;
-            padding: 5px;
-            color: #93918f;
-            cursor: pointer;
-        }
-
-        .searchBox {
-            padding: 0 !important;
-            margin: 0 !important;
-            height: 60px;
-            width: 100%;
-        }
-
-        .searchBox-inner {
-            height: 100%;
-            width: 100%;
-            padding: 10px !important;
-            background-color: #fbfbfb;
-        }
-
-        .searchBox-inner input:focus {
-            outline: none;
-            border: none;
-            box-shadow: none;
-        }
-
-        .sideBar {
-            padding: 0 !important;
-            margin: 0 !important;
-            background-color: #fff;
-            overflow-y: auto;
-            border: 1px solid #f7f7f7;
-            height: calc(100% - 120px);
-        }
-
-        .sideBar-body {
-            position: relative;
-            padding: 10px !important;
-            border-bottom: 1px solid #f7f7f7;
-            height: 72px;
-            margin: 0 !important;
-            cursor: pointer;
-        }
-
-        .sideBar-body:hover {
-            background-color: #f2f2f2;
-        }
-
-        .sideBar-avatar {
-            padding: 0 !important;
-        }
-
-        .sideBar-avatar .avatar-icon img {
-            border-radius: 50%;
-            height: 40px;
-            width: 40px;
-            max-height: 40px;
-            max-width: 40px;
-            object-fit: cover;
-        }
-
-        .sideBar-main {
-            padding: 0 !important;
-        }
-
-        .sideBar-main .row {
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        .sideBar-name {
-            padding: 10px !important;
-        }
-
-        .name-meta {
-            font-size: 100%;
-            padding: 1% !important;
-            text-align: left;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #000;
-        }
-
-        .sideBar-time {
-            padding: 10px !important;
-        }
-
-        .time-meta {
-            text-align: right;
-            font-size: 12px;
-            padding: 1% !important;
-            color: rgba(0, 0, 0, .4);
-            vertical-align: baseline;
-        }
-
-        .newMessage-heading {
-            padding: 10px 16px 10px 15px !important;
-            margin: 0 !important;
-            height: 100px;
-            width: 100%;
-            background-color: #00bfa5;
-            z-index: 1001;
-        }
-
-        .newMessage-main {
-            padding: 10px 16px 0 15px !important;
-            margin: 0 !important;
-            height: 60px;
-            margin-top: 30px !important;
-            width: 100%;
-            z-index: 1001;
-            color: #fff;
-        }
-
-        .newMessage-title {
-            font-size: 18px;
-            font-weight: 700;
-            padding: 10px 5px !important;
-        }
-
-        .newMessage-back {
-            text-align: center;
-            vertical-align: baseline;
-            padding: 12px 5px !important;
-            display: block;
-            cursor: pointer;
-        }
-
-        .newMessage-back i {
-            margin: auto !important;
-        }
-
-        .composeBox {
-            padding: 0 !important;
-            margin: 0 !important;
-            height: 60px;
-            width: 100%;
-        }
-
-        .composeBox-inner {
-            height: 100%;
-            width: 100%;
-            padding: 10px !important;
-            background-color: #fbfbfb;
-        }
-
-        .composeBox-inner input:focus {
-            outline: none;
-            border: none;
-            box-shadow: none;
-        }
-
-        .compose-sideBar {
-            padding: 0 !important;
-            margin: 0 !important;
-            background-color: #fff;
-            overflow-y: auto;
-            border: 1px solid #f7f7f7;
-            height: calc(100% - 160px);
-        }
-
-        .conversation {
-            padding: 0 !important;
-            margin: 0 !important;
-            height: 100%;
-            border-left: 1px solid rgba(0, 0, 0, .08);
-            flex: 1;
-            display: block !important;
-        }
-
-        .message {
-            padding: 0 !important;
-            margin: 0 !important;
-            background-image: none !important;
-            background-color: #fff;
-            overflow-y: auto;
-            border: 1px solid #f7f7f7;
-            height: calc(100% - 120px);
-            display: flex; /* Use Flexbox to stack messages vertically */
-            flex-direction: column; /* Stack messages from top to bottom */
-        }
-
-        .message-previous {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: auto;
-            width: 100%;
-        }
-
-        .previous {
-            font-size: 15px;
-            text-align: center;
-            padding: 10px !important;
-            cursor: pointer;
-        }
-
-        .previous a {
-            text-decoration: none;
-            font-weight: 700;
-        }
-
-        .message-date-separator {
-            margin: 10px 0;
-            text-align: center;
-        }
-
-        .date-label {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .message-body {
-            margin: 5px 0 !important; /* Add vertical spacing between messages */
-            padding: 5px 10px !important;
-            width: 100%; /* Ensure each message takes the full width of the container */
-            display: flex; /* Use Flexbox to align message content */
-            flex-direction: column; /* Stack message text and timestamp vertically */
-        }
-
-        .message-main-receiver,
-        .message-main-sender {
-            max-width: 60%;
-            display: flex;
-            flex-direction: column; /* Stack message text and timestamp vertically */
-        }
-
-        .message-main-receiver {
-            align-self: flex-start; /* Align received messages to the left */
-        }
-
-        .message-main-sender {
-            align-self: flex-end; /* Align sent messages to the right */
-        }
-
-        .message-text {
-            margin: 0 !important;
-            padding: 8px 12px !important;
-            word-wrap: break-word;
-            font-weight: 200;
-            font-size: 14px;
-        }
-
-        .message-time {
-            margin: 2px 0 0 0 !important;
-            font-size: 12px;
-            color: #9a9a9a;
-            text-align: right;
-        }
-
-        .receiver {
-            width: auto !important;
-            padding: 4px 10px 7px !important;
-            border-radius: 10px 10px 10px 0;
-            background: #ffffff;
-            font-size: 12px;
-            text-shadow: 0 1px 1px rgba(0, 0, 0, .2);
-            word-wrap: break-word;
-            display: inline-block;
-        }
-
-        .sender {
-            width: auto !important;
-            background: #dcf8c6;
-            border-radius: 10px 10px 0 10px;
-            padding: 4px 10px 7px !important;
-            font-size: 12px;
-            text-shadow: 0 1px 1px rgba(0, 0, 0, .2);
-            display: inline-block;
-            word-wrap: break-word;
-        }
-
-        .reply {
-            height: 60px;
-            width: 100%;
-            background-color: #f5f1ee;
-            padding: 10px 5px 10px 5px !important;
-            margin: 0 !important;
-            z-index: 1000;
-        }
-
-        .reply-emojis {
-            padding: 5px !important;
-        }
-
-        .reply-emojis i {
-            text-align: center;
-            padding: 5px 5px 5px 5px !important;
-            color: #93918f;
-            cursor: pointer;
-        }
-
-        .reply-recording {
-            padding: 5px !important;
-        }
-
-        .reply-recording i {
-            text-align: center;
-            padding: 5px !important;
-            color: #93918f;
-            cursor: pointer;
-        }
-
-        .reply-send {
-            padding: 5px !important;
-        }
-
-        .reply-send i {
-            text-align: center;
-            padding: 5px !important;
-            color: #93918f;
-            cursor: pointer;
-        }
-
-        .reply-main {
-            padding: 2px 5px !important;
-        }
-
-        .reply-main textarea {
-            width: 100%;
-            resize: none;
-            overflow: hidden;
-            padding: 5px !important;
-            outline: none;
-            border: none;
-            text-indent: 5px;
-            box-shadow: none;
-            height: 100%;
-            font-size: 16px;
-        }
-
-        .reply-main textarea:focus {
-            outline: none;
-            border: none;
-            text-indent: 5px;
-            box-shadow: none;
-        }
-
-        @media screen and (max-width: 700px) {
-            .chat-container {
-                min-height: calc(100vh - 250px);
-            }
-            .heading {
-                height: 70px;
-                background-color: #009688;
-            }
-            .heading-avatar-icon img {
-                height: 36px;
-                width: 36px;
-                max-height: 36px;
-                max-width: 36px;
-            }
-            .sideBar {
-                height: calc(100% - 130px);
-            }
-            .sideBar-body {
-                height: 80px;
-            }
-            .sideBar-avatar {
-                text-align: left;
-                padding: 0 8px !important;
-            }
-            .sideBar-avatar .avatar-icon img {
-                height: 44px;
-                width: 44px;
-                max-height: 44px;
-                max-width: 44px;
-            }
-            .name-meta {
-                font-size: 16px;
-                padding: 5% !important;
-            }
-            .time-meta {
-                text-align: right;
-                font-size: 14px;
-                padding: 4% !important;
-                color: rgba(0, 0, 0, .4);
-                vertical-align: baseline;
-            }
-            .message {
-                height: calc(100% - 140px);
-            }
-            .reply {
-                height: 70px;
-            }
-            .reply-main textarea {
-                padding: 8px !important;
-                font-size: 18px;
-            }
-        }
-    </style>
+    {{ encore_entry_link_tags('app') }}
+    {{ encore_entry_link_tags('chat') }}
 {% endblock %}
 
 {% block body %}
-    <div class="container chat-container">
-        <div class="row app-one">
-            <div class="col-sm-4 side">
+    <div class="chat-container">
+        <div class="app-one">
+            <div class="side">
                 <div class="side-one">
-                    <div class="row heading">
-                        <div class="col-sm-3 col-xs-3 heading-avatar">
+                    <div class="heading">
+                        <div class="heading-avatar">
                             <div class="heading-avatar-icon">
                                 <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="Avatar">
                             </div>
                         </div>
-                        <div class="col-sm-1 col-xs-1 heading-dot pull-right">
-                            <i class="fa fa-ellipsis-v fa-2x pull-right" aria-hidden="true"></i>
+                        <div class="heading-compose">
+                            <i class="fa fa-comments fa-2x" aria-hidden="true"></i>
                         </div>
-                        <div class="col-sm-2 col-xs-2 heading-compose pull-right">
-                            <i class="fa fa-comments fa-2x pull-right" aria-hidden="true"></i>
+                        <div class="heading-dot">
+                            <i class="fa fa-ellipsis-v fa-2x" aria-hidden="true"></i>
                         </div>
                     </div>
 
-                    <div class="row searchBox">
-                        <div class="col-sm-12 searchBox-inner">
+                    <div class="searchBox">
+                        <div class="searchBox-inner">
                             <div class="form-group has-feedback">
                                 <input id="searchText" type="text" class="form-control" name="searchText" placeholder="Search">
                                 <span class="fa fa-search form-control-feedback"></span>
@@ -556,25 +36,23 @@
                         </div>
                     </div>
 
-                    <div class="row sideBar">
+                    <div class="sideBar">
                         {% for user in users %}
                             {% if current_user and user.cin != current_user.cin %}
-                                <div class="row sideBar-body">
-                                    <div class="col-sm-3 col-xs-3 sideBar-avatar">
+                                <div class="sideBar-body">
+                                    <div class="sideBar-avatar">
                                         <div class="avatar-icon">
                                             <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
                                         </div>
                                     </div>
-                                    <div class="col-sm-9 col-xs-9 sideBar-main">
-                                        <div class="row">
-                                            <div class="col-sm-8 col-xs-8 sideBar-name">
-                                                <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
-                                                    <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
-                                                </a>
-                                            </div>
-                                            <div class="col-sm-4 col-xs-4 pull-right sideBar-time">
-                                                <span class="time-meta pull-right">18:18</span>
-                                            </div>
+                                    <div class="sideBar-main">
+                                        <div class="sideBar-name">
+                                            <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
+                                                <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
+                                            </a>
+                                        </div>
+                                        <div class="sideBar-time">
+                                            <span class="time-meta">18:18</span>
                                         </div>
                                     </div>
                                 </div>
@@ -584,19 +62,19 @@
                 </div>
 
                 <div class="side-two">
-                    <div class="row newMessage-heading">
-                        <div class="row newMessage-main">
-                            <div class="col-sm-2 col-xs-2 newMessage-back">
+                    <div class="newMessage-heading">
+                        <div class="newMessage-main">
+                            <div class="newMessage-back">
                                 <i class="fa fa-arrow-left" aria-hidden="true"></i>
                             </div>
-                            <div class="col-sm-10 col-xs-10 newMessage-title">
+                            <div class="newMessage-title">
                                 New Chat
                             </div>
                         </div>
                     </div>
 
-                    <div class="row composeBox">
-                        <div class="col-sm-12 composeBox-inner">
+                    <div class="composeBox">
+                        <div class="composeBox-inner">
                             <div class="form-group has-feedback">
                                 <input id="composeText" type="text" class="form-control" name="searchText" placeholder="Search People">
                                 <span class="fa fa-search form-control-feedback"></span>
@@ -604,25 +82,23 @@
                         </div>
                     </div>
 
-                    <div class="row compose-sideBar">
+                    <div class="compose-sideBar">
                         {% for user in users %}
                             {% if current_user and user.cin != current_user.cin %}
-                                <div class="row sideBar-body">
-                                    <div class="col-sm-3 col-xs-3 sideBar-avatar">
+                                <div class="sideBar-body">
+                                    <div class="sideBar-avatar">
                                         <div class="avatar-icon">
                                             <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
                                         </div>
                                     </div>
-                                    <div class="col-sm-9 col-xs-9 sideBar-main">
-                                        <div class="row">
-                                            <div class="col-sm-8 col-xs-8 sideBar-name">
-                                                <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
-                                                    <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
-                                                </a>
-                                            </div>
-                                            <div class="col-sm-4 col-xs-4 pull-right sideBar-time">
-                                                <span class="time-meta pull-right">18:18</span>
-                                            </div>
+                                    <div class="sideBar-main">
+                                        <div class="sideBar-name">
+                                            <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
+                                                <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
+                                            </a>
+                                        </div>
+                                        <div class="sideBar-time">
+                                            <span class="time-meta">18:18</span>
                                         </div>
                                     </div>
                                 </div>
@@ -632,43 +108,73 @@
                 </div>
             </div>
 
-            <div class="col-sm-8 conversation">
-                <div class="row heading">
-                    <div class="col-sm-2 col-md-1 col-xs-3 heading-avatar">
+            <div class="conversation">
+                <div class="heading">
+                    <div class="heading-avatar">
                         <div class="heading-avatar-icon">
                             <img src="https://bootdey.com/img/Content/avatar/avatar6.png" alt="Avatar">
                         </div>
                     </div>
-                    <div class="col-sm-8 col-xs-7 heading-name">
+                    <div class="heading-name">
                         <a class="heading-name-meta">Select a conversation</a>
                         <span class="heading-online">Online</span>
                     </div>
-                    <div class="col-sm-1 col-xs-1 heading-dot pull-right">
-                        <i class="fa fa-ellipsis-v fa-2x pull-right" aria-hidden="true"></i>
+                    <div class="heading-dot">
+                        <i class="fa fa-ellipsis-v fa-2x" aria-hidden="true"></i>
                     </div>
                 </div>
 
-                <div class="row message" id="conversation">
-                    <div class="row message-previous">
-                        <div class="col-sm-12 previous">
-                            <a onclick="previous(this)" id="ankitjain28" name="20">
-                                Show Previous Message!
-                            </a>
+                <div class="message" id="conversation">
+                    <div class="message-previous" id="previous-messages">
+                        {% if has_previous_messages|default(false) %}
+                            <div class="previous">
+                                <a id="load-previous" onclick="loadPreviousMessages(this)" data-offset="20" data-conversation-id="{{ conversation_id|default('') }}">
+                                    Show Previous Message!
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% for message in messages|default([]) %}
+                        <div class="message-body">
+                            {% if message.sender == current_user.cin %}
+                                <div class="message-main-sender">
+                                    <div class="sender">
+                                        <div class="message-text">
+                                            {{ message.content }}
+                                        </div>
+                                        <span class="message-time">
+                                            {{ message.createdAt|date('d/m/Y H:i') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="message-main-receiver">
+                                    <div class="receiver">
+                                        <div class="message-text">
+                                            {{ message.content }}
+                                        </div>
+                                        <span class="message-time">
+                                            {{ message.createdAt|date('d/m/Y H:i') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
-                    </div>
+                    {% endfor %}
                 </div>
 
-                <div class="row reply">
-                    <div class="col-sm-1 col-xs-1 reply-emojis">
+                <div class="reply">
+                    <div class="reply-emojis">
                         <i class="fa fa-smile-o fa-2x"></i>
                     </div>
-                    <div class="col-sm-9 col-xs-9 reply-main">
-                        <textarea class="form-control" rows="1" id="comment" disabled></textarea>
+                    <div class="reply-main">
+                        <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..." disabled></textarea>
                     </div>
-                    <div class="col-sm-1 col-xs-1 reply-recording">
+                    <div class="reply-recording">
                         <i class="fa fa-microphone fa-2x" aria-hidden="true"></i>
                     </div>
-                    <div class="col-sm-1 col-xs-1 reply-send">
+                    <div class="reply-send">
                         <i class="fa fa-send fa-2x" aria-hidden="true"></i>
                     </div>
                 </div>
@@ -679,5 +185,6 @@
 
 {% block javascripts %}
     {{ parent() }}
+    {{ encore_entry_script_tags('app') }}
     {{ encore_entry_script_tags('chat') }}
 {% endblock %}
