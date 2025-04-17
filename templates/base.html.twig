@@ -4,14 +4,15 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
-
         {% block css %}
             <style>
                 html, body {
@@ -56,6 +57,31 @@
                 }
             </style>
         {% endblock %}
+        <style>
+            /* Général */
+            /* Cart Icon with Item Count */
+            .cart-icon {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+            }
+            .cart-icon .bi-cart3 {
+                font-size: 20px;
+                color: #1a1a1a;
+            }
+            .cart-icon .cart-count {
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                background-color: #007bff;
+                color: #fff;
+                font-size: 11px;
+                font-weight: 600;
+                padding: 2px 5px;
+                border-radius: 50%;
+                line-height: 1;
+            }
+        </style>
     </head>
     <body>
         <!-- ***** Preloader Start ***** -->
@@ -71,82 +97,144 @@
         </div>
         <!-- ***** Preloader End ***** -->
 
-        <div class="sub-header">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-8 col-md-8">
-                        <ul class="info">
-                            <li><i class="fa fa-envelope"></i> studar21@gmail.com</li>
-                        </ul>
-                    </div>
-                    <div class="col-lg-4 col-md-4">
-                        <ul class="social-links">
-                            <li><a href="{{ path('app_home') }}"><i class="fab fa-facebook"></i></a></li>
-                            <li><a href="https://x.com/minthu" target="_blank"><i class="fab fa-twitter"></i></a></li>
-                            <li><a href="{{ path('app_home') }}"><i class="fab fa-linkedin"></i></a></li>
-                            <li><a href="{{ path('app_home') }}"><i class="fab fa-instagram"></i></a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ***** Header Area Start ***** -->
-        <header class="header-area header-sticky">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <nav class="main-nav">
-                            <!-- ***** Logo Start ***** -->
-                            <a href="{{ path('app_home') }}" class="logo">
-                                <img class="logo" src="{{ asset('images/logo.png') }}" alt="Villa Agency">
-                            </a>
-                            <!-- ***** Logo End ***** -->
-
-                            <!-- ***** Menu Start ***** -->
-                            <ul class="nav">
-                                <li><a href="{{ path('app_home') }}" class="active">Accueil</a></li>
-
-                                <!-- Services Dropdown -->
-                                <li class="dropdown">
-                                    <a href="#">Services <i class="fa fa-caret-down"></i></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ path('app_home') }}">Logements</a></li>
-                                        <li><a href="{{ path('app_home') }}">Meubles</a></li>
-                                        <li><a href="{{ path('app_home') }}">Transports</a></li>
-                                    </ul>
-                                </li>
-
-                                <!-- Agenda Dropdown -->
-                                <li class="dropdown">
-                                    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ path('app_home') }}">Réservation des logements</a></li>
-                                        <li><a href="{{ path('app_home') }}">Réservation des transporteurs</a></li>
-                                        <li><a href="{{ path('app_home') }}">Rendez-vous</a></li>
-                                    </ul>
-                                </li>
-
-                                <li><a href="{{ path('app_home') }}">Chat AI</a></li>
-                                <li><a href="{{ path('app_home') }}"><i class="fa fa-calendar"></i></a></li>
-                                {% if app.user %}
-                                    <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
-                                {% else %}
-                                    <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
-                                {% endif %}
-                                <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
+        {# Ne pas afficher l'en-tête et le pied de page pour la page 404 #}
+        {% if block('title') not in ['Page non trouvée - 404'] %}
+            <div class="sub-header">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-8 col-md-8">
+                            <ul class="info">
+                                <li><i class="fa fa-envelope"></i> studar21@gmail.com</li>
                             </ul>
-
-                            <a class='menu-trigger'>
-                                <span>Menu</span>
-                            </a>
-                            <!-- ***** Menu End ***** -->
-                        </nav>
+                        </div>
+                        <div class="col-lg-4 col-md-4">
+                            <ul class="social-links">
+                                <li><a><i class="fab fa-facebook"></i></a></li>
+                                <li><a  target="_blank"><i class="fab fa-twitter"></i></a></li>
+                                <li><a><i class="fab fa-linkedin"></i></a></li>
+                                <li><a ><i class="fab fa-instagram"></i></a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </header>
-        <!-- ***** Header Area End ***** -->
+
+            <!-- ***** Header Area Start ***** -->
+            <header class="header-area header-sticky">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
+                            <nav class="main-nav">
+                                <!-- ***** Logo Start ***** -->
+                                <a href="{{ path('app_admin_dashboard') }}" class="logo">
+                                    <img class="logo" src="{{ asset('images/logo.png') }}" alt="StuDar">
+                                </a>
+                                <!-- ***** Logo End ***** -->
+
+                                <!-- ***** Menu Start ***** -->
+                                <ul class="nav">
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                        <!-- Navigation pour les admins -->
+                                        <li><a href="{{ path('app_admin_dashboard') }}" class="{{ app.request.get('_route') == 'app_admin_dashboard' ? 'active' : '' }}">Dashboard</a></li>
+                                        <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}">Profil</a></li>
+
+                                        <!-- Services Dropdown pour Admin -->
+                                        <li class="nav-item dropdown">
+                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Services
+                                            </a>
+                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownAdmin">
+                                                <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Logements</a></li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
+    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
+    <ul class="dropdown-menu">
+        <li class="{{ app.request.get('_route') == 'app_rendezvous_index' ? 'active' }}">
+            <a href="{{ path('app_rendezvous_index_ADMIN') }}">
+                <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
+            </a>
+        </li>
+         <li class="{{ app.request.get('_route') == 'app_reservation_logement_index' ? 'active' }}">
+            <a href="{{ path('app_rendezvous_index_ADMIN') }}">
+                <i class="fas fa-bed mr-2"></i> Réservation des logements
+            </a>
+        </li>
+<li class="{{ app.request.get('_route') == 'app_reservation_transport_index' ? 'active' }}">
+    <a href="{{ path('app_rendezvous_index_ADMIN') }}">
+        <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
+    </a>
+</li>        
+    </ul>
+
+</li>
+
+
+                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
+                                    {% else %}
+                                        <!-- Navigation pour les non-admins -->
+                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
+
+                                        <!-- Services Dropdown -->
+                                        <li class="nav-item dropdown">
+                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Services
+                                            </a>
+                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
+                                                <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+
+                                                <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_a_acheter') }}">Meubles</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_transport_home') }}">Transports</a></li>
+                                            </ul>
+                                        </li>
+
+                                        <!-- Agenda Dropdown -->
+                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
+                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Agenda
+                                            </a>
+                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
+                                                <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                                <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                            </ul>
+                                        </li>
+
+                                        <li><a href="{{ path('app_home') }}">Chat AI</a></li>
+
+                                        <!-- Cart Icon with Static Item Count -->
+                                       {% if is_granted('ROLE_ETUDIANT') %}
+
+                                        <li>
+                                            <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="cart-icon">
+                                                <i class="bi bi-cart3"></i>
+                                                <span class="cart-count">{{ cart_service.cartCount }}</span>
+                                            </a>
+                                        </li>            
+                                    {% endif %}
+
+                                        {% if app.user %}
+                                            <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
+                                        {% else %}
+                                            <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
+                                        {% endif %}
+                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
+                                    {% endif %}
+                                </ul>
+
+                                <a class="menu-trigger">
+                                    <span>Menu</span>
+                                </a>
+                                <!-- ***** Menu End ***** -->
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- ***** Header Area End ***** -->
+        {% endif %}
 
         <main>
             {% block body %}
@@ -154,22 +242,63 @@
             {% endblock %}
         </main>
 
-        {# <footer>
-            <div class="container">
-                <div class="col-lg-4">
-                    <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
-                    Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
+        {# Ne pas afficher le pied de page pour la page 404 #}
+        {% if block('title') not in ['Page non trouvée - 404'] %}
+            <footer>
+                <div class="container">
+                    <div class="col-lg-8">
+                        <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
+                        Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
+                    </div>
                 </div>
-            </div>
-        </footer> #}
+            </footer>
+        {% endif %}
 
         {% block javascripts %}
             {{ encore_entry_script_tags('app') }}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
+            <script>
+                // View Toggle Functionality
+                document.addEventListener('DOMContentLoaded', function() {
+                    // View toggle buttons
+                    const viewButtons = document.querySelectorAll('[data-view]');
+                    viewButtons.forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            
+                            // Set active button
+                            viewButtons.forEach(b => b.classList.remove('active'));
+                            this.classList.add('active');
+                            
+                            // Toggle views
+                            const viewType = this.dataset.view;
+                            document.querySelector('.rendezvous-list').style.display = 
+                                viewType === 'list' ? 'block' : 'none';
+                            document.querySelector('.rendezvous-calendar').style.display = 
+                                viewType === 'calendar' ? 'block' : 'none';
+                        });
+                    });
+                    
+                    // Highlight current status filter
+                    const currentStatus = new URL(window.location.href).searchParams.get('status');
+                    if (currentStatus) {
+                        const activeFilter = document.querySelector(`.status-filter a[href*="status=${currentStatus}"]`);
+                        if (activeFilter) {
+                            activeFilter.classList.add('active');
+                        }
+                    }
+
+                    // Toggle mobile menu
+                    document.querySelector('.menu-trigger').addEventListener('click', function() {
+                        document.querySelector('.main-nav .nav').classList.toggle('active');
+                    });
+                });
+            </script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         {% endblock %}
 
         {% block js %}
-            <!-- Tu peux ajouter des scripts supplémentaires ici dans les templates enfants -->
+            <!-- Scripts supplémentaires ici -->
         {% endblock %}
     </body>
 </html>

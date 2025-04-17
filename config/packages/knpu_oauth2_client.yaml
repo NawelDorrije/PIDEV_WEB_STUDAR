@@ -1,0 +1,9 @@
+# config/packages/knpu_oauth2_client.yaml
+knpu_oauth2_client:
+    clients:
+        google:
+            type: google
+            client_id: '%env(OAUTH_GOOGLE_CLIENT_ID)%'
+            client_secret: '%env(OAUTH_GOOGLE_CLIENT_SECRET)%'
+            redirect_route: connect_google_check
+            # Scopes are now configured through the authenticator

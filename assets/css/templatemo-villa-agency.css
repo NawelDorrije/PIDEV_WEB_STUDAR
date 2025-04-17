@@ -33,49 +33,6 @@ reset
 */
 
 
-/* ------------------------------------ start code nawel -------------------------------- */
-/* public/css/style.css */
-.form-container {
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #214799;
-  box-shadow: 0 0 5px rgba(33, 71, 153, 0.3);
-}
-
-textarea.form-control {
-  resize: vertical;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-}
-/* ---------------------------------  end code nawel   ------------------------------------- */
 
 
 html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, div
@@ -86,6 +43,7 @@ figure, header, nav, section, article, aside, footer, figcaption {
   padding: 0;
   border: 0;
   outline: 0;
+
 }
 
 .clearfix:after {
@@ -546,7 +504,6 @@ Header Style
 .header-area .main-nav .nav li {
   padding-left: 10px;
   padding-right: 10px;
-  height: 100px;
   line-height: 100px;
 }
 
@@ -556,7 +513,6 @@ Header Style
   padding-right: 20px;
   font-weight: 500;
   font-size: 15px;
-  height: 40px;
   line-height: 40px;
   text-transform: capitalize;
   color: #1e1e1e;
@@ -581,8 +537,6 @@ Header Style
 .header-area .main-nav .nav li:last-child a i {
   background-color: #f35525;
   display: inline-block;
-  width: 40px;
-  height: 40px;
   text-align: center;
   line-height: 40px;
   margin-right: 10px;
@@ -616,7 +570,6 @@ Header Style
   position: absolute;
   top: 23px;
   width: 32px;
-  height: 40px;
   text-indent: -9999em;
   z-index: 99;
   right: 20px;
@@ -743,7 +696,6 @@ Header Style
   .background-header .main-nav .nav li a,
   .header-area .main-nav .nav li a {
     line-height: 50px;
-    height: 50px;
     font-weight: 400;
     color: #1e1e1e;
     background-color: #fff;
@@ -753,7 +705,6 @@ Header Style
   .header-area .main-nav .nav li {
     border-top: 1px solid #ddd;
     background-color: #f1f0fe;
-    height: 50px;
     border-radius: 0px 0px 25px 25px;
   }
   .header-area .main-nav .nav {
@@ -841,28 +792,45 @@ Banner Style
 --------------------------------------------- 
 */
 
-.main-banner .item {
+.main-banner .carousel-inner {
+  height: 400px; /* Hauteur du carousel */
+}
+
+.main-banner .carousel-item {
   background-position: center center;
-  background-repeat: no-repeat ;
+  background-repeat: no-repeat;
   background-size: cover;
-  padding: 100px 10% 100px 10%;
+  padding: 40px 10%;
   margin-top: 0px;
+  height: 100%;
 }
 
 .main-banner .item-1 {
-  background-image: url(../images/logement.jpg);
-  
+  background-image: url(../images/pexels-cottonbro-5077049.jpg);
 }
 
 .main-banner .item-2 {
-  background-image: url(../images/meubles.png);
+  background-image: url(../images/meubleocc1.jpg);
 }
 
 .main-banner .item-3 {
   background-image: url(../images/tranposrt.jpg);
 }
 
-.main-banner .item span.category {
+/* Style pour h2 */
+.main-banner .carousel-item h2 {
+  color: #ec631f; /* Nouvelle couleur */
+  font-family: 'Montserrat', sans-serif; /* Police recommandée */
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 40px;
+  width: 50%;
+  margin-bottom: 0px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); /* Ajout de l'ombre */
+}
+/* Styles existants pour category */
+.main-banner .carousel-item span.category {
   background-color: #fff;
   color: #1e1e1e;
   font-size: 16px;
@@ -873,79 +841,67 @@ Banner Style
   margin-bottom: 30px;
 }
 
-.main-banner .item span.category em {
-  font-style: normal;
-  color: #f35525;
-}
-
-.main-banner .item h2 {
-  font-size: 20px;
-  font-weight: 1000;
-  text-transform: uppercase;
-  color: #fff;
-  line-height: 72px;
-  width: 50%;
-  margin-bottom: 0px;
-}
-
-.main-banner .owl-dots {
-  position: absolute;
-  bottom: 60px;
-  left: 20%;
-}
-
-.main-banner .owl-dots .owl-dot {
-  width: 10px;
-  height: 10px;
-  background-color: #fff;
-  border-radius: 50%;
-  margin-right: 10px;
-  transition: all .5s;
-}
-
-.main-banner .owl-dots .active {
-  background-color: #f35525;
-}
-
-.main-banner .owl-nav {
-  position: absolute;
-  top: 50%;
-  width: 100%;
-  transform: translateY(-50px);
-}
-
-.main-banner .owl-nav .owl-prev i,
-.main-banner .owl-nav .owl-next i {
+/* Styles pour les boutons prev/next */
+.main-banner .carousel-control-prev,
+.main-banner .carousel-control-next {
   width: 50px;
   height: 50px;
-  line-height: 50px;
-  font-size: 24px;
-  display: inline-block;
-  color: #ec631f;
-  background-color: rgba(255, 255, 255, 0.2);
+  top: 50%;
+  transform: translateY(-50%);
   border-radius: 50%;
   opacity: 1;
   transition: all .3s;
 }
 
-.main-banner .owl-nav .owl-prev i {
-  position: absolute;
+.main-banner .carousel-control-prev {
   left: 45px;
 }
 
-.main-banner .owl-nav .owl-next i {
-  position: absolute;
+.main-banner .carousel-control-next {
   right: 45px;
 }
 
-.main-banner .owl-nav .owl-prev i:hover,
-.main-banner .owl-nav .owl-next i:hover {
-  opacity: 1;
-  background-color: rgba(255, 255, 255, 0.5);
+.main-banner .carousel-control-prev:hover,
+.main-banner .carousel-control-next:hover {
+  color: #f35525; /* Couleur au survol légèrement différente */
 }
 
+.main-banner .carousel-control-prev-icon,
+.main-banner .carousel-control-next-icon {
+  background-image: none;
+  color: #fff; /* Icônes blanches pour contraster avec le fond orange */
+  font-size: 24px;
+  line-height: 50px;
+}
+.main-banner .carousel-control-prev-icon:hover,
+.main-banner .carousel-control-next-icon:hover {
+  background-image: none;
+  color: #f35525; /* Icônes blanches pour contraster avec le fond orange */
+  font-size: 24px;
+  line-height: 50px;
+}
 
+.main-banner .carousel-control-prev-icon::before {
+  content: '\2039'; /* Flèche gauche */
+}
 
+.main-banner .carousel-control-next-icon::before {
+  content: '\203A'; /* Flèche droite */
+}
+
+/* Indicateurs */
+.main-banner .carousel-indicators [data-bs-target] {
+  width: 10px;
+  height: 10px;
+  background-color: #fff;
+  border-radius: 50%;
+  margin: 0 5px;
+  border: none;
+}
+
+.main-banner .carousel-indicators .active {
+  background-color: #ec631f; /* Harmonisation avec la couleur principale */
+}
 /* 
 ---------------------------------------------
 Featured Style
@@ -1259,67 +1215,70 @@ Properties Style
 */
 
 .properties .item {
-  background-color: #fafafa;
-  border-radius: 10px;
-  padding: 30px;
-  margin-bottom: 30px;
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    overflow: hidden; /* Pour que l'image reste dans les coins arrondis */
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Ombre légère */
 }
 
 .properties .item img {
-  border-radius: 10px;
+    width: 100%;
+    height: 250px; /* Hauteur fixe pour uniformité */
+    object-fit: cover;
+    display: block;
+}
+
+.properties .item-content {
+    padding: 20px;
+    position: relative;
+    min-height: 200px; /* Hauteur minimale pour le contenu */
 }
 
 .properties .item span.category {
-  background-color: #fbd9cf;
-  font-weight: 500;
-  border-radius: 5px;
-  font-size: 14px;
-  color: #1e1e1e;
-  padding: 5px 12px;
-  display: inline-block;
-  margin-top: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #ec631f;
+    display: block;
+    margin-bottom: 10px;
 }
 
 .properties .item h4 {
-  font-size: 19px;
-  margin: 25px 0px;
+    font-size: 16px;
+    color: #1e1e1e;
+    margin: 0 0 60px 0; /* Espace en bas pour laisser place au prix et bouton */
+    line-height: 1.5;
 }
 
-.properties .item h4 a {
-  color: #1e1e1e;
-}
-
-.properties .item ul li {
-  display: inline-block;
-  font-size: 15px;
-  color: #4a4a4a;
-  margin-right: 20px;
-}
-
-.properties .item ul li span {
-  font-weight: 600;
-  color: #1e1e1e;
-}
-
-.properties .item ul {
-  border-bottom: 1px solid #eaeaea;
-  margin-bottom: 30px;
-  padding-bottom: 30px;
-}
-
-.properties .item h6 {
-  font-size: 20px;
-  color: #f35525;
-  margin-top: 6px;
-  display: inline-block;
-  float: right;
-  margin-top: 30px;
+.properties .item .price {
+    position: absolute;
+    bottom: 50px; /* Position fixe au-dessus du bouton */
+    left: 20px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #f35525;
 }
 
 .properties .item .main-button {
-  text-align: center;
+    position: absolute;
+    bottom: 20px; /* Position fixe en bas */
+    right: 20px;
 }
 
+.properties .item .main-button a {
+    background-color: #ec631f;
+    color: #fff;
+    padding: 6px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.properties .item .main-button a:hover {
+    background-color: #f35525;
+}
 
 /* 
 ---------------------------------------------
@@ -1819,14 +1778,14 @@ body {
     line-height: 44px;
   }
   .best-deal .tabs-content ul.nav-tabs li {
-    margin: 0px 5px;
+    margin: 0px 1px;
   }
   .properties ul.properties-filter li a {
     font-size: 14px;
-    padding: 10px 15px;
+    padding: 5px 5px;
   }
   .properties ul.properties-filter li {
-    margin: 5px;
+    margin: px;
   }
   .header-area .main-nav .nav li:last-child {
     display: none;

@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier un meuble{% endblock %}
+
+{% block body %}
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="form-container" style="background-color: #ffffff; padding: 20px; border-radius: 5px; margin-top:-80px">
+                    <h2 style="font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 20px;">Modifier un Meuble</h2>
+
+                    <!-- Afficher les messages flash -->
+                    {% for message in app.flashes('success') %}
+                        <div class="alert alert-success d-flex align-items-center" role="alert">
+                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Succès :">
+                                <use xlink:href="#check-circle-fill"/>
+                            </svg>
+                            <div>{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                    {% for message in app.flashes('error') %}
+                        <div class="alert alert-danger d-flex align-items-center" role="alert">
+                            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Erreur :">
+                                <use xlink:href="#exclamation-triangle-fill"/>
+                            </svg>
+                            <div>{{ message }}</div>
+                        </div>
+                    {% endfor %}
+
+                    <!-- Formulaire de modification -->
+                    {{ form_start(form, {'attr': {'class': 'row g-3 needs-validation', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+
+                        <!-- Champ Nom -->
+                        <div class="col-md-6">
+                            {{ form_label(form.nom, 'Nom du meuble', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.nom, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le nom du meuble', 'required': 'required'}}) }}
+                            <div class="valid-feedback">Valide !</div>
+                            <div class="invalid-feedback">
+                                {{ form_errors(form.nom) ?: 'Le nom du meuble est obligatoire et doit contenir au moins 3 caractères.' }}
+                            </div>
+                        </div>
+
+                        <!-- Champ Prix -->
+                        <div class="col-md-6">
+                            {{ form_label(form.prix, 'Prix', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.prix, {'attr': {'type': 'number', 'class': 'form-control', 'placeholder': 'Entrez le prix du meuble', 'step': '0.01', 'min': '0', 'required': 'required'}}) }}
+                            <div class="valid-feedback">Valide !</div>
+                            <div class="invalid-feedback">
+                                {{ form_errors(form.prix) ?: 'Le prix doit être un nombre positif.' }}
+                            </div>
+                        </div>
+
+                        <!-- Champ Description -->
+                        <div class="col-md-12">
+                            {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'placeholder': 'Entrez la description du meuble', 'rows': '4'}}) }}
+                            <div class="valid-feedback">Valide !</div>
+                            <div class="invalid-feedback">
+                                {{ form_errors(form.description) ?: 'La description doit contenir au moins 10 caractères si elle est renseignée.' }}
+                            </div>
+                        </div>
+
+                        <!-- Champ Image -->
+                        <div class="col-md-12">
+                            {{ form_label(form.image, 'Image', {'label_attr': {'class': 'form-label'}}) }}
+                            <div class="image-preview-container" style="background: #e9edf4; padding: 10px; border-radius: 5px; display: flex; align-items: center;">
+                                <img id="image-preview" src="{% if meuble.image %}{{ asset('uploads/images/' ~ meuble.image) }}{% else %}{{ asset('images/downloadImage.png') }}{% endif %}" alt="Aperçu de l'image" style="width: 200px; height: 150px; margin-right: 20px;">
+                                {{ form_widget(form.image, {'attr': {'type': 'file', 'class': 'form-control', 'accept': 'image/*', 'onchange': 'previewImage(event)'}}) }}
+                                <div class="valid-feedback">Valide !</div>
+                                <div class="invalid-feedback">
+                                    {{ form_errors(form.image) ?: 'Veuillez choisir une image depuis votre ordinateur.' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton Modifier -->
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary">Modifier le meuble</button>
+                        </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script pour la validation Bootstrap -->
+<script>
+    (function () {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+<!-- Script pour prévisualiser l'image -->
+<script>
+    function previewImage(event) {
+        const imagePreview = document.getElementById('image-preview');
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.src = "{{ meuble.image ? asset('uploads/images/' ~ meuble.image) : asset('images/downloadImage.png') }}";
+        }
+    }
+</script>
+{% endblock %}

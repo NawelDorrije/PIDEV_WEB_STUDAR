@@ -1,12 +1,28 @@
+# config/routes.yaml
+_liip_imagine:
+    resource: "@LiipImagineBundle/Resources/config/routing.yaml"
 controllers:
     resource:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
 
+app_admin_dashboard:
+    path: /admin/dashboard
+    controller: App\Controller\Admin\DashboardController::dashboard
+    methods: GET
+
 app_login_check:
     path: /login_check
-    methods: [POST]  # <-- This must be an array format
-    # config/routes.yaml
+    methods: [POST]
+
 app_logout:
     path: /logout
+
+connect_google_check:
+    path: /connect/google/check
+    controller: App\Controller\GoogleController::connectCheckAction
+
+app_utilisateur_complete_registration:
+    path: /complete-registration
+    controller: App\Controller\RegistrationController::completeRegistration

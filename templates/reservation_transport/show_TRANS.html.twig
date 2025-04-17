@@ -1,0 +1,224 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Réservation Transport{% endblock %}
+
+{% block stylesheets %}
+<style>
+.section {
+    padding: 60px 0;
+    background-color: #f8f9fa; 
+}
+
+.container {
+    border-radius: 20px;
+}
+
+.reservation-details {
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: none;
+    overflow: hidden;
+    padding: 15px;
+}
+
+.reservation-details .card-header {
+    background-color: #F2F2F2;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 20px;
+}
+
+.reservation-details .card-header h3 {
+    color: #F25922;
+    font-weight: 700;
+    margin: 0;
+    padding: 8px 15px;
+    border-radius: 30px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.reservation-details .card-header h3 i {
+    margin-right: 8px;
+}
+
+.reservation-content {
+    padding: 20px;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.detail-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.detail-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 1rem;
+}
+
+.status-badge .badge {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.btn-accepter {
+    background-color: #4453A6;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-accepter:hover {
+    background-color: #3a4791;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(68, 83, 166, 0.3);
+}
+
+.btn-refuser {
+    background-color: #F2811D;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+.btn-refuser:hover {
+    background-color: #da7419;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
+}
+
+
+</style>
+{% endblock %}
+
+{% block body %}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card reservation-details">
+                    <div class="card-header">
+                        <h3><i class="fas fa-car"></i>Réservation de Transport</h3>
+                        <div class="status-badge">
+                            <span class="badge bg-{{ 
+                                reservation_transport.status == 'confirmée' ? 'success' : 
+                                (reservation_transport.status == 'en_attente' ? 'warning' : 'danger') 
+                            }}">
+                                {{ reservation_transport.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="reservation-content">
+                            <div class="details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Adresse de Départ:</span>
+                                    <span class="detail-value">{{ reservation_transport.adresseDepart }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Adresse de Destination:</span>
+                                    <span class="detail-value">{{ reservation_transport.adresseDestination }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Temps d'Arrivage:</span>
+                                    <span class="detail-value">{{ reservation_transport.tempsArrivage }}</span>
+                                </div>
+                                <div class="detail-item">
+                              <div class="detail-item">
+                                    <span class="detail-label">Transporteur::</span>
+                                    <span class="detail-value">
+                                        {% if reservation_transport.transporteur %}
+                                            {{ reservation_transport.transporteur.nom }} {{ reservation_transport.transporteur.prenom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Étudiant:</span>
+                                    <span class="detail-value">
+                                        {% if reservation_transport.etudiant %}
+                                            {{ reservation_transport.etudiant.nom }} {{ reservation_transport.etudiant.prenom }}
+                                        {% else %}
+                                            Non défini
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <form method="post" action="{{ path('app_reservationTransport_accept', {'id': reservation_transport.id}) }}" style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('accept' ~ reservation_transport.id) }}">
+                                    <button type="submit" 
+                                            class="btn btn-accepter {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
+                                            {% if not reservation_transport.isModifiable() %}disabled{% endif %}>
+                                        <i class="fas fa-check"></i> Accepter
+                                    </button>
+                                </form>
+                                
+                                <form method="post" action="{{ path('app_reservationTransport_reject', {'id': reservation_transport.id}) }}" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir refuser cette réservation?');"
+                                      style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ reservation_transport.id) }}">
+                                    <button type="submit" 
+                                            class="btn btn-refuser {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
+                                            {% if not reservation_transport.isModifiable() %}disabled{% endif %}>
+                                        <i class="fas fa-times"></i> Refuser
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,359 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Rendez-vous{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Style général */
+    .section {
+        padding: 60px 0;
+        background-color: #f8f9fa;
+    }
+  .section h2 {
+    color: #4453A6
+  }
+    
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        width:1000px;
+        margin-bottom:20px;
+        margin-left: 150px;
+    }
+    
+    /* Bouton flottant */
+    .floating-details-btn {
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: #4453A6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+    
+    .floating-details-btn:hover {
+        background: c;
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .floating-details-btn::after {
+        content: "Voir détails";
+        position: absolute;
+        right: 45px;
+        white-space: nowrap;
+        background: #4453A6;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .floating-details-btn:hover::after {
+        opacity: 1;
+    }
+    
+    /* Carte de rendez-vous */
+    .rendezvous-card {
+        position: relative;
+        padding-right: 30px;
+        overflow: visible;
+        margin-bottom: 20px;
+        border: none;
+                  margin-left:130px;
+
+    }
+
+    
+    .card-title {
+        color: #4453A6;
+        margin-bottom: 15px;
+    }
+    
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .card-meta-div {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+    
+    .card-meta i {
+        margin-right: 8px;
+        color: #F2811D;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        font-weight: 500;
+    }
+    .card-body h5 {
+              color: #4453A6;
+
+    }
+    
+    /* Options de vue */
+    .view-options {
+        margin-bottom: 30px;
+    }
+    
+    .btn-group {
+        margin-right: 10px;
+    }
+    /* Pastel purple animated button */
+    .btn-nouveau {
+        background-color: #B399D4;
+        color: white;
+        border: none;
+        animation: pop 2s infinite;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nouveau:hover {
+        background-color: #9F7FDB;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(179, 153, 212, 0.4);
+    }
+    .timeline-item timeline-date {
+  position: absolute;
+  left: -50px;
+  width: 40px;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-left: 150px;
+
+
+}
+    
+    @keyframes pop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="section-heading d-flex justify-content-between align-items-center mb-4">
+    <h2 style="color:rgb(94, 68, 166);"><i class="far fa-calendar-alt mr-2 outline-primary"></i>Vos Rendez-vous</h2>
+    <a href="{{ path('app_rendezvous_new') }}" class="btn btn-nouveau float-right">
+        <i class="fas fa-plus"></i> Nouveau Rendez-vous
+    </a>
+</div>
+                
+                <!-- Options de vue -->
+                <div class="view-options mb-4">
+                    <div class="btn-group" role="group">
+                        <a href="#" class="btn btn-outline-primary active" data-view="list">
+                            <i class="fas fa-list"></i> Liste
+                        </a>
+                        <a href="#" class="btn btn-outline-primary" data-view="calendar">
+                            <i class="far fa-calendar-alt"></i> Calendrier
+                        </a>
+                        <a href="#" class="btn btn-outline-primary" data-view="timeline">
+                            <i class="fas fa-stream"></i> Chronologie
+                        </a>
+                    </div>
+                    
+                    <!-- Filtres par statut -->
+                    <div class="status-filter btn-group ml-2" role="group">
+                        <a href="{{ path('app_rendezvous_index') }}" class="btn btn-outline-secondary">Tous</a>
+                        <a href="{{ path('app_rendezvous_index', {'status': 'confirmée'}) }}" 
+                           class="btn btn-outline-success">Confirmés</a>
+                        <a href="{{ path('app_rendezvous_index', {'status': 'en_attente'}) }}" 
+                           class="btn btn-outline-warning">En attente</a>
+                        <a href="{{ path('app_rendezvous_index', {'status': 'refusée'}) }}" 
+                           class="btn btn-outline-danger">Refusés</a>
+                    </div>
+                </div>
+                
+                <!-- Contenu principal -->
+                  <div class="rendezvous-content">
+                    <!-- Vue Liste -->
+                    <div class="rendezvous-list">
+                        {% for rendezvou in rendezvouses %}
+                        <div class="card rendezvous-card">
+                            <div class="card-body">
+                                <a href="{{ path('app_rendezvous_show', {'id': rendezvou.id}) }}" 
+                                   class="floating-details-btn" title="Voir détails">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                                <h5 class="card-title">
+                                    <i class="far fa-calendar-check mr-2"></i>Rendez-vous 
+                                    <span class="badge badge-{{ 
+                                        rendezvou.status == 'confirmée' ? 'success' : 
+                                        (rendezvou.status == 'en_attente' ? 'warning' : 'danger') 
+                                    }}">
+                                        {{ rendezvou.status }}
+                                    </span>
+                                </h5>
+                                <div class="card-meta">
+                                    <div><i class="far fa-calendar-alt"></i> {{ rendezvou.date|date('d/m/Y') }}</div>
+                                    <div><i class="far fa-clock"></i> {{ rendezvou.heure|date('H:i') }}</div>
+                                    <div><i class="fas fa-user-tie"></i> {{ rendezvou.proprietaire ? rendezvou.proprietaire.nom ~ ' ' ~ rendezvou.proprietaire.prenom : 'Non défini' }}</div>
+                                    <div><i class="fas fa-home"></i> 
+                                        {% if rendezvou.idLogement is iterable %}
+                                            {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
+                                        {% else %}
+                                            {% set logement = logement_repo.find(rendezvou.idLogement) %}
+                                            {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>Aucun rendez-vous trouvé.
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Vue Calendrier (masquée par défaut) -->
+                    <div class="rendezvous-calendar" style="display:none;">
+                        <div id="calendar"></div>
+                    </div>
+
+                    <!-- Vue Chronologie (masquée par défaut) -->
+                    <div class="rendezvous-timeline" style="display: none;">
+                        <div class="timeline">
+                            {% for rendezvou in rendezvouses|sort((a, b) => a.date <=> b.date) %}
+                                <div class="timeline-item">
+                                    <div class="timeline-date">
+                                        {{ rendezvou.date|date('d/m/Y') }} • {{ rendezvou.heure|date('H:i') }}
+                                    </div>
+                                    <div class="timeline-content card">
+                                        <div class="card-body">
+                                            <a href="{{ path('app_rendezvous_show', {'id': rendezvou.id}) }}" 
+                                               class="floating-details-btn" title="Voir détails">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                            <h5>Rendez-vous</h5>
+                                            <span class="badge badge-{{ rendezvou.status == 'confirmée' ? 'success' : 
+                                                (rendezvou.status == 'en_attente' ? 'warning' : 'danger') }}">
+                                                {{ rendezvou.status }}
+                                            </span>
+                                            <div class="card-meta mt-3">
+                                                <div><i class="fas fa-home"></i> 
+                                                    {% if rendezvou.idLogement is iterable %}
+                                                        {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
+                                                    {% else %}
+                                                        {% set logement = logement_repo.find(rendezvou.idLogement) %}
+                                                        {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialisation du calendrier
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek'
+                },
+                events: [
+                    {% for rendezvou in rendezvouses %}
+                        {% if rendezvou.status == 'confirmée' %}
+                        {
+                            title: 'RDV Confirmé',
+                            start: '{{ rendezvou.date|date('Y-m-d') }}',
+                            color: '#4CAF50',
+                            extendedProps: {
+                                status: '{{ rendezvou.status }}',
+                                heure: '{{ rendezvou.heure|date('H:i') }}',
+                                logement: '{% if rendezvou.idLogement is iterable %}{{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}{% else %}{% set logement = logement_repo.find(rendezvou.idLogement) %}{{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}{% endif %}'
+                            }
+                        }{% if not loop.last %},{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                ],
+                eventDidMount: function(info) {
+                    // Style basé sur le statut
+                    if (info.event.extendedProps.status === 'confirmée') {
+                        info.el.style.backgroundColor = '#4CAF50';
+                    } else if (info.event.extendedProps.status === 'en_attente') {
+                        info.el.style.backgroundColor = '#FFC107';
+                    } else if (info.event.extendedProps.status === 'refusée') {
+                        info.el.style.backgroundColor = '#F44336';
+                    }
+                    
+                    // Tooltip
+                    info.el.setAttribute('title', 
+                        `Heure: ${info.event.extendedProps.heure}\n` +
+                        `Logement: ${info.event.extendedProps.logement}\n` +
+                        `Statut: ${info.event.extendedProps.status}`
+                    );
+                }
+            });
+            calendar.render();
+
+            // Gestion des vues
+            document.querySelectorAll('[data-view]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Bouton actif
+                    document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Affichage des vues
+                    const viewType = this.dataset.view;
+                    document.querySelector('.rendezvous-list').style.display = 
+                        viewType === 'list' ? 'block' : 'none';
+                    document.querySelector('.rendezvous-calendar').style.display = 
+                        viewType === 'calendar' ? 'block' : 'none';
+                    document.querySelector('.rendezvous-timeline').style.display = 
+                        viewType === 'timeline' ? 'block' : 'none';
+                    
+                    // Actualisation du calendrier si besoin
+                    if (viewType === 'calendar') {
+                        calendar.updateSize();
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
+{% endblock %}

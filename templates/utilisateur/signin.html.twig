@@ -1,6 +1,4 @@
-
 {% block stylesheets %}
-   
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Additional CSS Files -->
     <link rel="stylesheet" href="{{ asset('assets/css/fontawesome.css') }}">
@@ -9,6 +7,34 @@
     <link rel="stylesheet" href="{{ asset('assets/css/animate.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/swiper@7/swiper-bundle.min.css"/>
     <style>
+        /* Your existing styles */
+        .line-with-text {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 10px 0;
+        }
+        /* ... (keep all your existing styles) ... */
+
+        /* Added reCAPTCHA specific styles */
+        .recaptcha-notice {
+            font-size: 12px;
+            color: #666;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .recaptcha-notice a {
+            color: #f35525;
+            text-decoration: underline;
+        }
+        #recaptcha-error {
+            color: #dc3545;
+            font-size: 14px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+      <style>
         .line-with-text {
             display: flex;
             align-items: center;
@@ -46,7 +72,7 @@
             border: none;
             padding: 12px 30px;
             border-radius: 12px;
-            width: 100%;
+            width: 460;
         }
 
         .contact-page .col-lg-6 {
@@ -122,6 +148,50 @@
         .contact-page{
             margin-top: -100px;
         }
+          /* Flash messages animation */
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .alert {
+            position: relative;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .alert-success {
+            color: #0f5132;
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+        }
+        
+        .alert-danger {
+            color: #842029;
+            background-color: #f8d7da;
+            border-color: #f5c2c7;
+        }
+        
+        .btn-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+            width: 1em;
+            height: 1em;
+            padding: 0.25em;
+            border: 0;
+            border-radius: 0.375rem;
+            opacity: 0.5;
+        }
         .row-page {
     display: flex; /* Enable flex layout */
     flex-wrap: nowrap; /* Prevent wrapping */
@@ -129,6 +199,14 @@
     height: auto; /* Remove fixed height */
     margin-top: 20px;
 }
+.g-recaptcha {
+            margin: 15px 0;
+        }
+        .recaptcha-error {
+            color: red;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
 
 /* Ensure columns take equal space */
 .col-lg-6 {
@@ -150,6 +228,29 @@
     .benefit-item p {
         margin-top: 0.5rem;
     }
+    /* For better popup appearance */
+.error-popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #ff4444;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 10000;
+    animation: fadeIn 0.3s, fadeOut 0.3s 4.7s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
 /* Optional: Add some visual separation */
 .left-column {
     background: white;
@@ -163,48 +264,101 @@
 }
     </style>
 {% endblock %}
-
+{% for message in app.flashes('error') %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const popup = document.createElement('div');
+            popup.style.position = 'fixed';
+            popup.style.top = '20px';
+            popup.style.right = '20px';
+            popup.style.backgroundColor = '#ff4444';
+            popup.style.color = 'white';
+            popup.style.padding = '15px';
+            popup.style.borderRadius = '5px';
+            popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+            popup.style.zIndex = '10000';
+            popup.innerHTML = `{{ message|e('js') }}`;
+            
+            document.body.appendChild(popup);
+            
+            setTimeout(() => {
+                popup.remove();
+            }, 5000);
+        });
+        
+    </script>
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.animation = 'fadeOut 0.5s forwards';
+                    setTimeout(() => alert.remove(), 500);
+                }, 5000);
+                
+                // Add click handler for close button
+                alert.querySelector('.btn-close')?.addEventListener('click', function() {
+                    alert.style.animation = 'fadeOut 0.5s forwards';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            });
+        });
+    </script>
+{% endfor %}
 {% block body %}
 <div class="contact-page section">
     <div class="container">
+        {# Flash messages container - positioned at the top #}
+        <div id="flash-messages" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ type }} alert-dismissible fade show" 
+                         style="min-width: 300px; animation: fadeIn 0.5s, fadeOut 0.5s 4.5s forwards;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
         <div class="row row-page">
+            
             <!-- Left Column -->
-<div class="col-lg-6">
-    <div class="benefit-item">
-        <img src="{{ asset('images/logo.png') }}" alt="Furniture" class="benefit-icon"/>
-        <h4>Pourquoi devrais-je m'inscrire ?</h4>
-        <p>Pour vivre une expérience immersive mêlant propriété, information et
-             confiance dans l'univers de l'immobilier, le tout harmonieusement réuni.</p>
-    </div>
-    <div class="benefits-grid">
-        <!-- First Row -->
-        <div class="benefit-item">
-            <img src="{{ asset('images/meublelogo.png') }}" alt="Furniture" class="benefit-icon"/>
-            <p class="benefit-text">Transport de meuble simplifié !</p>
-        </div>
-        <div class="benefit-item">
-            <img src="{{ asset('images/carlogo.png') }}" alt="Car" class="benefit-icon"/>
-            <p class="benefit-text">Meuble d'occasion économique !</p>
-        </div>
-        
-        <!-- Second Row -->
-        <div class="benefit-item">
-            <img style="height: 70px;" src="{{ asset('images/home.png') }}" alt="Home" class="benefit-icon"/>
-            <p class="benefit-text">Logement adorable !</p>
-        </div>
-        <div class="benefit-item" >
-            <img style="height: 40px;margin-top: 10px;margin-bottom: 20px;" src="{{ asset('images/email-icon.png') }}" alt="Communication" class="benefit-icon"/>
-            <p class="benefit-text">Communication facile !</p>
-        </div>
-    </div>
-</div>
+            <div class="col-lg-6">
+                <div class="benefit-item">
+                    <img src="{{ asset('images/logo.png') }}" alt="Furniture" class="benefit-icon"/>
+                    <h4>Pourquoi devrais-je m'inscrire ?</h4>
+                    <p>Pour vivre une expérience immersive mêlant propriété, information et
+                         confiance dans l'univers de l'immobilier, le tout harmonieusement réuni.</p>
+                </div>
+                <div class="benefits-grid">
+                    <!-- First Row -->
+                    <div class="benefit-item">
+                        <img src="{{ asset('images/meublelogo.png') }}" alt="Furniture" class="benefit-icon"/>
+                        <p class="benefit-text">Transport de meuble simplifié !</p>
+                    </div>
+                    <div class="benefit-item">
+                        <img src="{{ asset('images/carlogo.png') }}" alt="Car" class="benefit-icon"/>
+                        <p class="benefit-text">Meuble d'occasion économique !</p>
+                    </div>
+                    
+                    <!-- Second Row -->
+                    <div class="benefit-item">
+                        <img style="height: 70px;" src="{{ asset('images/home.png') }}" alt="Home" class="benefit-icon"/>
+                        <p class="benefit-text">Logement adorable !</p>
+                    </div>
+                    <div class="benefit-item" >
+                        <img style="height: 40px;margin-top: 10px;margin-bottom: 20px;" src="{{ asset('images/email-icon.png') }}" alt="Communication" class="benefit-icon"/>
+                        <p class="benefit-text">Communication facile !</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Right Column - Form -->
             <div class="col-lg-6 right-column">
-               
-                
                 <h3 class="center-title">Connectez-vous !</h3>
                 
-                <form method="post" action="{{ path('app_login_check') }}" class="mt-4">
+                <form method="post" action="{{ path('app_login_check') }}" id="loginForm" class="mt-4">
                     <div class="mb-3">
                         <input 
                             type="email" 
@@ -228,12 +382,26 @@
                             required
                         >
                         {% if error %}
-                        <div style="color: red;" class="alert alert-danger">
+                        <div class="alert alert-danger mt-2">
                             {{ error.messageKey|trans(error.messageData, 'security') }}
                         </div>
-                    {% endif %}
+                        {% endif %}
+                        <!-- {% if app.session.flashbag.has('error') %}
+    <div class="alert alert-danger">
+        {{ app.session.flashbag.get('error')[0] }}
+    </div>
+{% endif %} -->
                     </div>
-            
+
+                    <!-- reCAPTCHA v3 Implementation -->
+                    <input type="hidden" name="recaptcha_response" id="recaptchaResponse">
+                    <div id="recaptcha-error" class="recaptcha-error"></div>
+                    <p class="recaptcha-notice">
+                        Protégé par reCAPTCHA. 
+                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Confidentialité</a> et 
+                        <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Conditions</a>.
+                    </p>
+
                     <div class="mb-3 form-check" style="display: flex; align-items: center;">
                         <input type="checkbox" name="_remember_me" class="form-check-input" id="rememberMe" style="margin-right: 8px;">
                         <label class="form-check-label" for="rememberMe" style="margin: 0;">Se souvenir de moi</label>
@@ -241,28 +409,29 @@
             
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
             
-                    <button type="submit" class="orange-button">Se connecter</button>
+                    <button type="submit" style="width: 520px;" class="orange-button" id="submitButton">Se connecter</button>
                     
                     <div class="line-with-text">
                         <span class="line-text">Ou</span>
                     </div>
                     
-                    <button type="button" class="orange-button">Continuer avec Google</button>
-                    
+                    <a href="{{ path('connect_google') }}" class="orange-button" style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <img src="{{ asset('images/googlelogo.png') }}" width="20" alt="Google logo">
+                        Continuer avec Google
+                    </a>                    
                     <div class="center">
                         <a href="{{ path('app_utilisateur_new') }}" style="text-decoration: underline;">Vous n'avez pas de compte ? Inscrivez-vous</a>
                     </div>
                     <div class="center">
-                        <a  style="text-decoration: underline;">Mot de passe oublié ?</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block javascripts %}
-  
     <!-- Scripts -->
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ asset('vendor/bootstrap/js/bootstrap.min.js') }}"></script>
@@ -270,5 +439,54 @@
     <script src="{{ asset('assets/js/owl-carousel.js') }}"></script>
     <script src="{{ asset('assets/js/counter.js') }}"></script>
     <script src="{{ asset('assets/js/custom.js') }}"></script>
-{% endblock %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-dismiss alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+});
+</script>
+    <!-- reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6Lc85hUrAAAAAH4q1MhB4P1RPbxNK8O7Z7P5gp-v"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Disable submit button to prevent multiple submissions
+            const submitButton = document.getElementById('submitButton');
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Vérification...';
+            
+            // Hide previous errors
+            document.getElementById('recaptcha-error').style.display = 'none';
+            
+            // Execute reCAPTCHA
+            grecaptcha.ready(function() {
+                grecaptcha.execute('6Lc85hUrAAAAAH4q1MhB4P1RPbxNK8O7Z7P5gp-v', {
+                    action: 'login'
+                }).then(function(token) {
+                    // Add token to form
+                    document.getElementById('recaptchaResponse').value = token;
+                    
+                    // Submit form
+                    document.getElementById('loginForm').submit();
+                }).catch(function(error) {
+                    // Show error message
+                    const errorElement = document.getElementById('recaptcha-error');
+                    errorElement.textContent = 'Erreur de vérification de sécurité. Veuillez réessayer.';
+                    errorElement.style.display = 'block';
+                    
+                    // Re-enable button
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Se connecter';
+                });
+            });
+        });
+    </script>
 {% endblock %}
