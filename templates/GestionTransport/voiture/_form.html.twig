@@ -23,29 +23,30 @@
                         {{ form_row(form.model) }}
                         {{ form_row(form.numSerie) }}
                         
-                        {# Image field with preview #}
+                        {# Image field #}
                         <div class="mb-3">
                             {{ form_label(form.imageFile) }}
-                            {{ form_widget(form.imageFile) }}
-                            {{ form_errors(form.imageFile) }}
-                            
-                            {% if form.vars.data and form.vars.data.image %}
-                                <div class="mt-2">
+                            {% if form.vars.data and form.vars.data.idVoiture and form.vars.data.image %}
+                                <div class="mb-2">
                                     <img src="{{ vich_uploader_asset(form.vars.data, 'imageFile') }}" 
-                                         style="max-height: 150px;" 
-                                         class="img-thumbnail">
+                                         alt="Current vehicle image"
+                                         class="img-thumbnail"
+                                         style="max-height: 100px;">
+                                    <p class="text-muted small mt-1">Image actuelle</p>
                                 </div>
                             {% endif %}
+                            {{ form_widget(form.imageFile) }}
+                            {{ form_errors(form.imageFile) }}
                         </div>
 
                         {{ form_row(form.disponibilite) }}
                         
                         <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ path('app_voiture_index') }}" class="btn btn-secondary">
-                                {{ form.vars.data and form.vars.data.idVoiture ? 'Cancel' : 'Back to list' }}
+                            <a href="{{ path('app_voiture_index') }}" class="btn" style="background-color: #1976D2; color: white;">
+                                {{ form.vars.data and form.vars.data.idVoiture ? 'Annuler' : 'Retour à la liste' }}
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                {{ button_label|default(form.vars.data and form.vars.data.idVoiture ? 'Update' : 'Save') }}
+                            <button type="submit" class="btn" style="background-color: #FF5722; color: white;">
+                                {{ button_label|default(form.vars.data and form.vars.data.idVoiture ? 'Mettre à jour' : 'Enregistrer') }}
                             </button>
                         </div>
                     {{ form_end(form) }}
@@ -53,4 +54,8 @@
             </div>
         </div>
     </div>
+    <a href="{{ path('app_transport_home') }}" class="text-decoration-none" style="color: #1976D2;">
+        <i class="fas fa-arrow-left me-2"></i>
+        {{ form.vars.data and form.vars.data.idVoiture ? 'Annuler' : "Retour à l'accueil" }}
+    </a>
 </div>

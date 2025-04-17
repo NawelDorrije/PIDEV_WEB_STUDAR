@@ -11,6 +11,55 @@
             </a>
         </div>
 
+        {# Status Filter #}
+        <div class="mb-4">
+            <div class="btn-group" role="group">
+                <a href="{{ path('app_voiture_index') }}" 
+                   class="btn btn-sm"
+                   style="{% if app.request.query.get('disponibilite') is null %}
+                       background-color: transparent;
+                       border-color: #0d6efd;
+                       color: #0d6efd;
+                       border: 1px solid;
+                   {% else %}
+                       color: #0d6efd;
+                       border-color: #0d6efd;
+                       background-color: transparent;
+                       border: 1px solid;
+                   {% endif %}">
+                    Tous
+                </a>
+                <a href="{{ path('app_voiture_index', {'disponibilite': 'Disponible'}) }}" 
+                   class="btn btn-sm"
+                   style="{% if app.request.query.get('disponibilite') == 'Disponible' %}
+                       background-color: #6FE69B;
+                       border-color: #6FE69B;
+                       color: #000;
+                   {% else %}
+                       color: #6FE69B;
+                       border-color: #6FE69B;
+                       background-color: transparent;
+                       border: 1px solid;
+                   {% endif %}">
+                    Disponibles
+                </a>
+                <a href="{{ path('app_voiture_index', {'disponibilite': 'Non disponible'}) }}" 
+                   class="btn btn-sm"
+                   style="{% if app.request.query.get('disponibilite') == 'Non disponible' %}
+                       background-color: #ffc107;
+                       border-color: #ffc107;
+                       color: #000;
+                   {% else %}
+                       color: #ffc107;
+                       border-color: #ffc107;
+                       background-color: transparent;
+                       border: 1px solid;
+                   {% endif %}">
+                    Non disponibles
+                </a>
+            </div>
+        </div>
+
         <div class="card shadow">
             <div class="card-body">
                 <div class="table-responsive">
@@ -45,7 +94,10 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ voiture.disponibilite.value == 'DISPONIBLE' ? 'success' : 'warning' }}">
+                                    <span class="badge" 
+                                          style="{% if voiture.disponibilite.value == 'Disponible' %}background-color: #6FE69B;
+                                          {% elseif voiture.disponibilite.value == 'Non disponible' %}background-color: #ffc107;
+                                          {% else %}background-color: #6c757d;{% endif %}">
                                         {{ voiture.disponibilite.value }}
                                     </span>
                                 </td>
@@ -89,5 +141,8 @@
                 </div>
             </div>
         </div>
+        <a href="{{ path('app_transport_home') }}" class="btn btn-link text-decoration-none ps-0">
+            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+        </a>
     </div>
 {% endblock %}

@@ -1,0 +1,63 @@
+{# templates/admin/transport/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Transport Details #{{ transport.id }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h2>Transport Details #{{ transport.id }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Basic Information</h4>
+                    <table class="table">
+                        <tr>
+                            <th>Status</th>
+                            <td>
+                                <span class="badge bg-{{ transport.status.value == 'COMPLETED' ? 'success' : 'warning' }}">
+                                    {{ transport.status.value }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Distance</th>
+                            <td>{{ transport.trajetEnKm }} km</td>
+                        </tr>
+                        <tr>
+                            <th>Price</th>
+                            <td>{{ transport.tarif }} €</td>
+                        </tr>
+                        <tr>
+                            <th>Date</th>
+                            <td>{{ transport.timestamp|date('d/m/Y H:i') }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h4>Vehicle Information</h4>
+                    {% if transport.voiture %}
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>{{ transport.voiture.model }}</h5>
+                                <p>Serial: {{ transport.voiture.numSerie }}</p>
+                                <p>Owner: {{ transport.voiture.utilisateur.nom }} {{ transport.voiture.utilisateur.prenom }}</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">No vehicle assigned</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ path('admin_transport_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

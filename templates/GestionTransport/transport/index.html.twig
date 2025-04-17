@@ -7,8 +7,55 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">Mes Transports</h1>
             <a href="{{ path('app_transport_new') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Créer un transport
+                <i class="fas fa-plus"></i> Ajouter un transport
             </a>
+        </div>
+
+        {# Status Filter #}
+        <div class="mb-4">
+            <div class="btn-group" role="group">
+                <a href="{{ path('app_transport_index') }}" 
+                   class="btn btn-sm"
+                   style="{% if app.request.query.get('status') is null %}
+                       background-color: transparent;
+                       border-color: #0d6efd;
+                       color: #0d6efd;
+                       border: 1px solid;
+                   {% else %}
+                       color: #0d6efd;
+                       border-color: #0d6efd;
+                       background-color: transparent;
+                       border: 1px solid;
+                   {% endif %}">
+                    Tous
+                </a>
+                <a href="{{ path('app_transport_index', {'status': 'Actif'}) }}" 
+                   class="btn btn-sm" 
+                   style="{% if app.request.query.get('status') == 'Actif' %}
+                       background-color: #ffc107; 
+                       border-color: #ffc107;
+                       color: #000;
+                   {% else %}
+                       color: #ffc107;
+                       border-color: #ffc107;
+                       background-color: transparent;
+                   {% endif %}">
+                    Actifs
+                </a>
+                <a href="{{ path('app_transport_index', {'status': 'Complété'}) }}" 
+                   class="btn btn-sm"
+                   style="{% if app.request.query.get('status') == 'Complété' %}
+                       background-color: #6FE69B;
+                       border-color: #6FE69B;
+                       color: #000;
+                   {% else %}
+                       color: #6FE69B;
+                       border-color: #6FE69B;
+                       background-color: transparent;
+                   {% endif %}">
+                    Complétés
+                </a>
+            </div>
         </div>
 
         <div class="card shadow">
@@ -18,8 +65,9 @@
                         <thead class="table-light">
                             <tr>
                                 <th>ID</th>
+                                <th>Trajet</th>
                                 <th>Trajet (km)</th>
-                                <th>Tarif</th>
+                                <th>Tarif (TND)</th>
                                 <th>Statut</th>
                                 <th>Date</th>
                                 <th>Voiture</th>
@@ -31,15 +79,22 @@
                             {% if transport.voiture and transport.voiture.utilisateur and transport.voiture.utilisateur.cin == app.user.cin %}
                             <tr>
                                 <td>{{ transport.id }}</td>
-                                <td>{{ transport.trajetEnKm }} km</td>
-                                <td>{{ transport.tarif }} €</td>
                                 <td>
-                                    <span class="badge 
-        {% if transport.status.value == 'Complété' %}bg-success
-        {% elseif transport.status.value == 'Actif' %}bg-warning
-        {% else %}bg-secondary{% endif %}">
-        {{ transport.status.value }}
-    </span>
+                                    {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                        {{ transport.reservation.adresseDepart }} → {{ transport.reservation.adresseDestination }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ transport.trajetEnKm }} km</td>
+                                <td>{{ transport.tarif }}</td>
+                                <td>
+                                    <span class="badge" 
+                                          style="{% if transport.status.value == 'Complété' %}background-color: #6FE69B;
+                                          {% elseif transport.status.value == 'Actif' %}background-color: #ffc107;
+                                          {% else %}background-color: #6c757d;{% endif %}">
+                                        {{ transport.status.value }}
+                                    </span>
                                 </td>
                                 <td>{{ transport.timestamp ? transport.timestamp|date('d/m/Y H:i') : '' }}</td>
                                 <td>
@@ -88,5 +143,8 @@
                 </div>
             </div>
         </div>
+        <a href="{{ path('app_transport_home') }}" class="btn btn-link text-decoration-none ps-0">
+            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+        </a>
     </div>
 {% endblock %}

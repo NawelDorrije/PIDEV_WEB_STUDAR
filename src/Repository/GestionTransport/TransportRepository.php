@@ -16,10 +16,32 @@ class TransportRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Transport::class);
     }
+    public function findByStatusAndUser(string $status, $user)
+    {
+        return $this->createQueryBuilder('t')
+            ->join('t.voiture', 'v')
+            ->where('t.status = :status')
+            ->andWhere('v.utilisateur = :user')
+            ->setParameter('status', $status)
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
+    
+    public function findByUser($user)
+    {
+        return $this->createQueryBuilder('t')
+            ->join('t.voiture', 'v')
+            ->where('v.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countByMonthAndStatus(int $year): array
     {
         // Initialize all months with 0 counts
-        $months = array_fill_keys(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], [
+        $months = array_fill_keys(['Janv','Févr','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'], [
             'complete' => 0,
             'actif' => 0
         ]);
@@ -39,7 +61,12 @@ class TransportRepository extends ServiceEntityRepository
                 ->getResult();
 
             foreach ($results as $result) {
-                $monthName = \DateTime::createFromFormat('!m', $result['month_num'])->format('M');
+                $monthName = match($result['month_num']) {
+                    '01' => 'Janv', '02' => 'Févr', '03' => 'Mars',
+                    '04' => 'Avr',  '05' => 'Mai',  '06' => 'Juin',
+                    '07' => 'Juil', '08' => 'Août', '09' => 'Sept',
+                    '10' => 'Oct',  '11' => 'Nov',  '12' => 'Déc'
+                };
                 $months[$monthName] = [
                     'complete' => (int)$result['complete'],
                     'actif' => (int)$result['actif']
@@ -53,56 +80,32 @@ class TransportRepository extends ServiceEntityRepository
     }
     
     public function getRevenueByMonth(int $year): array
-{
-    $months = array_fill_keys(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], [
-        'revenue' => 0,
-        'count' => 0
-    ]);
+    {
+        $results = $this->createQueryBuilder('t')
+            ->select("DATE_FORMAT(t.timestamp, '%m') AS month_num")
+            ->addSelect("DATE_FORMAT(t.timestamp, '%b') AS month_label")
+            ->addSelect('SUM(t.tarif) AS revenue')
+            ->where("DATE_FORMAT(t.timestamp, '%Y') = :year")
+            ->andWhere('t.status = :status')
+            ->setParameter('year', $year)
+            ->setParameter('status', TransportStatus::COMPLETE)
+            ->groupBy('month_num')
+            ->addGroupBy('month_label')
+            ->orderBy('month_num', 'ASC')
+            ->getQuery()
+            ->getResult();
 
-    $results = $this->createQueryBuilder('t')
-        ->select("DATE_FORMAT(t.timestamp, '%m') as month_num")
-        ->addSelect('COALESCE(SUM(t.tarif), 0) as revenue')
-        ->addSelect('COUNT(t.id) as count')
-        ->where("DATE_FORMAT(t.timestamp, '%Y') = :year")
-        ->andWhere('t.status = :status')
-        ->setParameter('year', $year)
-        ->setParameter('status', TransportStatus::COMPLETE) // Make sure this matches your enum
-        ->groupBy('month_num')
-        ->getQuery()
-        ->getResult();
+            $months = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+            $revenueByMonth = array_fill_keys($months, 0);
 
-    foreach ($results as $result) {
-        $monthName = \DateTime::createFromFormat('!m', $result['month_num'])->format('M');
-        $months[$monthName] = [
-            'revenue' => (float)$result['revenue'],
-            'count' => (int)$result['count']
+        foreach ($results as $row) {
+            $monthLabel = $row['month_label'];
+            $revenueByMonth[$monthLabel] = (float) $row['revenue'];
+        }
+
+        return [
+            'labels' => array_keys($revenueByMonth),
+            'values' => array_values($revenueByMonth)
         ];
     }
-
-    return $months;
-}
-    //    /**
-    //     * @return Transport[] Returns an array of Transport objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('t')
-    //            ->andWhere('t.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('t.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Transport
-    //    {
-    //        return $this->createQueryBuilder('t')
-    //            ->andWhere('t.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
 }

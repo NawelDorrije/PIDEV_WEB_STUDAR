@@ -3,96 +3,180 @@
 {% block title %}Détails du Transport{% endblock %}
 
 {% block body %}
-    <div class="container mt-5">
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="mb-0">Détails du Transport #{{ transport.id }}</h1>
+    <div class="container-fluid px-4 py-4">
+        <div class="card shadow-sm border-0 rounded-lg">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h4 fw-bold text-blue mb-0">Détails du Transport #{{ transport.id }}</h2>
                 </div>
-
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
+            </div>
+            
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-8">
                         <div class="table-responsive">
-                            <table class="table table-bordered">
+                            <table class="table table-borderless">
                                 <tbody>
                                     <tr>
-                                        <th class="w-25">Trajet</th>
-                                        <td>{{ transport.trajetEnKm }} km</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Tarif(TND)</th>
-                                        <td>{{ transport.tarif }} </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Statut</th>
+                                        <th class="w-25 text-muted">Trajet</th>
                                         <td>
-                                            <span class="badge 
-        {% if transport.status.value == 'Complété' %}bg-success
-        {% elseif transport.status.value == 'Actif' %}bg-warning
-        {% else %}bg-secondary{% endif %}">
-        {{ transport.status.value }}
+                                            {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3 text-blue">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div>{{ transport.reservation.adresseDepart }}</div>
+                                                        <div class="text-muted small">→ {{ transport.reservation.adresseDestination }}</div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Distance</th>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 text-blue">
+                                                    <i class="fas fa-road"></i>
+                                                </div>
+                                                <div>
+                                                    {{ transport.trajetEnKm }} km
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Tarif</th>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 text-blue">
+                                                    <i class="fas fa-money-bill-wave"></i>
+                                                </div>
+                                                <div>
+                                                    {{ transport.tarif }} TND
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Statut</th>
+                                        <td>
+                                            <span class="fw-bold 
+                                                {% if transport.status.value == 'Complété' %}text-success fs-6
+                                                {% elseif transport.status.value == 'Actif' %}text-warning fs-6
+                                                {% else %}text-secondary fs-6{% endif %}">
+                                                {{ transport.status.value }}
                                             </span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th>Date</th>
-                                        <td>{{ transport.timestamp ? transport.timestamp|date('d/m/Y H:i') : '' }}</td>
+                                        <th class="text-muted">Date</th>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 text-blue">
+                                                    <i class="far fa-calendar-alt"></i>
+                                                </div>
+                                                <div>
+                                                    {{ transport.timestamp ? transport.timestamp|date('d/m/Y H:i') : '' }}
+                                                </div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-
-                        <div class="card mt-4">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Vehicule assignée</h5>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h5 class="mb-0 text-blue">Véhicule assigné</h5>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body d-flex flex-column">
                                 {% if transport.voiture %}
-                                    <div class="d-flex align-items-center justify-content-center">
+                                    <div class="text-center mb-3">
                                         {% if transport.voiture.image %}
                                             <img src="{{ vich_uploader_asset(transport.voiture, 'imageFile') }}" 
-                                                 class="img-thumbnail me-3" 
-                                                 style="max-height: 100px;">
+                                                 class="img-fluid rounded" 
+                                                 style="max-height: 150px;">
                                         {% else %}
                                             <img src="{{ asset('images/default-car.jpg') }}" 
-                                                 class="img-thumbnail me-3" 
-                                                 style="max-height: 100px;">
+                                                 class="img-fluid rounded" 
+                                                 style="max-height: 150px;">
                                         {% endif %}
-                                        <div>
-                                            <h6>{{ transport.voiture.model }}</h6>
-                                            <p class="mb-1">Numéro de serie: {{ transport.voiture.numSerie }}</p>
-                                            <p class="mb-1">Disponibilité: 
-                                                <span class="badge bg-{{ transport.voiture.disponibilite.value == 'DISPONIBLE' ? 'success' : 'warning' }}">
-                                                    {{ transport.voiture.disponibilite.value }}
-                                                </span>
-                                            </p>
+                                    </div>
+                                    <div class="mt-auto">
+                                        <h6 class="fw-bold">{{ transport.voiture.model }}</h6>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">N° Série:</span>
+                                            <span>{{ transport.voiture.numSerie }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Disponibilité:</span>
+                                            <span class="badge rounded-pill py-1 px-3 
+                                                {% if transport.voiture.disponibilite.value == 'Disponible' %}bg-success
+                                                {% else %}bg-orange{% endif %}">
+                                                {{ transport.voiture.disponibilite.value }}
+                                            </span>
                                         </div>
                                     </div>
                                 {% else %}
-                                    <p class="text-muted text-center">Aucune voiture assignée</p>
+                                    <div class="text-center text-muted my-auto py-4">
+                                        <i class="fas fa-car fa-3x mb-3"></i>
+                                        <p>Aucune voiture assignée</p>
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
-
+                
+                {% block stylesheets %}
+                    {{ parent() }}
+                    <style>
+                        .text-success {
+                            color: #6FE69B!important; 
+                        }
+                        .bg-success {
+                            background-color: #6FE69B !important;
+                        }
+                          .bg-orange {
+                            background-color: #ffc107 !important;
+                        }
+                        .text-warning {
+                            color: #ffc107 !important;
+                        }
+                        .btn-outline-primary {
+                            color: #1976D2 !important;
+                            border-color: #1976D2 !important;
+                        }
+                        .btn-outline-primary:hover {
+                            color: white !important;
+                            background-color: #1976D2 !important;
+                        }
+                    </style>
+                {% endblock %}
+                
                 <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <a href="{{ path('app_transport_index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        <i class="fas fa-arrow-left me-1"></i> Retour
+                    </a>
                     <div class="d-flex gap-2">
+                        <a href="{{ path('app_transport_edit', {'id': transport.id}) }}" 
+                           class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-edit me-1"></i> Modifier
+                        </a>
                         <form method="post" action="{{ path('app_transport_delete', {'id': transport.id}) }}" 
                               onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce transport ?');">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ transport.id) }}">
-                            <button type="submit" class="btn btn-link text-danger p-0 border-0" style="background: none;">
-                                <i class="fas fa-trash"></i>
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                <i class="fas fa-trash me-1"></i> Supprimer
                             </button>
                         </form>
-                        <a href="{{ path('app_transport_edit', {'id': transport.id}) }}" 
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
                     </div>
-                    <a href="{{ path('app_transport_index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Retour
-                    </a>
                 </div>
             </div>
         </div>

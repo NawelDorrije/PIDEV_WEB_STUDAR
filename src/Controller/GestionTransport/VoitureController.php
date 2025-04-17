@@ -11,16 +11,25 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-
+#[IsGranted('ROLE_TRANSPORTEUR')]
 #[Route('/voiture')]
 final class VoitureController extends AbstractController
 {
     #[Route(name: 'app_voiture_index', methods: ['GET'])]
-    public function index(VoitureRepository $voitureRepository): Response
+    public function index(Request $request, VoitureRepository $voitureRepository): Response
     {
+        $disponibilite = $request->query->get('disponibilite');
+        $user = $this->getUser();
+        
+        $voitures = $disponibilite
+            ? $voitureRepository->findByAvailabilityAndUser($disponibilite, $user)
+            : $voitureRepository->findByUser($user);
+
         return $this->render('GestionTransport/voiture/index.html.twig', [
-            'voitures' => $voitureRepository->findAll(),
+            'voitures' => $voitures,
+            'current_filter' => $disponibilite
         ]);
     }
 

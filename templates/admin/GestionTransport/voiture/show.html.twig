@@ -2,71 +2,91 @@
 
 {% block title %}Détails du Véhicule{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .bg-success {
+            background-color: #6FE69B !important;
+        }
+        .btn-outline-primary {
+            color: #1976D2 !important;
+            border-color: #1976D2 !important;
+        }
+        .btn-outline-primary:hover {
+            color: white !important;
+            background-color: #1976D2 !important;
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
-    <div class="container mt-5">
-        <div class="card shadow">
+    <div class="container-fluid px-4 py-4">
+        <div class="card shadow-sm border-0 rounded-lg">
+            <div class="card-header bg-white border-0 py-3">
+                <h2 class="h4 fw-bold text-blue mb-0">Détails du Véhicule</h2>
+            </div>
+            
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="mb-0">Détails du Véhicule #{{ voiture.idVoiture }}</h1>
-                </div>
-
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Image du véhicule</h5>
-                            </div>
-                            <div class="card-body text-center">
-                                {% if voiture.image %}
-                                    <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}"
-                                         alt="{{ voiture.model }}" 
-                                         class="img-fluid rounded"
-                                         style="max-width: 400px;">
-                                {% else %}
-                                    <p class="text-muted">Aucune image disponible</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
+                <div class="row">
+                    <div class="col-lg-6">
                         <div class="table-responsive">
-                            <table class="table table-bordered">
+                            <table class="table table-borderless">
                                 <tbody>
                                     <tr>
-                                        <th class="w-25">Modèle</th>
+                                        <th class="w-25 text-muted">ID Véhicule</th>
+                                        <td>{{ voiture.idVoiture }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-muted">Modèle</th>
                                         <td>{{ voiture.model }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Numéro de série</th>
+                                        <th class="text-muted">N° Série</th>
                                         <td>{{ voiture.numSerie }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Disponibilité</th>
+                                        <th class="text-muted">Disponibilité</th>
                                         <td>
-                                            <span class="badge 
+                                            <span class="badge rounded-pill py-2 px-3 
                                                 {% if voiture.disponibilite.value == 'Disponible' %}bg-success
-                                                {% elseif voiture.disponibilite.value == 'Non disponible' %}bg-warning
                                                 {% else %}bg-secondary{% endif %}">
                                                 {{ voiture.disponibilite.value }}
                                             </span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th>Date d'ajout</th>
+                                        <th class="text-muted">Date d'ajout</th>
                                         <td>{{ voiture.timestamp ? voiture.timestamp|date('d/m/Y H:i') : '' }}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-
-                      
+                    </div>
                     
-                        <!-- End of section to remove -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body d-flex flex-column">
+                                {% if voiture.image %}
+                                    <div class="text-center mb-3 flex-grow-1 d-flex align-items-center justify-content-center">
+                                        <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}"
+                                             alt="{{ voiture.model }}" 
+                                             class="img-fluid rounded"
+                                             style="max-height: 250px;">
+                                    </div>
+                                {% else %}
+                                    <div class="text-center text-muted my-auto py-4 flex-grow-1">
+                                        <i class="fas fa-car fa-5x mb-3"></i>
+                                        <p>Aucune image disponible</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
+                
                 <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <a href="{{ path('app_gestion_transport_dashboard') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Retour
+                    <a href="{{ path('app_gestion_transport_dashboard') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        <i class="fas fa-arrow-left me-1"></i> Retour 
                     </a>
                 </div>
             </div>

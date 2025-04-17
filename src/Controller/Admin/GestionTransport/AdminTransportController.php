@@ -8,26 +8,64 @@ use App\Repository\GestionTransport\VoitureRepository;
 use App\Repository\GestionTransport\TransportRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_ADMIN')]
 #[Route('/gestiontransport')]
-class AdminTransportController extends AbstractController
-{
-    #[Route('/adminTransport', name: 'app_gestion_transport_dashboard', methods: ['GET'])]
-    public function adminTransport(
-        VoitureRepository $voitureRepository,
-        TransportRepository $transportRepository
-    ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        $voitures = $voitureRepository->findAll();
-        $transports = $transportRepository->findAll();
-
-        return $this->render('admin/GestionTransport/dashboard.html.twig', [
-            'voitures' => $voitures,
-            'transports' => $transports,
+  class AdminTransportController extends AbstractController
+    {
+        #[Route('/adminTransport', name: 'app_gestion_transport_dashboard', methods: ['GET'])]
+        public function adminTransport(
+            VoitureRepository $voitureRepository,
+            TransportRepository $transportRepository,
+            Request $request
+        ): Response {
+            $this->denyAccessUnlessGranted('ROLE_ADMIN');
+            
+            // Get filter parameters
+            $disponibilite = $request->query->get('disponibilite');
+            $status = $request->query->get('status');
+    
+            // Filter vehicles
+            $queryBuilder = $voitureRepository->createQueryBuilder('v');
+            if ($disponibilite) {
+                $queryBuilder->andWhere('v.disponibilite = :disponibilite')
+                            ->setParameter('disponibilite', $disponibilite);
+            }
+            $voitures = $queryBuilder->getQuery()->getResult();
+            
+            // Filter transports
+            try {
+                $transportQb = $transportRepository->createQueryBuilder('t')
+                    ->innerJoin('t.reservation', 'r')
+                    ->addSelect('r');
+                
+                if ($status) {
+                    $transportQb->andWhere('t.status = :status')
+                               ->setParameter('status', $status);
+                }
+                
+                $transports = $transportQb->getQuery()->getResult();
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Error loading transports: ' . $e->getMessage());
+                $transports = [];
+            }
+        
+            return $this->render('admin/GestionTransport/dashboard.html.twig', [
+                'voitures' => $voitures,
+                'transports' => $transports,
+            ]);
+        }
+    
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/transport/{id}', name: 'admin_transport_show', methods: ['GET'])]
+    public function showTransport(Transport $transport): Response
+    {
+        return $this->render('admin/GestionTransport/transport/show.html.twig', [
+            'transport' => $transport,
         ]);
     }
     #[IsGranted('ROLE_ADMIN')]
@@ -38,15 +76,6 @@ class AdminTransportController extends AbstractController
             'voiture' => $voiture,
         ]);
     }
-    #[IsGranted('ROLE_ADMIN')]
-    #[Route('/transport/{id}', name: 'admin_transport_show', methods: ['GET'])]
-    public function showTransport(Transport $transport): Response
-    {
-        return $this->render('admin/GestionTransport/transport/show.html.twig', [
-            'transport' => $transport,
-        ]);
-    }
-
     // Change this route path
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/stats', name: 'admin_transport_stats', methods: ['GET'])]
@@ -54,49 +83,62 @@ class AdminTransportController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-        // Try current year first, then fallback to any available year
-        $years = $voitureRepo->createQueryBuilder('v')
-            ->select("DISTINCT DATE_FORMAT(v.timestamp, '%Y') as year")
+        // Get available years
+        $years = $transportRepo->createQueryBuilder('t')
+            ->select("DISTINCT DATE_FORMAT(t.timestamp, '%Y') as year")
             ->orderBy('year', 'DESC')
             ->getQuery()
             ->getSingleColumnResult();
         
         $yearToUse = !empty($years) ? max($years) : (new \DateTime())->format('Y');
-
-        // Debug revenue data
+        
+        // Get revenue data
         $revenueData = $transportRepo->getRevenueByMonth($yearToUse);
+        
+        // Debug revenue data
         dump([
             'year_used' => $yearToUse,
             'raw_revenue_data' => $revenueData,
-            'calculated_total' => array_sum(array_column($revenueData, 'revenue'))
+            'normalized_revenue' => $this->normalizeRevenueData($revenueData)
         ]);
-
+        
         $response = [
             'vehicles' => $this->normalizeMonthlyData($voitureRepo->countByMonth($yearToUse)),
             'transports' => $this->normalizeTransportData($transportRepo->countByMonthAndStatus($yearToUse)),
-            'revenue' => $this->normalizeMonthlyData($transportRepo->getRevenueByMonth($yearToUse)),
+            'revenue' => $this->normalizeRevenueData($revenueData),
             'year_used' => $yearToUse
         ];
-
+        
         return $this->json($response);
     }
+
     private function normalizeRevenueData(array $data): array
-{
-    $months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    $values = array_fill(0, 12, 0);
+    {
+        // Check if data already has labels and values
+        if (isset($data['labels'], $data['values'])) {
+            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            $values = array_fill(0, 12, 0);
     
-    foreach ($data as $month => $stats) {
-        $index = array_search($month, $months);
-        if ($index !== false) {
-            $values[$index] = (float)$stats['revenue'];
+            // Map provided values to correct months
+            foreach ($data['labels'] as $index => $month) {
+                $monthIndex = array_search($month, $months);
+                if ($monthIndex !== false) {
+                    $values[$monthIndex] = (float)($data['values'][$index] ?? 0);
+                }
+            }
+    
+            return [
+                'labels' => $months,
+                'values' => $values
+            ];
         }
-    }
     
-    return [
-        'labels' => $months,
-        'values' => $values
-    ];
-}
+        // Fallback for empty or invalid data
+        return [
+            'labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            'values' => array_fill(0, 12, 0)
+        ];
+    }
 
     private function normalizeMonthlyData(array $data): array
     {
@@ -130,4 +172,5 @@ class AdminTransportController extends AbstractController
             ))
         ];
     }
+   
 }

@@ -15,7 +15,7 @@ function initCharts(data) {
     if (data.vehicles && data.vehicles.labels) {
         new Chart(
             document.getElementById('vehiclesChart').getContext('2d'),
-            createChartConfig('bar', 'Vehicles Added', data.vehicles)
+            createChartConfig('bar', 'Véhicules Ajoutés', data.vehicles)
         );
     }
 
@@ -27,11 +27,11 @@ function initCharts(data) {
             data: {
                 labels: data.transports.labels,
                 datasets: [
-                    createDataset('Completed', data.transports.completed, '#28a745'),
-                    createDataset('Active', data.transports.active, '#ffc107')
+                    createDataset('Complété', data.transports.completed, '#28a745'),
+                    createDataset('Actif', data.transports.active, '#ffc107')
                 ]
             },
-            options: createChartOptions('Number of Transports')
+            options: createChartOptions('Nombre de Transports')
         });
     }
 
@@ -55,24 +55,26 @@ function initRevenueChart(data) {
 
     // Ensure values are numbers
     const values = data.values.map(val => parseFloat(val) || 0);
-    console.log("Processed revenue values:", values);
+    console.log("Processed revenue values:", data.values);
 
     // Calculate the maximum value for y-axis scaling
     const maxRevenue = Math.max(...values);
     const suggestedMax = maxRevenue > 0 ? maxRevenue * 1.1 : 10; // Add 10% padding, or default to 10 if all values are 0
 
     const ctx = document.getElementById('revenueChart').getContext('2d');
+    console.log("Canvas context:", ctx);
     
     if (revenueChart) {
         revenueChart.destroy();
     }
     
+    // Revenue Chart
     revenueChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: data.labels,
             datasets: [{
-                label: 'Revenue (TND)',
+                label: 'Revenus (TND)',
                 data: values,
                 backgroundColor: '#6FE69B',
                 borderColor: '#4CAF50',
@@ -97,10 +99,10 @@ function initRevenueChart(data) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    suggestedMax: suggestedMax, // Dynamically set the max value
+                    suggestedMax: suggestedMax,
                     title: {
                         display: true,
-                        text: 'Revenue (TND)'
+                        text: 'Revenus (TND)'
                     },
                     ticks: {
                         callback: function(value) {
@@ -111,7 +113,7 @@ function initRevenueChart(data) {
                 x: {
                     title: {
                         display: true,
-                        text: 'Month'
+                        text: 'Mois'
                     }
                 }
             }
@@ -119,6 +121,26 @@ function initRevenueChart(data) {
     });
 }
 
+function createChartOptions(title) {
+    return {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, title: { display: true, text: title } },
+            x: { title: { display: true, text: 'Mois' } }
+        }
+    };
+}
+
+function createDataset(label, data, color) {
+    return {
+        label: label,
+        data: data,
+        backgroundColor: color + '20',
+        borderColor: color,
+        borderWidth: 2,
+        tension: 0.1
+    };
+}
 
 function createChartConfig(type, label, data) {
     return {
@@ -133,27 +155,23 @@ function createChartConfig(type, label, data) {
                 borderWidth: 1
             }]
         },
-        options: createChartOptions(label)
-    };
-}
-
-function createChartOptions(title) {
-    return {
-        responsive: true,
-        scales: {
-            y: { beginAtZero: true, title: { display: true, text: title } },
-            x: { title: { display: true, text: 'Month' } }
+        options: {
+            responsive: true,
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    title: { 
+                        display: true, 
+                        text: label 
+                    } 
+                },
+                x: { 
+                    title: { 
+                        display: true, 
+                        text: 'Mois' 
+                    } 
+                }
+            }
         }
-    };
-}
-
-function createDataset(label, data, color) {
-    return {
-        label: label,
-        data: data,
-        backgroundColor: color + '20',
-        borderColor: color,
-        borderWidth: 2,
-        tension: 0.1
     };
 }

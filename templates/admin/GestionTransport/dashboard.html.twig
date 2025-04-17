@@ -35,7 +35,7 @@
 
 {% block body %}
     <div class="container mt-4">
-        <h1 class="text-center mb-5">Transport Management Dashboard</h1>
+        <h1 class="text-center mb-5">Gestion Transport Dashboard</h1>
 
         <!-- Statistics Cards Row -->
         <div class="row mb-5">
@@ -45,7 +45,7 @@
                     <div class="card-body text-center">
                         <h5 class="card-title"><i class="fas fa-car me-2"></i>Véhicules</h5>
                         <span class="stat-badge bg-primary rounded-pill">{{ voitures|length }} Total</span>
-                        <p class="mt-2 text-muted">Click to view monthly stats</p>
+                        <p class="mt-2 text-muted">Cliquez pour voir les statistiques mensuelles</p>
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                         {% set active = transports|filter(t => t.status.value == 'Actif')|length %}
                         <span class="stat-badge bg-success rounded-pill me-2">{{ completed }} Complété</span>
                         <span class="stat-badge bg-warning rounded-pill">{{ active }} Actif</span>
-                        <p class="mt-2 text-muted">Click to view monthly stats</p>
+                        <p class="mt-2 text-muted">Cliquez pour voir les statistiques mensuelles</p>
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                         <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Revenue</h5>
 {% set totalRevenue = transports|filter(t => t.status.value == 'Complété')|reduce((sum, t) => sum + t.tarif, 0) %}
             <span class="stat-badge bg-info rounded-pill">{{ totalRevenue|number_format(3, '.', ',') }} TND</span>
-                   <p class="mt-2 text-muted">Click to view revenue breakdown</p>
+                   <p class="mt-2 text-muted">Cliquez pour voir la répartition des revenus</p>
                     </div>
                 </div>
             </div>
@@ -81,6 +81,54 @@
         <div class="card shadow mb-5">
             <div class="card-header">
                 <h2 class="mb-0">Véhicules</h2>
+            </div>
+            {# Vehicles Status Filter #}
+            <div class="mb-4 mt-3 px-3">
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_gestion_transport_dashboard') }}" 
+                       class="btn btn-sm"
+                       style="{% if app.request.query.get('disponibilite') is null %}
+                           background-color: transparent;
+                           border-color: #0d6efd;
+                           color: #0d6efd;
+                           border: 1px solid;
+                       {% else %}
+                           color: #0d6efd;
+                           border-color: #0d6efd;
+                           background-color: transparent;
+                           border: 1px solid;
+                       {% endif %}">
+                        Tous
+                    </a>
+                    <a href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Disponible'}) }}" 
+                       class="btn btn-sm"
+                       style="{% if app.request.query.get('disponibilite') == 'Disponible' %}
+                           background-color: #6FE69B;
+                           border-color: #6FE69B;
+                           color: #000;
+                       {% else %}
+                           color: #6FE69B;
+                           border-color: #6FE69B;
+                           background-color: transparent;
+                           border: 1px solid;
+                       {% endif %}">
+                        Disponibles
+                    </a>
+                    <a href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Non disponible'}) }}" 
+                       class="btn btn-sm"
+                       style="{% if app.request.query.get('disponibilite') == 'Non disponible' %}
+                           background-color: #ffc107;
+                           border-color: #ffc107;
+                           color: #000;
+                       {% else %}
+                           color: #ffc107;
+                           border-color: #ffc107;
+                           background-color: transparent;
+                           border: 1px solid;
+                       {% endif %}">
+                        Non disponibles
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -131,12 +179,61 @@
             <div class="card-header">
                 <h2 class="mb-0">Transports</h2>
             </div>
+            {# Transport Status Filter #}
+            <div class="mb-4 mt-3 px-3">
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_gestion_transport_dashboard') }}" 
+                       class="btn btn-sm"
+                       style="{% if app.request.query.get('status') is null %}
+                           background-color: transparent;
+                           border-color: #0d6efd;
+                           color: #0d6efd;
+                           border: 1px solid;
+                       {% else %}
+                           color: #0d6efd;
+                           border-color: #0d6efd;
+                           background-color: transparent;
+                           border: 1px solid;
+                       {% endif %}">
+                        Tous
+                    </a>
+                    <a href="{{ path('app_gestion_transport_dashboard', {'status': 'Actif'}) }}" 
+                       class="btn btn-sm"
+                       style="{% if app.request.query.get('status') == 'Actif' %}
+                           background-color: #ffc107;
+                           border-color: #ffc107;
+                           color: #000;
+                       {% else %}
+                           color: #ffc107;
+                           border-color: #ffc107;
+                           background-color: transparent;
+                           border: 1px solid;
+                       {% endif %}">
+                        Actifs
+                    </a>
+                    <a href="{{ path('app_gestion_transport_dashboard', {'status': 'Complété'}) }}" 
+                       class="btn btn-sm"
+                       style="{% if app.request.query.get('status') == 'Complété' %}
+                           background-color: #6FE69B;
+                           border-color: #6FE69B;
+                           color: #000;
+                       {% else %}
+                           color: #6FE69B;
+                           border-color: #6FE69B;
+                           background-color: transparent;
+                           border: 1px solid;
+                       {% endif %}">
+                        Complétés
+                    </a>
+                </div>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
                                 <th>ID</th>
+                                <th>Trajet </th>
                                 <th>Trajet (km)</th>
                                 <th>Tarif (TND)</th>
                                 <th>Status</th>
@@ -148,6 +245,13 @@
                             {% for transport in transports %}
                                 <tr>
                                     <td>{{ transport.id }}</td>
+                                    <td>
+                                      {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                    {{ transport.reservation.adresseDepart }} → {{ transport.reservation.adresseDestination }}
+                                      {% else %}
+                                   <span class="text-muted">N/A</span>
+                                      {% endif %}
+                                    </td>
                                     <td>{{ transport.trajetEnKm }}</td>
                                     <td>{{ transport.tarif }}</td>
                                     <td>

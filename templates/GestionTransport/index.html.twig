@@ -1,83 +1,197 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion Transport{% endblock %}
+{# Time-sensitive title block #}
+{% block title %}
+    {% set currentHour = "now"|date('H') %}
+    {% if currentHour >= 18 or currentHour < 6 %}
+        Bonsoir
+    {% else %}
+        Bonjour 
+    {% endif %}, {{ app.user.prenom ?? 'M.' }} | Tableau de Bord
+{% endblock %}
 
 {% block navbar %}
     {{ parent() }}
 {% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1 class="text-center mb-5">Gestion Transport</h1>
-
-        <div class="row justify-content-center">
-            <!-- Voitures Section -->
-            <div class="col-md-8">
-                <div class="text-center mb-4">
-                    <h2>Dernièrs Vehicules</h2>
+    {# Time-sensitive greeting #}
+    {% set currentHour = "now"|date('H') %}
+    {% set greeting = currentHour >= 18 or currentHour < 6 ? 'Bonsoir' : 'Bonjour' %}
+    
+    <div class="container-fluid px-4 py-4">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header mb-5">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="fw-bold text-blue mb-2">{{ greeting }}, {{ app.user.prenom ?? 'M.' }}</h1>
+                    <p class="lead text-muted">Gérez vos véhicules et vos missions de transport</p>
                 </div>
-                <div class="row">
-                    {% for voiture in voitures %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
-                                {% if voiture.image %}
-                                    <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}" class="card-img-top" alt="Car Image">
-                                {% else %}
-                                    <img src="{{ asset('uploads/images/default-car.jpg') }}" class="card-img-top" alt="Default Car Image">
-                                {% endif %}
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">Voiture #{{ voiture.idVoiture }}</h5>
-                                    <p class="card-text">
-                                        Modèle: {{ voiture.model }}<br>
-                                        Numéro de série: {{ voiture.numSerie }}<br>
-                                        Disponibilité: {{ voiture.disponibilite.value }}
-                                    </p>
-                                    <div class="mt-auto">
-                                        <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}" class="btn btn-primary">Voir détails</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{{ path('app_voiture_index') }}" class="btn btn-secondary">Voir toutes les voitures</a>
+                <div class="col-md-6 text-md-end">
+                    <a href="{{ path('app_voiture_new') }}" class="btn btn-blue me-2">
+                        <i class="fas fa-car me-2"></i>Ajouter Véhicule
+                    </a>
+                    <a href="{{ path('app_transport_new') }}" class="btn btn-orange">
+                        <i class="fas fa-truck me-2"></i>Nouvelle Mission
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Transports Section -->
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-8">
-                <div class="text-center mb-4">
-                    <h2>Derniers Transports</h2>
-                </div>
-                <div class="row">
-                    {% for transport in transports %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <h5 class="card-title">Transport #{{ transport.id }}</h5>
-                                    <p class="card-text">
-                                        Trajet: {{ transport.trajetEnKm }} km<br>
-                                        Tarif: {{ transport.tarif }} €<br>
-                                        Status: {{ transport.status.value }}<br>
-                                        {% if transport.voiture %}
-                                            Voiture: #{{ transport.voiture.idVoiture }}
-                                        {% else %}
-                                            Voiture: Non assignée
-                                        {% endif %}
-                                    </p>
-                                    <div class="mt-auto">
-                                        <a href="{{ path('app_transport_show', {'id': transport.id}) }}" class="btn btn-primary">Voir détails</a>
-                                    </div>
-                                </div>
+        <!-- Quick Stats -->
+        <div class="row mb-5 g-4">
+            <div class="col-md-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon bg-blue-soft me-4">
+                                <i class="fas fa-car text-blue"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-2">Véhicules</h6>
+                                <h3 class="mb-0">{{ voitures|length }}</h3>
+                                <small class="text-muted">{{ voitures|filter(v => v.disponibilite.value == 'Disponible')|length }} disponibles</small>
                             </div>
                         </div>
-                    {% endfor %}
+                    </div>
                 </div>
-                <div class="text-center mt-3">
-                    <a href="{{ path('app_transport_index') }}" class="btn btn-secondary">Voir tous les transports</a>
+            </div>
+            <!-- Quick Stats -->
+            <div class="col-md-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Missions</h6>
+                                <h3 class="mb-0">{{ stats.total_transports }}</h3>
+                                <small class="text-muted">{{ stats.transports_actifs }} Actif</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Missions complétées</h6>
+                                <h3 class="mb-0">{{ stats.transports_completes }}</h3>
+                                <small class="text-muted">Ce mois</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- My Vehicles Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0 text-blue">Mes Véhicules</h5>
+                            <a href="{{ path('app_voiture_index') }}" class="btn btn-sm btn-outline-blue">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Modèle</th>
+                                        <th>N° Série</th>
+                                        <th>Disponibilité</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for voiture in voitures|slice(0, 3) %}
+                                        <tr>
+                                            <td class="fw-bold">{{ voiture.model }}</td>
+                                            <td>{{ voiture.numSerie }}</td>
+                                            <td>
+                                                <span class="badge {% if voiture.disponibilite.value == 'Disponible' %}bg-success{% else %}bg-orange{% endif %}">
+                                                    {{ voiture.disponibilite.value }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}" class="btn btn-sm btn-outline-blue">Gérer</a>
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">Aucun véhicule enregistré</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Transports Section -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0 text-blue">Missions Actuelles</h5>
+                            <a href="{{ path('app_transport_index') }}" class="btn btn-sm btn-outline-blue">Voir tout</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Trajet</th>
+                                        <th>Véhicule</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transport in transports|filter(t => t.status != 'COMPLETE')|slice(0, 3) %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <small class="text-muted">De</small>
+                                                    <span>{{ transport.reservation.adresseDepart }}</span>
+                                                    <small class="text-muted mt-1">À</small>
+                                                    <span>{{ transport.reservation.adresseDestination }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if transport.voiture %}
+                                                    <span class="badge bg-blue">{{ transport.voiture.model }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Non assigné</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if transport.status.value == 'Complété' %}bg-#6FE69B
+                                                    {% elseif transport.status.value == 'Actif' %}bg-orange
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ transport.status.value }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ path('app_transport_show', {'id': transport.id}) }}" class="btn btn-sm btn-outline-blue">Détails</a>
+                                            </td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">Aucune mission en cours</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -87,55 +201,107 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        .card {
-            border: none;
-            border-radius: 1rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease;
+        :root {
+            --blue: #1976D2;
+            --orange: #FF5722;
+            --blue-soft: rgba(25, 118, 210, 0.1);
+            --orange-soft: rgba(255, 87, 34, 0.1);
+            --green-soft: rgba(40, 167, 69, 0.1);
+            --success: #6FE69B;
         }
-
-        .card:hover {
+        
+        .text-blue { color: var(--blue); }
+        .text-orange { color: var(--orange); }
+        .bg-blue { background-color: var(--blue); }
+        .bg-orange { background-color: var(--orange); }
+        .bg-blue-soft { background-color: var(--blue-soft); }
+        .bg-orange-soft { background-color: var(--orange-soft); }
+        .bg-green-soft { background-color: var(--green-soft); }
+        
+        .btn-blue {
+            background-color: var(--blue);
+            color: white;
+            border: none;
+        }
+        
+        .btn-blue:hover {
+            background-color: #1565C0;
+            color: white;
+        }
+        
+        .btn-orange {
+            background-color: var(--orange);
+            color: white;
+            border: none;
+        }
+        
+        .btn-orange:hover {
+            background-color: #E64A19;
+            color: white;
+        }
+        
+        .btn-outline-blue {
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+        
+        .btn-outline-blue:hover {
+            background-color: var(--blue);
+            color: white;
+        }
+        
+        .stat-card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
             transform: translateY(-5px);
         }
-
-        .card-body {
-            text-align: center;
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-
-        .card-title {
-            font-weight: 700;
-            color: #333;
+        
+        .stat-icon i {
+            font-size: 1.25rem;
         }
-
-        .card-text {
-            color: #7a7a7a;
-            font-size: 0.95rem;
-        }
-
-        .card-img-top {
-            height: 200px;
-            object-fit: cover;
-            border-top-left-radius: 1rem;
-            border-top-right-radius: 1rem;
-        }
-
-        .btn-primary {
-            background-color: #ff5a3c;
+        
+        .card {
             border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
-
-        .btn-primary:hover {
-            background-color: #e04d30;
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-
-        .btn-secondary {
-            background-color: #f3f3f3;
-            color: #333;
-            border: none;
+        
+        .table {
+            margin-bottom: 0;
         }
-
-        .btn-secondary:hover {
-            background-color: #e0e0e0;
+        
+        .table thead th {
+            border-bottom: none;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+        }
+        
+        .bg-success {
+            background-color: #6FE69B !important;
         }
     </style>
 {% endblock %}

@@ -105,6 +105,39 @@
                 line-height: 1;
             }
         </style>
+        <style>
+            /* Unified dropdown styling */
+            .dropdown-menu {
+                border: none;
+                box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+                border-radius: 0.5rem;
+                padding: 0.5rem;
+                background-color: white;
+            }
+            
+            .dropdown-menu a {
+                padding: 0.5rem 1rem;
+                border-radius: 0.3rem;
+                transition: all 0.2s ease;
+                background-color: transparent !important;
+                color: #333 !important;
+            }
+            
+            .dropdown-menu a:hover {
+                background-color: #ff5a3c !important;
+                color: white !important;
+                transform: translateX(5px);
+            }
+
+            .dropdown-menu li {
+                background: none !important;
+            }
+
+            .dropdown-item.active {
+                background-color: #ff5a3c !important;
+                color: white !important;
+            }
+        </style>
     </head>
     <body>
         <!-- ***** Preloader Start ***** -->
@@ -198,7 +231,7 @@
                                         <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
                                     {% else %}
                                         <!-- Navigation pour les non-admins -->
-                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
+                                        <li><a href="{% if is_granted('ROLE_TRANSPORTEUR') %}{{ path('app_transport_home') }}{% else %}{{ path('app_home') }}{% endif %}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
 
                                         <!-- Services Dropdown -->
                                        <li class="nav-item dropdown">
@@ -209,7 +242,6 @@
                                                 {% if is_granted('ROLE_TRANSPORTEUR') %}
                                                     <li><a class="dropdown-item" href="{{ path('app_transport_index') }}">Mes Transports</a></li>
                                                     <li><a class="dropdown-item" href="{{ path('app_voiture_index') }}">Mes Véhicules</a></li>
-                                                       <li><a class="dropdown-item" href="{{ path('app_transport_home') }}">Transports</a></li>
                                                 {% else %}
                                                     <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
                                                     <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">Réservations</a></li>

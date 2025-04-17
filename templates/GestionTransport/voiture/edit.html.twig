@@ -4,9 +4,7 @@
 
 {% block body %}
 
-    {{ include('GestionTransport/voiture/_form.html.twig', {'button_label': 'Update'}) }}
+    {{ include('GestionTransport/voiture/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
 
-    <a href="{{ path('app_voiture_index') }}">back to list</a>
 
-    {{ include('GestionTransport/voiture/_delete_form.html.twig') }}
 {% endblock %}

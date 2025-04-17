@@ -15,10 +15,38 @@ class VoitureRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Voiture::class);
     }
+
+/**
+     * Find the last $limit Voiture records for a given user cin, ordered by timestamp DESC.
+     *
+     * @param string $cin
+     * @param int $limit
+     * @return Voiture[]
+     */
+    public function findByAvailabilityAndUser(string $disponibilite, $user)
+    {
+        return $this->createQueryBuilder('v')
+            ->where('v.disponibilite = :disponibilite')
+            ->andWhere('v.utilisateur = :user')
+            ->setParameter('disponibilite', $disponibilite)
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
+    
+    public function findByUser($user)
+    {
+        return $this->createQueryBuilder('v')
+            ->where('v.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countByMonth(int $year): array
     {
         // Initialize all months with 0
-        $months = array_fill_keys(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], 0);
+        $months = array_fill_keys(['Janv','Févr','Mars','Avr','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'], 0);
 
         try {
             $qb = $this->createQueryBuilder('v');

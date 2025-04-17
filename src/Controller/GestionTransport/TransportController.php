@@ -11,15 +11,26 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+
+#[IsGranted('ROLE_TRANSPORTEUR')]
 #[Route('/transport')]
 final class TransportController extends AbstractController
 {
     #[Route(name: 'app_transport_index', methods: ['GET'])]
-    public function index(TransportRepository $transportRepository): Response
+    public function index(TransportRepository $transportRepository, Request $request): Response
     {
+        $status = $request->query->get('status');
+        $user = $this->getUser();
+        
+        $transports = $status 
+            ? $transportRepository->findByStatusAndUser($status, $user)
+            : $transportRepository->findByUser($user);
+
         return $this->render('GestionTransport/transport/index.html.twig', [
-            'transports' => $transportRepository->findAll(),
+            'transports' => $transports,
+            'current_filter' => $status
         ]);
     }
 
@@ -31,6 +42,9 @@ final class TransportController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                
+           
             $reservation = $transport->getReservation();
             $depart = $reservation->getAdresseDepart();
             $arrivee = $reservation->getAdresseDestination();
@@ -42,10 +56,16 @@ final class TransportController extends AbstractController
             $tarif = $distanceKm * 0.5;
             $transport->setTarif($tarif);
 
+            $entityManager->persist($reservation);
             $entityManager->persist($transport);
             $entityManager->flush();
-
-            return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
+            $this->addFlash('succès', 'Transport créé avec succès');
+            return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER); }
+            catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                $this->addFlash('erreur', 'Cette réservation est déjà prise par un autre transport.');
+            } catch (\Exception $e) {
+                $this->addFlash('erreur', 'Une erreur est survenue lors de la création du transport.');
+            }
         }
 
         return $this->render('GestionTransport/transport/new.html.twig', [
@@ -73,6 +93,9 @@ final class TransportController extends AbstractController
         $form->handleRequest($request);
     
         if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                
+           
             // Recalculate distance and tariff when reservation changes
             $reservation = $transport->getReservation();
             $depart = $reservation->getAdresseDepart();
@@ -87,7 +110,13 @@ final class TransportController extends AbstractController
     
             $entityManager->flush();
     
-            return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER); }
+            catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                $this->addFlash('erreur', 'Cette réservation est déjà prise par un autre transport.');     
+            }
+            catch (\Exception $e) {
+                $this->addFlash('erreur', 'Une erreur est survenue lors de la modification du transport.'); 
+            }
         }
     
         return $this->render('GestionTransport/transport/edit.html.twig', [
