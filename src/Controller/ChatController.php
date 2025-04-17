@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Controller;
-
+use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Entity\Utilisateur;
 use App\Entity\Message;
 use App\Repository\UtilisateurRepository;
@@ -17,11 +17,11 @@ class ChatController extends AbstractController
     #[Route('/chat', name: 'app_chat')]
     public function index(UtilisateurRepository $utilisateurRepository): Response
     {
-        $currentUser = $utilisateurRepository->findOneBy(['cin' => '12345678']);
+        $currentUser = $this->getUser();
         if (!$currentUser instanceof Utilisateur) {
-            throw $this->createNotFoundException('Utilisateur statique non trouvé.');
+            throw $this->createNotFoundException('Utilisateur non connecté.');
         }
-    
+
         $users = $utilisateurRepository->findAll();
         return $this->render('chat/index.html.twig', [
             'current_user' => $currentUser,
@@ -36,9 +36,9 @@ class ChatController extends AbstractController
         MessageRepository $messageRepository,
         Request $request
     ): Response {
-        $currentUser = $utilisateurRepository->findOneBy(['cin' => '12345678']);
+        $currentUser = $this->getUser();
         if (!$currentUser instanceof Utilisateur) {
-            throw $this->createNotFoundException('Utilisateur statique non trouvé.');
+            throw $this->createNotFoundException('Utilisateur non connecté.');
         }
 
         $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
@@ -46,10 +46,8 @@ class ChatController extends AbstractController
             throw $this->createNotFoundException('Utilisateur non trouvé.');
         }
 
-        $limit = 20; // Number of messages to load initially
+        $limit = 20;
         $totalMessages = $messageRepository->countConversationMessages($currentUser->getCin(), $receiverCin);
-        
-        // Calculate offset to get the most recent messages
         $offset = max(0, $totalMessages - $limit);
         $messages = $messageRepository->findConversationPaginated($currentUser->getCin(), $receiverCin, $limit, $offset);
 
@@ -74,9 +72,9 @@ class ChatController extends AbstractController
         UtilisateurRepository $utilisateurRepository,
         MessageRepository $messageRepository
     ): Response {
-        $currentUser = $utilisateurRepository->findOneBy(['cin' => '12345678']);
+        $currentUser = $this->getUser();
         if (!$currentUser instanceof Utilisateur) {
-            return $this->json(['error' => 'Utilisateur statique non trouvé'], 404);
+            return $this->json(['error' => 'Utilisateur non connecté'], 403);
         }
 
         $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
@@ -87,7 +85,6 @@ class ChatController extends AbstractController
         $offset = (int) $request->query->get('offset', 0);
         $limit = (int) $request->query->get('limit', 20);
 
-        // Fetch messages before the current offset
         $newOffset = max(0, $offset - $limit);
         $messages = $messageRepository->findConversationPaginated($currentUser->getCin(), $receiverCin, $limit, $newOffset);
         $totalMessages = $messageRepository->countConversationMessages($currentUser->getCin(), $receiverCin);
@@ -109,21 +106,28 @@ class ChatController extends AbstractController
     }
 
     #[Route('/chat/send', name: 'app_chat_send', methods: ['POST'])]
-    public function sendMessage(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function sendMessage(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): JsonResponse
     {
         $currentUser = $this->getUser();
-        if (!$currentUser) {
+        if (!$currentUser instanceof Utilisateur) {
             return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté.'], 403);
         }
 
-        $receiverCin = $request->request->get('receiverCin');
-        $content = $request->request->get('content');
+        $contentType = $request->headers->get('Content-Type');
+        if (str_contains($contentType, 'application/json')) {
+            $data = json_decode($request->getContent(), true);
+            $receiverCin = $data['receiverCin'] ?? null;
+            $content = $data['content'] ?? null;
+        } else {
+            $receiverCin = $request->request->get('receiverCin');
+            $content = $request->request->get('content');
+        }
 
         if (!$receiverCin || !$content) {
             return new JsonResponse(['success' => false, 'error' => 'Paramètres manquants.'], 400);
         }
 
-        $receiver = $entityManager->getRepository(Utilisateur::class)->find($receiverCin);
+        $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
         if (!$receiver) {
             return new JsonResponse(['success' => false, 'error' => 'Destinataire non trouvé.'], 404);
         }

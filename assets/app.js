@@ -1,5 +1,6 @@
 // assets/app.js
 import $ from 'jquery';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
 

@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block body %}
-    <div class="chat-container">
+    <div class="chat-container"  data-current-user-cin="{{ current_user.cin }}">
         <div class="app-one">
             <div class="side">
                 <div class="side-one">
@@ -125,43 +125,7 @@
                 </div>
 
                 <div class="message" id="conversation">
-                    <div class="message-previous" id="previous-messages">
-                        {% if has_previous_messages|default(false) %}
-                            <div class="previous">
-                                <a id="load-previous" onclick="loadPreviousMessages(this)" data-offset="20" data-conversation-id="{{ conversation_id|default('') }}">
-                                    Show Previous Message!
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    {% for message in messages|default([]) %}
-                        <div class="message-body">
-                            {% if message.sender == current_user.cin %}
-                                <div class="message-main-sender">
-                                    <div class="sender">
-                                        <div class="message-text">
-                                            {{ message.content }}
-                                        </div>
-                                        <span class="message-time">
-                                            {{ message.createdAt|date('d/m/Y H:i') }}
-                                        </span>
-                                    </div>
-                                </div>
-                            {% else %}
-                                <div class="message-main-receiver">
-                                    <div class="receiver">
-                                        <div class="message-text">
-                                            {{ message.content }}
-                                        </div>
-                                        <span class="message-time">
-                                            {{ message.createdAt|date('d/m/Y H:i') }}
-                                        </span>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
+                    <div class="message-previous" id="previous-messages"></div>
                 </div>
 
                 <div class="reply">

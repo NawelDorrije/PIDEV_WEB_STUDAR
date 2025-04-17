@@ -1,4 +1,10 @@
 {% extends 'base.html.twig' %}
+{% block body_class 'chat' %}
+{% block body_id 'chat' %}
+{% block body_data 'data-chat' %}
+
+{% block meta_title %}Chat with {{ receiver.nom }} {{ receiver.prenom }} - StuDar{% endblock %}
+{% block meta_description %}Chat with {{ receiver.nom }} {{ receiver.prenom }} on StuDar{% endblock %}
 
 {% block title %}Chat with {{ receiver.nom }} {{ receiver.prenom }} - StuDar{% endblock %}
 
@@ -9,7 +15,7 @@
 {% endblock %}
 
 {% block body %}
-    <div class="chat-container">
+    <div class="chat-container" data-current-user-cin="{{ current_user.cin }}" data-receiver-cin="{{ receiver.cin }}">
         <div class="app-one">
             <div class="side">
                 <div class="side-one">
@@ -128,7 +134,7 @@
                     <div class="message-previous" id="previous-messages">
                         {% if offset > 0 %}
                             <div class="previous">
-                                <a id="load-previous" onclick="loadPreviousMessages('{{ receiver.cin }}', '{{ offset }}', '{{ limit }}')" data-offset="{{ offset }}" data-conversation-id="{{ conversation_id|default('') }}">
+                                <a id="load-previous" onclick="loadPreviousMessages('{{ receiver.cin }}', '{{ offset }}', '{{ limit }}')" data-offset="{{ offset }}">
                                     Show Previous Message!
                                 </a>
                             </div>
@@ -174,23 +180,29 @@
                     {% endfor %}
                 </div>
 
-               <div class="reply">
-    <div class="reply-emojis">
-        <i class="fa fa-smile-o fa-2x"></i>
-    </div>
-    <div class="reply-main">
-        <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..."></textarea>
-    </div>
-    <div class="reply-recording">
-        <i class="fa fa-microphone fa-2x" aria-hidden="true"></i>
-    </div>
-    <div class="reply-send">
-        <i class="fa fa-send fa-2x" aria-hidden="true" onclick="sendMessage('{{ receiver.cin }}', '{{ path('app_chat_send') }}')"></i>
-    </div>
-</div>
+                <div class="reply">
+                    <div class="reply-emojis">
+                        <i class="fa fa-smile fa-2x" aria-hidden="true"></i>
+                    </div>
+                    <div class="reply-main">
+                        <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..."></textarea>
+                    </div>
+                    <div class="reply-recording">
+                        <i class="fa fa-microphone fa-2x" aria-hidden="true"></i>
+                    </div>
+                    <div class="reply-send">
+                        <i class="fas fa-paper-plane fa-lg" aria-hidden="true" onclick="sendMessage('{{ current_user.cin }}', '{{ receiver.cin }}', '{{ path('app_chat_send') }}')"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <script src="{{ asset('assets/js/chat.js') }}">
+    
+        initializeWebSocket('{{ current_user.cin }}');
+        document.getElementById('conversation').scrollTop = document.getElementById('conversation').scrollHeight;
+    </script>
 {% endblock %}
 
 {% block javascripts %}
