@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Enums\Statut;
@@ -8,26 +7,39 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use LongitudeOne\Spatial\PHP\Types\SpatialInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LogementRepository::class)]
 #[ORM\Table(name: "logement")]
-
 class Logement
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(name:'id')]
-    private int $id ;
+    #[ORM\Column(name: 'id')]
+    private int $id;
+
     #[ORM\Column(name: 'nbrChambre')]
+    #[Assert\NotBlank(message: "Le nombre de chambres ne peut pas être vide.")]
+    #[Assert\GreaterThan(
+        value: 0,
+        message: "Le nombre de chambres doit être supérieur à 0."
+    )]
     private int $nbrChambre;
 
     #[ORM\Column]
-    private float $prix ;
+    #[Assert\NotBlank(message: "Le prix ne peut pas être vide.")]
+    #[Assert\GreaterThan(
+        value: 0,
+        message: "Le prix doit être supérieur à 0."
+    )]
+    private float $prix;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La description ne peut pas être vide.")]
     private ?string $description = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le type ne peut pas être vide.")]
     private ?string $type = null;
 
     #[ORM\Column(type: 'point')]

@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Logement{% endblock %}
+{% block title %}New Logement{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -14,7 +14,7 @@
         }
 
         #preview-slider {
-            display: none;
+            display: none; /* Initially hide the preview slider */
             padding: 15px;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
@@ -25,7 +25,7 @@
         }
 
         #preview-slider.visible {
-            display: block;
+            display: block; /* Show when photos are added */
         }
 
         .delete-btn {
@@ -77,6 +77,7 @@
             color: #555;
         }
 
+        /* Slider CSS */
         .slider-css-target {
             overflow-x: hidden;
             max-width: 600px;
@@ -91,7 +92,7 @@
             gap: 0.5rem;
             overflow-x: auto;
             white-space: nowrap;
-            justify-content: center;
+            justify-content: center; /* Center thumbnails */
         }
 
         .slider-css-target ul li {
@@ -105,7 +106,7 @@
         .slider-css-target ul li img {
             display: block;
             max-width: 100%;
-            width: 60px;
+            width: 60px; /* Reduced size for thumbnails */
             height: 60px;
             object-fit: cover;
             border: 2px solid white;
@@ -115,7 +116,7 @@
 
         .slider-css-target-images {
             display: flex;
-            width: 400%;
+            width: 400%; /* Will be dynamically adjusted */
             will-change: transform;
             transition: transform 0.4s ease-in-out;
         }
@@ -130,15 +131,20 @@
             display: block;
             width: 100%;
             height: auto;
-            max-height: 300px;
+            max-height: 300px; /* Limit large image height */
             object-fit: cover;
         }
 
+        .invalid-feedback,
         .error-message {
             color: #ff4444;
             font-size: 14px;
             margin-top: 5px;
-            display: none;
+            display: block;
+        }
+
+        .is-invalid {
+            border-color: #ff4444;
         }
     </style>
 {% endblock %}
@@ -147,42 +153,19 @@
     {{ parent() }}
     {# Leaflet JS #}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    {# Custom JS #}
+    <script src="{{ asset('assets/js/custom.js') }}"></script>
     <script>
         let map;
-        let marker;
+        let marker = null;
         let imageCount = 0;
         let allPhotos = [];
-        let selectedFiles = []; // Store File objects for new uploads
-        let existingPhotos = []; // Store existing photos with IDs and URLs
-        let deletedPhotoIds = []; // Track IDs of existing photos to delete
-
-        // Initialize existing photos from server
-        {% for photo in logement.imageLogements %}
-            existingPhotos.push({
-                id: '{{ photo.id }}',
-                url: '{{ asset('Uploads/photos/' ~ photo.url) }}'
-            });
-        {% endfor %}
-        allPhotos = existingPhotos.map(photo => photo.url);
 
         function previewImages(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
             Array.from(files).forEach(file => {
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Only JPEG, PNG, and GIF files are allowed.');
-                    return;
-                }
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File is too large. Maximum size is 5MB.');
-                    return;
-                }
-
-                selectedFiles.push(file);
-
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     allPhotos.push(e.target.result);
@@ -191,20 +174,21 @@
                 reader.readAsDataURL(file);
             });
 
-            updateFileInput();
-        }
-
-        function updateFileInput() {
-            const fileInput = document.getElementById("file-input");
+            // Update the form's file input to ensure files are submitted
+            const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
             const dataTransfer = new DataTransfer();
-            selectedFiles.forEach(file => dataTransfer.items.add(file));
-            fileInput.files = dataTransfer.files;
+            Array.from(files).forEach(file => dataTransfer.items.add(file));
+            formFileInput.files = dataTransfer.files;
+
+            // Clear the preview input to allow adding more photos
+            const previewInput = document.getElementById("file-input");
+            previewInput.value = '';
         }
 
         function renderPhotos() {
             const sliderContainer = document.querySelector(".slider-css-target");
             const thumbnailsList = sliderContainer.querySelector("ul");
-            const imagesContainer = sliderContainer.querySelector(".slider-css-target-images");
+            const imagesContainer = document.querySelector(".slider-css-target-images");
 
             thumbnailsList.innerHTML = '';
             imagesContainer.innerHTML = '';
@@ -235,24 +219,15 @@
                 deleteBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const existingPhotoIndex = existingPhotos.findIndex(p => p.url === photoSrc);
-                    if (existingPhotoIndex !== -1) {
-                        const existingPhoto = existingPhotos[existingPhotoIndex];
-                        if (!deletedPhotoIds.includes(existingPhoto.id)) {
-                            deletedPhotoIds.push(existingPhoto.id);
-                        }
-                        existingPhotos.splice(existingPhotoIndex, 1);
-                    } else {
-                        const selectedFileIndex = allPhotos.indexOf(photoSrc);
-                        if (selectedFileIndex !== -1 && selectedFileIndex < selectedFiles.length) {
-                            selectedFiles.splice(selectedFileIndex, 1);
-                        }
-                    }
                     allPhotos.splice(index, 1);
                     renderPhotos();
-                    updateFileInput();
-                    updateDeletedPhotosInput();
                     updatePreviewVisibility();
+                    // Update form input
+                    const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+                    const remainingFiles = allPhotos.map((_, i) => formFileInput.files[i]).filter(f => f);
+                    const dataTransfer = new DataTransfer();
+                    remainingFiles.forEach(file => dataTransfer.items.add(file));
+                    formFileInput.files = dataTransfer.files;
                 });
 
                 li.appendChild(a);
@@ -273,18 +248,6 @@
             updatePreviewVisibility();
         }
 
-        function updateDeletedPhotosInput() {
-            let input = document.getElementById('deleted-photos');
-            if (!input) {
-                input = document.createElement('input');
-                input.type = 'hidden';
-                input.id = 'deleted-photos';
-                input.name = 'deleted_photos';
-                document.getElementById('contact-form').appendChild(input);
-            }
-            input.value = deletedPhotoIds.join(',');
-        }
-
         function handleDrop(event) {
             event.preventDefault();
             const input = document.getElementById("file-input");
@@ -293,7 +256,7 @@
         }
 
         function openFileInput() {
-            const fileInput = document.getElementById("file-input");
+            const fileInput = document.getElementById('{{ form.photos.vars.id }}');
             fileInput.click();
         }
 
@@ -337,9 +300,8 @@
                 previewContainer.classList.add("visible");
             } else {
                 previewContainer.classList.remove("visible");
-                const fileInput = document.getElementById("file-input");
-                fileInput.value = '';
-                selectedFiles = [];
+                const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+                formFileInput.value = '';
             }
         }
 
@@ -351,28 +313,24 @@
         });
 
         function initMap() {
-            const initialLat = {{ logement.localisation.y ?? 36.8065 }};
-            const initialLng = {{ logement.localisation.x ?? 10.1815 }};
-            map = L.map('map').setView([initialLat, initialLng], 13);
+            map = L.map('map').setView([36.8065, 10.1815], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            marker = L.marker([initialLat, initialLng], {
-                draggable: true
-            }).addTo(map);
-
             map.on('click', function(e) {
-                marker.setLatLng(e.latlng);
+                if (!marker) {
+                    marker = L.marker(e.latlng, {
+                        draggable: true
+                    }).addTo(map);
+                    marker.on('dragend', function(e) {
+                        updateFields(marker.getLatLng(), true);
+                    });
+                } else {
+                    marker.setLatLng(e.latlng);
+                }
                 updateFields(e.latlng, true);
             });
-
-            marker.on('dragend', function(e) {
-                updateFields(marker.getLatLng(), true);
-            });
-
-            // Call updateFields immediately to populate the address field
-            updateFields({ lat: initialLat, lng: initialLng }, true);
         }
 
         async function updateFields(latlng, fromMap = false) {
@@ -393,38 +351,31 @@
             latField.value = latlng.lat;
             lonField.value = latlng.lng;
 
-            // Use the existing address if available and not updating from map click/drag
-            const existingAddress = '{{ logement.address ?? '' }}';
-            if (!fromMap && existingAddress) {
-                addressField.value = existingAddress;
-                if (errorMessage) errorMessage.style.display = 'none';
-                return;
-            }
-
-            // Otherwise, fetch the address via reverse geocoding
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&addressdetails=1`, {
-                    headers: {
-                        'User-Agent': 'MySymfonyApp/1.0 (contact@myapp.com)'
+            if (fromMap) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&addressdetails=1`, {
+                        headers: {
+                            'User-Agent': 'MySymfonyApp/1.0 (contact@myapp.com)'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data && data.display_name) {
+                        addressField.value = data.display_name;
+                        if (errorMessage) errorMessage.style.display = 'none';
+                    } else {
+                        addressField.value = 'Adresse non trouvée';
+                        if (errorMessage) {
+                            errorMessage.textContent = 'Adresse non trouvée';
+                            errorMessage.style.display = 'block';
+                        }
                     }
-                });
-                const data = await response.json();
-                if (data && data.display_name) {
-                    addressField.value = data.display_name;
-                    if (errorMessage) errorMessage.style.display = 'none';
-                } else {
-                    addressField.value = 'Address not found';
+                } catch (error) {
+                    console.error('Erreur lors de la récupération de l\'adresse:', error);
+                    addressField.value = 'Erreur lors de la récupération';
                     if (errorMessage) {
-                        errorMessage.textContent = 'Address not found';
+                        errorMessage.textContent = 'Erreur lors de la récupération de l\'adresse';
                         errorMessage.style.display = 'block';
                     }
-                }
-            } catch (error) {
-                console.error('Error fetching address:', error);
-                addressField.value = 'Error retrieving address';
-                if (errorMessage) {
-                    errorMessage.textContent = 'Error retrieving address';
-                    errorMessage.style.display = 'block';
                 }
             }
         }
@@ -442,31 +393,30 @@
                     const lat = parseFloat(data[0].lat);
                     const lon = parseFloat(data[0].lon);
                     const latlng = { lat, lng: lon };
-                    
+
                     if (!marker) {
                         marker = L.marker(latlng, {
-                            draggable: true
+                            draggable: false
                         }).addTo(map);
-                        marker.on('dragend', function(e) {
-                            updateFields(marker.getLatLng(), true);
-                        });
                     } else {
                         marker.setLatLng(latlng);
+                        marker.options.draggable = false;
+                        marker.dragging.disable();
                     }
-                    
+
                     map.setView(latlng, 13);
                     updateFields(latlng, false);
                     if (errorMessage) errorMessage.style.display = 'none';
                 } else {
                     if (errorMessage) {
-                        errorMessage.textContent = 'Address not found';
+                        errorMessage.textContent = 'Adresse non trouvée';
                         errorMessage.style.display = 'block';
                     }
                 }
             } catch (error) {
-                console.error('Error geocoding address:', error);
+                console.error('Erreur lors de la géolocalisation:', error);
                 if (errorMessage) {
-                    errorMessage.textContent = 'Error geocoding address';
+                    errorMessage.textContent = 'Erreur lors de la géolocalisation';
                     errorMessage.style.display = 'block';
                 }
             }
@@ -478,11 +428,7 @@
             if (initialHash && initialHash.startsWith('image_')) {
                 updateSliderTransform(initialHash);
             }
-            if (allPhotos.length > 0) {
-                renderPhotos();
-            }
 
-            // Add event listener for address input
             const addressField = document.querySelector('input[name="logement[address]"]');
             addressField.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -493,6 +439,13 @@
                     }
                 }
             });
+
+            // Sync custom file input with form input
+            const customFileInput = document.getElementById('file-input');
+            const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+            customFileInput.addEventListener('change', function() {
+                previewImages({ target: this });
+            });
         });
     </script>
 {% endblock %}
@@ -500,61 +453,76 @@
 {% block body %}
     <div class="contact-page section">
         <div class="container">
+            <div class="col-lg-4" style="margin:30px">
+                <h2>Ajouter ta offre!</h2>
+            </div>
             <div class="row row-page">
-                <div class="col-lg-12">
-                    <h1 class="center">Modifier ce Logement</h1>
-                </div>
                 <div class="col-lg-12 right-column">
-                    {{ form_start(form, {'attr': {'id': 'contact-form', 'enctype': 'multipart/form-data'}}) }}
-                    {# Hidden input for deleted photos #}
-                    <input type="hidden" id="deleted-photos" name="deleted_photos" value="">
+                    {{ form_start(form, {'attr': {'id': 'contact-form'}}) }}
                     <div class="row">
                         <div class="col-lg-6">
-                            <div class="col-lg-12">
+                            <div class="col-lg-12 mb-3">
+                                {{ form_label(form.nbrChambre, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.nbrChambre, {
                                     'attr': {
-                                        'placeholder': 'Number of Rooms',
                                         'class': 'form-control' ~ (form.nbrChambre.vars.errors|length > 0 ? ' is-invalid' : ''),
                                         'required': 'required'
                                     }
                                 }) }}
-                                {{ form_errors(form.nbrChambre) }}
+                                {% if form.nbrChambre.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.nbrChambre) }}
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="col-lg-12">
+                            <div class="col-lg-12 mb-3">
+                                {{ form_label(form.prix, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.prix, {
                                     'attr': {
-                                        'placeholder': 'Price (€)',
                                         'class': 'form-control' ~ (form.prix.vars.errors|length > 0 ? ' is-invalid' : ''),
                                         'required': 'required'
                                     }
                                 }) }}
-                                {{ form_errors(form.prix) }}
+                                {% if form.prix.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.prix) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-lg-6">
-                            <div class="col-lg-12">
+                            <div class="col-lg-12 mb-3">
+                                {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.description, {
                                     'attr': {
-                                        'placeholder': 'Description',
                                         'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
                                         'rows': 5,
                                         'required': 'required'
                                     }
                                 }) }}
-                                {{ form_errors(form.description) }}
+                                {% if form.description.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.description) }}
+                                    </div>
+                                {% endif %}
                             </div>
-                            <div class="col-lg-12">
+                            <div class="col-lg-12 mb-3">
+                                {{ form_label(form.type, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.type, {
                                     'attr': {
-                                        'placeholder': 'Property Type',
                                         'class': 'form-control' ~ (form.type.vars.errors|length > 0 ? ' is-invalid' : ''),
                                         'required': 'required'
                                     }
                                 }) }}
-                                {{ form_errors(form.type) }}
+                                {% if form.type.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.type) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div style="width: 100%; max-width: 100%; padding: 15px;">
+                            {{ form_label(form.photos, null, {'label_attr': {'class': 'form-label'}}) }}
                             <div
                                 class="drag-area"
                                 onclick="openFileInput()"
@@ -575,8 +543,20 @@
                                 <h5 style="font-weight: bold; color: #333; margin-bottom: 5px;">Parcourir les fichiers</h5>
                                 <p style="color: #6c757d; font-size: 14px; margin: 0;">Glissez et déposez les photos ici</p>
                                 <i class="fas fa-paperclip paperclip"></i>
-                                <input type="file" id="file-input" name="photos[]" multiple accept="image/*" style="display: none;" onchange="previewImages(event)">
+                                <input type="file" id="file-input" style="display: none;" onchange="previewImages(event)">
+                                {{ form_widget(form.photos, {
+                                    'attr': {
+                                        'class': 'd-none',
+                                        'multiple': 'multiple',
+                                        'accept': 'image/*'
+                                    }
+                                }) }}
                             </div>
+                            {% if form.photos.vars.errors|length > 0 %}
+                                <div class="invalid-feedback">
+                                    {{ form_errors(form.photos) }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div id="preview-slider">
                             <div class="slider-css-target">
@@ -588,15 +568,20 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-12">
+                        <div class="col-lg-12 mb-3">
+                            {{ form_label(form.address, null, {'label_attr': {'class': 'form-label'}}) }}
                             {{ form_widget(form.address, {
                                 'attr': {
-                                    'placeholder': 'Address (auto-filled)',
-                                    'class': 'form-control',
+                                    'class': 'form-control' ~ (form.address.vars.errors|length > 0 ? ' is-invalid' : ''),
                                     'id': 'logement_address',
+                                    'required': 'required'
                                 }
                             }) }}
-                            {{ form_errors(form.address) }}
+                            {% if form.address.vars.errors|length > 0 %}
+                                <div class="invalid-feedback">
+                                    {{ form_errors(form.address) }}
+                                </div>
+                            {% endif %}
                             <div id="address-error" class="error-message"></div>
                         </div>
                         <div class="col-lg-12">
@@ -606,7 +591,11 @@
                                     'class': 'd-none'
                                 }
                             }) }}
-                            {{ form_errors(form.latitude) }}
+                            {% if form.latitude.vars.errors|length > 0 %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form_errors(form.latitude) }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="col-lg-12">
                             {{ form_widget(form.longitude, {
@@ -615,20 +604,23 @@
                                     'class': 'd-none'
                                 }
                             }) }}
-                            {{ form_errors(form.longitude) }}
+                            {% if form.longitude.vars.errors|length > 0 %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form_errors(form.longitude) }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
                         <div class="col-lg-12" style="margin-top: 20px;">
-                            <button type="submit" class="orange-button">Update</button>
+                            <button type="submit" class="orange-button">{{ button_label|default('Enregistrer') }}</button>
                         </div>
                     </div>
                     {{ form_end(form) }}
                     <div class="center" style="margin-top: 20px;">
                         <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
-                            <i class="fa fa-arrow-left"></i> Back to List
+                            <i class="fa fa-arrow-left"></i> Retour à la liste
                         </a>
                     </div>
-                    {{ include('logement/_delete_form.html.twig') }}
                 </div>
             </div>
         </div>
