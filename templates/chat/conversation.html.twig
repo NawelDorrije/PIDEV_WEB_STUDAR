@@ -131,7 +131,7 @@
                 </div>
 
                 <div class="message" id="conversation">
-                    <div class="message-previous" id="previous-messages">
+                    {# <div class="message-previous" id="previous-messages">
                         {% if offset > 0 %}
                             <div class="previous">
                                 <a id="load-previous" onclick="loadPreviousMessages('{{ receiver.cin }}', '{{ offset }}', '{{ limit }}')" data-offset="{{ offset }}">
@@ -139,7 +139,7 @@
                                 </a>
                             </div>
                         {% endif %}
-                    </div>
+                    </div> #}
 
                     {% set previousDate = null %}
                     {% for message in messages %}
@@ -191,22 +191,30 @@
                         <i class="fa fa-microphone fa-2x" aria-hidden="true"></i>
                     </div>
                     <div class="reply-send">
-                        <i class="fas fa-paper-plane fa-lg" aria-hidden="true" onclick="sendMessage('{{ current_user.cin }}', '{{ receiver.cin }}', '{{ path('app_chat_send') }}')"></i>
-                    </div>
+                                            <button type="button" class="btn btn-link p-0">
+                                                <i class="fas fa-paper-plane fa-lg" aria-hidden="true" onclick="sendMessage('{{ current_user.cin }}', '{{ receiver.cin }}')"></i>
+                                            </button>
+                                        </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="{{ asset('assets/js/chat.js') }}">
-    
-        initializeWebSocket('{{ current_user.cin }}');
-        document.getElementById('conversation').scrollTop = document.getElementById('conversation').scrollHeight;
-    </script>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('app') }}
     {{ encore_entry_script_tags('chat') }}
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOMContentLoaded fired');
+        if (typeof initializeWebSocket === 'function') {
+            console.log('initializeWebSocket is defined');
+            initializeWebSocket('{{ current_user.cin }}');
+            document.getElementById('conversation').scrollTop = document.getElementById('conversation').scrollHeight;
+        } else {
+            console.error('initializeWebSocket is not defined - check if chat.js is loaded');
+        }
+    });
+    </script>
 {% endblock %}

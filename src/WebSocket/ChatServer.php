@@ -3,17 +3,22 @@ namespace App\WebSocket;
 
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
-use SplObjectStorage;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Message;
+use App\Entity\Utilisateur;
+use App\Repository\UtilisateurRepository;
 
 class ChatServer implements MessageComponentInterface
 {
-    protected $clients;
-    protected $userConnections; // Map user CIN to their connections
+    private $clients;
+    private $entityManager;
+    private $utilisateurRepository;
 
-    public function __construct()
+    public function __construct(EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository)
     {
-        $this->clients = new SplObjectStorage();
-        $this->userConnections = [];
+        $this->clients = new \SplObjectStorage();
+        $this->entityManager = $entityManager;
+        $this->utilisateurRepository = $utilisateurRepository;
     }
 
     public function onOpen(ConnectionInterface $conn)
@@ -25,58 +30,50 @@ class ChatServer implements MessageComponentInterface
     public function onMessage(ConnectionInterface $from, $msg)
     {
         $data = json_decode($msg, true);
-
-        if (isset($data['type']) && $data['type'] === 'register') {
-            // Register the user's CIN to their connection
-            $cin = $data['cin'];
-            if (!isset($this->userConnections[$cin])) {
-                $this->userConnections[$cin] = new SplObjectStorage();
-            }
-            $this->userConnections[$cin]->attach($from);
-            $from->cin = $cin; // Store CIN on connection for later use
-            echo "User {$cin} registered on connection {$from->resourceId}\n";
-            return;
-        }
-
-        // Handle incoming message
         $senderCin = $data['senderCin'] ?? null;
         $receiverCin = $data['receiverCin'] ?? null;
         $content = $data['content'] ?? null;
         $timestamp = $data['timestamp'] ?? null;
 
-        if ($senderCin && $receiverCin && $content && $timestamp) {
-            // Broadcast message to sender and receiver
-            $messageData = [
-                'content' => $content,
-                'timestamp' => $timestamp,
-                'senderCin' => $senderCin,
-                'receiverCin' => $receiverCin,
-            ];
-
-            // Send to sender
-            if (isset($this->userConnections[$senderCin])) {
-                foreach ($this->userConnections[$senderCin] as $client) {
-                    $client->send(json_encode($messageData));
-                }
-            }
-
-            // Send to receiver
-            if (isset($this->userConnections[$receiverCin])) {
-                foreach ($this->userConnections[$receiverCin] as $client) {
-                    $client->send(json_encode($messageData));
-                }
-            }
+        if (!$senderCin || !$receiverCin || !$content || !$timestamp) {
+            echo "Invalid message data\n";
+            return;
         }
+
+        $sender = $this->utilisateurRepository->findOneBy(['cin' => $senderCin]);
+        $receiver = $this->utilisateurRepository->findOneBy(['cin' => $receiverCin]);
+
+        if (!$sender || !$receiver) {
+            echo "Sender or receiver not found\n";
+            return;
+        }
+
+        $message = new Message();
+        $message->setSenderCin($sender);
+        $message->setReceiverCin($receiver);
+        $message->setContent($content);
+        $message->setTimestamp(new \DateTime($timestamp));
+
+        $this->entityManager->persist($message);
+        $this->entityManager->flush();
+
+        $messageData = [
+            'senderCin' => $senderCin,
+            'receiverCin' => $receiverCin,
+            'content' => $content,
+            'timestamp' => $message->getTimestamp()->format('d/m/Y H:i')
+        ];
+
+        echo "Broadcasting: " . json_encode($messageData) . "\n"; // Add this
+        foreach ($this->clients as $client) {
+            $client->send(json_encode($messageData));
+        }
+
+    
     }
 
     public function onClose(ConnectionInterface $conn)
     {
-        if (isset($conn->cin) && isset($this->userConnections[$conn->cin])) {
-            $this->userConnections[$conn->cin]->detach($conn);
-            if ($this->userConnections[$conn->cin]->count() === 0) {
-                unset($this->userConnections[$conn->cin]);
-            }
-        }
         $this->clients->detach($conn);
         echo "Connection closed! ({$conn->resourceId})\n";
     }

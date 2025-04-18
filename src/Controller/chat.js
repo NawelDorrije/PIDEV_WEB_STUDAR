@@ -1,61 +1,44 @@
 import '../css/chat.css';
 let ws = null;
 
-function initializeWebSocket(currentUserCin) {
-    if (ws && ws.readyState !== WebSocket.CLOSED) {
-        return;
-    }
+window.initializeWebSocket = function(currentUserCin, receiverCin) {
+    console.log('Initializing WebSocket for:', currentUserCin, receiverCin);
+    ws = new WebSocket('ws://127.0.0.1:8080');
 
-    ws = new WebSocket('ws://localhost:8080');
     ws.onopen = function() {
-        console.log('Connected to WebSocket server');
-        ws.send(JSON.stringify({
-            type: 'register',
-            cin: currentUserCin
-        }));
+        console.log('WebSocket connection established');
+    };
+
+    ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket connection closed');
+        ws = null;
     };
 
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
         const conversation = document.getElementById('conversation');
-        if (!conversation) return;
-
-        const currentUserCin = document.querySelector('body').dataset.currentUserCin || currentUserCin;
-        const receiverCin = document.querySelector('body').dataset.receiverCin;
-
-        if ((data.senderCin === currentUserCin && data.receiverCin === receiverCin) ||
-            (data.senderCin === receiverCin && data.receiverCin === currentUserCin)) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-body';
-            const isSender = data.senderCin === currentUserCin;
-            const messageMainClass = isSender ? 'message-main-sender' : 'message-main-receiver';
-            const messageSubClass = isSender ? 'sender' : 'receiver';
-
-            messageDiv.innerHTML = `
-                <div class="${messageMainClass}">
-                    <div class="${messageSubClass}">
-                        <div class="message-text">${data.content}</div>
-                        <span class="message-time">${data.timestamp}</span>
-                    </div>
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-body';
+        const isSender = data.senderCin === currentUserCin;
+        messageDiv.innerHTML = `
+            <div class="${isSender ? 'message-main-sender' : 'message-main-receiver'}">
+                <div class="${isSender ? 'sender' : 'receiver'}">
+                    <div class="message-text">${data.content}</div>
+                    <span class="message-time">${data.timestamp}</span>
                 </div>
-            `;
-            conversation.appendChild(messageDiv);
-            conversation.scrollTop = conversation.scrollHeight;
-        }
+            </div>
+        `;
+        conversation.appendChild(messageDiv);
+        conversation.scrollTop = conversation.scrollHeight;
     };
+};
 
-    ws.onerror = function(error) {
-        console.error('WebSocket error:', error);
-        alert('Failed to connect to WebSocket server. Please try again later.');
-    };
-
-    ws.onclose = function() {
-        console.log('WebSocket connection closed');
-        alert('WebSocket connection closed. Please refresh the page to reconnect.');
-    };
-}
-
-window.sendMessage = function(currentUserCin, receiverCin, sendUrl) {
+window.sendMessage = function(currentUserCin, receiverCin) {
+    console.log('sendMessage called:', currentUserCin, receiverCin);
     const comment = document.getElementById('comment');
     const content = comment.value.trim();
 
@@ -64,59 +47,19 @@ window.sendMessage = function(currentUserCin, receiverCin, sendUrl) {
         return;
     }
 
-    fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        const timestamp = new Date().toISOString();
+        ws.send(JSON.stringify({
+            senderCin: currentUserCin,
             receiverCin: receiverCin,
-            content: content
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    senderCin: currentUserCin,
-                    receiverCin: receiverCin,
-                    content: data.message.content,
-                    timestamp: data.message.timestamp
-                }));
-            } else {
-                const conversation = document.getElementById('conversation');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message-body';
-                messageDiv.innerHTML = `
-                    <div class="message-main-sender">
-                        <div class="sender">
-                            <div class="message-text">${data.message.content}</div>
-                            <span class="message-time">${data.message.timestamp}</span>
-                        </div>
-                    </div>
-                `;
-                conversation.appendChild(messageDiv);
-                conversation.scrollTop = conversation.scrollHeight;
-                console.warn('WebSocket is not open. Message appended manually.');
-            }
-            comment.value = '';
-        } else {
-            alert('Error: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Error sending message:', error);
-        alert('Failed to send message: ' + error.message);
-    });
+            content: content,
+            timestamp: timestamp
+        }));
+        comment.value = '';
+    } else {
+        alert('WebSocket connection is not open. Please try again later.');
+    }
 };
-
 window.loadPreviousMessages = function(receiverCin, offset, limit) {
     fetch(`/chat/${receiverCin}/load-previous?offset=${offset}&limit=${limit}`, {
         method: 'GET',

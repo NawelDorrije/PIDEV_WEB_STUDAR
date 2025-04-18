@@ -1,166 +1,144 @@
-import '../css/chat.css';
-let ws = null;
+import '../css/chat.css';// Ensure functions are globally accessible
+window.initializeWebSocket = initializeWebSocket;
+window.sendMessage = sendMessage;
 
-function initializeWebSocket(currentUserCin) {
-    if (ws && ws.readyState !== WebSocket.CLOSED) {
-        return;
+let socket;
+
+function initializeWebSocket(userCin) {
+    console.log('Initializing WebSocket for user:', userCin);
+    
+    try {
+        socket = new WebSocket('ws://127.0.0.1:8080');
+        
+        socket.onopen = function() {
+            console.log('WebSocket connected');
+            socket.send(JSON.stringify({ type: 'register', cin: userCin }));
+        };
+
+        socket.onmessage = function(event) {
+            try {
+                const message = JSON.parse(event.data);
+                console.log('Received:', message);
+                
+                // Skip if message lacks required fields
+                if (!message.senderCin || !message.receiverCin || !message.content) {
+                    console.log('Invalid message format:', message);
+                    return;
+                }
+
+                const chatContainer = document.querySelector('.chat-container');
+                if (!chatContainer) {
+                    console.error('Chat container not found');
+                    return;
+                }
+                const currentUserCin = chatContainer.dataset.currentUserCin || '';
+                const receiverCin = chatContainer.dataset.receiverCin || '';
+                
+                // Append if message involves current user
+                if (currentUserCin && receiverCin &&
+                    (message.senderCin === currentUserCin || message.receiverCin === currentUserCin) &&
+                    (message.senderCin === receiverCin || message.receiverCin === receiverCin)) {
+                    appendMessage(message);
+                } else {
+                    console.log('Message ignored (not for this conversation):', message);
+                }
+            } catch (e) {
+                console.error('Error parsing message:', e);
+            }
+        };
+
+        socket.onclose = function() {
+            console.log('WebSocket closed');
+        };
+
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+    } catch (e) {
+        console.error('WebSocket initialization failed:', e);
     }
-
-    ws = new WebSocket('ws://localhost:8080');
-    ws.onopen = function() {
-        console.log('Connected to WebSocket server');
-        ws.send(JSON.stringify({
-            type: 'register',
-            cin: currentUserCin
-        }));
-    };
-
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        const conversation = document.getElementById('conversation');
-        if (!conversation) return;
-
-        const currentUserCin = document.querySelector('body').dataset.currentUserCin || currentUserCin;
-        const receiverCin = document.querySelector('body').dataset.receiverCin;
-
-        if ((data.senderCin === currentUserCin && data.receiverCin === receiverCin) ||
-            (data.senderCin === receiverCin && data.receiverCin === currentUserCin)) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-body';
-            const isSender = data.senderCin === currentUserCin;
-            const messageMainClass = isSender ? 'message-main-sender' : 'message-main-receiver';
-            const messageSubClass = isSender ? 'sender' : 'receiver';
-
-            messageDiv.innerHTML = `
-                <div class="${messageMainClass}">
-                    <div class="${messageSubClass}">
-                        <div class="message-text">${data.content}</div>
-                        <span class="message-time">${data.timestamp}</span>
-                    </div>
-                </div>
-            `;
-            conversation.appendChild(messageDiv);
-            conversation.scrollTop = conversation.scrollHeight;
-        }
-    };
-
-    ws.onerror = function(error) {
-        console.error('WebSocket error:', error);
-        alert('Failed to connect to WebSocket server. Please try again later.');
-    };
-
-    ws.onclose = function() {
-        console.log('WebSocket connection closed');
-        alert('WebSocket connection closed. Please refresh the page to reconnect.');
-    };
 }
 
-window.sendMessage = function(currentUserCin, receiverCin, sendUrl) {
-    const comment = document.getElementById('comment');
-    const content = comment.value.trim();
+function sendMessage(senderCin, receiverCin) {
+    try {
+        const input = document.getElementById('comment');
+        if (!input) {
+            console.error('Input element not found');
+            return;
+        }
+        const content = input.value.trim();
+        if (!content) {
+            console.log('Empty message ignored');
+            return;
+        }
 
-    if (!content) {
-        alert('Message cannot be empty');
-        return;
-    }
-
-    fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
+        const messageData = {
+            senderCin: senderCin,
             receiverCin: receiverCin,
-            content: content
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    senderCin: currentUserCin,
-                    receiverCin: receiverCin,
-                    content: data.message.content,
-                    timestamp: data.message.timestamp
-                }));
-            } else {
-                const conversation = document.getElementById('conversation');
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message-body';
-                messageDiv.innerHTML = `
-                    <div class="message-main-sender">
-                        <div class="sender">
-                            <div class="message-text">${data.message.content}</div>
-                            <span class="message-time">${data.message.timestamp}</span>
-                        </div>
-                    </div>
-                `;
-                conversation.appendChild(messageDiv);
-                conversation.scrollTop = conversation.scrollHeight;
-                console.warn('WebSocket is not open. Message appended manually.');
-            }
-            comment.value = '';
+            content: content,
+            timestamp: new Date().toISOString()
+        };
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify(messageData));
+            input.value = '';
+            console.log('Sent:', messageData);
+            // Fallback: append locally if server doesn't broadcast
+            appendMessage({
+                senderCin: senderCin,
+                receiverCin: receiverCin,
+                content: content,
+                timestamp: messageData.timestamp
+            });
         } else {
-            alert('Error: ' + (data.error || 'Unknown error'));
+            console.error('WebSocket not connected');
         }
-    })
-    .catch(error => {
-        console.error('Error sending message:', error);
-        alert('Failed to send message: ' + error.message);
-    });
-};
+    } catch (e) {
+        console.error('Error sending message:', e);
+    }
+}
 
-window.loadPreviousMessages = function(receiverCin, offset, limit) {
-    fetch(`/chat/${receiverCin}/load-previous?offset=${offset}&limit=${limit}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
+function appendMessage(message) {
+    try {
         const conversation = document.getElementById('conversation');
-        const previousMessagesDiv = document.getElementById('previous-messages');
+        if (!conversation) {
+            console.error('Conversation element not found');
+            return;
+        }
 
-        data.messages.forEach(message => {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message-body';
-            const isSender = message.isSender;
-            const messageMainClass = isSender ? 'message-main-sender' : 'message-main-receiver';
-            const messageSubClass = isSender ? 'sender' : 'receiver';
+        const chatContainer = document.querySelector('.chat-container');
+        if (!chatContainer) {
+            console.error('Chat container not found');
+            return;
+        }
+        const currentUserCin = chatContainer.dataset.currentUserCin || '';
+        const isSender = message.senderCin === currentUserCin;
+        const messageClass = isSender ? 'message-main-sender' : 'message-main-receiver';
+        const bubbleClass = isSender ? 'sender' : 'receiver';
 
-            messageDiv.innerHTML = `
-                <div class="${messageMainClass}">
-                    <div class="${messageSubClass}">
-                        <div class="message-text">${message.content}</div>
-                        <span class="message-time">${message.timestamp}</span>
-                    </div>
-                </div>
-            `;
-            conversation.insertBefore(messageDiv, conversation.firstChild.nextSibling);
+        const timestamp = new Date(message.timestamp).toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
 
-        if (data.new_offset > 0) {
-            previousMessagesDiv.innerHTML = `
-                <div class="previous">
-                    <a id="load-previous" onclick="loadPreviousMessages('${receiverCin}', '${data.new_offset}', '${limit}')" data-offset="${data.new_offset}">
-                        Show Previous Message!
-                    </a>
+        const messageHtml = `
+            <div class="message-body">
+                <div class="${messageClass}">
+                    <div class="${bubbleClass}">
+                        <div class="message-text">${message.content}</div>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
                 </div>
-            `;
-        } else {
-            previousMessagesDiv.innerHTML = '';
-        }
-    })
-    .catch(error => {
-        console.error('Error loading previous messages:', error);
-        alert('Failed to load previous messages');
-    });
-};
+            </div>
+        `;
+
+        conversation.insertAdjacentHTML('beforeend', messageHtml);
+        conversation.scrollTop = conversation.scrollHeight;
+        console.log('Appended:', message.content);
+    } catch (e) {
+        console.error('Error appending message:', e);
+    }
+}

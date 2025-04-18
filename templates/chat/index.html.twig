@@ -1,11 +1,11 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}Chat - StuDar{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     {{ encore_entry_link_tags('app') }}
     {{ encore_entry_link_tags('chat') }}
+    <link rel="stylesheet" href="../assets/css/chat.css">
 {% endblock %}
 
 {% block body %}

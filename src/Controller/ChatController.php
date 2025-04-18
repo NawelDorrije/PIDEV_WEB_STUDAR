@@ -29,6 +29,7 @@ class ChatController extends AbstractController
         ]);
     }
 
+   
     #[Route('/chat/{receiverCin}', name: 'app_chat_conversation')]
     public function conversation(
         string $receiverCin,
@@ -64,7 +65,6 @@ class ChatController extends AbstractController
             'offset' => $offset,
         ]);
     }
-
     #[Route('/chat/{receiverCin}/load-previous', name: 'app_chat_load_previous', methods: ['GET'])]
     public function loadPreviousMessages(
         string $receiverCin,
@@ -105,48 +105,49 @@ class ChatController extends AbstractController
         ]);
     }
 
-    #[Route('/chat/send', name: 'app_chat_send', methods: ['POST'])]
-    public function sendMessage(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): JsonResponse
-    {
-        $currentUser = $this->getUser();
-        if (!$currentUser instanceof Utilisateur) {
-            return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté.'], 403);
-        }
-
-        $contentType = $request->headers->get('Content-Type');
-        if (str_contains($contentType, 'application/json')) {
-            $data = json_decode($request->getContent(), true);
-            $receiverCin = $data['receiverCin'] ?? null;
-            $content = $data['content'] ?? null;
-        } else {
-            $receiverCin = $request->request->get('receiverCin');
-            $content = $request->request->get('content');
-        }
-
-        if (!$receiverCin || !$content) {
-            return new JsonResponse(['success' => false, 'error' => 'Paramètres manquants.'], 400);
-        }
-
-        $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
-        if (!$receiver) {
-            return new JsonResponse(['success' => false, 'error' => 'Destinataire non trouvé.'], 404);
-        }
-
-        $message = new Message();
-        $message->setSenderCin($currentUser);
-        $message->setReceiverCin($receiver);
-        $message->setContent($content);
-        $message->setTimestamp(new \DateTime());
-
-        $entityManager->persist($message);
-        $entityManager->flush();
-
-        return new JsonResponse([
-            'success' => true,
-            'message' => [
-                'content' => $message->getContent(),
-                'timestamp' => $message->getTimestamp()->format('d/m/Y H:i'),
-            ],
-        ]);
-    }
+    // #[Route('/chat/send', name: 'app_chat_send', methods: ['POST'])]
+    // public function sendMessage(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): JsonResponse
+    // {
+    //     $currentUser = $this->getUser();
+    //     if (!$currentUser instanceof Utilisateur) {
+    //         error_log('User not authenticated for /chat/send'); // Add this for debugging
+    //         return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté.'], 403);
+    //     }
+    
+    //     $contentType = $request->headers->get('Content-Type');
+    //     if (str_contains($contentType, 'application/json')) {
+    //         $data = json_decode($request->getContent(), true);
+    //         $receiverCin = $data['receiverCin'] ?? null;
+    //         $content = $data['content'] ?? null;
+    //     } else {
+    //         $receiverCin = $request->request->get('receiverCin');
+    //         $content = $request->request->get('content');
+    //     }
+    
+    //     if (!$receiverCin || !$content) {
+    //         return new JsonResponse(['success' => false, 'error' => 'Paramètres manquants.'], 400);
+    //     }
+    
+    //     $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
+    //     if (!$receiver) {
+    //         return new JsonResponse(['success' => false, 'error' => 'Destinataire non trouvé.'], 404);
+    //     }
+    
+    //     $message = new Message();
+    //     $message->setSenderCin($currentUser);
+    //     $message->setReceiverCin($receiver);
+    //     $message->setContent($content);
+    //     $message->setTimestamp(new \DateTime());
+    
+    //     $entityManager->persist($message);
+    //     $entityManager->flush();
+    
+    //     return new JsonResponse([
+    //         'success' => true,
+    //         'message' => [
+    //             'content' => $message->getContent(),
+    //             'timestamp' => $message->getTimestamp()->format('d/m/Y H:i'),
+    //         ],
+    //     ]);
+    // }
 }

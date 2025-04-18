@@ -1,13 +1,6 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
-parameters:
-    images_directory: '%kernel.project_dir%/assets/images'
-    photos_directory: '%kernel.project_dir%/public/uploads/photos'
-    voiture_photos_directory: '%photos_directory%'
-    
+# config/services.yaml
+# imports:
+#     - { resource: 'parameters.yaml' }
 
 services:
     App\Security\GoogleAuthenticator:
@@ -15,16 +8,11 @@ services:
             - '@knpu.oauth2.registry'
             - '@doctrine.orm.entity_manager'
             - '@router.default'
-        
 
-  
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autowire: true
+        autoconfigure: true
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
         exclude:
@@ -32,23 +20,26 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # Configuration explicite pour CommandeRepository
     App\Repository\GestionMeubles\CommandeRepository:
         arguments:
-            $registry: '@doctrine'                  # ManagerRegistry
-            $entityManager: '@doctrine.orm.entity_manager'  # EntityManagerInterface
-            $mailer: '@mailer'                      # MailerInterface
+            $registry: '@doctrine'
+            $entityManager: '@doctrine.orm.entity_manager'
+            $mailer: '@mailer'
 
-    # Configuration explicite pour CartService
     App\Service\CartService:
         arguments:
             $panierRepository: '@App\Repository\GestionMeubles\PanierRepository'
             $lignePanierRepository: '@App\Repository\GestionMeubles\LignePanierRepository'
             $security: '@security.helper'
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+
     App\Controller\GestionTransport\HomeController:
         public: true
         tags: ['controller.service_arguments']
         autowire: true
         autoconfigure: true
+
+    App\WebSocket\ChatServer:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $utilisateurRepository: '@App\Repository\UtilisateurRepository'
+        public: true # Add this line to make the service public
