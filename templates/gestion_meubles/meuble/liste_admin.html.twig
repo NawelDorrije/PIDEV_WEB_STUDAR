@@ -302,7 +302,7 @@
                         <td class="meuble-statut">{{ meuble.statut }}</td>
                         <td class="meuble-categorie">{{ meuble.categorie }}</td>
                         <td class="meuble-vendeur">
-                            {{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} ({{ meuble.vendeur.cin|default('N/A') }})
+                            {{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} 
                         </td>
                         <td class="meuble-date">
                             {{ meuble.dateEnregistrement ? meuble.dateEnregistrement|date('d/m/Y H:i') : 'N/A' }}
@@ -360,7 +360,7 @@
                         prix: "{{ meuble.prix|number_format(2, ',', ' ') }} TND",
                         statut: "{{ meuble.statut }}",
                         categorie: "{{ meuble.categorie }}",
-                        vendeur: "{{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} ({{ meuble.vendeur.cin|default('N/A') }})",
+                        vendeur: "{{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} ",
                         dateEnregistrement: "{{ meuble.dateEnregistrement ? meuble.dateEnregistrement|date('d/m/Y H:i') : 'N/A' }}"
                     }{% if not loop.last %},{% endif %}
                 {% endfor %}

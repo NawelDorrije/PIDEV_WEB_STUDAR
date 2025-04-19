@@ -31,18 +31,18 @@ class MeubleRepository extends ServiceEntityRepository
     /**
      * Modifie un meuble existant dans la base de données
      */
-    public function edit(Meuble $meuble, bool $flush = true): void
-    {
-        // Vérifier si l'entité est gérée par Doctrine
-        if (!$this->getEntityManager()->contains($meuble)) {
-            throw new \LogicException('Le meuble n\'est pas géré par Doctrine. Assurez-vous qu\'il a été récupéré via le repository.');
-        }
+    // public function edit(Meuble $meuble, bool $flush = true): void
+    // {
+    //     // Vérifier si l'entité est gérée par Doctrine
+    //     if (!$this->getEntityManager()->contains($meuble)) {
+    //         throw new \LogicException('Le meuble n\'est pas géré par Doctrine. Assurez-vous qu\'il a été récupéré via le repository.');
+    //     }
 
-        // Pas besoin de persist ici, car l'entité est déjà gérée
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+    //     // Pas besoin de persist ici, car l'entité est déjà gérée
+    //     if ($flush) {
+    //         $this->getEntityManager()->flush();
+    //     }
+    // }
 
     /**
      * Supprime un meuble de la base de données
@@ -117,5 +117,15 @@ class MeubleRepository extends ServiceEntityRepository
             ->orderBy('m.id', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+    public function edit(Meuble $meuble, bool $flush = true): void
+    {
+        if (!$this->getEntityManager()->contains($meuble)) {
+            throw new \LogicException('Le meuble n\'est pas géré par Doctrine.');
+        }
+        $this->getEntityManager()->persist($meuble); // Ajout pour garantir le suivi
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

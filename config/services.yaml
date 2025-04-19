@@ -15,7 +15,9 @@ services:
             - '@knpu.oauth2.registry'
             - '@doctrine.orm.entity_manager'
             - '@router.default'
-        
+    App\Repository\GestionMeubles\CommandeRepository:
+        arguments:
+            $logger: '@monolog.logger'
 
   
     # default configuration for services in *this* file
@@ -33,11 +35,11 @@ services:
             - '../src/Kernel.php'
 
     # Configuration explicite pour CommandeRepository
-    App\Repository\GestionMeubles\CommandeRepository:
-        arguments:
-            $registry: '@doctrine'                  # ManagerRegistry
-            $entityManager: '@doctrine.orm.entity_manager'  # EntityManagerInterface
-            $mailer: '@mailer'                      # MailerInterface
+    # App\Repository\GestionMeubles\CommandeRepository:
+    #     arguments:
+    #         $registry: '@doctrine'                  # ManagerRegistry
+    #         $entityManager: '@doctrine.orm.entity_manager'  # EntityManagerInterface
+    #         $mailer: '@mailer'                      # MailerInterface
 
     # Configuration explicite pour CartService
     App\Service\CartService:

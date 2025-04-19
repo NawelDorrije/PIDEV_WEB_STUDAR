@@ -1,114 +1,143 @@
-{# templates/gestion_meubles/commande/bon_commande_pdf.html.twig #}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Bon de Commande #{{ commande.id }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Commande #{{ commande.id }}</title>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            color: #1f2937;
-            font-size: 12pt;
-            line-height: 1.5;
+            font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            margin: 40px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 13px;
+            line-height: 1.6;
         }
         .container {
-            width: 800px;
-            margin: 20px auto;
-            background: #fff;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             padding: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #6366f1;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            text-align: left;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 25px;
         }
         .header h1 {
-            font-size: 24pt;
-            color: #6366f1;
+            font-size: 28px;
+            color: #1e40af;
             margin: 0;
-        }
-        .header .info {
-            text-align: right;
-            font-size: 10pt;
-            color: #4b5563;
-        }
-        .section {
-            margin-bottom: 20px;
-        }
-        .section h2 {
-            font-size: 16pt;
-            color: #1f2937;
-            border-left: 4px solid #10b981;
-            padding-left: 10px;
-            margin-bottom: 10px;
-        }
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 10pt;
-        }
-        .details-grid strong {
-            color: #1f2937;
-            font-weight: 600;
-        }
-        .details-grid .highlight {
-            color: #10b981;
             font-weight: 700;
         }
-        .details-grid .statut {
-            background: #fef2f2;
-            color: #ef4444;
-            padding: 2px 8px;
-            border-radius: 12px;
-            display: inline-block;
+        .header .subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+            font-weight: 400;
         }
-        table {
+        .commande-details {
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .commande-details p {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .commande-details strong {
+            width: 180px;
+            font-weight: 600;
+            color: #1e293b;
+            position: relative;
+            padding-left: 20px;
+        }
+        .commande-details strong::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #f59e0b;
+            font-size: 16px;
+        }
+        .commande-details .montant strong::before {
+            content: '$';
+            font-size: 14px;
+            top: -1px;
+        }
+        .commande-details .montant span {
+            font-weight: 700;
+            color: #059669;
+        }
+        .items {
+            margin-top: 20px;
+        }
+        .items h2 {
+            font-size: 18px;
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 15px;
+            border-left: 4px solid #f59e0b;
+            padding-left: 10px;
+        }
+        .items table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            font-size: 10pt;
         }
-        table th, table td {
-            padding: 10px;
+        .items th, .items td {
+            padding: 12px 10px;
             text-align: left;
-            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        table th {
-            background: #6366f1;
-            color: #fff;
+        .items th {
+            background: #f1f5f9;
+            color: #1e293b;
             font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
         }
-        table td {
-            background: #f8f9fa;
+        .items td {
+            color: #475569;
         }
-        .total {
-            text-align: right;
-            font-size: 14pt;
-            font-weight: 700;
-            color: #10b981;
-            margin-top: 20px;
+        .items tr:last-child td {
+            border-bottom: none;
+        }
+        .items .no-items {
+            text-align: center;
+            color: #64748b;
+            padding: 20px;
+            font-style: italic;
         }
         .footer {
+            margin-top: 40px;
             text-align: center;
-            font-size: 8pt;
-            color: #6b7280;
-            margin-top: 30px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 10px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 11px;
+        }
+        .footer a {
+            color: #1e40af;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer a:hover {
+            text-decoration: underline;
         }
         @media print {
+            body {
+                background: #ffffff;
+                margin: 0;
+            }
             .container {
                 box-shadow: none;
-                margin: 0;
-                width: 100%;
+                padding: 20px;
             }
         }
     </style>
@@ -116,64 +145,43 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Bon de Commande #{{ commande.id }}</h1>
-            <div class="info">
-                <p>Date d'émission : {{ "now"|date('d/m/Y') }}</p>
-                <p>Client : {{ commande.acheteur.nom }} {{ commande.acheteur.prenom }} (CIN: {{ commande.cinAcheteur }})</p>
-            </div>
+            <h1>Commande #{{ commande.id }}</h1>
+            <p class="subtitle">Émise le {{ "now"|date('d/m/Y') }} | Studar</p>
         </div>
-
-        <div class="section">
-            <h2>Informations de la Commande</h2>
-            <div class="details-grid">
-                <div>
-                    <strong>Date de commande :</strong> {{ commande.dateCommande|date('d/m/Y H:i') }}
-                </div>
-                <div>
-                    <strong>Statut :</strong> <span class="statut">{{ commande.statut|lower|replace({'_': ' '})|capitalize }}</span>
-                </div>
-                <div>
-                    <strong>Méthode de paiement :</strong> {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}
-                </div>
-                <div>
-                    <strong>Adresse de livraison :</strong> {{ commande.adresseLivraison|default('Non spécifiée') }}
-                </div>
-            </div>
+        <div class="commande-details">
+            <p><strong>Date de commande :</strong> {{ commande.dateCommande|date('d/m/Y H:i') }}</p>
+            <p><strong>Statut :</strong> {{ commande.statut|lower|replace({'_': ' '})|capitalize }}</p>
+            <p><strong>Méthode de paiement :</strong> {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}</p>
+            <p class="montant"><strong>Montant total :</strong> <span>{{ commande.montantTotal|number_format(2, ',', ' ') }} TND</span></p>
+            <p><strong>Adresse de livraison :</strong> {{ commande.adresseLivraison|default('Non spécifiée') }}</p>
         </div>
-
-        <div class="section">
-            <h2>Articles</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Meuble</th>
-                        <th>Prix Unitaire</th>
-                        <th>Vendeur</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ligne in commande.panier.lignesPanier %}
+        <div class="items">
+            <h2>Articles ({{ commande.panier.lignesPanier|length }})</h2>
+            {% if commande.panier.lignesPanier|length > 0 %}
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ ligne.meuble.nom|default('Meuble inconnu') }}</td>
-                            <td>{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND</td>
-                            <td>{{ ligne.meuble.vendeur.nom|default('Inconnu') }} {{ ligne.meuble.vendeur.prenom|default('') }}</td>
+                            <th>Meuble</th>
+                            <th>Prix</th>
+                            <th>Vendeur</th>
                         </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="3">Aucun article</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for ligne in commande.panier.lignesPanier %}
+                            <tr>
+                                <td>{{ ligne.meuble.nom|default('Meuble inconnu') }}</td>
+                                <td>{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND</td>
+                                <td>{{ ligne.meuble.vendeur.nom|default('Inconnu') }} {{ ligne.meuble.vendeur.prenom|default('') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-items">Aucun article dans cette commande.</p>
+            {% endif %}
         </div>
-
-        <div class="total">
-            Total : {{ commande.montantTotal|number_format(2, ',', ' ') }} TND
-        </div>
-
         <div class="footer">
-            <p>Merci pour votre achat !</p>
-            <p>Contact : support@votre-entreprise.com | (+216) 12 345 678</p>
+            <p>Merci pour votre confiance ! Contactez notre équipe à <a href="mailto:support@studar.tn">support@studar.tn</a> pour toute question.</p>
         </div>
     </div>
 </body>

@@ -210,17 +210,17 @@ if (file_exists($logoPath)) {
   // src/Controller/ReservationLogementController.php
 // src/Controller/ReservationLogementController.php
 
-#[Route('/statistics/owner', name: 'app_reservation_logement_statistics_owner')]
-public function statisticsOwner(ReservationLogementRepository $repository): Response
-{
-    // Récupérer le CIN du propriétaire connecté (à adapter selon votre système d'authentification)
-    $cinProprietaire = $this->getUser()->getCin(); // Adaptez cette ligne
+// #[Route('/statistics/owner', name: 'app_reservation_logement_statistics_owner')]
+// public function statisticsOwner(ReservationLogementRepository $repository): Response
+// {
+//     // Récupérer le CIN du propriétaire connecté (à adapter selon votre système d'authentification)
+//     $cinProprietaire = $this->getUser()->getCin(); // Adaptez cette ligne
     
-    $stats = $repository->getMonthlyStatisticsForOwner($cinProprietaire);
+//     $stats = $repository->getMonthlyStatisticsForOwner($cinProprietaire);
     
-    return $this->render('reservation_logement/statistics_owner.html.twig', [
-        'stats' => $stats,
-        'max' => !empty($stats) ? max(array_column($stats, 'count')) : 0
-    ]);
-}
+//     return $this->render('reservation_logement/statistics_owner.html.twig', [
+//         'stats' => $stats,
+//         'max' => !empty($stats) ? max(array_column($stats, 'count')) : 0
+//     ]);
+// }
 }

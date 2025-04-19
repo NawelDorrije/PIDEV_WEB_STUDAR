@@ -144,7 +144,6 @@ final class MeubleController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
     public function modifier(Request $request, Meuble $meuble): Response
     {
-        
         $utilisateur = $this->getUser();
         if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
@@ -155,16 +154,14 @@ final class MeubleController extends AbstractController
             return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
         }
     
-        $oldImage = $meuble->getImage(); // Sauvegarder l'ancienne image
+        $oldImage = $meuble->getImage();
         $form = $this->createForm(MeubleType::class, $meuble);
-    
         $form->handleRequest($request);
     
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
                 $imageFile = $form->get('image')->getData();
     
-                // Gérer l'image uniquement si une nouvelle image est uploadée
                 if ($imageFile) {
                     $constraint = new File([
                         'maxSize' => '5M',
@@ -173,7 +170,6 @@ final class MeubleController extends AbstractController
                     ]);
     
                     $violations = $this->validator->validate($imageFile, $constraint);
-    
                     if (count($violations) > 0) {
                         foreach ($violations as $violation) {
                             $this->addFlash('error', $violation->getMessage());
@@ -194,11 +190,15 @@ final class MeubleController extends AbstractController
                             $newFilename
                         );
                         // Supprimer l'ancienne image si elle existe
-                        if ($oldImage && file_exists($this->getParameter('images_directory') . '/' . $oldImage)) {
-                            unlink($this->getParameter('images_directory') . '/' . $oldImage);
+                        if ($oldImage) {
+                            $oldImagePath = $this->getParameter('images_directory') . '/' . $oldImage;
+                            if (file_exists($oldImagePath)) {
+                                unlink($oldImagePath);
+                            }
                         }
                         $meuble->setImage($newFilename);
                     } catch (FileException $e) {
+                        error_log('File upload error: ' . $e->getMessage());
                         $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
                         return $this->render('gestion_meubles/meuble/form.html.twig', [
                             'form' => $form->createView(),
@@ -206,17 +206,13 @@ final class MeubleController extends AbstractController
                             'is_edit' => true,
                         ]);
                     }
-                } else {
-                    // Si aucune nouvelle image n'est uploadée, conserver l'ancienne
-                    $meuble->setImage($oldImage);
                 }
     
-                // Utiliser la méthode update pour l'édition
-                $this->meubleRepository->update($meuble);
+                // Utiliser la méthode edit
+                $this->meubleRepository->edit($meuble);
                 $this->addFlash('success', 'Meuble modifié avec succès !');
                 return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
             } else {
-                // Afficher les erreurs de validation
                 $errors = $form->getErrors(true);
                 foreach ($errors as $error) {
                     $this->addFlash('error', $error->getMessage());

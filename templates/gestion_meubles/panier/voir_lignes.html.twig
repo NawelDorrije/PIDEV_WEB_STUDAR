@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 prix: "{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND",
                 statut: "{{ ligne.meuble.statut|capitalize }}",
                 categorie: "{{ ligne.meuble.categorie|capitalize }}",
-                vendeur: "{{ ligne.meuble.vendeur.nom }} {{ ligne.meuble.vendeur.prenom }} (CIN: {{ ligne.meuble.vendeur.cin }})",
+                vendeur: "{{ ligne.meuble.vendeur.nom }} {{ ligne.meuble.vendeur.prenom }}",
                 dateEnregistrement: "{{ ligne.meuble.dateEnregistrement|date('d/m/Y H:i') }}"
             }{% if not loop.last %},{% endif %}
         {% endfor %}

@@ -56,7 +56,6 @@ class Meuble
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     #[Assert\File(mimeTypes: ["image/jpeg", "image/png", "image/webp"], mimeTypesMessage: "Le fichier doit être une image valide (JPG, PNG, WEBP).")]
     private ?string $image = null;
-
     #[ORM\OneToMany(mappedBy: 'meuble', targetEntity: LignePanier::class, cascade: ['persist', 'remove'])]
     private Collection $lignesPanier;
 

@@ -311,7 +311,7 @@
                     <tr class="commande-row" data-id="{{ commande.id }}">
                         <td class="commande-id">#{{ commande.id }}</td>
                         <td class="commande-acheteur">
-                            {{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ({{ commande.cinAcheteur|default('N/A') }})
+                            {{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }}
                         </td>
                         <td class="commande-date">
                             {{ commande.dateCommande|date('d/m/Y H:i') }}
@@ -371,7 +371,7 @@
                 {% for commande in pagination %}
                     "{{ commande.id }}": {
                         id: "{{ commande.id }}",
-                        acheteur: "{{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ({{ commande.cinAcheteur|default('N/A') }})",
+                        acheteur: "{{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ",
                         date: "{{ commande.dateCommande|date('d/m/Y H:i') }}",
                         statut: "{{ commande.statut }}",
                         montant: "{{ commande.montantTotal|number_format(2, ',', ' ') }} TND",

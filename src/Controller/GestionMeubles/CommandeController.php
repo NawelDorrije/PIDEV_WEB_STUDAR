@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Knp\Component\Pager\PaginatorInterface;
 use Knp\Snappy\Pdf;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 use Symfony\UX\Chartjs\Model\Chart;
@@ -27,6 +29,8 @@ final class CommandeController extends AbstractController
     private MeubleRepository $meubleRepository;
     private EntityManagerInterface $entityManager;
     private ChartBuilderInterface $chartBuilder;
+    private $pdf;
+    private LoggerInterface $logger; // Ajout du logger
 
     public function __construct(
         PanierRepository $panierRepository,
@@ -34,7 +38,9 @@ final class CommandeController extends AbstractController
         CommandeRepository $commandeRepository,
         MeubleRepository $meubleRepository,
         EntityManagerInterface $entityManager,
-        ChartBuilderInterface $chartBuilder
+        ChartBuilderInterface $chartBuilder,
+        Pdf $pdf,
+        LoggerInterface $logger // Injection du logger
     ) {
         $this->panierRepository = $panierRepository;
         $this->lignePanierRepository = $lignePanierRepository;
@@ -42,6 +48,8 @@ final class CommandeController extends AbstractController
         $this->meubleRepository = $meubleRepository;
         $this->entityManager = $entityManager;
         $this->chartBuilder = $chartBuilder;
+        $this->pdf = $pdf;
+        $this->logger = $logger;
     }
     #[Route('/admin/commandes', name: 'app_gestion_meubles_commandes_admin')]
     public function listeCommandesAdmin(Request $request, PaginatorInterface $paginator): Response
@@ -265,4 +273,78 @@ final class CommandeController extends AbstractController
 
     //     return $response;
     // }
+
+    #[Route('/commande/{id}/pdf', name: 'app_gestion_meubles_commande_pdf', methods: ['GET'])]
+    public function downloadCommandePdf(int $id): Response
+    {
+        // Récupérer la commande
+        $commande = $this->commandeRepository->find($id);
+
+        if (!$commande) {
+            throw $this->createNotFoundException('Commande non trouvée');
+        }
+
+        // Vérifier que l'utilisateur a le droit d'accéder à la commande
+        $utilisateur = $this->getUser();
+        if (!$utilisateur || $commande->getAcheteur() !== $utilisateur) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à télécharger cette commande.');
+        }
+
+        // Rendre le template pour le PDF
+        $html = $this->renderView('gestion_meubles/commande/bon_commande_pdf.html.twig', [
+            'commande' => $commande,
+        ]);
+
+        // Générer le PDF
+        $pdfContent = $this->pdf->getOutputFromHtml($html);
+
+        // Créer une réponse avec le PDF
+        $response = new Response($pdfContent);
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            sprintf('commande_%s.pdf', $commande->getId())
+        );
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+    #[Route('/commande/{id}/annuler', name: 'app_gestion_meubles_commande_annuler', methods: ['POST'])]
+    public function annulerCommande(Request $request, int $id): JsonResponse
+    {
+        $this->logger->info('Tentative d\'annulation de la commande ID: ' . $id);
+
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            $this->logger->warning('Utilisateur non connecté pour annulation de la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Vous devez être connecté.'], 403);
+        }
+
+        $commande = $this->commandeRepository->find($id);
+        if (!$commande) {
+            $this->logger->warning('Commande non trouvée: ID ' . $id);
+            return new JsonResponse(['error' => 'Commande non trouvée.'], 404);
+        }
+
+        if ($commande->getAcheteur() !== $utilisateur) {
+            $this->logger->warning('Utilisateur non autorisé pour la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Vous n\'êtes pas autorisé à annuler cette commande.'], 403);
+        }
+
+        $raisonAnnulation = $request->request->get('raison', 'Annulation par l\'utilisateur');
+
+        try {
+            $success = $this->commandeRepository->annulerCommande($id, $raisonAnnulation, $utilisateur);
+            if ($success) {
+                $this->logger->info('Commande annulée avec succès: ID ' . $id);
+                return new JsonResponse(['success' => 'Commande annulée avec succès.']);
+            } else {
+                $this->logger->warning('Échec de l\'annulation: commande ID ' . $id . ' (déjà annulée ou délai dépassé)');
+                return new JsonResponse(['error' => 'Impossible d\'annuler la commande. Vérifiez si elle est déjà annulée ou si le délai de 24h est dépassé.'], 400);
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de l\'annulation de la commande ID: ' . $id . ' - ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Erreur lors de l\'annulation : ' . $e->getMessage()], 500);
+        }
+    }
 }

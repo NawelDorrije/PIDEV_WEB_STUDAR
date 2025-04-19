@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Psr\Log\LoggerInterface; // Importation correcte
 
 /**
  * @extends ServiceEntityRepository<Commande>
@@ -19,12 +20,18 @@ class CommandeRepository extends ServiceEntityRepository
 {
     private EntityManagerInterface $entityManager;
     private MailerInterface $mailer;
+    private LoggerInterface $logger; // Ajout de la propriété
 
-    public function __construct(ManagerRegistry $registry, EntityManagerInterface $entityManager, MailerInterface $mailer)
-    {
+    public function __construct(
+        ManagerRegistry $registry,
+        EntityManagerInterface $entityManager,
+        MailerInterface $mailer,
+        LoggerInterface $logger // Ajout du paramètre
+    ) {
         parent::__construct($registry, Commande::class);
         $this->entityManager = $entityManager;
         $this->mailer = $mailer;
+        $this->logger = $logger; // Initialisation
     }
 
     /**
@@ -115,6 +122,7 @@ class CommandeRepository extends ServiceEntityRepository
     public function findAll(): array
     {
         return $this->createQueryBuilder('c')
+            ->orderBy('c.id', 'DESC')
             ->getQuery()
             ->getResult();
     }
@@ -135,14 +143,17 @@ class CommandeRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('c')
             ->andWhere('c.acheteur = :acheteur')
             ->setParameter('acheteur', $acheteur)
+            ->orderBy('c.id', 'DESC')
             ->getQuery()
             ->getResult();
     }
     
     public function annulerCommande(int $idCommande, string $raisonAnnulation, Utilisateur $acheteur): bool
     {
+        $this->logger->info('Début de l\'annulation de la commande ID: ' . $idCommande);
+
         $this->entityManager->beginTransaction();
-    
+
         try {
             $commande = $this->createQueryBuilder('c')
                 ->andWhere('c.id = :id')
@@ -155,34 +166,46 @@ class CommandeRepository extends ServiceEntityRepository
                 ->setParameter('acheteur', $acheteur)
                 ->getQuery()
                 ->getOneOrNullResult();
-    
+
             if (!$commande) {
+                $this->logger->warning('Commande non trouvée ou non annulable: ID ' . $idCommande);
                 return false;
             }
-    
+
             $commande->setStatut(Commande::STATUT_ANNULEE);
             $commande->setDateAnnulation(new \DateTime());
             $commande->setRaisonAnnulation($raisonAnnulation);
             $this->entityManager->persist($commande);
-    
+
             $lignesPanier = $commande->getPanier()->getLignesPanier();
             foreach ($lignesPanier as $ligne) {
                 $meuble = $ligne->getMeuble();
                 $meuble->setStatut('disponible');
                 $this->entityManager->persist($meuble);
             }
-    
+
             $this->entityManager->flush();
             $this->entityManager->commit();
-    
-            $this->envoyerEmailsAnnulation($commande, $raisonAnnulation);
+
+            $this->logger->info('Commande annulée avec succès: ID ' . $idCommande);
+
+            // Envoi des emails après la transaction
+            try {
+                $this->envoyerEmailsAnnulation($commande, $raisonAnnulation);
+                $this->logger->info('Emails d\'annulation envoyés pour la commande ID: ' . $idCommande);
+            } catch (\Exception $e) {
+                $this->logger->error('Erreur lors de l\'envoi des emails pour la commande ID: ' . $idCommande . ' - ' . $e->getMessage());
+                // Ne pas relancer l'exception pour ne pas interrompre le processus
+            }
+
             return true;
         } catch (\Exception $e) {
             $this->entityManager->rollback();
+            $this->logger->error('Erreur lors de l\'annulation de la commande ID: ' . $idCommande . ' - ' . $e->getMessage());
             throw new \RuntimeException('Erreur lors de l\'annulation : ' . $e->getMessage(), 0, $e);
         }
     }
-    
+
     private function envoyerEmailsAnnulation(Commande $commande, string $raisonAnnulation): void
     {
         $acheteurEmail = $commande->getAcheteur()->getEmail();
@@ -191,21 +214,21 @@ class CommandeRepository extends ServiceEntityRepository
             $commande->getId(),
             $raisonAnnulation
         );
-    
+
         $emailAcheteur = (new Email())
             ->from('no-reply@votreapp.com')
             ->to($acheteurEmail)
             ->subject('Annulation de votre commande')
             ->text($messageAcheteur);
         $this->mailer->send($emailAcheteur);
-    
+
         $meublesParVendeur = [];
         foreach ($commande->getPanier()->getLignesPanier() as $ligne) {
             $meuble = $ligne->getMeuble();
             $vendeur = $meuble->getVendeur();
             $meublesParVendeur[$vendeur->getCin()][] = $meuble;
         }
-    
+
         foreach ($meublesParVendeur as $cinVendeur => $meubles) {
             $vendeur = $meubles[0]->getVendeur();
             $vendeurEmail = $vendeur->getEmail();
@@ -214,7 +237,7 @@ class CommandeRepository extends ServiceEntityRepository
                 $messageVendeur .= "- {$meuble->getNom()} ({$meuble->getPrix()} TND)\n";
             }
             $messageVendeur .= "\nRaison : {$raisonAnnulation}\n\nCordialement,\nL'équipe";
-    
+
             $emailVendeur = (new Email())
                 ->from('no-reply@votreapp.com')
                 ->to($vendeurEmail)
@@ -223,6 +246,7 @@ class CommandeRepository extends ServiceEntityRepository
             $this->mailer->send($emailVendeur);
         }
     }
+
     public function getChiffreAffairesTotal(string $statut = '', string $periode = 'all'): float
     {
         $qb = $this->createQueryBuilder('c')
@@ -299,29 +323,29 @@ class CommandeRepository extends ServiceEntityRepository
     }
 
     public function getChiffreAffairesParMois(string $periode = 'all'): array
-{
-    $qb = $this->createQueryBuilder('c')
-        ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as mois, COALESCE(SUM(c.montantTotal), 0) as montant")
-        ->where('c.statut != :annulee')
-        ->setParameter('annulee', Commande::STATUT_ANNULEE)
-        ->groupBy('mois')
-        ->orderBy('mois', 'ASC');
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as mois, COALESCE(SUM(c.montantTotal), 0) as montant")
+            ->where('c.statut != :annulee')
+            ->setParameter('annulee', Commande::STATUT_ANNULEE)
+            ->groupBy('mois')
+            ->orderBy('mois', 'ASC');
 
-    if ($periode === 'month') {
-        $qb->andWhere('c.dateCommande >= :start')
-           ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
-    } elseif ($periode === 'year') {
-        $qb->andWhere('c.dateCommande >= :start')
-           ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
-    }
+        if ($periode === 'month') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
+        } elseif ($periode === 'year') {
+            $qb->andWhere('c.dateCommande >= :start')
+               ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
+        }
 
-    $results = $qb->getQuery()->getResult();
-    $data = [];
-    foreach ($results as $row) {
-        $data[$row['mois']] = (float) $row['montant'];
+        $results = $qb->getQuery()->getResult();
+        $data = [];
+        foreach ($results as $row) {
+            $data[$row['mois']] = (float) $row['montant'];
+        }
+        return $data;
     }
-    return $data;
-}
 
     public function getVentesParJour(string $periode = 'all'): array
     {
