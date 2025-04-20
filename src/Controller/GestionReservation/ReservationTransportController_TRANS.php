@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\Geocoder;
 
 
@@ -57,6 +58,18 @@ final class ReservationTransportController_TRANS extends AbstractController
         }
     
         return $this->redirectToRoute('app_reservation_transport_index_TRANS');
+    }
+    #[Route('/api/reservation/{id}/arrival-time', name:"api_reservation_arrival_time", methods: ["GET"])]
+ 
+    public function getArrivalTimeApi(ReservationTransport $reservation): JsonResponse
+    {
+        if (!$reservation) {
+            return $this->json(['error' => 'Reservation not found'], 404);
+        }
+        return $this->json([
+            'arrivalTime' => $reservation->getTempsArrivage(),
+            'formatted' => (new \DateTime($reservation->getTempsArrivage()))->format('l j F Y à H:i') // French format
+        ]);
     }
     
 }

@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\Geocoder;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 
 #[Route('/reservation/transport')]
@@ -60,6 +61,7 @@ final class ReservationTransportController extends AbstractController
                       $this->addFlash('warning', 'L\'adresse de destination n\'a pas pu être localisée sur la carte');
                   }
               }
+              
               
               $em->persist($reservation);
               $em->flush();
@@ -115,4 +117,18 @@ final class ReservationTransportController extends AbstractController
 
         return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
     }
+    
+
+  #[Route('/api/reservation/{id}/arrival-time', name:"api_reservation_arrival_time", methods: ["GET"])]
+ 
+public function getArrivalTimeApi(ReservationTransport $reservation): JsonResponse
+{
+    if (!$reservation) {
+        return $this->json(['error' => 'Reservation not found'], 404);
+    }
+    return $this->json([
+        'arrivalTime' => $reservation->getTempsArrivage(),
+        'formatted' => (new \DateTime($reservation->getTempsArrivage()))->format('l j F Y à H:i') // French format
+    ]);
+}
 }

@@ -1,80 +1,126 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Modifier Rendez-vous Transport{% endblock %}
+{% block title %}{{ edit_mode|default(false) ? 'Edit' : 'New' }} Reservation Transport{% endblock %}
 
 {% block stylesheets %}
 <style>
-  /* Edit Page Specific Styles */
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap');
   
-  .transport-edit-section {
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.is-invalid + label {
+    color: #dc3545 !important;
+}
+  .transport-section {
     padding: 80px 0;
-    background-color: light;
+    background-color: #f8f9fa;
   }
 
-  .transport-edit-container {
-    background: #F2F2F2;
+  .transport-container {
+    background: #FFE8D6;
     padding: 40px;
     border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(68, 83, 166, 0.15);
+    box-shadow: 0 10px 30px rgba(242, 129, 29, 0.2);
+    border: 1px solid #FFD1A8;
   }
 
-  .transport-edit-title {
+  .transport-title {
     font-family: 'Poppins', sans-serif;
     font-weight: 700;
-    color: #4453A6;
-    letter-spacing: 1.5px;
+    color: #F25922;
+    letter-spacing: 2px;
     text-align: center;
     margin-bottom: 40px;
     text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-size: 1.7em;
+  }
+
+  .transport-title i {
+    font-size: 1.2em;
+    color: #F25922;
   }
 
   .form-row {
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
   }
 
   .form-group {
     flex: 0 0 50%;
     padding: 0 15px;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    position: relative;
   }
 
   .form-group label {
-    display: block;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 8px;
+    position: absolute;
+    left: 25px;
+    top: 15px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    background: white;
+    padding: 0 5px;
+    border-radius: 4px;
   }
 
-  .transport-edit-input {
+  .transport-input {
     width: 100%;
-    height: 50px;
-    border: 2px solid #dee2e6;
+    height: 55px;
+    border: 2px solid #FFD1A8;
     border-radius: 8px;
-    padding: 12px 15px;
+    padding: 15px 20px;
     background: white;
     box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
   }
 
-  .transport-edit-input:focus {
+  .transport-input:focus {
     border-color: #4453A6;
-    box-shadow: 0 0 0 0.2rem rgba(68, 83, 166, 0.25);
     outline: none;
   }
 
-  .transport-edit-action-buttons {
+  .transport-input:focus + label,
+  .transport-input:not(:placeholder-shown) + label {
+    top: -10px;
+    left: 20px;
+    font-size: 12px;
+    color: #4453A6;
+    background: white;
+    padding: 0 5px;
+  }
+
+  /* Style for datetime-local input to match other inputs */
+  input[type="datetime-local"].transport-input {
+    padding: 15px 20px;
+    line-height: normal; /* Fix for some browsers */
+  }
+
+  .transport-action-buttons {
     display: flex;
     justify-content: center;
     gap: 20px;
     margin-top: 40px;
   }
 
-  .transport-edit-btn-save {
+  .transport-btn-save {
     background-color: #4453A6;
     color: white;
-    padding: 12px 30px;
+    padding: 15px 40px;
     border-radius: 50px;
     font-weight: 600;
     border: none;
@@ -82,19 +128,13 @@
     box-shadow: 0 4px 15px rgba(68, 83, 166, 0.3);
     font-family: 'Poppins', sans-serif;
     letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 16px;
   }
 
-  .transport-edit-btn-cancel {
-    background-color: #F2811D;
-    color: white;
-    padding: 12px 30px;
-    border-radius: 50px;
-    font-weight: 600;
-    border: none;
-    transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(242, 129, 29, 0.3);
-    font-family: 'Poppins', sans-serif;
-    letter-spacing: 1px;
+  .transport-btn-save:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(68, 83, 166, 0.4);
   }
 
   @media (max-width: 768px) {
@@ -102,13 +142,22 @@
       flex: 0 0 100%;
     }
     
-    .transport-edit-action-buttons {
+    .transport-container {
+      padding: 30px;
+    }
+    
+    .transport-title {
+      font-size: 24px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .transport-action-buttons {
       flex-direction: column;
       gap: 15px;
     }
     
-    .transport-edit-btn-save, 
-    .transport-edit-btn-cancel {
+    .transport-btn-save {
       width: 100%;
     }
   }
@@ -116,50 +165,100 @@
 {% endblock %}
 
 {% block body %}
-<section class="transport-edit-section">
+<section class="transport-section">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="transport-edit-container">
-                    <h2 class="transport-edit-title">Modifiez votre réservation</h2>
+                <div class="transport-container">
+                    <h1 class="transport-title">
+                        <i class="fas fa-car"></i>
+                        {{ edit_mode|default(false) ? 'Modifier' : 'Nouvelle' }} Réservation Transport
+                    </h1>
                     
-                    {{ form_start(form, {'attr': {'class': 'transport-edit-form'}}) }}
+                    {{ form_start(form, {'attr': {'class': 'transport-form', 'novalidate': 'novalidate'}}) }}
                         <div class="form-row">
                             <div class="form-group">
+                                {{ form_widget(form.adresseDepart, {
+                                    'attr': {
+                                        'class': 'transport-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
                                 {{ form_label(form.adresseDepart) }}
-                                {{ form_widget(form.adresseDepart, {'attr': {'class': 'transport-edit-input'}}) }}
+                                {% if form_errors(form.adresseDepart) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.adresseDepart) }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="form-group">
+                                {{ form_widget(form.adresseDestination, {
+                                    'attr': {
+                                        'class': 'transport-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
                                 {{ form_label(form.adresseDestination) }}
-                                {{ form_widget(form.adresseDestination, {'attr': {'class': 'transport-edit-input'}}) }}
+                                {% if form_errors(form.adresseDestination) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.adresseDestination) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
+                                {{ form_widget(form.tempsArrivage, {
+                                    'attr': {
+                                        'class': 'transport-input',
+                                        'placeholder': 'aaaa-mm-jj HH:MM (ex: 2025-04-30 22:03)'
+                                    }
+                                }) }}
                                 {{ form_label(form.tempsArrivage) }}
-                                {{ form_widget(form.tempsArrivage, {'attr': {'class': 'transport-edit-input'}}) }}
+                                {% if form_errors(form.tempsArrivage) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.tempsArrivage) }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="form-group">
+                                {{ form_widget(form.etudiant, {
+                                    'attr': {
+                                        'class': 'transport-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
                                 {{ form_label(form.etudiant) }}
-                                {{ form_widget(form.etudiant, {'attr': {'class': 'transport-edit-input'}}) }}
+                                {% if form_errors(form.etudiant) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.etudiant) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
+                                {{ form_widget(form.transporteur, {
+                                    'attr': {
+                                        'class': 'transport-input',
+                                        'placeholder': ' '
+                                    }
+                                }) }}
                                 {{ form_label(form.transporteur) }}
-                                {{ form_widget(form.transporteur, {'attr': {'class': 'transport-edit-input'}}) }}
+                                {% if form_errors(form.transporteur) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.transporteur) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         
-                        <div class="transport-edit-action-buttons">
-                            <button type="submit" class="transport-edit-btn-save">
-                                <i class="fas fa-check-circle mr-2"></i> Confirmer modifications
+                        <div class="transport-action-buttons">
+                            <button type="submit" class="transport-btn-save">
+                                <i class="fas fa-save mr-2"></i> {{ edit_mode|default(false) ? 'Mettre à jour' : 'Valider la réservation' }}
                             </button>
-                            <a href="{{ path('app_reservation_transport_index') }}" class="transport-edit-btn-cancel">
-                                <i class="fas fa-times-circle mr-2"></i> Annuler
-                            </a>
                         </div>
                     {{ form_end(form) }}
                 </div>
@@ -167,4 +266,109 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.transport-form');
+    
+    if (form) {
+        // Désactiver la validation HTML5
+        form.setAttribute('novalidate', 'novalidate');
+        
+        // Add this to your existing JavaScript
+        const datetimeInput = form.querySelector('input[type="datetime-local"]');
+        if (datetimeInput) {
+            datetimeInput.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const now = new Date();
+                const threeMonthsLater = new Date();
+                threeMonthsLater.setMonth(now.getMonth() + 3);
+                
+                this.classList.remove('is-invalid');
+                const errorDiv = this.closest('.form-group')?.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+                
+                if (!this.value) {
+                    showError(this, 'La date est obligatoire');
+                } else if (selectedDate < now) {
+                    showError(this, 'La date doit être aujourd\'hui ou dans le futur');
+                } else if (selectedDate > threeMonthsLater) {
+                    showError(this, 'La date ne peut pas être plus de 3 mois dans le futur');
+                }
+            });
+        }
+        
+        // Validation en temps réel pour les champs texte et select (hors datetime-local)
+        const inputs = form.querySelectorAll('.transport-input:not([type="datetime-local"])');
+        inputs.forEach(input => {
+            input.addEventListener('blur', validateField);
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+                const errorDiv = this.closest('.form-group')?.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+            });
+        });
+
+        function validateField(e) {
+            const input = e.target;
+
+            if (input.id === '{{ form.adresseDepart.vars.id }}') {
+                if (!input.value.trim()) {
+                    showError(input, 'L\'adresse de départ est obligatoire');
+                } else if (input.value.trim().length < 5) {
+                    showError(input, 'L\'adresse doit contenir au moins 5 caractères');
+                } else {
+                    clearError(input);
+                }
+            }
+
+            if (input.id === '{{ form.adresseDestination.vars.id }}') {
+                if (!input.value.trim()) {
+                    showError(input, 'L\'adresse de destination est obligatoire');
+                } else if (input.value.trim().length < 5) {
+                    showError(input, 'L\'adresse doit contenir au moins 5 caractères');
+                } else {
+                    clearError(input);
+                }
+            }
+
+            if (input.id === '{{ form.etudiant.vars.id }}' && !input.value) {
+                showError(input, 'L\'étudiant est obligatoire');
+            } else {
+                clearError(input);
+            }
+        }
+        
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            
+            let errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                formGroup.appendChild(errorDiv);
+            }
+            
+            errorDiv.textContent = message;
+            input.classList.add('is-invalid');
+        }
+        
+        function clearError(input) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+            
+            const errorDiv = formGroup.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            
+            input.classList.remove('is-invalid');
+        }
+    }
+});
+</script>
 {% endblock %}

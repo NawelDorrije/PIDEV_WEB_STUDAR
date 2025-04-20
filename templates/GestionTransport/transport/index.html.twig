@@ -69,7 +69,7 @@
                                 <th>Trajet (km)</th>
                                 <th>Tarif (TND)</th>
                                 <th>Statut</th>
-                                <th>Date</th>
+                                <th>Heure d'arrivée estimée</th>
                                 <th>Voiture</th>
                                 <th>Actions</th>
                             </tr>
@@ -96,8 +96,9 @@
                                         {{ transport.status.value }}
                                     </span>
                                 </td>
-                                <td>{{ transport.timestamp ? transport.timestamp|date('d/m/Y H:i') : '' }}</td>
-                                <td>
+<td>
+    {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : '' }}
+</td>                                <td>
                                     {% if transport.voiture %}
                                         {{ transport.voiture.model }} ({{ transport.voiture.numSerie }})
                                     {% else %}

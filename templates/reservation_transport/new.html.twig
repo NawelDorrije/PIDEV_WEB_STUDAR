@@ -104,6 +104,12 @@
     padding: 0 5px;
   }
 
+  /* Style for datetime-local input to match other inputs */
+  input[type="datetime-local"].transport-input {
+    padding: 15px 20px;
+    line-height: normal; /* Fix for some browsers */
+  }
+
   .transport-action-buttons {
     display: flex;
     justify-content: center;
@@ -169,7 +175,7 @@
                         {{ edit_mode|default(false) ? 'Modifier' : 'Nouvelle' }} Réservation Transport
                     </h1>
                     
-                    {{ form_start(form, {'attr': {'class': 'transport-form'}}) }}
+                    {{ form_start(form, {'attr': {'class': 'transport-form', 'novalidate': 'novalidate'}}) }}
                         <div class="form-row">
                             <div class="form-group">
                                 {{ form_widget(form.adresseDepart, {
@@ -179,6 +185,11 @@
                                     }
                                 }) }}
                                 {{ form_label(form.adresseDepart) }}
+                                {% if form_errors(form.adresseDepart) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.adresseDepart) }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="form-group">
                                 {{ form_widget(form.adresseDestination, {
@@ -188,18 +199,28 @@
                                     }
                                 }) }}
                                 {{ form_label(form.adresseDestination) }}
+                                {% if form_errors(form.adresseDestination) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.adresseDestination) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         
                         <div class="form-row">
                             <div class="form-group">
                                 {{ form_widget(form.tempsArrivage, {
-    'attr': {
-        'class': 'transport-input',
-        'placeholder': 'HH:MM (ex: 14:00)'
-    }
-}) }}
+                                    'attr': {
+                                        'class': 'transport-input',
+                                        'placeholder': 'aaaa-mm-jj HH:MM (ex: 2025-04-30 22:03)'
+                                    }
+                                }) }}
                                 {{ form_label(form.tempsArrivage) }}
+                                {% if form_errors(form.tempsArrivage) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.tempsArrivage) }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="form-group">
                                 {{ form_widget(form.etudiant, {
@@ -209,6 +230,11 @@
                                     }
                                 }) }}
                                 {{ form_label(form.etudiant) }}
+                                {% if form_errors(form.etudiant) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.etudiant) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         
@@ -221,6 +247,11 @@
                                     }
                                 }) }}
                                 {{ form_label(form.transporteur) }}
+                                {% if form_errors(form.transporteur) %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.transporteur) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         
@@ -236,6 +267,7 @@
     </div>
 </section>
 {% endblock %}
+
 {% block javascripts %}
 {{ parent() }}
 <script>
@@ -246,66 +278,31 @@ document.addEventListener('DOMContentLoaded', function() {
         // Désactiver la validation HTML5
         form.setAttribute('novalidate', 'novalidate');
         
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            let isValid = true;
-            
-            // Validation adresse départ
-            const adresseDepart = document.getElementById('{{ form.adresseDepart.vars.id }}');
-            if (!adresseDepart.value.trim()) {
-                showError(adresseDepart, 'L\'adresse de départ est obligatoire');
-                isValid = false;
-            } else if (adresseDepart.value.trim().length < 5) {
-                showError(adresseDepart, 'L\'adresse doit contenir au moins 5 caractères');
-                isValid = false;
-            } else {
-                clearError(adresseDepart);
-            }
-            
-            // Validation adresse destination
-            const adresseDestination = document.getElementById('{{ form.adresseDestination.vars.id }}');
-            if (!adresseDestination.value.trim()) {
-                showError(adresseDestination, 'L\'adresse de destination est obligatoire');
-                isValid = false;
-            } else if (adresseDestination.value.trim().length < 5) {
-                showError(adresseDestination, 'L\'adresse doit contenir au moins 5 caractères');
-                isValid = false;
-            } else {
-                clearError(adresseDestination);
-            }
-            
-            // Validation temps arrivage (optionnel)
-            // Validation temps arrivage
-const tempsArrivage = document.getElementById('{{ form.tempsArrivage.vars.id }}');
-if (tempsArrivage.value.trim() && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(tempsArrivage.value.trim())) {
-    showError(tempsArrivage, 'Format invalide (ex: 14:00)');
-    isValid = false;
-} else {
-    clearError(tempsArrivage);
-}
-            
-            // Validation étudiant
-            const etudiant = document.getElementById('{{ form.etudiant.vars.id }}');
-            if (!etudiant.value) {
-                showError(etudiant, 'L\'étudiant est obligatoire');
-                isValid = false;
-            } else {
-                clearError(etudiant);
-            }
-            
-            if (isValid) {
-                form.submit();
-            } else {
-                // Scroll to first error
-                const firstError = form.querySelector('.is-invalid');
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Add this to your existing JavaScript
+        const datetimeInput = form.querySelector('input[type="datetime-local"]');
+        if (datetimeInput) {
+            datetimeInput.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const now = new Date();
+                const threeMonthsLater = new Date();
+                threeMonthsLater.setMonth(now.getMonth() + 3);
+                
+                this.classList.remove('is-invalid');
+                const errorDiv = this.closest('.form-group')?.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+                
+                if (!this.value) {
+                    showError(this, 'La date est obligatoire');
+                } else if (selectedDate < now) {
+                    showError(this, 'La date doit être aujourd\'hui ou dans le futur');
+                } else if (selectedDate > threeMonthsLater) {
+                    showError(this, 'La date ne peut pas être plus de 3 mois dans le futur');
                 }
-            }
-        });
+            });
+        }
         
-        // Validation en temps réel
-        const inputs = form.querySelectorAll('.transport-input');
+        // Validation en temps réel pour les champs texte et select (hors datetime-local)
+        const inputs = form.querySelectorAll('.transport-input:not([type="datetime-local"])');
         inputs.forEach(input => {
             input.addEventListener('blur', validateField);
             input.addEventListener('input', function() {
@@ -314,10 +311,10 @@ if (tempsArrivage.value.trim() && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(temps
                 if (errorDiv) errorDiv.remove();
             });
         });
-        
+
         function validateField(e) {
             const input = e.target;
-            
+
             if (input.id === '{{ form.adresseDepart.vars.id }}') {
                 if (!input.value.trim()) {
                     showError(input, 'L\'adresse de départ est obligatoire');
@@ -327,7 +324,7 @@ if (tempsArrivage.value.trim() && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(temps
                     clearError(input);
                 }
             }
-            
+
             if (input.id === '{{ form.adresseDestination.vars.id }}') {
                 if (!input.value.trim()) {
                     showError(input, 'L\'adresse de destination est obligatoire');
@@ -337,17 +334,11 @@ if (tempsArrivage.value.trim() && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(temps
                     clearError(input);
                 }
             }
-            
-          if (input.id === '{{ form.tempsArrivage.vars.id }}') {
-    if (input.value.trim() && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(input.value.trim())) {
-        showError(input, 'Format invalide (ex: 14:00)');
-    } else {
-        clearError(input);
-    }
-}
-            
+
             if (input.id === '{{ form.etudiant.vars.id }}' && !input.value) {
                 showError(input, 'L\'étudiant est obligatoire');
+            } else {
+                clearError(input);
             }
         }
         

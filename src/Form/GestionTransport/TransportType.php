@@ -8,7 +8,7 @@ use App\Enums\GestionTransport\TransportStatus;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use App\Entity\ReservationTransport;
@@ -43,6 +43,16 @@ class TransportType extends AbstractType
                 return $er->createQueryBuilder('r')
                     ->orderBy('r.id', 'ASC');
             }
+        ])
+        ->add('tempsArrivageDisplay', TextType::class, [
+            'label' => 'Heure d\'arrivée estimée',
+            'mapped' => false,
+            'required' => false,
+            'attr' => [
+                'class' => 'form-control',
+                'readonly' => true,
+                'id' => 'arrival_time_display' // Added ID for easier selection
+            ]
         ])
             ->add('voiture', EntityType::class, [
                 'class' => Voiture::class,

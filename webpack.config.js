@@ -1,7 +1,6 @@
 const Encore = require('@symfony/webpack-encore');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
-// Manually configure the runtime environment if not already configured yet by the "encore" command.
-// It's useful when you use tools that rely on webpack.config.js file.
 if (!Encore.isRuntimeEnvironmentConfigured()) {
     Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev');
 }
@@ -52,22 +51,25 @@ Encore
         config.useBuiltIns = 'usage';
         config.corejs = '3.38';
     })
+    .autoProvidejQuery();
 
-    // enables Sass/SCSS support
-    //.enableSassLoader()
+const config = Encore.getWebpackConfig();
 
-    // uncomment if you use TypeScript
-    //.enableTypeScriptLoader()
+if (Encore.isProduction()) {
+    config.optimization.minimizer = [
+        // Preserve default JS minifier (e.g., Terser) if needed, then add CSS minifier
+        ...((config.optimization.minimizer || []).filter(
+            (minimizer) => !(minimizer instanceof CssMinimizerPlugin)
+        )),
+        new CssMinimizerPlugin({
+            minimizerOptions: {
+                preset: [
+                    'default',
+                    { discardComments: { removeAll: true } },
+                ],
+            },
+        }),
+    ];
+}
 
-    // uncomment if you use React
-    //.enableReactPreset()
-
-    // uncomment to get integrity="..." attributes on your script & link tags
-    // requires WebpackEncoreBundle 1.4 or higher
-    //.enableIntegrityHashes(Encore.isProduction())
-
-    // uncomment if you're having problems with a jQuery plugin
-    .autoProvidejQuery()
-;
-
-module.exports = Encore.getWebpackConfig();
+module.exports = config;

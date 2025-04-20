@@ -1,4 +1,13 @@
-{{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
-{{ form_end(form) }}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    {{ form_start(form) }}
+        {{ form_row(form.adresseDepart) }}
+        {{ form_row(form.adresseDestination) }}
+        {{ form_row(form.tempsArrivage) }}
+        {{ form_row(form.etudiant) }}
+        {{ form_row(form.transporteur) }}
+        <button type="submit" class="btn">Save</button>
+    {{ form_end(form) }}
+{% endblock %}
+   

@@ -73,15 +73,15 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th class="text-muted">Date</th>
+                                        <th class="text-muted">Estimé le :</th>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="me-3 text-blue">
                                                     <i class="far fa-calendar-alt"></i>
                                                 </div>
                                                 <div>
-                                                    {{ transport.timestamp ? transport.timestamp|date('d/m/Y H:i') : '' }}
-                                                </div>
+    {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : '' }}
+                                               </div>
                                             </div>
                                         </td>
                                     </tr>
@@ -180,5 +180,8 @@
                 </div>
             </div>
         </div>
+          <a href="{{ path('app_transport_home') }}" class="btn btn-link text-decoration-none ps-0">
+            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+        </a>
     </div>
 {% endblock %}

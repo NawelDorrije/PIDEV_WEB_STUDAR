@@ -236,6 +236,7 @@
                                 <th>Trajet </th>
                                 <th>Trajet (km)</th>
                                 <th>Tarif (TND)</th>
+                                <th>Heure d'arrivée estimée</th>
                                 <th>Status</th>
                                 <th>Voiture ID</th>
                                 <th>Actions</th>
@@ -254,6 +255,7 @@
                                     </td>
                                     <td>{{ transport.trajetEnKm }}</td>
                                     <td>{{ transport.tarif }}</td>
+                                    <td>{{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : '' }}</td>
                                     <td>
                                        <span class="badge 
                                             {% if transport.status.value == 'Complété' %}bg-success

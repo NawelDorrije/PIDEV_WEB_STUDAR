@@ -26,7 +26,11 @@
                             {{ form_widget(form.reservation, {'attr': {'class': 'form-control'}}) }}
                             {{ form_errors(form.reservation) }}
                         </div>
-
+                        
+                        <div class="mb-3">
+                            {{ form_label(form.tempsArrivageDisplay) }}
+                            {{ form_widget(form.tempsArrivageDisplay) }}
+                        </div>
                         <div class="mb-3">
                             {{ form_label(form.voiture) }}
                             {{ form_widget(form.voiture, {'attr': {'class': 'form-control'}}) }}
@@ -47,6 +51,53 @@
                                 {{ button_label|default(form.vars.data and form.vars.data.id ? 'Mettre à jour' : 'Enregistrer') }}
                             </button>
                         </div>
+
+                     <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                        const reservationSelect = document.getElementById('{{ form.reservation.vars.id }}');
+                        const arrivalDisplay = document.getElementById('{{ form.tempsArrivageDisplay.vars.id }}');
+
+    if (reservationSelect && arrivalDisplay) {
+        // Initial load if value exists
+        if (reservationSelect.value) {
+            fetchArrivalTime(reservationSelect.value);
+        }
+
+        // On change event
+        reservationSelect.addEventListener('change', function() {
+            arrivalDisplay.value = 'Loading...';
+            if (this.value) {
+                fetchArrivalTime(this.value);
+            } else {
+                arrivalDisplay.value = '';
+            }
+        });
+
+        function fetchArrivalTime(reservationId) {
+            fetch("{{ path('api_reservation_arrival_time', {'id': 'PLACEHOLDER'}) }}".replace('PLACEHOLDER', reservationId))
+                .then(response => {
+                    if (!response.ok) throw new Error('Error fetching data');
+                    return response.json();
+                })
+                .then(data => {
+                    arrivalDisplay.value = data.formatted || 
+                        new Date(data.arrivalTime).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    arrivalDisplay.value = 'Error loading arrival time';
+                });
+        }
+    }
+});
+</script>
                     {{ form_end(form) }}
                 </div>
             </div>

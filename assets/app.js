@@ -1,6 +1,10 @@
 // assets/app.js
 import $ from 'jquery';
-window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
+window.jQuery = window.$ = $;
+
+$(document).ready(function() {
+    console.log("jQuery loaded successfully");
+});// Rend jQuery global pour les plugins
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
