@@ -6,6 +6,7 @@ use App\Entity\GestionMeubles\Meuble;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
@@ -17,7 +18,16 @@ class MeubleType extends AbstractType
         $builder
             ->add('nom')
             ->add('description')
-            ->add('prix')
+            ->add('prix', NumberType::class, [
+                'scale' => 2, // Enforce 2 decimal places
+                'html5' => true, // Use HTML5 number input
+                'attr' => [
+                    'step' => '0.01', // Allow increments of 0.01
+                    'min' => '0', // Enforce non-negative values
+                    'placeholder' => '0.00',
+                ],
+                'invalid_message' => 'Le prix doit être un nombre valide (ex: 123.45).',
+            ])
             ->add('statut', ChoiceType::class, [
                 'choices' => [
                     'Disponible' => 'disponible',

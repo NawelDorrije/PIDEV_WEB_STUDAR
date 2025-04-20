@@ -56,8 +56,8 @@ class Commande
     public const STATUT_LIVREE = 'LIVRÉE';
     public const STATUT_ANNULEE = 'ANNULEE';
 
-    public const METHODE_STRIPE = 'Stripe';
-    public const METHODE_PAIEMENT_A_LA_LIVRAISON = 'Paiement_a_la_livraison';
+    public const METHODE_STRIPE = 'card';
+    public const METHODE_PAIEMENT_A_LA_LIVRAISON = 'delivery';
 
     public function __construct()
     {
@@ -207,3 +207,4 @@ class Commande
         );
     }
 }
+?>

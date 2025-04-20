@@ -18,8 +18,12 @@ use Knp\Snappy\Pdf;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 use Symfony\UX\Chartjs\Model\Chart;
+use Stripe\Checkout\Session;
+use Stripe\Stripe;
 
 final class CommandeController extends AbstractController
 {
@@ -30,7 +34,8 @@ final class CommandeController extends AbstractController
     private EntityManagerInterface $entityManager;
     private ChartBuilderInterface $chartBuilder;
     private $pdf;
-    private LoggerInterface $logger; // Ajout du logger
+    private LoggerInterface $logger;
+    private MailerInterface $mailer;
 
     public function __construct(
         PanierRepository $panierRepository,
@@ -40,7 +45,8 @@ final class CommandeController extends AbstractController
         EntityManagerInterface $entityManager,
         ChartBuilderInterface $chartBuilder,
         Pdf $pdf,
-        LoggerInterface $logger // Injection du logger
+        LoggerInterface $logger,
+        MailerInterface $mailer
     ) {
         $this->panierRepository = $panierRepository;
         $this->lignePanierRepository = $lignePanierRepository;
@@ -50,64 +56,7 @@ final class CommandeController extends AbstractController
         $this->chartBuilder = $chartBuilder;
         $this->pdf = $pdf;
         $this->logger = $logger;
-    }
-    #[Route('/admin/commandes', name: 'app_gestion_meubles_commandes_admin')]
-    public function listeCommandesAdmin(Request $request, PaginatorInterface $paginator): Response
-    {
-        // Vérifier que l'utilisateur est admin
-       $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
-        // Récupérer toutes les commandes avec leurs acheteurs associés
-        $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
-            ->leftJoin('c.acheteur', 'a')
-            ->addSelect('a');
-
-        // Paginer les résultats
-        $pagination = $paginator->paginate(
-            $queryBuilder,
-            $request->query->getInt('page', 1),
-            10 // 10 commandes par page
-        );
-
-        return $this->render('gestion_meubles/commande/liste_admin.html.twig', [
-            'pagination' => $pagination,
-        ]);
-    }
-
-    // Autres méthodes existantes inchangées
-    #[Route('/gestion/meubles/commandes/acheteur/{cin}', name: 'app_gestion_meubles_commandes_acheteur')]
-    public function listeCommandesParAcheteur(string $cin): Response
-    {
-        $commandes = $this->commandeRepository->findByCinAcheteur($cin);
-
-        if (empty($commandes)) {
-            $this->addFlash('warning', 'Aucune commande trouvée pour cet acheteur.');
-        }
-
-        return $this->render('gestion_meubles/commande/liste.html.twig', [
-            'commandes' => $commandes,
-            'cin_acheteur' => $cin,
-        ]);
-    }
-
-    #[Route('/gestion/meubles/commandes/mes-commandes', name: 'app_gestion_meubles_mes_commandes')]
-    public function mesCommandes(): Response
-    {
-        $utilisateur = $this->getUser();
-        if (!$utilisateur instanceof Utilisateur) {
-            throw $this->createAccessDeniedException('Vous devez être connecté.');
-        }
-
-        $commandes = $this->commandeRepository->findByAcheteur($utilisateur);
-
-        if (empty($commandes)) {
-            $this->addFlash('warning', 'Aucune commande trouvée.');
-        }
-
-        return $this->render('gestion_meubles/commande/liste.html.twig', [
-            'commandes' => $commandes,
-            'cin_acheteur' => $utilisateur->getCin(),
-        ]);
+        $this->mailer = $mailer;
     }
 
     #[Route('/confirm-checkout', name: 'app_gestion_meubles_panier_confirm_checkout', methods: ['POST'])]
@@ -149,21 +98,202 @@ final class CommandeController extends AbstractController
 
             $commandeId = $this->commandeRepository->ajouterCommande($commande);
 
-            $this->entityManager->commit();
-
             if ($paymentMethod === 'delivery') {
+                // Paiement à la livraison : finaliser directement
+                $this->entityManager->commit();
+                $this->sendConfirmationEmailToBuyer($commande, $utilisateur, $address);
+                $this->sendNotificationEmailsToSellers($commande);
                 $this->addFlash('success', 'Commande confirmée avec paiement à la livraison. Adresse : ' . $address);
+                return $this->redirectToRoute('app_gestion_meubles_mes_commandes');
             } else {
-                $this->addFlash('success', 'Commande confirmée avec paiement par carte.');
-            }
+                // Paiement par carte : initier une session Stripe Checkout
+                Stripe::setApiKey($this->getParameter('stripe_secret_key'));
 
-            return $this->redirectToRoute('app_gestion_meubles_mes_commandes');
+                $lineItems = [];
+                foreach ($panier->getLignesPanier() as $ligne) {
+                    $lineItems[] = [
+                        'price_data' => [
+                            'currency' => 'tnd',
+                            'product_data' => [
+                                'name' => $ligne->getMeuble()->getNom(),
+                            ],
+                            'unit_amount' => $ligne->getMeuble()->getPrix() * 100, // Montant en centimes
+                        ],
+                        'quantity' => 1,
+                    ];
+                }
+
+                $session = Session::create([
+                    'payment_method_types' => ['card'],
+                    'line_items' => $lineItems,
+                    'mode' => 'payment',
+                    'success_url' => $this->generateUrl('app_gestion_meubles_payment_success', ['commandeId' => $commandeId], true),
+                    'cancel_url' => $this->generateUrl('app_gestion_meubles_payment_cancel', [], true),
+                    'metadata' => [
+                        'commande_id' => $commandeId,
+                    ],
+                ]);
+
+                $commande->setSessionStripe($session->id);
+                $this->entityManager->flush();
+                $this->entityManager->commit();
+
+                return $this->redirect($session->url);
+            }
         } catch (\Exception $e) {
             $this->entityManager->rollback();
             $this->addFlash('error', 'Erreur lors de la confirmation de la commande : ' . $e->getMessage());
             return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
         }
     }
+
+    #[Route('/payment/success/{commandeId}', name: 'app_gestion_meubles_payment_success')]
+    public function paymentSuccess(int $commandeId): Response
+    {
+        $commande = $this->commandeRepository->find($commandeId);
+        if (!$commande) {
+            $this->addFlash('error', 'Commande non trouvée.');
+            return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
+        }
+
+        // Vérifier le paiement via Stripe
+        Stripe::setApiKey($this->getParameter('stripe_secret_key'));
+        $session = Session::retrieve($commande->getStripeSessionId());
+
+        if ($session->payment_status === 'paid') {
+            $commande->setStatut(Commande::STATUT_PAYEE);
+            $this->entityManager->flush();
+
+            $this->sendConfirmationEmailToBuyer($commande, $commande->getAcheteur(), $commande->getAdresseLivraison());
+            $this->sendNotificationEmailsToSellers($commande);
+
+            $this->addFlash('success', 'Paiement par carte confirmé avec succès.');
+        } else {
+            $this->addFlash('error', 'Le paiement n\'a pas été complété.');
+        }
+
+        return $this->redirectToRoute('app_gestion_meubles_mes_commandes');
+    }
+
+    #[Route('/payment/cancel', name: 'app_gestion_meubles_payment_cancel')]
+    public function paymentCancel(): Response
+    {
+        $this->addFlash('error', 'Paiement annulé.');
+        return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
+    }
+
+    /**
+     * Envoie un email de confirmation à l'acheteur avec un template Twig.
+     */
+    private function sendConfirmationEmailToBuyer(Commande $commande, Utilisateur $utilisateur, ?string $address): void
+    {
+        $email = (new Email())
+            ->from('votre_email@gmail.com')
+            ->to($utilisateur->getEmail())
+            ->subject('Confirmation de votre commande')
+            ->html($this->renderView('emails/confirmation_acheteur.html.twig', [
+                'commande' => $commande,
+                'address' => $address,
+                'nom' => $utilisateur->getNom(),
+                'prenom' => $utilisateur->getPrenom(),
+            ]));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Envoie des emails de notification aux vendeurs avec un template Twig.
+     */
+    private function sendNotificationEmailsToSellers(Commande $commande): void
+    {
+        $vendeursArticles = [];
+
+        foreach ($commande->getPanier()->getLignesPanier() as $ligne) {
+            $vendeur = $ligne->getMeuble()->getVendeur();
+            if (!isset($vendeursArticles[$vendeur->getCin()])) {
+                $vendeursArticles[$vendeur->getCin()] = [
+                    'vendeur' => $vendeur,
+                    'articles' => [],
+                ];
+            }
+            $vendeursArticles[$vendeur->getCin()]['articles'][] = $ligne;
+        }
+
+        foreach ($vendeursArticles as $data) {
+            $vendeur = $data['vendeur'];
+            $articles = $data['articles'];
+
+            $email = (new Email())
+                ->from('votre_email@gmail.com')
+                ->to($vendeur->getEmail())
+                ->subject('Nouvelle commande pour vos articles')
+                ->html($this->renderView('emails/notification_vendeur.html.twig', [
+                    'commande' => $commande,
+                    'articles' => $articles,
+                    'nom' => $vendeur->getNom(),
+                    'prenom' => $vendeur->getPrenom(),
+                ]));
+
+            $this->mailer->send($email);
+        }
+    }
+
+    // Autres méthodes inchangées (listeCommandesAdmin, listeCommandesParAcheteur, mesCommandes, statistiquesAdmin, downloadCommandePdf, annulerCommande)
+    #[Route('/admin/commandes', name: 'app_gestion_meubles_commandes_admin')]
+    public function listeCommandesAdmin(Request $request, PaginatorInterface $paginator): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
+            ->leftJoin('c.acheteur', 'a')
+            ->addSelect('a');
+
+        $pagination = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page', 1),
+            10
+        );
+
+        return $this->render('gestion_meubles/commande/liste_admin.html.twig', [
+            'pagination' => $pagination,
+        ]);
+    }
+
+    #[Route('/gestion/meubles/commandes/acheteur/{cin}', name: 'app_gestion_meubles_commandes_acheteur')]
+    public function listeCommandesParAcheteur(string $cin): Response
+    {
+        $commandes = $this->commandeRepository->findByCinAcheteur($cin);
+
+        if (empty($commandes)) {
+            $this->addFlash('warning', 'Aucune commande trouvée pour cet acheteur.');
+        }
+
+        return $this->render('gestion_meubles/commande/liste.html.twig', [
+            'commandes' => $commandes,
+            'cin_acheteur' => $cin,
+        ]);
+    }
+
+    #[Route('/gestion/meubles/commandes/mes-commandes', name: 'app_gestion_meubles_mes_commandes')]
+    public function mesCommandes(): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Vous devez être connecté.');
+        }
+
+        $commandes = $this->commandeRepository->findByAcheteur($utilisateur);
+
+        if (empty($commandes)) {
+            $this->addFlash('warning', 'Aucune commande trouvée.');
+        }
+
+        return $this->render('gestion_meubles/commande/liste.html.twig', [
+            'commandes' => $commandes,
+            'cin_acheteur' => $utilisateur->getCin(),
+        ]);
+    }
+
     #[Route('/admin/statistiques', name: 'app_gestion_meubles_statistiques')]
     public function statistiquesAdmin(
         Request $request,
@@ -171,19 +301,16 @@ final class CommandeController extends AbstractController
         CommandeRepository $commandeRepository,
         ChartBuilderInterface $chartBuilder
     ): Response {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN'); 
-    
-        // Filtres
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
         $statut = $request->query->get('statut', '');
         $periode = $request->query->get('periode', 'all');
-    
-        // KPI
+
         $nombreMeubles = $meubleRepository->count([]);
         $chiffreAffaires = $commandeRepository->getChiffreAffairesTotal($statut, $periode);
         $topVendeur = $commandeRepository->getTopVendeur($periode);
         $commandesParStatut = $commandeRepository->getCommandesParStatut($periode);
-    
-        // Graphique : Chiffre d'affaires par mois
+
         $caParMoisData = $commandeRepository->getChiffreAffairesParMois($periode);
         $caChart = $chartBuilder->createChart(Chart::TYPE_BAR);
         $caChart->setData([
@@ -203,8 +330,7 @@ final class CommandeController extends AbstractController
                 ],
             ],
         ]);
-    
-        // Graphique : Répartition des commandes par statut
+
         $statutChart = $chartBuilder->createChart(Chart::TYPE_PIE);
         $statutChart->setData([
             'labels' => array_keys($commandesParStatut),
@@ -215,8 +341,7 @@ final class CommandeController extends AbstractController
                 ],
             ],
         ]);
-    
-        // Calendrier
+
         $ventesParJour = $commandeRepository->getVentesParJour($periode);
         $calendarEvents = [];
         foreach ($ventesParJour as $date => $info) {
@@ -228,7 +353,7 @@ final class CommandeController extends AbstractController
                 'borderColor' => $montant > 1000 ? '#10b981' : ($montant > 200 ? '#f97316' : '#6b7280'),
             ];
         }
-    
+
         return $this->render('gestion_meubles/meuble/statistiques-admin.html.twig', [
             'nombreMeubles' => $nombreMeubles,
             'chiffreAffaires' => $chiffreAffaires,
@@ -241,64 +366,27 @@ final class CommandeController extends AbstractController
             'filtrePeriode' => $periode,
         ]);
     }
-    // #[Route('/commande/{id}/pdf', name: 'app_gestion_meubles_commande_pdf', methods: ['GET'])]
-    // public function downloadPdf(
-    //     Commande $commande,
-    //     Pdf $knpSnappyPdf,
-    //     CommandeRepository $commandeRepository
-    // ): Response {
-    //     //$this->denyAccessUnlessGranted('ROLE_USER');
-
-    //     // Vérifier que la commande appartient à l'utilisateur
-    //     if ($commande->getAcheteur() !== $this->getUser()) {
-    //         throw $this->createAccessDeniedException('Vous ne pouvez pas accéder à cette commande.');
-    //     }
-
-    //     // Générer le HTML à partir du template
-    //     $html = $this->renderView('gestion_meubles/commande/bon_commande_pdf.html.twig', [
-    //         'commande' => $commande,
-    //     ]);
-
-    //     // Générer le PDF
-    //     $pdfContent = $knpSnappyPdf->getOutputFromHtml($html);
-
-    //     // Créer la réponse
-    //     $response = new Response($pdfContent);
-    //     $disposition = $response->headers->makeDisposition(
-    //         ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-    //         sprintf('bon-commande-%s.pdf', $commande->getId())
-    //     );
-    //     $response->headers->set('Content-Type', 'application/pdf');
-    //     $response->headers->set('Content-Disposition', $disposition);
-
-    //     return $response;
-    // }
 
     #[Route('/commande/{id}/pdf', name: 'app_gestion_meubles_commande_pdf', methods: ['GET'])]
     public function downloadCommandePdf(int $id): Response
     {
-        // Récupérer la commande
         $commande = $this->commandeRepository->find($id);
 
         if (!$commande) {
             throw $this->createNotFoundException('Commande non trouvée');
         }
 
-        // Vérifier que l'utilisateur a le droit d'accéder à la commande
         $utilisateur = $this->getUser();
         if (!$utilisateur || $commande->getAcheteur() !== $utilisateur) {
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à télécharger cette commande.');
         }
 
-        // Rendre le template pour le PDF
         $html = $this->renderView('gestion_meubles/commande/bon_commande_pdf.html.twig', [
             'commande' => $commande,
         ]);
 
-        // Générer le PDF
         $pdfContent = $this->pdf->getOutputFromHtml($html);
 
-        // Créer une réponse avec le PDF
         $response = new Response($pdfContent);
         $disposition = $response->headers->makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
@@ -309,6 +397,7 @@ final class CommandeController extends AbstractController
 
         return $response;
     }
+
     #[Route('/commande/{id}/annuler', name: 'app_gestion_meubles_commande_annuler', methods: ['POST'])]
     public function annulerCommande(Request $request, int $id): JsonResponse
     {

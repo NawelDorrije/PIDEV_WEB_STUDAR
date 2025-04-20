@@ -145,18 +145,18 @@ final class MeubleController extends AbstractController
     public function modifier(Request $request, Meuble $meuble): Response
     {
         $utilisateur = $this->getUser();
-        if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
-            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
-        }
-    
-        if ($meuble->getStatut() === 'indisponible') {
-            $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
-            return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
-        }
-    
-        $oldImage = $meuble->getImage();
-        $form = $this->createForm(MeubleType::class, $meuble);
-        $form->handleRequest($request);
+    if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
+        throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
+    }
+
+    if ($meuble->getStatut() === 'indisponible') {
+        $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
+        return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
+    }
+
+    $oldImage = $meuble->getImage();
+    $form = $this->createForm(MeubleType::class, $meuble, ['is_edit' => true]);
+    $form->handleRequest($request);
     
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
@@ -222,6 +222,7 @@ final class MeubleController extends AbstractController
                     'meuble' => $meuble,
                     'is_edit' => true,
                 ]);
+
             }
         }
     
@@ -231,83 +232,7 @@ final class MeubleController extends AbstractController
             'is_edit' => true,
         ]);
     }
-    // #[Route('/{id}/modifier', name: 'app_gestion_meuble_modifier', methods: ['GET', 'POST'])]
-    // public function modifier(Request $request, Meuble $meuble): Response
-    // {
-    //     $utilisateur = $this->getUser();
-    //     if (!$utilisateur instanceof Utilisateur || $meuble->getVendeur() !== $utilisateur) {
-    //         throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce meuble.');
-    //     }
 
-    //     if ($meuble->getStatut() === 'indisponible') {
-    //         $this->addFlash('error', 'Vous ne pouvez pas modifier un meuble déjà vendu.');
-    //         return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
-    //     }
-
-    //     $oldImage = $meuble->getImage();
-    //     $form = $this->createForm(MeubleType::class, $meuble, [
-    //         'validation_groups' => ['Default', 'edit']
-    //     ]);
-
-    //     $form->handleRequest($request);
-
-    //     if ($form->isSubmitted()) {
-    //         if ($form->isValid()) {
-    //             $imageFile = $form->get('image')->getData();
-
-    //             if ($imageFile) {
-    //                 $constraint = new File([
-    //                     'maxSize' => '5M',
-    //                     'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    //                     'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP).',
-    //                 ]);
-
-    //                 $violations = $this->validator->validate($imageFile, $constraint);
-
-    //                 if (count($violations) > 0) {
-    //                     foreach ($violations as $violation) {
-    //                         $this->addFlash('error', $violation->getMessage());
-    //                     }
-    //                     return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
-    //                 }
-
-    //                 $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-    //                 $newFilename = $originalFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
-
-    //                 try {
-    //                     $imageFile->move(
-    //                         $this->getParameter('images_directory'),
-    //                         $newFilename
-    //                     );
-    //                     if ($oldImage && file_exists($this->getParameter('images_directory') . '/' . $oldImage)) {
-    //                         unlink($this->getParameter('images_directory') . '/' . $oldImage);
-    //                     }
-    //                     $meuble->setImage($newFilename);
-    //                 } catch (FileException $e) {
-    //                     $this->addFlash('error', 'Erreur lors de l\'upload de l\'image : ' . $e->getMessage());
-    //                     return $this->redirectToRoute('app_gestion_meuble_modifier', ['id' => $meuble->getId()]);
-    //                 }
-    //             } else {
-    //                 $meuble->setImage($oldImage);
-    //             }
-
-    //             $this->meubleRepository->save($meuble);
-    //             $this->addFlash('success', 'Meuble modifié avec succès !');
-    //             return $this->redirectToRoute('app_gestion_meubles_mes_meubles');
-    //         } else {
-    //             $errors = $form->getErrors(true);
-    //             foreach ($errors as $error) {
-    //                 $this->addFlash('error', $error->getMessage());
-    //             }
-    //         }
-    //     }
-
-    //     return $this->render('gestion_meubles/meuble/form.html.twig', [
-    //         'form' => $form->createView(),
-    //         'meuble' => $meuble,
-    //         'is_edit' => true,
-    //     ]);
-    // }
 
     #[Route('/mes-meubles', name: 'app_gestion_meubles_mes_meubles')]
     public function consulterMesMeubles(): Response

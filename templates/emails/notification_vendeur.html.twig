@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle commande pour vos articles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+        .header img {
+            max-width: 150px;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        .content h2 {
+            color: #333;
+        }
+        .content p {
+            color: #555;
+            line-height: 1.6;
+        }
+        .order-details {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .order-details ul {
+            list-style: none;
+            padding: 0;
+        }
+        .order-details li {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {# <div class="header">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo de votre site">
+        </div> #}
+        <div class="content">
+            <h2>Bonjour {{ prenom }} {{ nom }},</h2>
+            <p>Une nouvelle commande a été passée pour vos articles. Voici les détails :</p>
+            <div class="order-details">
+                <ul>
+                    <li><strong>Numéro de commande :</strong> {{ commande.id }}</li>
+                    <li><strong>Date de commande :</strong> {{ commande.dateCommande|date('d/m/Y H:i') }}</li>
+                    <li><strong>Acheteur :</strong> {{ commande.acheteur.nom }} {{ commande.acheteur.prenom }}</li>
+                </ul>
+            </div>
+            <h3>Articles commandés :</h3>
+            <ul>
+                {% for ligne in articles %}
+                    <li>{{ ligne.meuble.nom }} : {{ ligne.meuble.prix }} TND</li>
+                {% endfor %}
+            </ul>
+            <p>Merci de préparer ces articles pour la livraison.</p>
+        </div>
+        <div class="footer">
+            <p>© 2024 Votre Site. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>
