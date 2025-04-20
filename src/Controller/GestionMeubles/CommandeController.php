@@ -90,7 +90,7 @@ final class CommandeController extends AbstractController
             $commande->setAcheteur($utilisateur);
             $commande->setDateCommande(new \DateTime());
             $commande->setStatut(Commande::STATUT_EN_ATTENTE);
-            $commande->setMethodePaiement($paymentMethod === 'delivery' ? Commande::METHODE_PAIEMENT_A_LA_LIVRAISON : Commande::METHODE_STRIPE);
+            $commande->setMethodePaiement('Paiement a la livraison');
             $commande->setMontantTotal($this->panierRepository->calculerSommePanier($panier->getId()));
             if ($paymentMethod === 'delivery') {
                 $commande->setAdresseLivraison($address);
@@ -113,7 +113,7 @@ final class CommandeController extends AbstractController
                 foreach ($panier->getLignesPanier() as $ligne) {
                     $lineItems[] = [
                         'price_data' => [
-                            'currency' => 'tnd',
+                            'currency' => 'eur',
                             'product_data' => [
                                 'name' => $ligne->getMeuble()->getNom(),
                             ],
@@ -123,18 +123,31 @@ final class CommandeController extends AbstractController
                     ];
                 }
 
+                // Générer les URLs avec l'URL de base
+                $baseUrl = rtrim($this->getParameter('app_url'), '/');
+                $successPath = ltrim($this->generateUrl('app_gestion_meubles_payment_success', ['commandeId' => $commandeId]), '/');
+                $cancelPath = ltrim($this->generateUrl('app_gestion_meubles_payment_cancel', []), '/');
+
+                $successUrl = $baseUrl . '/' . $successPath;
+                $cancelUrl = $baseUrl . '/' . $cancelPath;
+
+                $this->logger->info('Success URL: ' . $successUrl);
+                $this->logger->info('Cancel URL: ' . $cancelUrl);
+
                 $session = Session::create([
                     'payment_method_types' => ['card'],
                     'line_items' => $lineItems,
                     'mode' => 'payment',
-                    'success_url' => $this->generateUrl('app_gestion_meubles_payment_success', ['commandeId' => $commandeId], true),
-                    'cancel_url' => $this->generateUrl('app_gestion_meubles_payment_cancel', [], true),
+                    'success_url' => $successUrl,
+                    'cancel_url' => $cancelUrl,
                     'metadata' => [
                         'commande_id' => $commandeId,
                     ],
                 ]);
 
                 $commande->setSessionStripe($session->id);
+                $commande->setMethodePaiement('stripe');
+                $commande->setStatut(Commande::STATUT_PAYEE);
                 $this->entityManager->flush();
                 $this->entityManager->commit();
 
@@ -142,6 +155,7 @@ final class CommandeController extends AbstractController
             }
         } catch (\Exception $e) {
             $this->entityManager->rollback();
+            $this->logger->error('Erreur lors de la confirmation de la commande : ' . $e->getMessage());
             $this->addFlash('error', 'Erreur lors de la confirmation de la commande : ' . $e->getMessage());
             return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
         }
@@ -158,21 +172,29 @@ final class CommandeController extends AbstractController
 
         // Vérifier le paiement via Stripe
         Stripe::setApiKey($this->getParameter('stripe_secret_key'));
-        $session = Session::retrieve($commande->getStripeSessionId());
+        $session = Session::retrieve($commande->getSessionStripe());
 
         if ($session->payment_status === 'paid') {
             $commande->setStatut(Commande::STATUT_PAYEE);
             $this->entityManager->flush();
 
+            // Envoyer un email de confirmation à l'acheteur
             $this->sendConfirmationEmailToBuyer($commande, $commande->getAcheteur(), $commande->getAdresseLivraison());
+
+            // Envoyer des notifications aux vendeurs
             $this->sendNotificationEmailsToSellers($commande);
 
-            $this->addFlash('success', 'Paiement par carte confirmé avec succès.');
+            // Générer un bon de commande PDF
+            $this->generateOrderConfirmationPdf($commande);
+
+            $this->addFlash('success', 'Paiement par carte confirmé avec succès. Un email de confirmation a été envoyé.');
+
+            // Redirection immédiate vers app_gestion_meubles_mes_commandes
+            return $this->redirectToRoute('app_gestion_meubles_mes_commandes');
         } else {
             $this->addFlash('error', 'Le paiement n\'a pas été complété.');
+            return $this->redirectToRoute('app_gestion_meubles_lignes_panier');
         }
-
-        return $this->redirectToRoute('app_gestion_meubles_mes_commandes');
     }
 
     #[Route('/payment/cancel', name: 'app_gestion_meubles_payment_cancel')]
@@ -238,7 +260,20 @@ final class CommandeController extends AbstractController
         }
     }
 
-    // Autres méthodes inchangées (listeCommandesAdmin, listeCommandesParAcheteur, mesCommandes, statistiquesAdmin, downloadCommandePdf, annulerCommande)
+    /**
+     * Génère un bon de commande PDF après un paiement réussi.
+     */
+    private function generateOrderConfirmationPdf(Commande $commande): void
+    {
+        $html = $this->renderView('gestion_meubles/commande/bon_commande_pdf.html.twig', [
+            'commande' => $commande,
+        ]);
+
+        $pdfContent = $this->pdf->getOutputFromHtml($html);
+        $pdfPath = $this->getParameter('kernel.project_dir') . '/public/uploads/commandes/commande_' . $commande->getId() . '.pdf';
+        file_put_contents($pdfPath, $pdfContent);
+    }
+
     #[Route('/admin/commandes', name: 'app_gestion_meubles_commandes_admin')]
     public function listeCommandesAdmin(Request $request, PaginatorInterface $paginator): Response
     {
