@@ -11,6 +11,50 @@
         * {
             box-sizing: border-box;
         }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        #wordInput {
+            padding: 8px;
+            font-size: 16px;
+        }
+        #addButton {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50; /* Green like the CSS button in the image */
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        #addButton:hover {
+            background-color: #45a049;
+        }
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .word-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 16px;
+            color: white;
+            border-radius: 4px;
+            background-color: #f28c38; /* Orange like the JavaScript button */
+        }
+        .word-item span {
+            margin-right: 8px;
+        }
+        .delete-icon {
+            cursor: pointer;
+            font-size: 14px;
+            color: #ffe4c4;
+        }
+        .delete-icon:hover {
+            color: #ff0000;
+        }
         #preview-slider {
             display: none;
             padding: 15px;
@@ -179,7 +223,52 @@
         let marker = null;
         let imageCount = 0;
         let allPhotos = [];
+        let Alloptions=[];
+        const wordInput = document.getElementById('wordInput');
+        const addButton = document.getElementById('addButton');
+        const wordList = document.getElementById('wordList');
 
+        function addWord() {
+            const wordInput = document.getElementById('wordInput');
+            const word = wordInput.value.trim();
+            if (word) {
+                Alloptions.push(word);
+                const wordList = document.getElementById('wordList');
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <span>${word}</span>
+                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
+                `;
+                wordList.appendChild(wordItem);
+                wordInput.value = '';
+                updateOptionsInput();
+            }
+        }
+        function updateOptionsInput() {
+            const optionsInput = document.getElementById('optionsInput');
+            optionsInput.value = JSON.stringify(Alloptions);
+            console.log('Options updated:', optionsInput.value); // Debug
+        }
+        // Function to delete a word
+        function deleteWord(element, word) {
+            Alloptions = Alloptions.filter(item => item !== word);
+            element.parentElement.remove();
+            updateOptionsInput();
+        }
+
+
+
+        // Add word on button click
+        document.getElementById('addButton')?.addEventListener('click', addWord);
+
+        // Add word on Enter key press
+        document.getElementById('wordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addWord();
+            }
+        });
         function previewImages(event) {
             console.log('previewImages called with files:', event.target.files);
             const files = event.target.files;
@@ -614,11 +703,19 @@
                         </div>
                         <!-- HiddenEyebrow: Hidden fields for coordinates -->
                         {{ form_widget(form.lat, {'attr': {'id': 'logement_lat'}}) }}
-                        {{ form_widget(form.lng, {'attr': {'id': 'logement_lng'}}) }}
+                        {{ form_widget(form.lng, {'attr': {'id': 'logement_lng'}}) }}  
                         <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
+                        <div class="input-container">
+                            <input type="text" id="wordInput" placeholder="Add an option (e.g. WiFi, Parking)" class="form-control">
+                            <button type="button" id="addButton" onclick="addWord()">Add Option</button>
+                        </div>
+                        <div class="word-list" id="wordList"></div>
+                        <div id="options-error" class="error-message"></div>
+                        <input type="hidden" name="options" id="optionsInput">
                         <div class="col-lg-12" style="margin-top: 20px;">
                             <button type="submit" class="orange-button">{{ button_label|default('Enregistrer') }}</button>
-                        </div>
+                        </div>                            
+                   
                     </div>
                     {{ form_end(form) }}
                     <div class="center" style="margin-top: 20px;">
