@@ -420,10 +420,15 @@
         body.modal-open .container,
         body.modal-open .modal,
         body.modal-open .modal-backdrop {
-            opacity: 1 !important;
             animation: none !important;
             transition: none !important;
         }
+                {# body.modal-open .modal{
+                    opacity: 0 !important;
+                                opacity: 1 !important;
+
+                } #}
+
 
         .modal.in {
             display: block !important;
@@ -584,6 +589,72 @@
         .action-buttons button {
             margin-right: 5px;
         }
+        .reclamations-section .panel-en-cours {
+        border-color: #f0ad4e; /* Bootstrap 3 warning color */
+    }
+    .reclamations-section .panel-en-cours .panel-heading {
+        background-color: #f0ad4e;
+        color: #fff;
+    }
+    .reclamations-section .panel-traite {
+        border-color: #5cb85c; /* Bootstrap 3 success color */
+    }
+    .reclamations-section .panel-traite .panel-heading {
+        background-color: #5cb85c;
+        color: #fff;
+    }
+    .reclamations-section .panel-refuse {
+        border-color: #d9534f; /* Bootstrap 3 danger color */
+    }
+    .reclamations-section .panel-refuse .panel-heading {
+        background-color: #d9534f;
+        color: #fff;
+    }
+    .reclamations-section .panel {
+        margin-bottom: 20px;
+    }
+    .reclamations-section .panel-body {
+        padding: 15px;
+    }
+    .reclamations-section .panel-body p {
+        margin: 5px 0;
+    }
+    .reclamations-section .panel-footer {
+        background-color: transparent;
+        padding: 10px 15px;
+    }
+    .reclamations-section .panel-footer .btn {
+        margin-right: 5px;
+    }
+    .reclamations-section .panel-heading {
+    font-size: 16px;
+    font-weight: bold;
+}
+.reclamations-section .panel-body p:first-child {
+    font-weight: bold;
+}
+.reclamations-section .row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.reclamations-section .col-md-4 {
+    padding: 10px; /* Espacement entre les cartes */
+}
+
+.reclamations-section .panel {
+    height: 100%; /* Pour que toutes les cartes aient la même hauteur */
+    display: flex;
+    flex-direction: column;
+}
+
+.reclamations-section .panel-body {
+    flex-grow: 1; /* Permet au corps du panneau de s'étendre */
+}
+
+.reclamations-section .panel-footer {
+    margin-top: auto; /* Pousse les boutons en bas */
+}
     </style>
 {% endblock %}
 
@@ -705,55 +776,62 @@
                     </div>
 
                     <!-- Reclamations Section -->
-                    <div class="reclamations-section">
-                        <h4>Réclamations</h4>
-                        {% if logement.reclamations is not empty %}
-                            <table class="reclamations-table">
-                                <thead>
-                                    <tr>
-                                        <th>Titre</th>
-                                        <th>Description</th>
-                                        <th>Date de création</th>
-                                        {# <th>Utilisateur</th> #}
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for reclamation in logement.reclamations %}
-                                        <tr>
-                                            <td>{{ reclamation.titre }}</td>
-                                            <td>{{ reclamation.description }}</td>
-                                            <td>{{ reclamation.timestamp|date('d/m/Y H:i') }}</td>
-                                            {# <td>{{ reclamation.utilisateur.email }}</td> #}
-                                            <td class="action-buttons">
-                                                {% if app.user and app.user == reclamation.utilisateur %}
-                                                    <button 
-                                                        class="btn btn-sm btn-primary modify-reclamation-btn"
-                                                        data-toggle="modal"
-                                                        data-target="#modifyReclamationModal"
-                                                        data-reclamation-id="{{ reclamation.id }}"
-                                                        data-title="{{ reclamation.titre }}"
-                                                        data-description="{{ reclamation.description }}"
-                                                        data-timestamp="{{ reclamation.timestamp|date('c') }}"
-                                                    >
-                                                        Modifier
-                                                    </button>
-                                                    <button 
-                                                        class="btn btn-sm btn-danger delete-reclamation-btn"
-                                                        data-reclamation-id="{{ reclamation.id }}"
-                                                    >
-                                                        Supprimer
-                                                    </button>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <div class="alert alert-info">Aucune réclamation pour ce logement.</div>
-                        {% endif %}
-                    </div>
+ <div class="reclamations-section">
+    <h4>Réclamations</h4>
+    {% if logement.reclamations is not empty %}
+        <div class="row">
+    {% for reclamation in logement.reclamations %}
+        {# Determine the panel class based on statut #}
+        {% set panelClass = reclamation.statut | replace({' ': '-'}) %}
+        {% if reclamation.statut == 'en cours' %}
+            {% set panelClass = 'en-cours' %}
+        {% elseif reclamation.statut == 'traité' %}
+            {% set panelClass = 'traite' %}
+        {% elseif reclamation.statut == 'refusé' %}
+            {% set panelClass = 'refuse' %}
+        {% endif %}
+
+        <div class="col-md-4"> <!-- 3 cartes par ligne sur écrans moyens et grands -->
+            <div class="panel panel-default panel-{{ panelClass }}">
+                <div class="panel-heading">
+                    {{ reclamation.titre }}
+                </div>
+                <div class="panel-body">
+                    <p><strong>{{ reclamation.statut|upper }}</strong></p>
+                    <p>{{ reclamation.description }}</p>
+                    <p>Créée le : {{ reclamation.timestamp|date('d/m/Y H:i') }}</p>
+                    <p>Utilisateur : {{ reclamation.utilisateur.nom }} {{ reclamation.utilisateur.prenom }}</p>
+                </div>
+                <div class="panel-footer">
+                    {% if app.user and app.user == reclamation.utilisateur %}
+                        <button 
+                            class="btn btn-primary btn-sm modify-reclamation-btn"
+                            data-toggle="modal"
+                            data-target="#modifyReclamationModal"
+                            data-reclamation-id="{{ reclamation.id }}"
+                            data-title="{{ reclamation.titre }}"
+                            data-description="{{ reclamation.description }}"
+                            data-timestamp="{{ reclamation.timestamp|date('c') }}"
+                        >
+                            Modifier
+                        </button>
+                        <button 
+                            class="btn btn-danger btn-sm delete-reclamation-btn"
+                            data-reclamation-id="{{ reclamation.id }}"
+                        >
+                            Supprimer
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+        <a href="{{ path('app_logement_index') }}" class="btn btn-default">Retour à la liste</a>
+    {% else %}
+        <div class="alert alert-info">Aucune réclamation pour ce logement.</div>
+    {% endif %}
+</div>
                 </div>
             </div>
         </div>

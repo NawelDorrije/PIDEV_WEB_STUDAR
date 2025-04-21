@@ -111,6 +111,7 @@ class ReclamationController extends AbstractController
         $reclamation->setTimestamp(new \DateTime());
         $reclamation->setUtilisateur($user);
         $reclamation->setCin($cin);
+        $reclamation->setStatut('en cours'); // Explicitly set the status
     
         try {
             $entityManager->persist($reclamation);
@@ -149,16 +150,22 @@ class ReclamationController extends AbstractController
 
         $title = $request->request->get('title');
         $description = $request->request->get('description');
+        $statut = $request->request->get('statut');
 
-        if (empty($title) || empty($description)) {
-            return new JsonResponse(['error' => 'Le titre et la description sont requis.'], 400);
+        if (empty($title) || empty($description) || empty($statut)) {
+            return new JsonResponse(['error' => 'Le titre, la description et le statut sont requis.'], 400);
         }
-
+    
         $reclamation->setTitre($title);
         $reclamation->setDescription($description);
-
-        $entityManager->flush();
-
+        $reclamation->setStatut('en cours'); // Explicitly set the status
+        
+        try {
+            $entityManager->flush();
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Erreur lors de la modification de la réclamation : ' . $e->getMessage()], 500);
+        }
+    
         return new JsonResponse(['success' => 'Réclamation modifiée avec succès !']);
     }
 

@@ -27,6 +27,9 @@ class Reclamation
     #[ORM\Column(length: 8)]
     private ?string $cin = null;
 
+    #[ORM\Column(type: "string", length: 10, enumType: null)]
+    private ?string $statut = 'en cours'; // Default to "en cours"
+
     #[ORM\ManyToOne(inversedBy: 'reclamations')]
     #[ORM\JoinColumn(name: "idLogement", nullable: true)]
     private ?Logement $logement = null;
@@ -34,6 +37,16 @@ class Reclamation
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: "cin", referencedColumnName: "cin", nullable: false)]
     private ?Utilisateur $utilisateur = null;
+
+    // List of allowed statuses
+    private const STATUT_EN_COURS = 'en cours';
+    private const STATUT_TRAITE = 'traité';
+    private const STATUT_REFUSE = 'refusé';
+    private const STATUTS = [
+        self::STATUT_EN_COURS,
+        self::STATUT_TRAITE,
+        self::STATUT_REFUSE,
+    ];
 
     public function getId(): ?int
     {
@@ -81,6 +94,22 @@ class Reclamation
     public function setCin(string $cin): static
     {
         $this->cin = $cin;
+        return $this;
+    }
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): static
+    {
+        if (!in_array($statut, self::STATUTS, true)) {
+            throw new \InvalidArgumentException(
+                sprintf('Statut invalide "%s". Les valeurs autorisées sont : %s', $statut, implode(', ', self::STATUTS))
+            );
+        }
+        $this->statut = $statut;
         return $this;
     }
 
