@@ -47,6 +47,11 @@ class Logement
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $adresse = null;
+    #[ORM\Column(type: "string", length: 10, nullable: true)]
+    private ?string $emogies = null;
+
+    #[ORM\Column(type: "integer",name: "shareCount", options: ["default" => 0])]
+    private int $shareCount = 0;
 
     #[ORM\Column(type: 'string', enumType: Statut::class)]
     private Statut $statut = Statut::DISPONIBLE;
@@ -233,5 +238,25 @@ public function setUtilisateurCin(?Utilisateur $utilisateur_cin): static
     return $this;
 }
 
+public function getEmogies(): ?string
+    {
+        return $this->emogies;
+    }
 
+    public function setEmogies(?string $emogies): self
+    {
+        $this->emogies = $emogies;
+        return $this;
+    }
+
+    public function getShareCount(): int
+    {
+        return $this->shareCount;
+    }
+
+    public function setShareCount(int $shareCount): self
+    {
+        $this->shareCount = $shareCount;
+        return $this;
+    }
 }

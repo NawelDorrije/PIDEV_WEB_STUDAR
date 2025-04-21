@@ -10,7 +10,7 @@
             --input-border: #CDD9ED;
             --input-background: #fff;
             --input-placeholder: #CBD1DC;
-            --input-border-focus:rgb(15, 54, 133);
+            --input-border-focus: rgb(15, 54, 133);
             --group-color: var(--input-color);
             --group-border: var(--input-border);
             --group-background: #EEF4FF;
@@ -46,7 +46,7 @@
             display: flex;
             width: 300px; /* Match image width */
             margin-right: 10px; /* Space between search and buttons */
-            margin-top:20px;
+            margin-top: 20px;
         }
         .form-group > span,
         .form-field {
@@ -106,6 +106,102 @@
         *:before,
         *:after {
             box-sizing: inherit;
+        }
+        /* Styles pour la ligne d'interaction (emojis + partage + show) */
+        .interaction-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-top: 10px;
+        }
+        /* Styles pour la section des emojis */
+        .reaction-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .reaction-toggle {
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            color: #606770; /* Couleur similaire à Facebook */
+            font-size: 14px;
+        }
+        .reaction-toggle i {
+            margin-right: 5px;
+            color: #678EFE; /* Couleur du thème pour l'icône */
+        }
+        .reaction-count {
+            margin-left: 5px;
+            font-size: 14px;
+            color: #606770;
+        }
+        .emoji-list {
+            display: none;
+            position: absolute;
+            top: -50px; /* Positionner au-dessus pour ressembler à Facebook */
+            left: 0;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        .reaction-container:hover .emoji-list {
+            display: flex;
+        }
+        .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 24px; /* Taille plus grande comme dans l'image */
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+        .emoji-btn:hover {
+            transform: scale(1.2); /* Effet de zoom au survol */
+        }
+        .current-emoji {
+            font-size: 16px;
+            margin-right: 3px;
+        }
+        /* Styles pour le partage */
+        .share-container {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .share-btn {
+            background: none;
+            border: none;
+            color: #606770; /* Couleur similaire à Facebook */
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .share-btn:hover {
+            background-color: #f0f2f5; /* Fond gris clair au survol, comme Facebook */
+        }
+        .share-btn i {
+            margin-right: 5px;
+        }
+        /* Ajustement du bouton "show" */
+        .main-button a {
+            padding: 5px 10px;
+            font-size: 14px;
+            color: #606770; /* Même couleur que les autres boutons */
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .main-button a:hover {
+            background-color: #f0f2f5; /* Même effet de survol */
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
@@ -283,8 +379,36 @@
                                         {{ options|join(', ') ?: 'Aucune option' }}
                                     </li>
                                 </ul>
-                                <div class="main-button">
-                                    <a href="{{ path('app_logement_show', {'id': logement.id}) }}">show</a>
+                                <!-- Ligne d'interaction : emojis, partage, et show -->
+                                <div class="interaction-row">
+                                    <!-- Section pour les emojis -->
+                                    <div class="reaction-container">
+                                        <div class="reaction-toggle">
+                                            {% if logement.emogies %}
+                                                <span class="current-emoji">{{ logement.emogies }}</span>
+                                                <span class="reaction-count">1</span> <!-- Compteur statique pour l'exemple -->
+                                            {% else %}
+                                                <i class="fas fa-thumbs-up"></i> J'aime
+                                            {% endif %}
+                                        </div>
+                                        <div class="emoji-list">
+                                            <form action="{{ path('app_logement_react', {'id': logement.id}) }}" method="post" style="display:inline;">
+                                                <button type="submit" name="emoji" value="👍" class="emoji-btn">👍</button>
+                                                <button type="submit" name="emoji" value="👎" class="emoji-btn">👎</button>
+                                                <button type="submit" name="emoji" value="❤️" class="emoji-btn">❤️</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <!-- Section pour le partage -->
+                                    <div class="share-container">
+                                        <form action="{{ path('app_logement_share', {'id': logement.id}) }}" method="post" style="display:inline;">
+                                            <button type="submit" class="share-btn"><i class="fas fa-share"></i> Partager</button>
+                                        </form>
+                                    </div>
+                                    <!-- Bouton "show" -->
+                                    <div class="main-button">
+                                        <a href="{{ path('app_logement_show', {'id': logement.id}) }}">show</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

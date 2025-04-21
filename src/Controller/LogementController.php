@@ -533,4 +533,65 @@ final class LogementController extends AbstractController
 
         return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
     }
+    #[Route('/logement/{id}/react', name: 'app_logement_react', methods: ['POST'])]
+    public function react(Request $request, Logement $logement, LogementRepository $logementRepository): Response
+    {
+        // Vérifier si l'utilisateur est connecté
+        $user = $this->getUser();
+        if (!$user) {
+            $this->addFlash('error', 'Vous devez être connecté pour réagir.');
+            return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        // Récupérer l'emoji sélectionné
+        $emoji = $request->request->get('emoji');
+
+        // Liste des emojis autorisés
+        $allowedEmojis = ['👍', '❤️', '😢', '😡'];
+        if (!in_array($emoji, $allowedEmojis)) {
+            $this->addFlash('error', 'Emoji non valide.');
+            return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        // Mettre à jour l'emoji du logement
+        $logement->setEmogies($emoji);
+
+        // Sauvegarder les modifications
+        $logementRepository->getEntityManager()->flush();
+
+        // Message de confirmation
+        $this->addFlash('success', 'Réaction mise à jour avec succès !');
+
+        // Rediriger vers la liste des logements
+        return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    /**
+     * Gère le partage d'un logement
+     */
+    #[Route('/logement/{id}/share', name: 'app_logement_share', methods: ['POST'])]
+    public function share(Logement $logement, LogementRepository $logementRepository): Response
+    {
+        // Vérifier si l'utilisateur est connecté
+        $user = $this->getUser();
+        if (!$user) {
+            $this->addFlash('error', 'Vous devez être connecté pour partager.');
+            return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        // Incrémenter le compteur de partages
+        $logement->setShareCount($logement->getShareCount() + 1);
+
+        // Sauvegarder les modifications
+        $logementRepository->getEntityManager()->flush();
+
+        // Générer un lien de partage
+        $shareLink = $this->generateUrl('app_logement_show', ['id' => $logement->getId()], true);
+
+        // Message de confirmation avec le lien
+        $this->addFlash('success', 'Logement partagé ! Lien : ' . $shareLink);
+
+        // Rediriger vers la liste des logements
+        return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+    }
 }

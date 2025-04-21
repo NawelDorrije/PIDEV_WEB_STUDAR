@@ -3,7 +3,7 @@ doctrine:
         url: '%env(resolve:DATABASE_URL)%'
         # Add the spatial type for point
         types:
-            point: LongitudeOne\Spatial\DBAL\Types\Geometry\PointType
+            point: CrEOF\Spatial\DBAL\Types\Geography\PointType
             statut: App\Doctrine\DBAL\Types\StatutType  
             role_enum: App\Doctrine\DBAL\Types\RoleEnumType
 
@@ -11,6 +11,7 @@ doctrine:
         # either here or in the DATABASE_URL env var (see .env file)
         #server_version: '16'
         mapping_types:
+            point: point
             enum: string
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
