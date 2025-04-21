@@ -258,9 +258,17 @@
                                             <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
                                                 <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
-                                            </ul>
-                                        </li>
+                                                <li>
+            {% if is_granted('ROLE_TRANSPORTEUR') %}
+                <a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">
+                    <i class="fas fa-bus me-2"></i> Mes Réservations Transport
+                </a>
+            {% elseif is_granted('ROLE_ETUDIANT') %}
+                <a class="dropdown-item" href="{{ path('app_reservation_transport_etudiant') }}">
+                    <i class="fas fa-bus me-2"></i> Mes Réservations Transport
+                </a>
+            {% endif %}
+        </li>
 
                                         <li><a href="{{ path('app_home') }}">Chat AI</a></li>
 

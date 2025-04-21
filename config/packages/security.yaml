@@ -50,6 +50,8 @@ security:
          - { path: ^/verify-reset-code, roles: PUBLIC_ACCESS }
          - { path: ^/reset-password, roles: PUBLIC_ACCESS }
          - { path: ^/admin, roles: ROLE_ADMIN }
+         - { path: ^/reservation/transport/transporteur, roles: ROLE_TRANSPORTEUR }
+         - { path: ^/reservation/transport/etudiant, roles: ROLE_ETUDIANT }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 

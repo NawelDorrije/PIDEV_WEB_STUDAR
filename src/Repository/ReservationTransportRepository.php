@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\ReservationTransport;
+use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -15,7 +16,49 @@ class ReservationTransportRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, ReservationTransport::class);
     }
+  // src/Repository/ReservationTransportRepository.php
 
+public function findByTransporteurAndStatus(Utilisateur $transporteur, ?string $status = null): array
+{
+    return $this->createTransporteurQueryBuilder($transporteur, $status)
+        ->getQuery()
+        ->getResult();
+}
+
+public function findByEtudiantAndStatus(Utilisateur $etudiant, ?string $status = null): array
+{
+    return $this->createEtudiantQueryBuilder($etudiant, $status)
+        ->getQuery()
+        ->getResult();
+}
+
+private function createTransporteurQueryBuilder(Utilisateur $transporteur, ?string $status = null)
+{
+    $qb = $this->createQueryBuilder('r')
+        ->where('r.transporteur = :transporteur')
+        ->setParameter('transporteur', $transporteur);
+
+    if ($status) {
+        $qb->andWhere('r.status = :status')
+           ->setParameter('status', $status);
+    }
+
+    return $qb;
+}
+
+private function createEtudiantQueryBuilder(Utilisateur $etudiant, ?string $status = null)
+{
+    $qb = $this->createQueryBuilder('r')
+        ->where('r.etudiant = :etudiant')
+        ->setParameter('etudiant', $etudiant);
+
+    if ($status) {
+        $qb->andWhere('r.status = :status')
+           ->setParameter('status', $status);
+    }
+
+    return $qb;
+}
     //    /**
     //     * @return ReservationTransport[] Returns an array of ReservationTransport objects
     //     */

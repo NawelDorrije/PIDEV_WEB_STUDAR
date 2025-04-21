@@ -12,92 +12,140 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\Geocoder;
 use Symfony\Component\HttpFoundation\JsonResponse;
-
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/reservation/transport')]
 final class ReservationTransportController extends AbstractController
 {
-  #[Route('/', name: 'app_reservation_transport_index', methods: ['GET'])]
-  public function index(Request $request, ReservationTransportRepository $repo): Response
-  {
-      $status = $request->query->get('status');
-      $reservations = $status ? $repo->findBy(['status' => $status]) : $repo->findAll();
+    #[Route('/', name: 'app_reservation_transport_base', methods: ['GET'])]
+    public function baseRedirect(): Response
+    {
+        if ($this->isGranted('ROLE_TRANSPORTEUR')) {
+            return $this->redirectToRoute('app_reservation_transport_index');
+        }
+        if ($this->isGranted('ROLE_ETUDIANT')) {
+            return $this->redirectToRoute('app_reservation_transport_etudiant');
+        }
+        
+        throw $this->createAccessDeniedException();
+    }
 
-      return $this->render('reservation_transport/index.html.twig', [
-          'reservations' => $reservations,
-          'current_status' => $status
-      ]);
-  }
+    #[Route('/transporteur', name: 'app_reservation_transport_index', methods: ['GET'])]
+    #[IsGranted('ROLE_TRANSPORTEUR')]
+    public function indexTransporteur(Request $request, ReservationTransportRepository $repo): Response
+    {
+        $status = $request->query->get('status');
+        
+        $reservations = $repo->findByTransporteurAndStatus(
+            $this->getUser(),
+            $status
+        );
+
+        return $this->render('reservation_transport/index.html.twig', [
+            'reservations' => $reservations,
+            'current_status' => $status,
+            'user_role' => 'transporteur'
+        ]);
+    }
+
+    #[Route('/etudiant', name: 'app_reservation_transport_etudiant', methods: ['GET'])]
+    #[IsGranted('ROLE_ETUDIANT')]
+    public function indexEtudiant(Request $request, ReservationTransportRepository $repo): Response
+    {
+        $status = $request->query->get('status');
+        
+        $reservations = $repo->findByEtudiantAndStatus(
+            $this->getUser(),
+            $status
+        );
+
+        return $this->render('reservation_transport/index_etudiant.html.twig', [
+            'reservations' => $reservations,
+            'current_status' => $status,
+            'user_role' => 'etudiant'
+        ]);
+    }
 
     #[Route('/new', name: 'app_reservation_transport_new', methods: ['GET', 'POST'])]
+  
     public function new(
-      Request $request, 
-      EntityManagerInterface $em,
-      Geocoder $geocoder
-  ): Response {
-      $reservation = new ReservationTransport();
-      $form = $this->createForm(ReservationTransportType::class, $reservation);
-      
-      $form->handleRequest($request);
-      if ($form->isSubmitted() && $form->isValid()) {
-          try {
-              // Géocodage des adresses
-              if ($reservation->getAdresseDepart()) {
-                  $departure = $geocoder->geocode($reservation->getAdresseDepart());
-                  if ($departure) {
-                      $reservation->setDepartureLat((float)$departure['lat']);
-                      $reservation->setDepartureLng((float)$departure['lon']);
-                  } else {
-                      $this->addFlash('warning', 'L\'adresse de départ n\'a pas pu être localisée sur la carte');
-                  }
-              }
-              
-              if ($reservation->getAdresseDestination()) {
-                  $destination = $geocoder->geocode($reservation->getAdresseDestination());
-                  if ($destination) {
-                      $reservation->setDestinationLat((float)$destination['lat']);
-                      $reservation->setDestinationLng((float)$destination['lon']);
-                  } else {
-                      $this->addFlash('warning', 'L\'adresse de destination n\'a pas pu être localisée sur la carte');
-                  }
-              }
-              
-              
-              $em->persist($reservation);
-              $em->flush();
-              
-              $this->addFlash('success', 'Réservation créée avec succès');
-              return $this->redirectToRoute('app_reservation_transport_index');
-              
-          } catch (\Exception $e) {
-              $this->addFlash('error', 'Une erreur est survenue lors de la création de la réservation');
-              // Log the error if needed
-              // $this->logger->error('Reservation creation failed: '.$e->getMessage());
-          }
-      }
+        Request $request, 
+        EntityManagerInterface $em,
+        Geocoder $geocoder
+    ): Response {
+        $reservation = new ReservationTransport();
+        $form = $this->createForm(ReservationTransportType::class, $reservation);
+        
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                // Géocodage des adresses
+                if ($reservation->getAdresseDepart()) {
+                    $departure = $geocoder->geocode($reservation->getAdresseDepart());
+                    if ($departure) {
+                        $reservation->setDepartureLat((float)$departure['lat']);
+                        $reservation->setDepartureLng((float)$departure['lon']);
+                    } else {
+                        $this->addFlash('warning', 'L\'adresse de départ n\'a pas pu être localisée sur la carte');
+                    }
+                }
+                
+                if ($reservation->getAdresseDestination()) {
+                    $destination = $geocoder->geocode($reservation->getAdresseDestination());
+                    if ($destination) {
+                        $reservation->setDestinationLat((float)$destination['lat']);
+                        $reservation->setDestinationLng((float)$destination['lon']);
+                    } else {
+                        $this->addFlash('warning', 'L\'adresse de destination n\'a pas pu être localisée sur la carte');
+                    }
+                }
+                
+                $em->persist($reservation);
+                $em->flush();
+                
+                $this->addFlash('success', 'Réservation créée avec succès');
+                return $this->redirectToRoute('app_reservation_transport_index');
+                
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Une erreur est survenue lors de la création de la réservation');
+            }
+        }
 
-      return $this->render('reservation_transport/new.html.twig', [
-          'form' => $form->createView(),
-          'reservation' => $reservation
-      ]);
-  }
+        return $this->render('reservation_transport/new.html.twig', [
+            'form' => $form->createView(),
+            'reservation' => $reservation
+        ]);
+    }
+
     #[Route('/{id}', name: 'app_reservation_transport_show', methods: ['GET'])]
     public function show(ReservationTransport $reservationTransport): Response
     {
+        $user = $this->getUser();
+        
+        if (!$user || 
+            ($user !== $reservationTransport->getTransporteur() && 
+             $user !== $reservationTransport->getEtudiant())) {
+            throw $this->createAccessDeniedException('You can only view your own reservations.');
+        }
+        
         return $this->render('reservation_transport/show.html.twig', [
             'reservation_transport' => $reservationTransport,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_reservation_transport_edit', methods: ['GET', 'POST'])]
+    
     public function edit(Request $request, ReservationTransport $reservationTransport, EntityManagerInterface $entityManager): Response
     {
+        if ($this->getUser() !== $reservationTransport->getTransporteur()) {
+            throw $this->createAccessDeniedException('You can only edit your own reservations.');
+        }
+        
         $form = $this->createForm(ReservationTransportType::class, $reservationTransport);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-
             return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -108,8 +156,13 @@ final class ReservationTransportController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_reservation_transport_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_TRANSPORTEUR')]
     public function delete(Request $request, ReservationTransport $reservationTransport, EntityManagerInterface $entityManager): Response
     {
+        if ($this->getUser() !== $reservationTransport->getTransporteur()) {
+            throw $this->createAccessDeniedException('You can only delete your own reservations.');
+        }
+        
         if ($this->isCsrfTokenValid('delete'.$reservationTransport->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($reservationTransport);
             $entityManager->flush();
@@ -118,17 +171,21 @@ final class ReservationTransportController extends AbstractController
         return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
     }
     
-
-  #[Route('/api/reservation/{id}/arrival-time', name:"api_reservation_arrival_time", methods: ["GET"])]
- 
-public function getArrivalTimeApi(ReservationTransport $reservation): JsonResponse
-{
-    if (!$reservation) {
-        return $this->json(['error' => 'Reservation not found'], 404);
+    #[Route('/api/reservation/{id}/arrival-time', name: 'api_reservation_arrival_time', methods: ['GET'])]
+    #[IsGranted('ROLE_TRANSPORTEUR')]
+    public function getArrivalTimeApi(ReservationTransport $reservation): JsonResponse
+    {
+        if ($this->getUser() !== $reservation->getTransporteur()) {
+            return $this->json(['error' => 'Access denied'], 403);
+        }
+        
+        if (!$reservation) {
+            return $this->json(['error' => 'Reservation not found'], 404);
+        }
+        
+        return $this->json([
+            'arrivalTime' => $reservation->getTempsArrivage(),
+            'formatted' => (new \DateTime($reservation->getTempsArrivage()))->format('l j F Y à H:i')
+        ]);
     }
-    return $this->json([
-        'arrivalTime' => $reservation->getTempsArrivage(),
-        'formatted' => (new \DateTime($reservation->getTempsArrivage()))->format('l j F Y à H:i') // French format
-    ]);
-}
 }
