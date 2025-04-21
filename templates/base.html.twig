@@ -84,7 +84,7 @@
                                                 <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Logements</a></li>
-                                            </ul>
+<li><a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}" href="{{ path('admin_reclamation') }}">Réclamations Avancées</a></li>                                            </ul>
                                         </li>
                                         <li class="dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
     <a href="#">Agenda <i class="fa fa-caret-down"></i></a>

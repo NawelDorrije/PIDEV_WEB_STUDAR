@@ -1,0 +1,320 @@
+{% extends 'admin/dashboard.html.twig' %}
+
+{% block title %}Réclamations Avancées{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Card Styling */
+        .reclamation-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            min-height: 250px;
+            width: 100%;
+        }
+        .reclamation-card.en-cours {
+            border-left: 5px solid #007bff; /* Bleu pour "en cours" */
+        }
+        .reclamation-card.traite {
+            border-left: 5px solid #28a745; /* Vert pour "traité" */
+        }
+        .reclamation-card.refuse {
+            border-left: 5px solid #dc3545; /* Rouge pour "refusé" */
+        }
+        .card-header {
+            background: linear-gradient(90deg, #2c3e50, #4a5b6b);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 12px 12px 0 0;
+            font-size: 1.1rem;
+        }
+        .card-body {
+            padding: 20px;
+            font-size: 0.95rem;
+        }
+        .card-body p {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .card-body i {
+            margin-right: 8px;
+            color: #6c757d;
+        }
+        .card-footer {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            border-radius: 5px;
+        }
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        .form-group .i{
+            margin-right: 30px;
+        }
+        /* Contenu principal */
+        .reclamation-content {
+            padding: 0 15px;
+        }
+        .row1 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px; /* Espacement uniforme entre les cartes */
+        }
+        .col-lg-4 {
+            flex: 1 1 calc(33.333% - 20px); /* Ajustement pour l'espacement */
+            max-width: calc(33.333% - 20px);
+        }
+
+        /* Style pour la nouvelle barre de navigation */
+        .navbar-filter {
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 10px 15px;
+        }
+        .navbar-filter .form-inline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .navbar-filter .form-group {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .navbar-filter .form-group label {
+            margin-right: 10px;
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+        .navbar-filter .form-control {
+            {# width: 180px;;
+            padding-left: 30px;  #};
+            padding: 8px 8px 8px 35px; /* Plus de padding à gauche pour l'icône */
+        }
+        .navbar-filter .btn {
+            margin-left: 10px;
+        }
+        .navbar-filter .form-group i {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        .navbar-filter .search-group {
+            position: relative;
+        }
+        .navbar-filter .search-group i {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        {# /* Restaurer les proportions de navbar-main */
+        .navbar-main {
+            padding: 0 15px;
+        } #}
+        {# .navbar-main .container-fluid {
+            padding: 10px 0;
+        } #}
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .col-lg-4 {
+                flex: 1 1 calc(50% - 20px);
+                max-width: calc(50% - 20px);
+            }
+            .navbar-filter .form-control {
+                width: 150px;
+            }
+        }
+        @media (max-width: 576px) {
+            .col-lg-4 {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+            .reclamation-card {
+                min-height: 200px;
+            }
+            .card-body {
+                padding: 15px;
+                font-size: 0.9rem;
+            }
+            .card-header {
+                font-size: 1rem;
+            }
+            .btn-sm {
+                padding: 5px 8px;
+                font-size: 0.75rem;
+            }
+            .navbar-filter .form-inline {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .navbar-filter .form-control {
+                width: 100%;
+            }
+            .navbar-filter .form-group {
+                width: 100%;
+            }
+            .navbar-filter .btn {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <main class="main-content position-relative  reclamation-container">
+        <!-- Nouvelle barre de navigation pour la recherche et les filtres -->
+        <div class="navbar navbar-light bg-light navbar-filter">
+            <form class="form-inline" method="get" action="{{ path('admin_reclamation') }}">
+                <!-- Recherche -->
+                <div class="form-group search-group">
+                    <i class="fas fa-search"></i>
+                    <input class="form-control mr-sm-2" type="search" placeholder="Rechercher..." aria-label="Search" id="searchReclamation">
+                </div>
+                <!-- Filtre par utilisateur -->
+                <div class="form-group">
+                    <label for="user_filter">Utilisateur :</label>
+                    <i class="fas fa-user"></i>
+                    <select class="form-control mr-sm-2" id="user_filter" name="user_filter">
+                        <option value="">Tous les utilisateurs</option>
+                        {% for user in users %}
+                            <option value="{{ user.cin }}" {{ selected_user == user.cin ? 'selected' : '' }}>
+                                {{ user.nom }} {{ user.prenom }} (CIN: {{ user.cin }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Filtre par date -->
+                <div class="form-group">
+                    <label for="date_filter">Date :</label>
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" class="form-control mr-sm-2" id="date_filter" name="date_filter" value="{{ selected_date }}">
+                </div>
+                <button type="submit" class="btn btn-outline-success my-2 my-sm-0">Filtrer</button>
+                <button type="button" class="btn btn-outline-secondary my-2 my-sm-0" onclick="window.location.href='{{ path('admin_reclamation') }}'">Réinitialiser</button>
+            </form>
+        </div>
+
+        <div class="container-fluid py-4">
+            <!-- Contenu principal : Les cartes de réclamation -->
+            <div class="reclamation-content">
+                <!-- Liste des réclamations -->
+                <div class="row1" id="reclamationList">
+                    {% if reclamations|length > 0 %}
+                        {% for reclamation in reclamations %}
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                                <div class="card reclamation-card {{ reclamation.statut|replace({' ': '-'})|default('en-cours') }}">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Réclamation #{{ reclamation.id }}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><i class="fas fa-user"></i> <strong>Utilisateur :</strong> {{ reclamation.utilisateur ? (reclamation.utilisateur.nom|default('') ~ ' ' ~ reclamation.utilisateur.prenom|default('')) : 'Anonyme' }}</p>
+                                        <p><i class="fas fa-heading"></i> <strong>Titre :</strong> {{ reclamation.titre }}</p>
+                                        <p><i class="fas fa-align-left"></i> <strong>Description :</strong> {{ reclamation.description }}</p>
+                                        <p><i class="fas fa-calendar-alt"></i> <strong>Date :</strong> {{ reclamation.timestamp ? reclamation.timestamp|date('Y-m-d H:i') : 'Non définie' }}</p>
+                                        <p><i class="fas fa-info-circle"></i> <strong>Statut :</strong> {{ reclamation.statut|default('non défini') }}</p>
+                                        <p><i class="fas fa-home"></i> <strong>Logement :</strong> {{ reclamation.logement ? reclamation.logement.id : 'Non défini' }}</p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <a href="{{ path('admin_reclamation_show', {'id': reclamation.id}) }}" class="btn btn-sm btn-info">Détails</a>
+                                        <a href="{{ path('admin_reclamation_edit_recommend', {'id': reclamation.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                        <form method="post" action="{{ path('admin_reclamation_delete', {'id': reclamation.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reclamation.id) }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info text-center" role="alert">
+                                Aucune réclamation trouvée.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {{ current_page == 1 ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page - 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'date_filter': selected_date}) }}" aria-label="Previous">
+                                    <span aria-hidden="true">«</span>
+                                </a>
+                            </li>
+                            {% for i in 1..total_pages %}
+                                <li class="page-item {{ current_page == i ? 'active' : '' }}">
+                                    <a class="page-link" href="{{ path('admin_reclamation', {'page': i, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'date_filter': selected_date}) }}">{{ i }}</a>
+                                </li>
+                            {% endfor %}
+                            <li class="page-item {{ current_page == total_pages ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page + 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'date_filter': selected_date}) }}" aria-label="Next">
+                                    <span aria-hidden="true">»</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Recherche en temps réel
+        document.getElementById('searchReclamation').addEventListener('input', function(e) {
+            const searchText = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.col-lg-4');
+            cards.forEach(card => {
+                const description = card.querySelector('.card-body p:nth-child(3)').textContent.toLowerCase();
+                card.style.display = description.includes(searchText) ? '' : 'none';
+            });
+        });
+
+        // Tri dynamique
+        document.querySelectorAll('th a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = new URL(this.href);
+                window.location.href = url;
+            });
+        });
+    </script>
+{% endblock %}

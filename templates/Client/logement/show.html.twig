@@ -827,7 +827,6 @@
         </div>
     {% endfor %}
 </div>
-        <a href="{{ path('app_logement_index') }}" class="btn btn-default">Retour à la liste</a>
     {% else %}
         <div class="alert alert-info">Aucune réclamation pour ce logement.</div>
     {% endif %}
@@ -836,12 +835,7 @@
             </div>
         </div>
 
-        <!-- Back Button -->
-        <div class="mt-4" style="margin-left:60px;">
-            <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
-                <i class="fa fa-arrow-left"></i> Retour à la liste
-            </a>
-        </div>
+               <a href="{{ path('app_logement_index') }}" class="btn btn-default">Retour à la liste</a>
 
         <!-- Include the Add Reclamation Modal -->
         {% include 'reclamation/_add_reclamation_modal.html.twig' %}

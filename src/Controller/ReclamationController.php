@@ -13,6 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Repository\UtilisateurRepository;
+use App\Entity\Utilisateur;
 
 #[Route('/reclamation')]
 class ReclamationController extends AbstractController
@@ -192,4 +194,125 @@ class ReclamationController extends AbstractController
 
         return new JsonResponse(['success' => 'Réclamation supprimée avec succès !']);
     }
+    #[Route('/admin/reclamation', name: 'admin_reclamation', methods: ['GET'])]
+public function index(Request $request, ReclamationRepository $reclamationRepository, EntityManagerInterface $entityManager): Response
+{
+    $page = $request->query->getInt('page', 1);
+    $limit = 10; // Nombre d'éléments par page
+    $sortBy = $request->query->get('sort_by', 'timestamp');
+    $sortOrder = $request->query->get('sort_order', 'desc');
+    $userFilter = $request->query->get('user_filter', '');
+    $dateFilter = $request->query->get('date_filter', '');
+
+    // Compter le nombre total pour la pagination
+    $countQuery = $reclamationRepository->createQueryBuilder('r');
+    if ($userFilter) {
+        $countQuery->andWhere('r.cin = :cin')
+                   ->setParameter('cin', $userFilter);
+    }
+    if ($dateFilter) {
+        $countQuery->andWhere('r.timestamp LIKE :date')
+                   ->setParameter('date', $dateFilter . '%');
+    }
+    $totalReclamations = $countQuery->select('COUNT(r.id)')
+                                    ->getQuery()
+                                    ->getSingleScalarResult();
+    $totalPages = ceil($totalReclamations / $limit);
+
+    // Récupérer les réclamations paginées
+    $queryBuilder = $reclamationRepository->createQueryBuilder('r');
+    if ($userFilter) {
+        $queryBuilder->andWhere('r.cin = :cin')
+                     ->setParameter('cin', $userFilter);
+    }
+    if ($dateFilter) {
+        $queryBuilder->andWhere('r.timestamp LIKE :date')
+                     ->setParameter('date', $dateFilter . '%');
+    }
+    $queryBuilder->orderBy("r.$sortBy", $sortOrder)
+                 ->setFirstResult(($page - 1) * $limit)
+                 ->setMaxResults($limit);
+
+    $reclamations = $queryBuilder->getQuery()->getResult();
+
+    // Récupérer les utilisateurs pour le filtrage
+    $utilisateurRepository = $entityManager->getRepository(utilisateur::class);
+    $usersQuery = $utilisateurRepository->createQueryBuilder('u')
+        ->select('u')
+        ->distinct()
+        ->innerJoin('App\Entity\Reclamation', 'r', 'WITH', 'r.cin = u.cin')
+        ->getQuery();
+
+    $users = $usersQuery->getResult();
+
+    return $this->render('admin/reclamation/index.html.twig', [
+        'reclamations' => $reclamations,
+        'current_page' => $page,
+        'total_pages' => $totalPages,
+        'sort_by' => $sortBy,
+        'sort_order' => $sortOrder,
+        'selected_user' => $userFilter,
+        'selected_date' => $dateFilter,
+        'users' => $users,
+    ]);
+}
+
+    #[Route('/admin/reclamation/{id}', name: 'admin_reclamation_show', methods: ['GET'])]
+    public function show(Reclamation $reclamation): Response
+    {
+        return $this->render('admin/reclamation/show.html.twig', [
+            'reclamation' => $reclamation,
+        ]);
+    }
+
+    #[Route('/admin/reclamation/{id}/edit', name: 'admin_reclamation_edit_recommend', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($request->isMethod('POST')) {
+            $submittedToken = $request->request->get('_token');
+            if (!$this->isCsrfTokenValid('edit_reclamation', $submittedToken)) {
+                $this->addFlash('error', 'Invalid CSRF token.');
+                return $this->redirectToRoute('admin_reclamation');
+            }
+
+            $statut = $request->request->get('statut');
+            if (!in_array($statut, ['en cours', 'traité', 'refusé'])) {
+                $this->addFlash('error', 'Statut invalide.');
+                return $this->redirectToRoute('admin_reclamation');
+            }
+
+            $reclamation->setStatut($statut);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Statut de la réclamation mis à jour avec succès.');
+            return $this->redirectToRoute('admin_reclamation');
+        }
+
+        return $this->render('admin/reclamation/edit.html.twig', [
+            'reclamation' => $reclamation,
+        ]);
+    }
+
+    #[Route('/admin/reclamation/{id}', name: 'admin_reclamation_delete', methods: ['POST'])]
+    public function delete(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete' . $reclamation->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($reclamation);
+            $entityManager->flush();
+            $this->addFlash('success', 'Réclamation supprimée avec succès.');
+        } else {
+            $this->addFlash('error', 'Invalid CSRF token.');
+        }
+
+        return $this->redirectToRoute('admin_reclamation');
+    }
+    #[Route('/admin/reclamations', name: 'admin_reclamations', methods: ['GET'])]
+public function indexSimple(ReclamationRepository $reclamationRepository): Response
+{
+    $reclamations = $reclamationRepository->findAll();
+
+    return $this->render('admin/reclamation/simple_index.html.twig', [
+        'reclamations' => $reclamations,
+    ]);
+}
 }

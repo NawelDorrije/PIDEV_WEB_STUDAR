@@ -15,6 +15,15 @@ class ReclamationRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Reclamation::class);
     }
+    public function findUsersWithReclamations()
+{
+    return $this->createQueryBuilder('r')
+        ->select('u')
+        ->leftJoin('r.utilisateur', 'u')
+        ->distinct()
+        ->getQuery()
+        ->getResult();
+}
 
     //    /**
     //     * @return Reclamation[] Returns an array of Reclamation objects

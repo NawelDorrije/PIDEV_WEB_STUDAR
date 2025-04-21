@@ -1,0 +1,20 @@
+{% extends 'admin/dashboard.html.twig' %}
+
+{% block title %}Détails de la Réclamation{% endblock %}
+
+{% block body %}
+    <div class="container-fluid py-4">
+        <h1>Détails de la Réclamation #{{ reclamation.id }}</h1>
+        <div class="card">
+            <div class="card-body">
+                <p><strong>Utilisateur :</strong> {{ reclamation.utilisateur ? (reclamation.utilisateur.nom|default('') ~ ' ' ~ reclamation.utilisateur.prenom|default('')) : 'Anonyme' }}</p>
+                <p><strong>Titre :</strong> {{ reclamation.titre }}</p>
+                <p><strong>Description :</strong> {{ reclamation.description }}</p>
+                <p><strong>Date :</strong> {{ reclamation.timestamp ? reclamation.timestamp|date('Y-m-d H:i') : 'Non définie' }}</p>
+                <p><strong>Logement :</strong> {{ reclamation.logement ? reclamation.logement.id : 'Non associé' }}</p>
+                <p><strong>Statut :</strong> {{ reclamation.statut|default('non défini') }}</p>
+            </div>
+        </div>
+        <a href="{{ path('admin_reclamation') }}" class="btn btn-secondary mt-3">Retour à la liste</a>
+    </div>
+{% endblock %}
