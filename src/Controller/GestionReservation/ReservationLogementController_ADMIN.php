@@ -17,7 +17,7 @@ use TCPDF2DBarcode;
 final class ReservationLogementController_ADMIN extends AbstractController
 {
     #[Route('/', name: 'app_reservation_logement_index_ADMIN', methods: ['GET'])]
-    public function index(Request $request, ReservationLogementRepository $reservationLogementRepository): Response
+    public function index(Request $request, ReservationLogementRepository $reservationLogementRepository,): Response
     {
         $status = $request->query->get('status');
         

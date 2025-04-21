@@ -259,15 +259,17 @@
                                             </h5>
                                             <div class="card-meta">
                                                 <div><i class="far fa-calendar-alt"></i> {{ rendezvou.date|date('d/m/Y') }}</div>
-                                                <div><i class="far fa-clock"></i> {{ rendezvou.heure }}</div>
+                                                <div><i class="far fa-clock"></i> {{ rendezvou.heure|date('H:i') }}</div>
+                                                <div><i class="fas fa-user-tie"></i> {{ rendezvou.proprietaire ? rendezvou.proprietaire.nom ~ ' ' ~ rendezvou.proprietaire.prenom : 'Non défini' }}</div>
                                                 <div><i class="fas fa-home"></i> 
                                                     {% if rendezvou.idLogement is iterable %}
                                                         {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
                                                     {% else %}
-                                                        {{ rendezvou.idLogement }}
+                                                        {% set logement = logement_repo.find(rendezvou.idLogement) %}
+                                                        {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
                                                     {% endif %}
                                                 </div>
-                                            </div>
+                                            </div>      
                                         </div>
                                     </div>
                                 </div>
@@ -318,12 +320,16 @@
                                                 (rendezvou.status == 'en_attente' ? 'warning' : 'danger') }}">
                                                 {{ rendezvou.status }}
                                             </span>
-                                            <div class="card-meta mt-3">
+                                              <div class="card-meta">
+                                                <div><i class="far fa-calendar-alt"></i> {{ rendezvou.date|date('d/m/Y') }}</div>
+                                                <div><i class="far fa-clock"></i> {{ rendezvou.heure|date('H:i') }}</div>
+                                                <div><i class="fas fa-user-tie"></i> {{ rendezvou.proprietaire ? rendezvou.proprietaire.nom ~ ' ' ~ rendezvou.proprietaire.prenom : 'Non défini' }}</div>
                                                 <div><i class="fas fa-home"></i> 
-                                                    {% if rendezvou.idLogement %}
-                                                        {{ rendezvou.idLogement }}
+                                                    {% if rendezvou.idLogement is iterable %}
+                                                        {{ rendezvou.idLogement.adresse ?? 'Logement #' ~ rendezvou.idLogement.id }}
                                                     {% else %}
-                                                        Non défini
+                                                        {% set logement = logement_repo.find(rendezvou.idLogement) %}
+                                                        {{ logement ? logement.adresse : 'Logement #' ~ rendezvou.idLogement }}
                                                     {% endif %}
                                                 </div>
                                             </div>
