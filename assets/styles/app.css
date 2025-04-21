@@ -5,7 +5,7 @@
     .list-group-item a { text-decoration: none; color: #007bff; }
     .list-group-item a:hover { text-decoration: underline; } */
 
-    .container {
+    /* .container {
         max-width: 800px;
         margin: 0 auto;
         padding: 20px;
@@ -35,35 +35,4 @@
         top: 0;
         z-index: 1000;
     }
-    /* assets/styles/app.css */
-.chat-container {
-    display: flex;
-    height: 100%;
-}
-.app-one {
-    display: flex;
-    width: 100%;
-}
-.side {
-    width: 300px;
-    border-right: 1px solid #ddd;
-    background: #f8f9fa;
-}
-.conversation {
-    flex-grow: 1;
-    padding: 20px;
-}
-.sideBar-body {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-.sideBar-body:hover {
-    background: #e9ecef;
-}
-.heading {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
-.searchBox {
-    padding: 10px;
-}
+     */

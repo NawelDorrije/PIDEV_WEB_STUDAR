@@ -150,6 +150,15 @@
             resultContainer.style.display = 'block';
         }
 
+        // Function to check if a reclamation is within 24 hours of creation
+        function isWithin24Hours(timestamp) {
+            const creationDate = new Date(timestamp);
+            const now = new Date();
+            const diffInMs = now - creationDate;
+            const diffInHours = diffInMs / (1000 * 60 * 60);
+            return diffInHours <= 24;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
 
@@ -206,6 +215,200 @@
                 const hash = window.location.hash.substring(1);
                 updateSliderPosition(hash);
             });
+
+            // Handle reclamation form submission (Add Reclamation)
+            const submitButton = document.getElementById('submit-reclamation');
+            const reclamationForm = document.getElementById('add-reclamation-form');
+            const errorMessageDiv = document.getElementById('form-error');
+            const modal = document.getElementById('addReclamationModal');
+
+            if (submitButton && reclamationForm) {
+                reclamationForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('Default form submission prevented');
+                });
+
+                submitButton.addEventListener('click', function() {
+                    console.log('Form action URL:', reclamationForm.action);
+                    const title = document.getElementById('reclamation-title').value.trim();
+                    const description = document.getElementById('reclamation-description').value.trim();
+
+                    if (!title || !description) {
+                        errorMessageDiv.textContent = 'Le titre et la description sont requis.';
+                        errorMessageDiv.style.display = 'block';
+                        return;
+                    }
+
+                    errorMessageDiv.style.display = 'none';
+                    const formData = new FormData(reclamationForm);
+                    console.log('FormData entries:');
+                    for (let [key, value] of formData.entries()) {
+                        console.log(`${key}: ${value}`);
+                    }
+
+                    fetch(reclamationForm.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
+                        if (data.success) {
+                            try {
+                                $('#addReclamationModal').modal('hide');
+                            } catch (e) {
+                                console.warn('jQuery/Bootstrap method failed, using vanilla JS to close modal:', e);
+                                if (modal) {
+                                    modal.classList.remove('show');
+                                    modal.setAttribute('aria-hidden', 'true');
+                                    modal.style.display = 'none';
+                                    const backdrop = document.querySelector('.modal-backdrop');
+                                    if (backdrop) {
+                                        backdrop.remove();
+                                    }
+                                    document.body.classList.remove('modal-open');
+                                }
+                            }
+                            reclamationForm.reset();
+                            setTimeout(() => {
+                                window.location.reload(); // Reload to show new reclamation
+                            }, 300);
+                        } else {
+                            errorMessageDiv.textContent = data.error || 'Une erreur est survenue.';
+                            errorMessageDiv.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting reclamation:', error);
+                        errorMessageDiv.textContent = 'Une erreur est survenue lors de l\'envoi.';
+                        errorMessageDiv.style.display = 'block';
+                    });
+                });
+            } else {
+                console.error('Reclamation form or submit button not found');
+            }
+
+            // Disable "Modifier" buttons for reclamations older than 24 hours
+            const modifyButtons = document.querySelectorAll('.modify-reclamation-btn');
+            modifyButtons.forEach(button => {
+                const timestamp = button.dataset.timestamp;
+                if (!isWithin24Hours(timestamp)) {
+                    button.disabled = true;
+                    button.title = "Modification non autorisée après 24 heures.";
+                }
+
+                button.addEventListener('click', function() {
+                    const reclamationId = this.dataset.reclamationId;
+                    const title = this.dataset.title;
+                    const description = this.dataset.description;
+
+                    // Populate the modify modal with reclamation data
+                    const modifyForm = document.getElementById('modify-reclamation-form');
+                    modifyForm.action = '{{ path('app_reclamation_modify', {'id': 'REPLACEMENT_ID'}) }}'.replace('REPLACEMENT_ID', reclamationId);
+                    document.getElementById('modify-reclamation-title').value = title;
+                    document.getElementById('modify-reclamation-description').value = description;
+                });
+            });
+
+            // Handle modify reclamation
+            const modifyModal = document.getElementById('modifyReclamationModal');
+            const modifyForm = document.getElementById('modify-reclamation-form');
+            const modifyTitleInput = document.getElementById('modify-reclamation-title');
+            const modifyDescriptionInput = document.getElementById('modify-reclamation-description');
+            const modifyErrorMessageDiv = document.getElementById('modify-form-error');
+            const submitModifyButton = document.getElementById('submit-modify-reclamation');
+
+            if (submitModifyButton && modifyForm) {
+                modifyForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                });
+
+                submitModifyButton.addEventListener('click', function() {
+                    const title = modifyTitleInput.value.trim();
+                    const description = modifyDescriptionInput.value.trim();
+
+                    if (!title || !description) {
+                        modifyErrorMessageDiv.textContent = 'Le titre et la description sont requis.';
+                        modifyErrorMessageDiv.style.display = 'block';
+                        return;
+                    }
+
+                    modifyErrorMessageDiv.style.display = 'none';
+                    const formData = new FormData(modifyForm);
+
+                    fetch(modifyForm.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            try {
+                                $('#modifyReclamationModal').modal('hide');
+                            } catch (e) {
+                                console.warn('jQuery/Bootstrap method failed, using vanilla JS to close modal:', e);
+                                if (modifyModal) {
+                                    modifyModal.classList.remove('show');
+                                    modifyModal.setAttribute('aria-hidden', 'true');
+                                    modifyModal.style.display = 'none';
+                                    const backdrop = document.querySelector('.modal-backdrop');
+                                    if (backdrop) {
+                                        backdrop.remove();
+                                    }
+                                    document.body.classList.remove('modal-open');
+                                }
+                            }
+                            modifyForm.reset();
+                            setTimeout(() => {
+                                window.location.reload(); // Reload to reflect changes
+                            }, 300);
+                        } else {
+                            modifyErrorMessageDiv.textContent = data.error || 'Une erreur est survenue.';
+                            modifyErrorMessageDiv.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error modifying reclamation:', error);
+                        modifyErrorMessageDiv.textContent = 'Une erreur est survenue lors de la modification.';
+                        modifyErrorMessageDiv.style.display = 'block';
+                    });
+                });
+            }
+
+            // Handle delete reclamation
+            const deleteButtons = document.querySelectorAll('.delete-reclamation-btn');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?')) {
+                        return;
+                    }
+
+                    const reclamationId = this.dataset.reclamationId;
+                    const deleteUrl = '{{ path('app_reclamation_delete', {'id': 'REPLACEMENT_ID'}) }}'.replace('REPLACEMENT_ID', reclamationId);
+
+                    fetch(deleteUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': '{{ csrf_token('delete_reclamation') }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload(); // Reload to reflect changes
+                        } else {
+                            alert(data.error || 'Une erreur est survenue lors de la suppression.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting reclamation:', error);
+                        alert('Une erreur est survenue lors de la suppression.');
+                    });
+                });
+            });
         });
     </script>
 {% endblock %}
@@ -213,6 +416,24 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
+        body.modal-open,
+        body.modal-open .container,
+        body.modal-open .modal,
+        body.modal-open .modal-backdrop {
+            opacity: 1 !important;
+            animation: none !important;
+            transition: none !important;
+        }
+
+        .modal.in {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        .modal-backdrop.in {
+            opacity: 0.5 !important;
+        }
+
         .slider-css-target {
             max-width: 800px;
             margin: 0 auto;
@@ -241,7 +462,7 @@
         }
     
         .slider-css-target ul li.active img {
-            border-color: #007bff;
+            border-color: #337ab7;
         }
     
         .slider-css-target-images {
@@ -287,6 +508,81 @@
             font-size: 14px;
             margin-top: 5px;
             display: none;
+        }
+
+        .icon-button {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .icon-button a {
+            display: flex;
+            align-items: center;
+            color: white;
+            background-color: #333;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .icon-button a i {
+            margin-right: 8px;
+        }
+
+        .icon-button a:hover {
+            background-color: #555;
+        }
+
+        .icon-button a[data-toggle="modal"] {
+            background-color: transparent;
+            color: #337ab7;
+        }
+
+        .icon-button a[data-toggle="modal"]:hover {
+            text-decoration: underline;
+            background-color: transparent;
+        }
+
+        #new-address {
+            width: 100%;
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #555;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .reclamations-section {
+            margin-top: 40px;
+        }
+
+        .reclamations-section h4 {
+            margin-bottom: 20px;
+        }
+
+        .reclamations-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reclamations-table th,
+        .reclamations-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .reclamations-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .action-buttons button {
+            margin-right: 5px;
         }
     </style>
 {% endblock %}
@@ -367,6 +663,9 @@
                                 <form id="delete-form" method="post" action="{{ path('app_logement_delete', {'id': logement.id}) }}" style="display: none;">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ logement.id) }}">
                                 </form>
+    <a data-toggle="modal" data-target="#addReclamationModal" class="icon-button mt-2">
+        <i class="fa fa-plus"></i> Ajouter une Réclamation
+    </a>
                             </div>
                         </div>
                     </div>
@@ -377,10 +676,8 @@
                             <div id="preview-slider" class="{{ logement.imageLogements|length > 0 ? 'visible' : '' }}">
                                 <div class="slider-css-target">
                                     {% if logement.imageLogements|length > 0 %}
-                                    
                                         <ul>
                                             {% for photo in logement.imageLogements %}
-                                            {{dump(photo)}}
                                                 <li>
                                                     <a href="#image_{{ loop.index }}">
                                                         <img src="{{ asset('Uploads/photos/' ~ photo.url) }}" 
@@ -406,6 +703,57 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Reclamations Section -->
+                    <div class="reclamations-section">
+                        <h4>Réclamations</h4>
+                        {% if logement.reclamations is not empty %}
+                            <table class="reclamations-table">
+                                <thead>
+                                    <tr>
+                                        <th>Titre</th>
+                                        <th>Description</th>
+                                        <th>Date de création</th>
+                                        {# <th>Utilisateur</th> #}
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reclamation in logement.reclamations %}
+                                        <tr>
+                                            <td>{{ reclamation.titre }}</td>
+                                            <td>{{ reclamation.description }}</td>
+                                            <td>{{ reclamation.timestamp|date('d/m/Y H:i') }}</td>
+                                            {# <td>{{ reclamation.utilisateur.email }}</td> #}
+                                            <td class="action-buttons">
+                                                {% if app.user and app.user == reclamation.utilisateur %}
+                                                    <button 
+                                                        class="btn btn-sm btn-primary modify-reclamation-btn"
+                                                        data-toggle="modal"
+                                                        data-target="#modifyReclamationModal"
+                                                        data-reclamation-id="{{ reclamation.id }}"
+                                                        data-title="{{ reclamation.titre }}"
+                                                        data-description="{{ reclamation.description }}"
+                                                        data-timestamp="{{ reclamation.timestamp|date('c') }}"
+                                                    >
+                                                        Modifier
+                                                    </button>
+                                                    <button 
+                                                        class="btn btn-sm btn-danger delete-reclamation-btn"
+                                                        data-reclamation-id="{{ reclamation.id }}"
+                                                    >
+                                                        Supprimer
+                                                    </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="alert alert-info">Aucune réclamation pour ce logement.</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -415,6 +763,39 @@
             <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Retour à la liste
             </a>
+        </div>
+
+        <!-- Include the Add Reclamation Modal -->
+        {% include 'reclamation/_add_reclamation_modal.html.twig' %}
+
+        <!-- Modify Reclamation Modal -->
+        <div class="modal fade" id="modifyReclamationModal" tabindex="-1" role="dialog" aria-labelledby="modifyReclamationModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modifyReclamationModalLabel">Modifier une Réclamation</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="modify-reclamation-form" action="" method="post">
+                            <div class="form-group">
+                                <label for="modify-reclamation-title">Titre</label>
+                                <input type="text" class="form-control" id="modify-reclamation-title" name="title" placeholder="Entrez le titre de la réclamation" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="modify-reclamation-description">Description</label>
+                                <textarea class="form-control" id="modify-reclamation-description" name="description" rows="3" placeholder="Décrivez votre réclamation" required></textarea>
+                            </div>
+                            <input type="hidden" name="_token" value="{{ csrf_token('modify_reclamation') }}">
+                        </form>
+                        <div id="modify-form-error" class="error-message" style="display: none; color: #ff4444;"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="submit-modify-reclamation">Enregistrer</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

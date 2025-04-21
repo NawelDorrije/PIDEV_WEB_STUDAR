@@ -1,12 +1,5 @@
 // assets/app.js
 import $ from 'jquery';
-import '@fortawesome/fontawesome-free/css/all.min.css';
-
-window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
-
-// assets/app.js
-import 'bootstrap'; // Correct for Bootstrap 3
-
 import 'owl.carousel';
 
 window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
@@ -22,12 +15,9 @@ import './css/animate.css';
 import './css/owl.css';
 import './css/fontawesome.css';
 import './css/templatemo-villa-agency.css';
-import './css/meuble-style.css';
 import './js/counter.js';
 import './js/custom.js';
 import './js/isotope.min.js';
 import './js/owl-carousel.js';
-
-
 
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');

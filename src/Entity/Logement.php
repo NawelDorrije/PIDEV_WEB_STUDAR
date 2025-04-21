@@ -72,11 +72,18 @@ class Logement
     #[ORM\ManyToOne(inversedBy: 'logements')]
     #[ORM\JoinColumn(name: 'utilisateur_cin', referencedColumnName: 'cin')]
     private ?Utilisateur $utilisateur_cin = null;
+
+    /**
+     * @var Collection<int, Reclamation>
+     */
+    #[ORM\OneToMany(targetEntity: Reclamation::class, mappedBy: 'logement')]
+    private Collection $reclamations;
   
    public function __construct()
    {
        $this->logementOptions = new ArrayCollection();
        $this->imageLogements = new ArrayCollection();
+       $this->reclamations = new ArrayCollection();
    }
  
 
@@ -229,6 +236,36 @@ public function getUtilisateurCin(): ?Utilisateur
 public function setUtilisateurCin(?Utilisateur $utilisateur_cin): static
 {
     $this->utilisateur_cin = $utilisateur_cin;
+
+    return $this;
+}
+
+/**
+ * @return Collection<int, Reclamation>
+ */
+public function getReclamations(): Collection
+{
+    return $this->reclamations;
+}
+
+public function addReclamation(Reclamation $reclamation): static
+{
+    if (!$this->reclamations->contains($reclamation)) {
+        $this->reclamations->add($reclamation);
+        $reclamation->setLogement($this);
+    }
+
+    return $this;
+}
+
+public function removeReclamation(Reclamation $reclamation): static
+{
+    if ($this->reclamations->removeElement($reclamation)) {
+        // set the owning side to null (unless already changed)
+        if ($reclamation->getLogement() === $this) {
+            $reclamation->setLogement(null);
+        }
+    }
 
     return $this;
 }
