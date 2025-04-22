@@ -1,222 +1,852 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Liste des Réservations de Logement{% endblock %}
+{% block title %}Réservations de Logement - Admin Dashboard{% endblock %}
 
 {% block stylesheets %}
 {{ parent() }}
 <style>
-    /* Style général */
-    .section {
-        padding: 60px 0;
-        background-color: #f8f9fa;
+    /* General Styles */
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
+        min-height: 100vh;
     }
-    
-    .card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-align: center;
+        background: linear-gradient(to right, #4f46e5, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
     }
-    
-    /* Bouton flottant */
-    .floating-details-btn {
-        position: absolute;
-        right: -15px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 40px;
-        height: 40px;
-        background: #4453A6;
-        color: white;
-        border-radius: 50%;
+
+    .subtitle {
+        font-size: 1rem;
+        color: #64748b;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    /* Section Styles */
+    .dashboard-section {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-section:hover {
+        transform: translateY(-5px);
+    }
+
+    .dashboard-section h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-        z-index: 2;
+        gap: 0.5rem;
     }
-    
-    .floating-details-btn:hover {
-        background: #3a4791;
-        transform: translateY(-50%) scale(1.1);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-    }
-    
-    .floating-details-btn::after {
-        content: "Voir détails";
-        position: absolute;
-        right: 45px;
-        white-space: nowrap;
-        background: #4453A6;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        font-size: 14px;
-    }
-    
-    .floating-details-btn:hover::after {
-        opacity: 1;
-    }
-    
-    /* Carte de réservation */
-    .reservation-card {
-        position: relative;
-        padding-right: 30px;
-        overflow: visible;
-        margin-bottom: 20px;
-        border: none;
-          width: 1000px;
-          margin-left:130px;
 
-
-
+    .dashboard-section h2 i {
+        color: #4f46e5;
+        font-size: 1.2rem;
     }
-    
-    .card-title {
-        color: #4453A6;
-        margin-bottom: 15px;
-    }
-    
-    .card-meta {
+
+    /* Filters and Actions */
+    .filters-container {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
         flex-wrap: wrap;
-        gap: 20px;
-        align-items: center;
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
-    
-    .card-meta-div {
-        display: flex;
-        align-items: center;
-        white-space: nowrap;
+
+    .filter-select, .action-btn, .search-input {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        background: #fff;
+        transition: all 0.3s ease;
     }
-    
-    .card-meta i {
-        margin-right: 8px;
-        color: #F2811D;
+
+    .filter-select, .search-input {
+        width: 220px;
     }
-    
+
+    .filter-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.2rem;
+    }
+
+    .search-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .filter-select:focus, .action-btn:hover, .search-input:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    .action-btn {
+        background: linear-gradient(135deg, #4f46e5, #3b82f6);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn:hover {
+        background: linear-gradient(135deg, #3b82f6, #4f46e5);
+        transform: translateY(-2px);
+    }
+
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: left 0.3s ease;
+    }
+
+    .action-btn:hover::before {
+        left: 100%;
+    }
+
+    /* Table Styles */
+    .reservation-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .reservation-table th, .reservation-table td {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.95rem;
+        color: #1e293b;
+    }
+
+    .reservation-table th {
+        background: linear-gradient(135deg, #4f46e5, #3b82f6);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .reservation-table th:hover {
+        background: linear-gradient(135deg, #3b82f6, #4f46e5);
+    }
+
+    .reservation-table th::after {
+        content: '↕';
+        position: absolute;
+        right: 10px;
+        opacity: 0.5;
+    }
+
+    .reservation-table th.asc::after { content: '↑'; opacity: 1; }
+    .reservation-table th.desc::after { content: '↓'; opacity: 1; }
+
+    .reservation-table td {
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.3s ease;
+    }
+
+    .reservation-table tr:hover td {
+        background: #f8fafc;
+    }
+
     .badge {
         font-size: 0.8rem;
-        padding: 5px 10px;
+        padding: 6px 12px;
+        border-radius: 20px;
         font-weight: 500;
+        cursor: pointer;
     }
-    
-    /* Options de vue */
-    .view-options {
-        margin-bottom: 30px;
-    }
-    
-    .btn-group {
+
+    .badge-success { background: #10b981; color: white; }
+    .badge-warning { background: #f97316; color: white; }
+    .badge-danger { background: #ef4444; color: white; }
+
+    .action-icons i {
         margin-right: 10px;
+        color: #4f46e5;
+        cursor: pointer;
+        transition: color 0.3s ease;
     }
-    
-    /* Pastel purple animated button */
-    .btn-nouveau {
-        background-color: #B399D4;
-        color: white;
-        border: none;
-        animation: pop 2s infinite;
+
+    .action-icons i:hover {
+        color: #3b82f6;
+    }
+
+    /* Enhanced Stats Section */
+    .stats-section {
+        position: relative;
+        overflow: hidden;
+        transform: perspective(600px) rotateX(2deg);
+        transition: transform 0.3s ease;
+    }
+
+    .stats-section:hover {
+        transform: perspective(600px) rotateX(0deg);
+    }
+
+    .stats-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .stats-tab {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        position: relative;
         transition: all 0.3s ease;
     }
-    
-    .btn-nouveau:hover {
-        background-color: #9F7FDB;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(179, 153, 212, 0.4);
+
+    .stats-tab.active {
+        color: #4f46e5;
+        border-bottom: 3px solid #4f46e5;
     }
-    
-    @keyframes pop {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
+
+    .stats-tab:hover {
+        color: #3b82f6;
+        transform: translateY(-2px);
+    }
+
+    .chart-container {
+        position: relative;
+        max-width: 100%;
+        height: 400px;
+        margin-top: 1.5rem;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .insights-panel {
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .insights-panel:hover {
+        transform: scale(1.02);
+    }
+
+    .insights-panel h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1rem;
+    }
+
+    .insights-panel p {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .insights-panel i {
+        color: #4f46e5;
+        font-size: 1.1rem;
+    }
+
+    .insights-panel .highlight {
+        color: #3b82f6;
+        font-weight: 500;
+    }
+
+    .stats-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    /* Particles Background */
+    #particles-js {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: 0.3;
+    }
+
+    /* Animations */
+    .reservation-table tr, .insights-panel {
+        animation: fadeInUp 0.6s ease-out;
+        animation-delay: calc(var(--index) * 0.1s);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .filters-container, .stats-tabs {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-select, .action-btn, .search-input {
+            width: 100%;
+        }
+
+        .reservation-table {
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        .insights-panel {
+            margin-top: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 0 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .dashboard-section h2 {
+            font-size: 1.3rem;
+        }
+
+        .reservation-table {
+            display: block;
+            overflow-x: auto;
+        }
+
+        .reservation-table th, .reservation-table td {
+            min-width: 120px;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .reservation-table th, .reservation-table td {
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+        }
+
+        .chart-container {
+            height: 200px;
+        }
+
+        .stats-tab {
+            font-size: 0.9rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<section class="section">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="section-heading d-flex justify-content-between align-items-center mb-4">
-                    <h2 style="color:rgb(94, 68, 166);"><i class="fas fa-bed mr-2"></i>Vos Réservations de Logement</h2>
-                    
-                </div>
-                
-                <!-- Options de vue -->
-                <div class="view-options mb-4">
-                    <div class="btn-group" role="group">
-                        <a href="#" class="btn btn-outline-primary active" data-view="list">
-                            <i class="fas fa-list"></i> Liste
-                        </a>
-                        
-                      {# <li class="{{ app.request.get('_route') == 'app_reservation_logement_statistics_owner' ? 'active' }}">
-    <a href="{{ path('app_reservation_logement_statistics_owner') }}">
-        <i class="fas fa-chart-pie mr-2"></i> Mes Statistiques
-    </a> #}
-</li>
-                    </div>
-                    
-                    <!-- Filtres par statut -->
-                    <div class="status-filter btn-group ml-2" role="group">
-                        <a href="{{ path('app_reservation_logement_index_ADMIN') }}" class="btn btn-outline-secondary">Tous</a>
-                        <a href="{{ path('app_reservation_logement_index_ADMIN', {'status': 'confirmée'}) }}" 
-                           class="btn btn-outline-success">Confirmés</a>
-                        <a href="{{ path('app_reservation_logement_index_ADMIN', {'status': 'en_attente'}) }}" 
-                           class="btn btn-outline-warning">En attente</a>
-                        <a href="{{ path('app_reservation_logement_index_ADMIN', {'status': 'refusée'}) }}" 
-                           class="btn btn-outline-danger">Refusés</a>
-                    </div>
-                </div>
-                
-                <!-- Contenu principal -->
-                <div class="reservation-content">
-                    <!-- Vue Liste -->
-                    <div class="reservation-list">
-                        {% for reservation in reservation_logements %}
-                        <div class="card reservation-card">
-                            <div class="card-body">
-                                <a href="{{ path('app_reservation_logement_show_ADMIN', {'id': reservation.id}) }}" 
-                                   class="floating-details-btn" title="Voir détails">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                                <h5 class="card-title" style="color:rgb(49, 69, 149);" >
-                                    <i class="fas fa-bed mr-2"></i>Réservation 
-                                    <span class="badge badge-{{ 
-                                        reservation.status == 'confirmée' ? 'success' : 
-                                        (reservation.status == 'en_attente' ? 'warning' : 'danger') 
-                                    }}">
-                                        {{ reservation.status }}
-                                    </span>
-                                </h5>
-                                <div class="card-meta">
-                                    <div class="card-meta-div">
-                                        <i class="far fa-calendar-alt"></i> Du {{ reservation.dateDebut|date('d/m/Y') }}
-                                    </div>
-                                    <div class="card-meta-div">
-                                        <i class="far fa-calendar-alt"></i> Au {{ reservation.dateFin|date('d/m/Y') }}
-                                    </div>
-                                    <div class="card-meta-div">
-                                        <i class="fas fa-home"></i> 
-                                        {% if reservation.idLogement is iterable %}
-                                            {{ reservation.idLogement.adresse ?? 'Logement #' ~ reservation.idLogement.id }}
-                                        {% else %}
-                                            {{ reservation.idLogement }}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle mr-2"></i>Aucune réservation trouvée.
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+<div class="dashboard-container">
+    <h1>Réservations de Logement - Admin Dashboard</h1>
+    <p class="subtitle">Gérez et analysez vos réservations en temps réel</p>
+
+    <!-- Filters and Actions Section -->
+    <div class="dashboard-section">
+        <h2><i class="fas fa-filter"></i> Filtres & Actions</h2>
+        <div class="filters-container">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <input type="text" class="search-input" id="search-input" placeholder="Rechercher par logement..." oninput="searchReservations()">
+                <select class="filter-select" id="filtre-statut" onchange="applyFilters()">
+                    <option value="">Tous les statuts</option>
+                    <option value="confirmée" {% if current_status == 'confirmée' %}selected{% endif %}>Confirmés</option>
+                    <option value="en_attente" {% if current_status == 'en_attente' %}selected{% endif %}>En attente</option>
+                    <option value="refusée" {% if current_status == 'refusée' %}selected{% endif %}>Refusés</option>
+                </select>
+                <select class="filter-select" id="filtre-periode" onchange="applyFilters()">
+                    <option value="all">Toutes périodes</option>
+                    <option value="month" {% if current_periode == 'month' %}selected{% endif %}>Mois courant</option>
+                    <option value="year" {% if current_periode == 'year' %}selected{% endif %}>Année courante</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="action-btn" onclick="exportToExcel()"><i class="fas fa-download"></i> Exporter Excel</button>
             </div>
         </div>
     </div>
-</section>
+
+    <!-- Reservations Table Section -->
+    <div class="dashboard-section">
+        <h2><i class="fas fa-table"></i> Liste des Réservations</h2>
+        {% if reservation_logements|length > 0 %}
+        <table class="reservation-table">
+            <thead>
+                <tr>
+                    <th data-sort="dateDebut">Date Début</th>
+                    <th data-sort="dateFin">Date Fin</th>
+                    <th data-sort="logement">Logement</th>
+                    <th data-sort="status">Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservation_logements %}
+                <tr style="--index: {{ loop.index0 }}" data-id="{{ reservation.id }}">
+                    <td>{{ reservation.dateDebut|date('d/m/Y') }}</td>
+                    <td>{{ reservation.dateFin|date('d/m/Y') }}</td>
+                    <td>
+                        {% if reservation.idLogement is iterable %}
+                            {{ reservation.idLogement.adresse ?? 'Logement #' ~ reservation.idLogement.id }}
+                        {% else %}
+                            {% set logement = logement_repo.find(reservation.idLogement) %}
+                            {{ logement ? logement.adresse : reservation.idLogement }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ 
+                            reservation.status == 'confirmée' ? 'success' : 
+                            (reservation.status == 'en_attente' ? 'warning' : 'danger') }}"
+                            onclick="toggleStatus({{ reservation.id }}, this)">
+                            {{ reservation.status }}
+                        </span>
+                    </td>
+                    <td class="action-icons">
+                        <a href="{{ path('app_reservation_logement_show_ADMIN', {'id': reservation.id}) }}" title="Voir détails">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i> Aucune réservation trouvée.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Enhanced Statistics Section -->
+    <div class="dashboard-section stats-section">
+        <div id="particles-js"></div>
+        <h2><i class="fas fa-chart-bar"></i> Analyse des Réservations</h2>
+        <div class="stats-tabs" role="tablist">
+            <div class="stats-tab active" data-period="monthly" role="tab" aria-selected="true">Mensuel</div>
+            <div class="stats-tab" data-period="quarterly" role="tab" aria-selected="false">Trimestriel</div>
+            <div class="stats-tab" data-period="seasonal" role="tab" aria-selected="false">Saisonnier</div>
+        </div>
+        <div class="chart-container">
+            <canvas id="statsChart" aria-label="Graphique des réservations par période"></canvas>
+        </div>
+        <div class="insights-panel">
+            <h3>Clés d'Analyse</h3>
+            <p><i class="fas fa-calendar"></i> Période la plus réservée : <span class="highlight" id="peak-period"></span></p>
+            <p><i class="fas fa-home"></i> Logement le plus réservé : <span class="highlight">{{ stats.topLogement.adresse }} ({{ stats.topLogement.count }} réservations)</span></p>
+            <p><i class="fas fa-check-circle"></i> Statut dominant : <span class="highlight">{{ stats.peakStatus.status }} ({{ stats.peakStatus.percent }}%)</span></p>
+            <div class="stats-actions">
+                <button class="action-btn" onclick="exportChart()"><i class="fas fa-image"></i> Exporter Graphique</button>
+                <button class="action-btn" onclick="copyInsights()"><i class="fas fa-copy"></i> Copier Insights</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply Filters
+            window.applyFilters = function() {
+                const statut = document.getElementById('filtre-statut').value;
+                const periode = document.getElementById('filtre-periode').value;
+                window.location.href = '{{ path('app_reservation_logement_index_ADMIN') }}?status=' + encodeURIComponent(statut) + '&periode=' + encodeURIComponent(periode);
+            };
+
+            // Search Reservations
+            window.searchReservations = function() {
+                const query = document.getElementById('search-input').value.toLowerCase();
+                const rows = document.querySelectorAll('.reservation-table tbody tr');
+                rows.forEach(row => {
+                    const logement = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+                    row.style.display = logement.includes(query) ? '' : 'none';
+                });
+            };
+
+            // Table Sorting
+            const headers = document.querySelectorAll('.reservation-table th[data-sort]');
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.dataset.sort;
+                    const isAsc = !header.classList.contains('asc');
+                    headers.forEach(h => h.classList.remove('asc', 'desc'));
+                    header.classList.add(isAsc ? 'asc' : 'desc');
+
+                    const rows = Array.from(document.querySelectorAll('.reservation-table tbody tr'));
+                    rows.sort((a, b) => {
+                        let aValue = a.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
+                        let bValue = b.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
+                        
+                        if (sortKey === 'dateDebut' || sortKey === 'dateFin') {
+                            aValue = new Date(aValue.split('/').reverse().join('-'));
+                            bValue = new Date(bValue.split('/').reverse().join('-'));
+                        }
+                        
+                        return isAsc ? 
+                            (aValue > bValue ? 1 : -1) : 
+                            (aValue < bValue ? 1 : -1);
+                    });
+
+                    const tbody = document.querySelector('.reservation-table tbody');
+                    tbody.innerHTML = '';
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+
+            // Export to Excel
+            window.exportToExcel = function() {
+                const rows = document.querySelectorAll('.reservation-table tr');
+                const data = [];
+                
+                const headers = [];
+                document.querySelectorAll('.reservation-table th').forEach(header => {
+                    headers.push(header.textContent.trim());
+                });
+                data.push(headers);
+                
+                rows.forEach((row, rowIndex) => {
+                    if (rowIndex === 0) return;
+                    if (row.style.display === 'none') return;
+                    const rowData = [];
+                    const cols = row.querySelectorAll('td');
+                    cols.forEach((col, colIndex) => {
+                        if (colIndex < 4) {
+                            rowData.push(col.textContent.trim());
+                        }
+                    });
+                    data.push(rowData);
+                });
+                
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                XLSX.utils.book_append_sheet(wb, ws, "Réservations");
+                XLSX.writeFile(wb, 'reservations_export_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            };
+
+            // Toggle Status
+            window.toggleStatus = function(id, element) {
+                const statuses = ['confirmée', 'en_attente', 'refusée'];
+                const currentStatus = element.textContent.trim();
+                const nextStatus = statuses[(statuses.indexOf(currentStatus) + 1) % statuses.length];
+                
+                fetch('/api/reservation_logement/' + id + '/status', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: nextStatus })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        element.textContent = nextStatus;
+                        element.className = 'badge badge-' + (
+                            nextStatus === 'confirmée' ? 'success' :
+                            nextStatus === 'en_attente' ? 'warning' : 'danger'
+                        );
+                    } else {
+                        alert('Erreur lors de la mise à jour du statut');
+                    }
+                })
+                .catch(() => alert('Erreur réseau'));
+            };
+
+            // Inline Editing (Placeholder)
+            window.editRow = function(id) {
+                alert('Fonctionnalité d\'édition inline en cours de développement pour Réservation #' + id);
+            };
+
+            // Delete Row
+            window.deleteRow = function(id) {
+                if (confirm('Voulez-vous vraiment supprimer cette réservation ?')) {
+                    fetch('/api/reservation_logement/' + id, {
+                        method: 'DELETE'
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            document.querySelector(`tr[data-id="${id}"]`).remove();
+                        } else {
+                            alert('Erreur lors de la suppression');
+                        }
+                    })
+                    .catch(() => alert('Erreur réseau'));
+                }
+            };
+
+            // Enhanced Statistics Chart
+            const stats = {{ stats|json_encode|raw }};
+            const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+            const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+            const seasons = ['Hiver', 'Printemps', 'Été', 'Automne'];
+            let chartInstance;
+
+            function updateChart(period) {
+                const ctx = document.getElementById('statsChart').getContext('2d');
+                let labels, counts, avgDays, topLogements;
+
+                if (period === 'monthly') {
+                    labels = months;
+                    counts = Object.values(stats.monthly).map(m => m.count);
+                    avgDays = Object.values(stats.monthly).map(m => m.avgDays);
+                    topLogements = Object.values(stats.monthly).map(m => m.topLogement);
+                } else if (period === 'quarterly') {
+                    labels = quarters;
+                    counts = Object.values(stats.quarterly).map(q => q.count);
+                    avgDays = Object.values(stats.quarterly).map(q => q.avgDays);
+                } else {
+                    labels = seasons;
+                    counts = Object.values(stats.seasonal).map(s => s.count);
+                    avgDays = Object.values(stats.seasonal).map(s => s.avgDays);
+                }
+
+                // Update Peak Period
+                const maxCount = Math.max(...counts);
+                const peakIndex = counts.indexOf(maxCount);
+                document.getElementById('peak-period').textContent = labels[peakIndex] + ` (${maxCount} réservations)`;
+
+                if (chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Nombre de Réservations',
+                                data: counts,
+                                backgroundColor: labels.map((_, i) => 
+                                    counts[i] === maxCount ? 
+                                    'rgba(59, 130, 246, 0.9)' : 
+                                    'rgba(79, 70, 229, 0.6)'
+                                ),
+                                borderColor: '#4f46e5',
+                                borderWidth: 1,
+                                yAxisID: 'y',
+                                order: 2
+                            },
+                            {
+                                label: 'Durée Moyenne (jours)',
+                                data: avgDays,
+                                type: 'line',
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                yAxisID: 'y1',
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: { family: 'Inter', size: 14 },
+                                    color: '#1e293b'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const dataset = context.dataset.label;
+                                        const value = context.raw;
+                                        let extra = '';
+                                        if (dataset === 'Nombre de Réservations' && period === 'monthly' && topLogements[context.dataIndex]) {
+                                            extra = `\nLogement principal: Logement #${topLogements[context.dataIndex]}`;
+                                        }
+                                        return `${dataset}: ${value}${extra}`;
+                                    }
+                                },
+                                backgroundColor: '#1e293b',
+                                titleFont: { family: 'Inter', size: 14 },
+                                bodyFont: { family: 'Inter', size: 12 },
+                                padding: 10
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    font: { family: 'Inter', size: 12 },
+                                    color: '#1e293b'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#e2e8f0' },
+                                ticks: {
+                                    font: { family: 'Inter', size: 12 },
+                                    color: '#1e293b',
+                                    stepSize: 1
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Réservations',
+                                    font: { family: 'Inter', size: 14 },
+                                    color: '#1e293b'
+                                }
+                            },
+                            y1: {
+                                beginAtZero: true,
+                                position: 'right',
+                                grid: { display: false },
+                                ticks: {
+                                    font: { family: 'Inter', size: 12 },
+                                    color: '#1e293b'
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Durée (jours)',
+                                    font: { family: 'Inter', size: 14 },
+                                    color: '#1e293b'
+                                }
+                            }
+                        },
+                        animation: {
+                            onComplete: function() {
+                                const chart = this;
+                                chart.data.datasets[0].data.forEach((value, i) => {
+                                    if (value === Math.max(...chart.data.datasets[0].data)) {
+                                        chart.getDatasetMeta(0).data[i].custom = { glow: true };
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Tab Switching
+            const tabs = document.querySelectorAll('.stats-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.setAttribute('aria-selected', 'false');
+                    });
+                    tab.classList.add('active');
+                    tab.setAttribute('aria-selected', 'true');
+                    updateChart(tab.dataset.period);
+                });
+            });
+
+            // Initial Chart
+            updateChart('monthly');
+
+            // Particles Background
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 50, density: { enable: true, value_area: 800 } },
+                    color: { value: '#4f46e5' },
+                    shape: { type: 'circle' },
+                    opacity: { value: 0.5, random: true },
+                    size: { value: 3, random: true },
+                    line_linked: { enable: true, distance: 150, color: '#4f46e5', opacity: 0.4, width: 1 },
+                    move: { enable: true, speed: 2, direction: 'none', random: false, straight: false, out_mode: 'out', bounce: false }
+                },
+                interactivity: {
+                    detect_on: 'canvas',
+                    events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' }, resize: true },
+                    modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+                },
+                retina_detect: true
+            });
+
+            // Export Chart
+            window.exportChart = function() {
+                const canvas = document.getElementById('statsChart');
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'reservations_stats_' + new Date().toISOString().slice(0, 10) + '.png';
+                link.click();
+            };
+
+            // Copy Insights
+            window.copyInsights = function() {
+                const insights = [
+                    `Période la plus réservée: ${document.getElementById('peak-period').textContent}`,
+                    `Logement le plus réservé: {{ stats.topLogement.adresse }} ({{ stats.topLogement.count }} réservations)`,
+                    `Statut dominant: {{ stats.peakStatus.status }} ({{ stats.peakStatus.percent }}%)`
+                ].join('\n');
+                navigator.clipboard.writeText(insights).then(() => {
+                    alert('Insights copiés dans le presse-papiers !');
+                }).catch(() => alert('Erreur lors de la copie'));
+            };
+        });
+    </script>
+{% endblock %}
 {% endblock %}

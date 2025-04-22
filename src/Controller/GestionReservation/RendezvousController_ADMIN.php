@@ -17,10 +17,11 @@ use Symfony\Component\Routing\Attribute\Route;
 final class RendezvousController_ADMIN extends AbstractController
 {
   
-    #[Route('/', name: 'app_rendezvous_index_ADMIN', methods: ['GET'])]
+    #[Route(path: '/', name: 'app_rendezvous_index_ADMIN', methods: ['GET'])]
     public function index(Request $request, RendezvousRepository $rendezvousRepository, LogementRepository $logementRepository): Response
     {
         $status = $request->query->get('status');
+      
         
         if ($status) {
             $rendezvouses = $rendezvousRepository->findBy(['status' => $status]);
