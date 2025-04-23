@@ -4,9 +4,8 @@
 
 {% block stylesheets %}
 {{ parent() }}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-    /* General Styles */
+    /* Styles généraux */
     .dashboard-container {
         max-width: 1400px;
         margin: 3rem auto;
@@ -34,7 +33,7 @@
         margin-bottom: 2rem;
     }
 
-    /* Section Styles */
+    /* Sections */
     .dashboard-section {
         background: #ffffff;
         border-radius: 12px;
@@ -63,7 +62,7 @@
         font-size: 1.2rem;
     }
 
-    /* Filters and Actions */
+    /* Filtres et actions */
     .filters-container {
         display: flex;
         justify-content: space-between;
@@ -139,7 +138,7 @@
         left: 100%;
     }
 
-    /* Table Styles */
+    /* Tableau */
     .transport-table {
         width: 100%;
         border-collapse: separate;
@@ -213,7 +212,11 @@
         color: #3b82f6;
     }
 
-    /* Modal Styles */
+    .compatibility-icon.check { color: #10b981; }
+    .compatibility-icon.exclamation { color: #f97316; }
+    .compatibility-icon.times { color: #ef4444; }
+
+    /* Modale */
     .modal {
         display: none;
         position: fixed;
@@ -251,21 +254,7 @@
         color: #64748b;
     }
 
-    .forecast-form label {
-        display: block;
-        margin: 0.5rem 0 0.2rem;
-        font-weight: 500;
-    }
-
-    .forecast-form input {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-
-    #forecastChart {
+    #compatibilityChart {
         max-width: 100%;
         height: 300px;
     }
@@ -346,9 +335,9 @@
 {% block body %}
 <div class="dashboard-container">
     <h1>Réservations de Transport - Admin Dashboard</h1>
-    <p class="subtitle">Gérez et prévoyez les revenus de vos réservations de transport</p>
+    <p class="subtitle">Optimisez les assignations avec la correspondance intelligente des préférences</p>
 
-    <!-- Filters and Actions Section -->
+    <!-- Filtres et actions -->
     <div class="dashboard-section">
         <h2><i class="fas fa-filter"></i> Filtres & Actions</h2>
         <div class="filters-container">
@@ -364,13 +353,13 @@
                 <input type="date" class="date-input" id="date-end" value="{{ date_end|default('') }}" onchange="applyFilters()">
             </div>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="action-btn" onclick="showRevenueForecast()"><i class="fas fa-dollar-sign"></i> Prévision des Revenus</button>
+                <button class="action-btn" onclick="showCompatibilityAnalytics()"><i class="fas fa-handshake"></i> Correspondance des Préférences</button>
                 <button class="action-btn" onclick="exportToExcel()"><i class="fas fa-download"></i> Exporter Excel</button>
             </div>
         </div>
     </div>
 
-    <!-- Reservations Table Section -->
+    <!-- Tableau des réservations -->
     <div class="dashboard-section">
         <h2><i class="fas fa-table"></i> Liste des Réservations</h2>
         {% if reservations|length > 0 %}
@@ -384,6 +373,7 @@
                     <th data-sort="etudiant">Étudiant</th>
                     <th data-sort="transporteur">Transporteur</th>
                     <th data-sort="status">Statut</th>
+                    <th data-sort="compatibility">Compatibilité</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -392,7 +382,10 @@
                 <tr style="--index: {{ loop.index0 }}"
                     data-id="{{ reservation.id }}"
                     data-distance="{{ reservation.getDistance()|default(0) }}"
-                    data-temps="{{ reservation.tempsArrivage|default('0 min') }}">
+                    data-temps="{{ reservation.tempsArrivage|default('0 min') }}"
+                    data-transporteur="{{ reservation.transporteur ? reservation.transporteur.cin : '' }}"
+                    data-depart="{{ reservation.adresseDepart|default('') }}"
+                    data-destination="{{ reservation.adresseDestination|default('') }}">
                     <td class="tempsArrivage">{{ reservation.tempsArrivage ?: '-' }}</td>
                     <td class="adresseDepart">{{ reservation.adresseDepart ?: '-' }}</td>
                     <td class="adresseDestination">{{ reservation.adresseDestination ?: '-' }}</td>
@@ -407,11 +400,19 @@
                             {{ reservation.status }}
                         </span>
                     </td>
+                    <td class="compatibility">
+                        {% if reservation.transporteur %}
+                        <i class="fas compatibility-icon" data-cin="{{ reservation.transporteur.cin }}"></i>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
                     <td class="actions action-icons">
                         <a href="{{ path('app_reservation_transport_show_ADMIN', {'id': reservation.id}) }}" title="Voir détails">
                             <i class="fas fa-eye"></i>
                         </a>
-                        
+                        <i class="fas fa-edit" onclick="editRow({{ reservation.id }})" title="Modifier"></i>
+                        <i class="fas fa-trash" onclick="deleteRow({{ reservation.id }})" title="Supprimer"></i>
                     </td>
                 </tr>
                 {% endfor %}
@@ -424,27 +425,12 @@
         {% endif %}
     </div>
 
-    <!-- Revenue Forecast Modal -->
-    <div id="forecastModal" class="modal">
+    <!-- Modale d'analyse de compatibilité -->
+    <div id="compatibilityModal" class="modal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeModal('forecastModal')">×</span>
-            <h3>Prévision des Revenus</h3>
-            <div class="forecast-form">
-                <label for="cost-per-km">Coût par Kilomètre (MAD)</label>
-                <input type="number" id="cost-per-km" step="0.01" value="2.5" min="0">
-                <label for="cost-per-minute">Coût par Minute (MAD)</label>
-                <input type="number" id="cost-per-minute" step="0.01" value="0.5" min="0">
-                <label for="fixed-fee">Frais Fixe par Réservation (MAD)</label>
-                <input type="number" id="fixed-fee" step="0.01" value="10" min="0">
-                <label for="group-by">Grouper par</label>
-                <select id="group-by">
-                    <option value="transporteur">Transporteur</option>
-                    <option value="status">Statut</option>
-                    <option value="date">Date</option>
-                </select>
-                <button class="action-btn" onclick="generateForecast()">Générer Prévision</button>
-            </div>
-            <canvas id="forecastChart"></canvas>
+            <span class="modal-close" onclick="closeModal('compatibilityModal')">×</span>
+            <h3>Correspondance des Préférences</h3>
+            <canvas id="compatibilityChart"></canvas>
         </div>
     </div>
 </div>
@@ -455,9 +441,9 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    let forecastChart;
+    let compatibilityChart;
 
-    // Apply Filters
+    // Appliquer les filtres
     function applyFilters() {
         const statut = document.getElementById('filtre-statut').value;
         const dateStart = document.getElementById('date-start').value;
@@ -469,7 +455,7 @@
         window.location.href = '{{ path('app_reservation_transport_index_ADMIN') }}?' + params.toString();
     }
 
-    // Search Reservations
+    // Recherche dans les réservations
     function searchReservations() {
         const query = document.getElementById('search-input').value.toLowerCase();
         const rows = document.querySelectorAll('.transport-table tbody tr');
@@ -480,9 +466,10 @@
             const transporteur = row.querySelector('.transporteur').textContent.toLowerCase();
             row.style.display = (depart.includes(query) || destination.includes(query) || etudiant.includes(query) || transporteur.includes(query)) ? '' : 'none';
         });
+        updateCompatibilityIcons();
     }
 
-    // Table Sorting
+    // Tri du tableau
     document.addEventListener('DOMContentLoaded', function() {
         const headers = document.querySelectorAll('.transport-table th[data-sort]');
         headers.forEach(header => {
@@ -499,6 +486,11 @@
                     if (sortKey === 'distance') {
                         aValue = parseFloat(aValue) || 0;
                         bValue = parseFloat(bValue) || 0;
+                    } else if (sortKey === 'compatibility') {
+                        aValue = a.querySelector('.compatibility-icon')?.classList.contains('check') ? 3 : 
+                                 a.querySelector('.compatibility-icon')?.classList.contains('exclamation') ? 2 : 1;
+                        bValue = b.querySelector('.compatibility-icon')?.classList.contains('check') ? 3 : 
+                                 b.querySelector('.compatibility-icon')?.classList.contains('exclamation') ? 2 : 1;
                     }
                     return isAsc ? 
                         (aValue > bValue ? 1 : -1) : 
@@ -510,19 +502,23 @@
                 rows.forEach(row => tbody.appendChild(row));
             });
         });
+        updateCompatibilityIcons();
     });
 
-    // Export to Excel
+    // Exporter en Excel
     function exportToExcel() {
         const rows = document.querySelectorAll('.transport-table tr');
         const data = [
-            ['Temps Estimé', 'Adresse Départ', 'Adresse Destination', 'Distance (km)', 'Étudiant', 'Transporteur', 'Statut']
+            ['Temps Estimé', 'Adresse Départ', 'Adresse Destination', 'Distance (km)', 'Étudiant', 'Transporteur', 'Statut', 'Compatibilité']
         ];
 
         rows.forEach((row, rowIndex) => {
             if (rowIndex === 0) return;
             if (row.style.display === 'none') return;
             const cols = row.querySelectorAll('td');
+            const compatibility = cols[7].querySelector('.compatibility-icon')?.classList.contains('check') ? 'Excellente' : 
+                                 cols[7].querySelector('.compatibility-icon')?.classList.contains('exclamation') ? 'Partielle' : 
+                                 cols[7].querySelector('.compatibility-icon') ? 'Faible' : '-';
             data.push([
                 cols[0].textContent.trim(),
                 cols[1].textContent.trim(),
@@ -530,7 +526,8 @@
                 cols[3].textContent.trim(),
                 cols[4].textContent.trim(),
                 cols[5].textContent.trim(),
-                cols[6].textContent.trim()
+                cols[6].textContent.trim(),
+                compatibility
             ]);
         });
 
@@ -540,7 +537,7 @@
         XLSX.writeFile(wb, 'transport_reservations_export_' + new Date().toISOString().slice(0, 10) + '.xlsx');
     }
 
-    // Toggle Status
+    // Changer le statut
     function toggleStatus(id, element) {
         const statuses = ['confirmée', 'en_attente', 'refusée'];
         const currentStatus = element.textContent.trim();
@@ -558,6 +555,7 @@
                     nextStatus === 'confirmée' ? 'success' :
                     nextStatus === 'en_attente' ? 'warning' : 'danger'
                 );
+                updateCompatibilityIcons();
             } else {
                 alert('Erreur lors de la mise à jour du statut');
             }
@@ -565,12 +563,12 @@
         .catch(() => alert('Erreur réseau'));
     }
 
-    // Inline Editing (Placeholder)
+    // Édition inline (placeholder)
     function editRow(id) {
         alert('Fonctionnalité d\'édition inline en cours de développement pour Réservation #' + id);
     }
 
-    // Delete Row
+    // Supprimer une ligne
     function deleteRow(id) {
         if (confirm('Voulez-vous vraiment supprimer cette réservation ?')) {
             fetch('/api/reservation_transport/' + id, {
@@ -579,6 +577,7 @@
             .then(response => {
                 if (response.ok) {
                     document.querySelector(`tr[data-id="${id}"]`).remove();
+                    updateCompatibilityIcons();
                 } else {
                     alert('Erreur lors de la suppression');
                 }
@@ -587,65 +586,100 @@
         }
     }
 
-    // Revenue Forecast
-    function showRevenueForecast() {
-        document.getElementById('forecastModal').style.display = 'flex';
+    // Analyse de compatibilité
+    function showCompatibilityAnalytics() {
+        document.getElementById('compatibilityModal').style.display = 'flex';
+        updateCompatibilityChart();
     }
 
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
-        if (modalId === 'forecastModal' && forecastChart) {
-            forecastChart.destroy();
-            forecastChart = null;
+        if (modalId === 'compatibilityModal' && compatibilityChart) {
+            compatibilityChart.destroy();
+            compatibilityChart = null;
         }
     }
 
-    function generateForecast() {
-        const costPerKm = parseFloat(document.getElementById('cost-per-km').value) || 0;
-        const costPerMinute = parseFloat(document.getElementById('cost-per-minute').value) || 0;
-        const fixedFee = parseFloat(document.getElementById('fixed-fee').value) || 0;
-        const groupBy = document.getElementById('group-by').value;
-
+    function updateCompatibilityChart() {
         const rows = Array.from(document.querySelectorAll('.transport-table tbody tr')).filter(row => row.style.display !== 'none');
-        const data = {};
+        const transporteurs = {{ transporteurs|map(t => {'cin': t.cin, 'nom': t.nom, 'prenom': t.prenom})|json_encode|raw }};
+        const compatibility = { excellent: 0, partial: 0, poor: 0 };
 
-        rows.forEach(row => {
-            const distance = parseFloat(row.dataset.distance) || 0;
-            const temps = parseInt(row.dataset.temps) || 0;
-            const status = row.querySelector('.status .badge').textContent.trim();
-            const transporteur = row.querySelector('.transporteur').textContent.trim();
-            const date = row.dataset.id ? new Date(2025, 3, parseInt(row.dataset.id) % 30 + 1).toISOString().slice(0, 10) : 'Unknown';
-
-            let key;
-            if (groupBy === 'transporteur') key = transporteur === '-' ? 'Non assigné' : transporteur;
-            else if (groupBy === 'status') key = status;
-            else key = date;
-
-            if (!data[key]) data[key] = 0;
-            data[key] += (distance * costPerKm) + (temps * costPerMinute) + fixedFee;
+        // Déterminer les zones préférées
+        const preferredZones = {};
+        transporteurs.forEach(t => {
+            const res = rows.filter(row => row.dataset.transporteur === t.cin);
+            const zones = res.map(row => {
+                const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+                const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+                return [depart, destination];
+            }).flat().filter((v, i, a) => a.indexOf(v) === i);
+            preferredZones[t.cin] = zones.length > 0 ? zones[0] : 'unknown';
         });
 
-        if (forecastChart) forecastChart.destroy();
-        const ctx = document.getElementById('forecastChart').getContext('2d');
-        forecastChart = new Chart(ctx, {
-            type: 'bar',
+        rows.forEach(row => {
+            const cin = row.dataset.transporteur;
+            if (!cin) return;
+
+            const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+            const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+            const isMorning = parseInt(row.dataset.id) % 2 === 0; // Simulation horaire (pair = matin)
+            const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
+            const timeMatch = isMorning;
+
+            const score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
+            if (score === 100) compatibility.excellent++;
+            else if (score === 50) compatibility.partial++;
+            else compatibility.poor++;
+        });
+
+        if (compatibilityChart) compatibilityChart.destroy();
+        const ctx = document.getElementById('compatibilityChart').getContext('2d');
+        compatibilityChart = new Chart(ctx, {
+            type: 'doughnut',
             data: {
-                labels: Object.keys(data),
+                labels: ['Excellente (100%)', 'Partielle (50%)', 'Faible (0%)'],
                 datasets: [{
-                    label: 'Revenu Prévu (MAD)',
-                    data: Object.values(data),
-                    backgroundColor: 'rgba(79, 70, 229, 0.5)',
-                    borderColor: 'rgba(79, 70, 229, 1)',
+                    data: [compatibility.excellent, compatibility.partial, compatibility.poor],
+                    backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(249, 115, 22, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                    borderColor: ['rgba(16, 185, 129, 1)', 'rgba(249, 115, 22, 1)', 'rgba(239, 68, 68, 1)'],
                     borderWidth: 1
                 }]
             },
             options: {
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Revenu (MAD)' } },
-                    x: { title: { display: true, text: groupBy === 'transporteur' ? 'Transporteur' : groupBy === 'status' ? 'Statut' : 'Date' } }
-                },
-                plugins: { legend: { position: 'top' } }
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.label}: ${context.raw} réservations`
+                        }
+                    }
+                }
             }
+        });
+
+        updateCompatibilityIcons(preferredZones);
+    }
+
+    function updateCompatibilityIcons(preferredZones) {
+        const rows = Array.from(document.querySelectorAll('.transport-table tbody tr')).filter(row => row.style.display !== 'none');
+        document.querySelectorAll('.compatibility-icon').forEach(icon => {
+            const cin = icon.dataset.cin;
+            const row = rows.find(r => r.dataset.transporteur === cin && r.querySelector('.compatibility-icon') === icon);
+            if (!row) return;
+
+            const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+            const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+            const isMorning = parseInt(row.dataset.id) % 2 === 0;
+            const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
+            const timeMatch = isMorning;
+
+            const score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
+            icon.className = 'fas compatibility-icon ' + (
+                score === 100 ? 'fa-check check' : 
+                score === 50 ? 'fa-exclamation exclamation' : 
+                'fa-times times'
+            );
         });
     }
 </script>

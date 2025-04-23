@@ -13,6 +13,7 @@
         font-family: 'Inter', sans-serif;
         background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
         min-height: 100vh;
+        position: relative;
     }
 
     h1 {
@@ -31,6 +32,35 @@
         color: #64748b;
         text-align: center;
         margin-bottom: 2rem;
+    }
+
+    /* Floating Button */
+    .floating-btn {
+        position: fixed;
+        top: 230px;
+        left: 20px;
+        background: #f97316;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .floating-btn:hover {
+        background: #e8650c;
+        transform: scale(1.1);
+    }
+
+    .floating-btn i {
+        font-size: 1.5rem;
     }
 
     /* Section Styles */
@@ -263,6 +293,15 @@
         .rendezvous-table {
             font-size: 0.9rem;
         }
+
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+        }
+
+        .floating-btn i {
+            font-size: 1.2rem;
+        }
     }
 
     @media (max-width: 768px) {
@@ -286,6 +325,11 @@
         .rendezvous-table th, .rendezvous-table td {
             min-width: 120px;
         }
+
+        .floating-btn {
+            top: 15px;
+            left: 15px;
+        }
     }
 
     @media (max-width: 480px) {
@@ -297,12 +341,26 @@
         .action-btn {
             padding: 0.5rem 1rem;
         }
+
+        .floating-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .floating-btn i {
+            font-size: 1rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="dashboard-container">
+    <!-- Floating Calendar Button -->
+    <button class="floating-btn" onclick="scrollToCalendar()" title="Aller au calendrier">
+        <i class="far fa-calendar-alt"></i>
+    </button>
+
     <h1>Rendez-vous Admin Dashboard</h1>
     <p class="subtitle">Gérez et analysez vos rendez-vous en temps réel</p>
 
@@ -368,7 +426,6 @@
                         <a href="{{ path('app_rendezvous_show_ADMIN', {'id': rendezvou.id}) }}" title="Voir détails">
                             <i class="fas fa-eye"></i>
                         </a>
-                        
                     </td>
                 </tr>
                 {% endfor %}
@@ -387,182 +444,184 @@
         <div id="calendar"></div>
     </div>
 </div>
+{% endblock %}
 
 {% block javascripts %}
-    {{ parent() }}
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
-        <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize FullCalendar
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'fr',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,dayGridWeek'
+{{ parent() }}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize FullCalendar
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'fr',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridWeek'
+            },
+            events: [
+                {% for rendezvou in rendezvouses %}
+                {
+                    title: 'RDV - {{ rendezvou.status }}',
+                    start: '{{ rendezvou.date|date('Y-m-d') }}T{{ rendezvou.heure }}',
+                    color: '{{ rendezvou.status == "confirmée" ? "#10b981" : (rendezvou.status == "en_attente" ? "#f97316" : "#ef4444") }}',
+                    extendedProps: {
+                        status: '{{ rendezvou.status }}',
+                        heure: '{{ rendezvou.heure }}',
+                        logement: '{{ rendezvou.idLogement is iterable ? (rendezvou.idLogement.adresse ?? "Logement #" ~ rendezvou.idLogement.id) : rendezvou.idLogement }}'
+                    }
                 },
-                events: [
-                    {% for rendezvou in rendezvouses %}
-                    {
-                        title: 'RDV - {{ rendezvou.status }}',
-                        start: '{{ rendezvou.date|date('Y-m-d') }}T{{ rendezvou.heure }}',
-                        color: '{{ rendezvou.status == "confirmée" ? "#10b981" : (rendezvou.status == "en_attente" ? "#f97316" : "#ef4444") }}',
-                        extendedProps: {
-                            status: '{{ rendezvou.status }}',
-                            heure: '{{ rendezvou.heure }}',
-                            logement: '{{ rendezvou.idLogement is iterable ? (rendezvou.idLogement.adresse ?? "Logement #" ~ rendezvou.idLogement.id) : rendezvou.idLogement }}'
-                        }
-                    },
-                    {% endfor %}
-                ],
-                eventDidMount: function(info) {
-                    info.el.setAttribute('title', 
-                        `Heure: ${info.event.extendedProps.heure}\n` +
-                        `Logement: ${info.event.extendedProps.logement}\n` +
-                        `Statut: ${info.event.extendedProps.status}`
+                {% endfor %}
+            ],
+            eventDidMount: function(info) {
+                info.el.setAttribute('title', 
+                    `Heure: ${info.event.extendedProps.heure}\n` +
+                    `Logement: ${info.event.extendedProps.logement}\n` +
+                    `Statut: ${info.event.extendedProps.status}`
+                );
+            },
+            eventClick: function(info) {
+                alert(`Rendez-vous: ${info.event.title}\nHeure: ${info.event.extendedProps.heure}\nLogement: ${info.event.extendedProps.logement}`);
+            }
+        });
+        calendar.render();
+
+        // Scroll to Calendar
+        window.scrollToCalendar = function() {
+            const calendarSection = document.querySelector('.calendar-container');
+            if (calendarSection) {
+                calendarSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+
+        // Apply Filters
+        window.applyFilters = function() {
+            const statut = document.getElementById('filtre-statut').value;
+            const periode = document.getElementById('filtre-periode').value;
+            window.location.href = '{{ path('app_rendezvous_index_ADMIN') }}?status=' + encodeURIComponent(statut) + '&periode=' + encodeURIComponent(periode);
+        };
+
+        // Table Sorting
+        const headers = document.querySelectorAll('.rendezvous-table th[data-sort]');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.dataset.sort;
+                const isAsc = !header.classList.contains('asc');
+                headers.forEach(h => h.classList.remove('asc', 'desc'));
+                header.classList.add(isAsc ? 'asc' : 'desc');
+
+                const rows = Array.from(document.querySelectorAll('.rendezvous-table tbody tr'));
+                rows.sort((a, b) => {
+                    let aValue = a.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
+                    let bValue = b.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
+                    
+                    if (sortKey === 'date') {
+                        aValue = new Date(aValue.split('/').reverse().join('-'));
+                        bValue = new Date(bValue.split('/').reverse().join('-'));
+                    } else if (sortKey === 'heure') {
+                        aValue = aValue.replace(':', '');
+                        bValue = bValue.replace(':', '');
+                    }
+                    
+                    return isAsc ? 
+                        (aValue > bValue ? 1 : -1) : 
+                        (aValue < bValue ? 1 : -1);
+                });
+
+                const tbody = document.querySelector('.rendezvous-table tbody');
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+
+        // Export to CSV
+        window.exportToCSV = function() {
+            const rows = document.querySelectorAll('.rendezvous-table tr');
+            const data = [];
+            
+            // Add headers
+            const headers = [];
+            document.querySelectorAll('.rendezvous-table th').forEach(header => {
+                headers.push(header.textContent.trim());
+            });
+            data.push(headers);
+            
+            // Add data
+            rows.forEach((row, rowIndex) => {
+                if (rowIndex === 0) return; // Skip header row
+                
+                const rowData = [];
+                const cols = row.querySelectorAll('td');
+                
+                cols.forEach((col, colIndex) => {
+                    if (colIndex < 4) { // Only first 4 columns
+                        rowData.push(col.textContent.trim());
+                    }
+                });
+                
+                data.push(rowData);
+            });
+            
+            // Create Excel workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Rendez-vous");
+            
+            // Generate Excel file
+            XLSX.writeFile(wb, 'rendezvous_export_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+        };
+
+        // Toggle Status
+        window.toggleStatus = function(id, element) {
+            const statuses = ['confirmée', 'en_attente', 'refusée'];
+            const currentStatus = element.textContent.trim();
+            const nextStatus = statuses[(statuses.indexOf(currentStatus) + 1) % statuses.length];
+            
+            fetch('/api/rendezvous/' + id + '/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: nextStatus })
+            })
+            .then(response => {
+                if (response.ok) {
+                    element.textContent = nextStatus;
+                    element.className = 'badge badge-' + (
+                        nextStatus === 'confirmée' ? 'success' :
+                        nextStatus === 'en_attente' ? 'warning' : 'danger'
                     );
-                },
-                eventClick: function(info) {
-                    alert(`Rendez-vous: ${info.event.title}\nHeure: ${info.event.extendedProps.heure}\nLogement: ${info.event.extendedProps.logement}`);
+                    calendar.refetchEvents();
+                } else {
+                    alert('Erreur lors de la mise à jour du statut');
                 }
-            });
-            calendar.render();
+            })
+            .catch(() => alert('Erreur réseau'));
+        };
 
-            // Apply Filters
-            window.applyFilters = function() {
-                const statut = document.getElementById('filtre-statut').value;
-                const periode = document.getElementById('filtre-periode').value;
-                window.location.href = '{{ path('app_rendezvous_index_ADMIN') }}?status=' + encodeURIComponent(statut) + '&periode=' + encodeURIComponent(periode);
-            };
+        // Inline Editing (Placeholder)
+        window.editRow = function(id) {
+            alert('Fonctionnalité d\'édition inline en cours de développement pour RDV #' + id);
+        };
 
-            // Table Sorting
-            const headers = document.querySelectorAll('.rendezvous-table th[data-sort]');
-            headers.forEach(header => {
-                header.addEventListener('click', () => {
-                    const sortKey = header.dataset.sort;
-                    const isAsc = !header.classList.contains('asc');
-                    headers.forEach(h => h.classList.remove('asc', 'desc'));
-                    header.classList.add(isAsc ? 'asc' : 'desc');
-
-                    const rows = Array.from(document.querySelectorAll('.rendezvous-table tbody tr'));
-                    rows.sort((a, b) => {
-                        let aValue = a.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
-                        let bValue = b.querySelector(`td:nth-child(${Array.from(headers).indexOf(header) + 1})`).textContent.trim();
-                        
-                        if (sortKey === 'date') {
-                            aValue = new Date(aValue.split('/').reverse().join('-'));
-                            bValue = new Date(bValue.split('/').reverse().join('-'));
-                        } else if (sortKey === 'heure') {
-                            aValue = aValue.replace(':', '');
-                            bValue = bValue.replace(':', '');
-                        }
-                        
-                        return isAsc ? 
-                            (aValue > bValue ? 1 : -1) : 
-                            (aValue < bValue ? 1 : -1);
-                    });
-
-                    const tbody = document.querySelector('.rendezvous-table tbody');
-                    tbody.innerHTML = '';
-                    rows.forEach(row => tbody.appendChild(row));
-                });
-            });
-
-            // Export to CSV
-             window.exportToCSV = function() {
-                // Renommer la fonction pour garder la compatibilité
-                const rows = document.querySelectorAll('.rendezvous-table tr');
-                const data = [];
-                
-                // Ajouter les en-têtes
-                const headers = [];
-                document.querySelectorAll('.rendezvous-table th').forEach(header => {
-                    headers.push(header.textContent.trim());
-                });
-                data.push(headers);
-                
-                // Ajouter les données
-                rows.forEach((row, rowIndex) => {
-                    if (rowIndex === 0) return; // Sauter la ligne d'en-tête
-                    
-                    const rowData = [];
-                    const cols = row.querySelectorAll('td');
-                    
-                    cols.forEach((col, colIndex) => {
-                        if (colIndex < 4) { // Seulement les 4 premières colonnes
-                            rowData.push(col.textContent.trim());
-                        }
-                    });
-                    
-                    data.push(rowData);
-                });
-                
-                // Créer un classeur Excel
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(data);
-                XLSX.utils.book_append_sheet(wb, ws, "Rendez-vous");
-                
-                // Générer le fichier Excel
-                XLSX.writeFile(wb, 'rendezvous_export_' + new Date().toISOString().slice(0, 10) + '.xlsx');
-            };
-
-            // Toggle Status
-            window.toggleStatus = function(id, element) {
-                const statuses = ['confirmée', 'en_attente', 'refusée'];
-                const currentStatus = element.textContent.trim();
-                const nextStatus = statuses[(statuses.indexOf(currentStatus) + 1) % statuses.length];
-                
-                // Simulate API call
-                fetch('/api/rendezvous/' + id + '/status', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: nextStatus })
+        // Delete Row (Placeholder)
+        window.deleteRow = function(id) {
+            if (confirm('Voulez-vous vraiment supprimer ce rendez-vous ?')) {
+                fetch('/api/rendezvous/' + id, {
+                    method: 'DELETE'
                 })
                 .then(response => {
                     if (response.ok) {
-                        element.textContent = nextStatus;
-                        element.className = 'badge badge-' + (
-                            nextStatus === 'confirmée' ? 'success' :
-                            nextStatus === 'en_attente' ? 'warning' : 'danger'
-                        );
+                        document.querySelector(`tr[data-id="${id}"]`).remove();
                         calendar.refetchEvents();
                     } else {
-                        alert('Erreur lors de la mise à jour du statut');
+                        alert('Erreur lors de la suppression');
                     }
                 })
                 .catch(() => alert('Erreur réseau'));
-            };
-
-            // Inline Editing (Placeholder)
-            window.editRow = function(id) {
-                alert('Fonctionnalité d\'édition inline en cours de développement pour RDV #' + id);
-                // Implement inline editing logic here
-            };
-
-            // Delete Row (Placeholder)
-            window.deleteRow = function(id) {
-                if (confirm('Voulez-vous vraiment supprimer ce rendez-vous ?')) {
-                    // Simulate API call
-                    fetch('/api/rendezvous/' + id, {
-                        method: 'DELETE'
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            document.querySelector(`tr[data-id="${id}"]`).remove();
-                            calendar.refetchEvents();
-                        } else {
-                            alert('Erreur lors de la suppression');
-                        }
-                    })
-                    .catch(() => alert('Erreur réseau'));
-                }
-            };
-        });
-    </script>
-{% endblock %}
-</div>
+            }
+        };
+    });
+</script>
 {% endblock %}

@@ -23,10 +23,8 @@ class ReservationTransportController_ADMIN extends AbstractController
         $this->entityManager = $entityManager;
     }
 
-    #[Route('/reservation/transport_ADMIN', name: 'app_reservation_transport_index_ADMIN', methods: ['GET'])]
-    public function index(Request $request, ReservationTransportRepository $reservationTransportRepository, UtilisateurRepository $utilisateurRepository): Response
+    #[Route('/reservation/transport_ADMIN', name: 'app_reservation_transport_index_ADMIN', methods: ['GET'])]    public function index(Request $request, ReservationTransportRepository $reservationTransportRepository, UtilisateurRepository $utilisateurRepository): Response
     {
-    
         $status = $request->query->get('status');
         $dateStart = $request->query->get('date_start');
         $dateEnd = $request->query->get('date_end');
@@ -80,7 +78,6 @@ class ReservationTransportController_ADMIN extends AbstractController
         return $this->json(['success' => true]);
     }
 
-
   
     #[Route('/{id}', name: 'app_reservation_transport_show_ADMIN', methods: ['GET'])]
     public function show(ReservationTransport $reservationTransport): Response
@@ -94,3 +91,4 @@ class ReservationTransportController_ADMIN extends AbstractController
 
     
 }
+

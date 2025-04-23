@@ -2,9 +2,308 @@
 
 {% block title %}Home - StuDar{% endblock %}
 
+{% block css %}
+    <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}">
+    <style>
+        .main-banner .carousel-inner {
+            height: 500px;
+            overflow: hidden;
+            border-radius: 15px; /* Subtle rounding */
+            clip-path: polygon(
+                0% 2%, 2% 0%, 98% 0%, 100% 2%,
+                100% 98%, 98% 100%, 2% 100%, 0% 98%
+            ); /* Less bubbly shape */
+            animation: pulse 10s ease-in-out infinite; /* Subtle animation */
+        }
+
+        
+
+        .main-banner .carousel-item {
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            padding: 40px 10%;
+            height: 100%;
+            position: relative;
+        }
+
+        .main-banner .item-1 {
+            background-image: url({{ asset('images/pexels-cottonbro-5077049.jpg') }});
+        }
+
+        .main-banner .item-2 {
+            background-image: url({{ asset('images/meubleocc1.jpg') }});
+        }
+
+        .main-banner .item-3 {
+            background-image: url({{ asset('images/tranposrt.jpg') }});
+        }
+
+        .main-banner .carousel-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .main-banner .header-text {
+            position: absolute;
+            z-index: 2;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            perspective: 1000px;
+            width: 40%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .main-banner .carousel-item.active .header-text {
+            opacity: 1;
+        }
+
+        /* Positioning for each slide */
+        .main-banner .item-1 .header-text,
+        .main-banner .item-3 .header-text {
+            right: 10%;
+            text-align: right;
+            transform: translateY(-50%) translateX(20px);
+        }
+
+        .main-banner .item-2 .header-text {
+            left: 10%;
+            text-align: left;
+            transform: translateY(-50%) translateX(-20px);
+        }
+
+        .main-banner .carousel-item.active .item-1 .header-text,
+        .main-banner .carousel-item.active .item-3 .header-text {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .main-banner .carousel-item.active .item-2 .header-text {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        /* Category Badge - Light Blue-Grey Container with Glassmorphism */
+        .main-banner .header-text span.category {
+            background: rgba(176, 196, 222, 0.3); /* Light blue-grey */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff; /* White for clarity */
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            display: inline-block;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+            animation: shine 2s infinite ease-in-out;
+            transition: transform 0.3s ease; /* Hover animation */
+        }
+
+        .main-banner .header-text span.category:hover {
+            transform: scale(1.05); /* Subtle scale on hover for liveliness */
+        }
+
+        .main-banner .header-text span.category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.5s;
+        }
+
+        .main-banner .carousel-item.active .header-text span.category::before {
+            left: 100%;
+        }
+
+        /* Main Heading - White with White Shadow */
+        /* Main Heading - Light Grey with White Shine */
+        .main-banner .header-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color:rgb(105, 104, 104); /* Light grey */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+            line-height: 1.3;
+            margin: 0 0 20px;
+            padding-bottom: 15px;
+            position: relative;
+            animation: shine 2s infinite ease-in-out;
+        }
+
+        .main-banner .header-text h2:hover {
+            transform: scale(1.05); /* Subtle scale on hover for liveliness */
+        }
+
+        .main-banner .header-text h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 100%; /* Full width of text */
+    height: 5px; /* Fine line */
+    background: linear-gradient(90deg, rgba(129, 127, 127, 0.5), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.5)); /* Gradient for sparkle */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5); /* Glowing effect */
+    animation: diamondShine 3s ease-in-out infinite; /* Shimmer animation */
+}
+
+.main-banner .item-1 .header-text h2::after,
+.main-banner .item-3 .header-text h2::after {
+    right: 0;
+}
+
+.main-banner .item-2 .header-text h2::after {
+    left: 0;
+}
+
+/* Diamond shine animation */
+@keyframes diamondShine {
+    0%, 100% {
+        background-position: -100%;
+    }
+    50% {
+        background-position: 100%;
+    }
+}
+
+        /* Shine Animation */
+        @keyframes shine {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0);
+            }
+            50% {
+                transform: translateY(calc(-50% - 10px)) translateX(0);
+            }
+        }
+
+        .main-banner .carousel-control-prev,
+        .main-banner .carousel-control-next {
+            width: 100px;
+            height: 0px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 50%;
+        }
+
+        .main-banner .carousel-control-prev:hover,
+        .main-banner .carousel-control-next:hover {
+            background: rgba(123, 117, 117, 0.8);
+        }
+
+        .main-banner .carousel-control-prev-icon,
+        .main-banner .carousel-control-next-icon {
+            background-image: none;
+            color: #fff;
+            font-size: 30px;
+            line-height: 60px;
+        }
+
+        .main-banner .carousel-control-prev-icon::before {
+            content: '\2039';
+        }
+
+        .main-banner .carousel-control-next-icon::before {
+            content: '\203A';
+        }
+
+        .main-banner .carousel-indicators {
+            bottom: 20px;
+        }
+
+        .main-banner .carousel-indicators [data-bs-target] {
+            width: 12px;
+            height: 12px;
+            background-color: rgba(150, 149, 149, 0.5);
+            border-radius: 50%;
+            margin: 0 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .main-banner .carousel-indicators .active {
+            background-color: #ffffff;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            .main-banner .header-text {
+                width: 50%;
+            }
+
+            .main-banner .header-text h2 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-banner .carousel-inner {
+                height: 350px;
+                border-radius: 10px;
+                clip-path: polygon(
+                    0% 3%, 3% 0%, 97% 0%, 100% 3%,
+                    100% 97%, 97% 100%, 3% 100%, 0% 97%
+                ); /* Adjusted for smaller screens */
+            }
+
+            .main-banner .header-text {
+                width: 60%;
+            }
+
+            .main-banner .header-text h2 {
+                font-size: 1.8rem;
+                line-height: 1.2;
+                
+            }
+
+            .main-banner .header-text span.category {
+                padding: 8px 20px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-banner .header-text {
+                width: 80%;
+            }
+
+            .main-banner .header-text h2 {
+                font-size: 1.6rem;
+            }
+
+            .main-banner .header-text span.category {
+                padding: 6px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
     <!-- Carousel -->
-    <div id="housingCarousel" class="carousel slide main-banner" data-bs-ride="carousel" >
+    <div id="housingCarousel" class="carousel slide main-banner" data-bs-ride="carousel">
         <!-- Indicators/dots -->
         <div class="carousel-indicators">
             <button type="button" data-bs-target="#housingCarousel" data-bs-slide-to="0" class="active" aria-label="Slide 1"></button>
@@ -13,23 +312,23 @@
         </div>
 
         <!-- The slideshow/carousel -->
-        <div class="carousel-inner" >
-            <div class="carousel-item active item-1" >
+        <div class="carousel-inner">
+            <div class="carousel-item item-1 active">
                 <div class="header-text">
                     <span class="category">Tunisie</span>
-                    <h2>Trouvez le logement étudiant de vos rêves en quelques clics !<br> Des offres adaptées à votre budget et à vos besoins, où que vous soyez.</h2>
+                    <h2>Découvrez votre maison étudiante idéale<br>Sans effort, abordable et adapté à vos besoins</h2>
                 </div>
             </div>
             <div class="carousel-item item-2">
                 <div class="header-text">
                     <span class="category">Tunisie</span>
-                    <h2>Décorez votre intérieur sans vous ruiner !<br> Découvrez des meubles d'occasion de qualité à des prix imbattables.</h2>
+                    <h2>Aménagez votre espace avec un budget limité<br>Des meubles d'occasion de qualité vous attendent</h2>
                 </div>
             </div>
             <div class="carousel-item item-3">
                 <div class="header-text">
-                    <span class="category">Tunis</span>
-                    <h2>Déménagez vos meubles en toute simplicité !<br>Trouvez des transporteurs fiables et économiques pour faciliter vos achats.</h2>
+                    <span class="category">Tunisie</span>
+                    <h2>Déplacez-vous en toute confiance<br>Un transport fiable pour vos biens</h2>
                 </div>
             </div>
         </div>
@@ -45,197 +344,215 @@
         </button>
     </div>
 
-<div class="properties section">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Logement</h6>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-01.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$2.264.000</h6>
-            <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
-            <ul>
-              <li>Bedrooms: <span>8</span></li>
-              <li>Bathrooms: <span>8</span></li>
-              <li>Area: <span>545m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>6 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="{{ path('app_rendezvous_new') }}" >Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-02.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.180.000</h6>
-            <h4><a href="#">54 Mid Street Florida, OR 27001</a></h4>
-            <ul>
-              <li>Bedrooms: <span>6</span></li>
-              <li>Bathrooms: <span>5</span></li>
-              <li>Area: <span>450m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>8 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-03.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.460.000</h6>
-            <h4><a href="#">26 Old Street Miami, OR 38540</a></h4>
-            <ul>
-              <li>Bedrooms: <span>5</span></li>
-              <li>Bathrooms: <span>4</span></li>
-              <li>Area: <span>225m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>10 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-     
-      </div>
-    </div>
-  </div>
-<div class="properties section">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-4 offset-lg-4">
-                <div class="section-heading text-center">
-                    <h6>| Meubles</h6>
+    <div class="properties section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 offset-lg-4">
+                    <div class="section-heading text-center">
+                        <h6>| Logement</h6>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            {% for meuble in meubles|slice(0, 3) %}
+            <div class="row">
                 <div class="col-lg-4 col-md-6">
                     <div class="item">
-                        <a href="#"><img src="{{ asset('images/' ~ meuble.image) }}" alt="{{ meuble.nom }}"></a>
-                        <div class="item-content">
-                            <span class="category">{{ meuble.nom }}</span>
-                            <h4>{{ meuble.description|length > 50 ? meuble.description|slice(0, 50) ~ '...' : meuble.description }}</h4>
-                            <div class="price">{{ meuble.prix }} TND</div>
-                            <div class="main-button">
-                                <a href="#">Contacter</a>
-                            </div>
+                        <a href="#"><img src="{{ asset('images/property-01.jpg') }}" alt=""></a>
+                        <span class="category">Luxury Villa</span>
+                        <h6>$2.264.000</h6>
+                        <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
+                        <ul>
+                            <li>Bedrooms: <span>8</span></li>
+                            <li>Bathrooms: <span>8</span></li>
+                            <li>Area: <span>545m2</span></li>
+                            <li>Floor: <span>3</span></li>
+                            <li>Parking: <span>6 spots</span></li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="{{ path('app_rendezvous_new') }}">Schedule a visit</a>
                         </div>
                     </div>
                 </div>
-            {% else %}
-                <div class="col-12">
-                    <p>Aucun meuble disponible pour le moment.</p>
+                <div class="col-lg-4 col-md-6">
+                    <div class="item">
+                        <a href="#"><img src="{{ asset('images/property-02.jpg') }}" alt=""></a>
+                        <span class="category">Luxury Villa</span>
+                        <h6>$1.180.000</h6>
+                        <h4><a href="#">54 Mid Street Florida, OR 27001</a></h4>
+                        <ul>
+                            <li>Bedrooms: <span>6</span></li>
+                            <li>Bathrooms: <span>5</span></li>
+                            <li>Area: <span>450m2</span></li>
+                            <li>Floor: <span>3</span></li>
+                            <li>Parking: <span>8 spots</span></li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="#">Schedule a visit</a>
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="item">
+                        <a href="#"><img src="{{ asset('images/property-03.jpg') }}" alt=""></a>
+                        <span class="category">Luxury Villa</span>
+                        <h6>$1.460.000</h6>
+                        <h4><a href="#">26 Old Street Miami, OR 38540</a></h4>
+                        <ul>
+                            <li>Bedrooms: <span>5</span></li>
+                            <li>Bathrooms: <span>4</span></li>
+                            <li>Area: <span>225m2</span></li>
+                            <li>Floor: <span>3</span></li>
+                            <li>Parking: <span>10 spots</span></li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="#">Schedule a visit</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-  <div class="properties section">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Transport</h6>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-01.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$2.264.000</h6>
-            <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
-            <ul>
-              <li>Bedrooms: <span>8</span></li>
-              <li>Bathrooms: <span>8</span></li>
-              <li>Area: <span>545m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>6 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
+    <div class="properties section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 offset-lg-4">
+                    <div class="section-heading text-center">
+                        <h6>| Meubles</h6>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-02.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.180.000</h6>
-            <h4><a href="#">54 Mid Street Florida, OR 27001</a></h4>
-            <ul>
-              <li>Bedrooms: <span>6</span></li>
-              <li>Bathrooms: <span>5</span></li>
-              <li>Area: <span>450m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>8 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
+            <div class="row">
+                {% for meuble in meubles|slice(0, 3) %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="item">
+                            <a href="#"><img src="{{ asset('images/' ~ meuble.image) }}" alt="{{ meuble.nom }}"></a>
+                            <div class="item-content">
+                                <span class="category">{{ meuble.nom }}</span>
+                                <h4>{{ meuble.description|length > 50 ? meuble.description|slice(0, 50) ~ '...' : meuble.description }}</h4>
+                                <div class="price">{{ meuble.prix }} TND</div>
+                                <div class="main-button">
+                                    <a href="#">Contacter</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <p>Aucun meuble disponible pour le moment.</p>
+                    </div>
+                {% endfor %}
             </div>
-          </div>
         </div>
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-03.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$1.460.000</h6>
-            <h4><a href="#">26 Old Street Miami, OR 38540</a></h4>
-            <ul>
-              <li>Bedrooms: <span>5</span></li>
-              <li>Bathrooms: <span>4</span></li>
-              <li>Area: <span>225m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>10 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="#">Schedule a visit</a>
-            </div>
-          </div>
-        </div>
-     
-      </div>
     </div>
-  </div>
-  <div class="video section">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Video View</h6>
-            <h2>Get Closer View & Different Feeling</h2>
-          </div>
+    <div class="properties section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 offset-lg-4">
+                    <div class="section-heading text-center">
+                        <h6>| Transport</h6>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <div class="item">
+                        <a href="#"><img src="{{ asset('images/property-01.jpg') }}" alt=""></a>
+                        <span class="category">Luxury Villa</span>
+                        <h6>$2.264.000</h6>
+                        <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
+                        <ul>
+                            <li>Bedrooms: <span>8</span></li>
+                            <li>Bathrooms: <span>8</span></li>
+                            <li>Area: <span>545m2</span></li>
+                            <li>Floor: <span>3</span></li>
+                            <li>Parking: <span>6 spots</span></li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="#">Schedule a visit</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="item">
+                        <a href="#"><img src="{{ asset('images/property-02.jpg') }}" alt=""></a>
+                        <span class="category">Luxury Villa</span>
+                        <h6>$1.180.000</h6>
+                        <h4><a href="#">54 Mid Street Florida, OR 27001</a></h4>
+                        <ul>
+                            <li>Bedrooms: <span>6</span></li>
+                            <li>Bathrooms: <span>5</span></li>
+                            <li>Area: <span>450m2</span></li>
+                            <li>Floor: <span>3</span></li>
+                            <li>Parking: <span>8 spots</span></li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="#">Schedule a visit</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="item">
+                        <a href="#"><img src="{{ asset('images/property-03.jpg') }}" alt=""></a>
+                        <span class="category">Luxury Villa</span>
+                        <h6>$1.460.000</h6>
+                        <h4><a href="#">26 Old Street Miami, OR 38540</a></h4>
+                        <ul>
+                            <li>Bedrooms: <span>5</span></li>
+                            <li>Bathrooms: <span>4</span></li>
+                            <li>Area: <span>225m2</span></li>
+                            <li>Floor: <span>3</span></li>
+                            <li>Parking: <span>10 spots</span></li>
+                        </ul>
+                        <div class="main-button">
+                            <a href="#">Schedule a visit</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
+    <div class="video section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 offset-lg-4">
+                    <div class="section-heading text-center">
+                        <h6>| Video View</h6>
+                        <h2>Get Closer View & Different Feeling</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <div class="video-content">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-10 offset-lg-1">
-          <div class="video-frame">
-            <img src="assets/images/video-frame.jpg" alt="">
-            <a href="https://youtube.com" target="_blank"><i class="fa fa-play"></i></a>
-          </div>
+    <div class="video-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-10 offset-lg-1">
+                    <div class="video-frame">
+                        <img src="{{ asset('images/video-frame.jpg') }}" alt="">
+                        <a href="https://youtube.com" target="_blank"><i class="fa fa-play"></i></a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const carousel = document.querySelector('#housingCarousel');
+            const items = carousel.querySelectorAll('.carousel-item');
+
+            // Enhance Bootstrap carousel transitions
+            items.forEach(item => {
+                item.addEventListener('slid.bs.carousel', function () {
+                    const activeItem = carousel.querySelector('.carousel-item.active');
+                    activeItem.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        activeItem.style.transform = 'scale(1)';
+                    }, 500);
+                });
+            });
+        });
+    </script>
 {% endblock %}
