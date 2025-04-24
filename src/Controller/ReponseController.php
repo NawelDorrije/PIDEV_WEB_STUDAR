@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Notifier\TexterInterface;
+use Symfony\Component\Notifier\Message\SmsMessage;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Security;
 
@@ -35,7 +37,8 @@ class ReponseController extends AbstractController
         EntityManagerInterface $entityManager,
         ReponseRepository $reponseRepository,
         ChatbotService $chatbotService,
-        MailerInterface $mailer
+        MailerInterface $mailer,
+        TexterInterface $texter
     ): Response {
         // Récupérer l'utilisateur connecté (admin)
         $admin = $this->security->getUser();
@@ -62,7 +65,7 @@ class ReponseController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // Mettre à jour le statut de la réclamation à "traité"
-            $reclamation->setStatut('traité');            
+            $reclamation->setStatut('traité'); 
             // Persister la réponse et la réclamation mise à jour
             $entityManager->persist($reponse);
             $entityManager->persist($reclamation);
@@ -71,13 +74,15 @@ class ReponseController extends AbstractController
             // Récupérer l'utilisateur (auteur de la réclamation)
             $user = $reclamation->getUtilisateur();
             $userEmail = $user ? $user->getEmail() : null;
+            $userPhone = $user ? $user->getNumTel() : null;
 
             // Récupérer le propriétaire du logement
             $logement = $reclamation->getLogement();
             $proprietaire = $logement ? $logement->getUtilisateurCin() : null;
             $proprietaireEmail = $proprietaire ? $proprietaire->getEmail() : null;
+            $proprietairePhone = $proprietaire ? $proprietaire->getNumTel() : null;
 
-            // Envoyer un email à l'utilisateur (auteur de la réclamation)
+            // Envoyer un email à l'utilisateur
             if ($userEmail && filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
                 $emailToUser = (new Email())
                     ->from('no-reply@yourdomain.com')
@@ -89,9 +94,32 @@ class ReponseController extends AbstractController
                         'user' => $user,
                     ]));
 
-                $mailer->send($emailToUser);
+                try {
+                    $mailer->send($emailToUser);
+                } catch (\Exception $e) {
+                    error_log('Failed to send email to user: ' . $e->getMessage());
+                    $this->addFlash('warning', 'La réponse a été enregistrée, mais l\'email à l\'utilisateur n\'a pas pu être envoyé.');
+                }
             } else {
                 error_log('Invalid or missing email address for user: ' . ($user ? $user->getCin() : 'Unknown'));
+            }
+
+            // Envoyer un SMS à l'utilisateur
+            if ($userPhone) {
+                $smsToUser = new SmsMessage(
+                    $userPhone,
+                    'Votre réclamation #' . $reclamation->getId() . ' a été traitée. Consultez votre email pour plus de détails.'
+                );
+                $smsToUser->transport('infobip');
+
+                try {
+                    $texter->send($smsToUser);
+                } catch (\Exception $e) {
+                    error_log('Failed to send SMS to user: ' . $e->getMessage());
+                    $this->addFlash('warning', 'La réponse a été enregistrée, mais le SMS à l\'utilisateur n\'a pas pu être envoyé.');
+                }
+            } else {
+                error_log('Missing phone number for user: ' . ($user ? $user->getCin() : 'Unknown'));
             }
 
             // Générer un message pour le propriétaire via l'IA
@@ -103,6 +131,10 @@ class ReponseController extends AbstractController
                     $reponse->getContenueReponse()
                 );
                 $messageForProprietaire = $chatbotService->getResponse($promptForProprietaire);
+
+                if (str_starts_with($messageForProprietaire, 'Error:')) {
+                    $messageForProprietaire = 'Une réclamation concernant votre logement a été traitée. Veuillez prendre les mesures nécessaires si besoin.';
+                }
 
                 $emailToProprietaire = (new Email())
                     ->from('no-reply@yourdomain.com')
@@ -116,9 +148,32 @@ class ReponseController extends AbstractController
                         'messageForProprietaire' => $messageForProprietaire,
                     ]));
 
-                $mailer->send($emailToProprietaire);
+                try {
+                    $mailer->send($emailToProprietaire);
+                } catch (\Exception $e) {
+                    error_log('Failed to send email to proprietaire: ' . $e->getMessage());
+                    $this->addFlash('warning', 'La réponse a été enregistrée, mais l\'email au propriétaire n\'a pas pu être envoyé.');
+                }
             } else {
                 error_log('Invalid or missing email address for proprietaire: ' . ($proprietaire ? $proprietaire->getCin() : 'Unknown'));
+            }
+
+            // Envoyer un SMS au propriétaire
+            if ($proprietairePhone) {
+                $smsToProprietaire = new SmsMessage(
+                    $proprietairePhone,
+                    'Une réclamation pour votre logement #' . $logement->getId() . ' a été traitée. Consultez votre email pour plus de détails.'
+                );
+                $smsToProprietaire->transport('infobip');
+
+                try {
+                    $texter->send($smsToProprietaire);
+                } catch (\Exception $e) {
+                    error_log('Failed to send SMS to proprietaire: ' . $e->getMessage());
+                    $this->addFlash('warning', 'La réponse a été enregistrée, mais le SMS au propriétaire n\'a pas pu être envoyé.');
+                }
+            } else {
+                error_log('Missing phone number for proprietaire: ' . ($proprietaire ? $proprietaire->getCin() : 'Unknown'));
             }
 
             $this->addFlash('success', 'La réponse a été envoyée avec succès et la réclamation a été marquée comme traitée.');

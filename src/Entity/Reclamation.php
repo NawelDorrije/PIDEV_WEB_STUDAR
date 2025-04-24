@@ -112,6 +112,7 @@ class Reclamation
         $this->statut = $statut;
         return $this;
     }
+    
 
     public function getLogement(): ?Logement
     {
