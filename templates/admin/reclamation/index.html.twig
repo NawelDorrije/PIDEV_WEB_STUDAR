@@ -12,67 +12,97 @@
             transition: all 0.3s ease;
             border: none;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
-            min-height: 250px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            min-height: 280px;
             width: 100%;
         }
-        .reclamation-card.en-cours {
-            border-left: 5px solid #007bff; /* Bleu pour "en cours" */
+        .reclamation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
-        .reclamation-card.traite {
-            border-left: 5px solid #28a745; /* Vert pour "traité" */
+        .reclamation-card.bg-primary {
+            background-color: #5a8dee;
         }
-        .reclamation-card.refuse {
-            border-left: 5px solid #dc3545; /* Rouge pour "refusé" */
+        .reclamation-card.bg-success {
+            background-color: #5cb85c;
+        }
+        .reclamation-card.bg-danger {
+            background-color: #d9534f;
+        }
+        .reclamation-card.bg-secondary {
+            background-color: #6c757d;
+        }
+        .reclamation-card, 
+        .reclamation-card .card-header,
+        .reclamation-card .card-body,
+        .reclamation-card .card-body p,
+        .reclamation-card .card-body strong,
+        .reclamation-card .card-footer {
+            color: #fff !important;
         }
         .card-header {
-            background: linear-gradient(90deg, #2c3e50, #4a5b6b);
-            color: #fff;
-            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 15px;
             border-radius: 12px 12px 0 0;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
         .card-body {
-            padding: 20px;
+            padding: 25px;
             font-size: 0.95rem;
         }
         .card-body p {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
         }
+        .card-body strong {
+            font-weight: 500;
+            margin-left: 5px;
+        }
         .card-body i {
-            margin-right: 8px;
-            color: #6c757d;
+            margin-right: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
         }
         .card-footer {
-            padding: 10px;
-            background: #f8f9fa;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 0 0 12px 12px;
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
+            gap: 12px;
         }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.85rem;
+        .card-footer .btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
             border-radius: 5px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: transparent;
+            color: #fff !important;
         }
-        .btn-info {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
+        .card-footer .btn-info {
+            border-color: #0dcaf0;
         }
-        .btn-warning {
-            background-color: #ffc107;
+        .card-footer .btn-info:hover {
+            background-color: #0dcaf0;
+            color: #fff !important;
+        }
+        .card-footer .btn-warning {
             border-color: #ffc107;
         }
-        .btn-danger {
-            background-color: #dc3545;
+        .card-footer .btn-warning:hover {
+            background-color: #ffc107;
+            color: #fff !important;
+        }
+        .card-footer .btn-danger {
             border-color: #dc3545;
         }
-        .form-group .i{
-            margin-right: 30px;
+        .card-footer .btn-danger:hover {
+            background-color: #dc3545;
+            color: #fff !important;
         }
         /* Contenu principal */
         .reclamation-content {
@@ -81,21 +111,22 @@
         .row1 {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px; /* Espacement uniforme entre les cartes */
+            gap: 25px;
         }
         .col-lg-4 {
-            flex: 1 1 calc(33.333% - 20px); /* Ajustement pour l'espacement */
-            max-width: calc(33.333% - 20px);
+            flex: 1 1 calc(33.333% - 25px);
+            max-width: calc(33.333% - 25px);
         }
 
-        /* Style pour la nouvelle barre de navigation */
+        /* Style pour la barre de navigation */
         .navbar-filter {
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 10px 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            background-color: #f8f9fa;
         }
-        .navbar-filter .form-inline {
+        .navbar-filter .filter-form {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
@@ -113,9 +144,7 @@
             font-weight: 500;
         }
         .navbar-filter .form-control {
-            {# width: 180px;;
-            padding-left: 30px;  #};
-            padding: 8px 8px 8px 35px; /* Plus de padding à gauche pour l'icône */
+            padding: 8px 8px 8px 35px;
         }
         .navbar-filter .btn {
             margin-left: 10px;
@@ -138,19 +167,11 @@
             color: #6c757d;
         }
 
-        {# /* Restaurer les proportions de navbar-main */
-        .navbar-main {
-            padding: 0 15px;
-        } #}
-        {# .navbar-main .container-fluid {
-            padding: 10px 0;
-        } #}
-
         /* Responsive Design */
         @media (max-width: 992px) {
             .col-lg-4 {
-                flex: 1 1 calc(50% - 20px);
-                max-width: calc(50% - 20px);
+                flex: 1 1 calc(50% - 25px);
+                max-width: calc(50% - 25px);
             }
             .navbar-filter .form-control {
                 width: 150px;
@@ -171,11 +192,11 @@
             .card-header {
                 font-size: 1rem;
             }
-            .btn-sm {
-                padding: 5px 8px;
-                font-size: 0.75rem;
+            .card-footer .btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
             }
-            .navbar-filter .form-inline {
+            .navbar-filter .filter-form {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
@@ -195,20 +216,20 @@
 {% endblock %}
 
 {% block body %}
-    <main class="main-content position-relative  reclamation-container">
-        <!-- Nouvelle barre de navigation pour la recherche et les filtres -->
-        <div class="navbar navbar-light bg-light navbar-filter">
-            <form class="form-inline" method="get" action="{{ path('admin_reclamation') }}">
+    <main class="main-content position-relative reclamation-container">
+        <!-- Barre de navigation pour la recherche et les filtres -->
+        <div class="navbar-filter">
+            <form class="filter-form" method="get" action="{{ path('admin_reclamation') }}">
                 <!-- Recherche -->
                 <div class="form-group search-group">
                     <i class="fas fa-search"></i>
-                    <input class="form-control mr-sm-2" type="search" placeholder="Rechercher..." aria-label="Search" id="searchReclamation">
+                    <input class="form-control" type="search" placeholder="Rechercher..." aria-label="Search" id="searchReclamation">
                 </div>
                 <!-- Filtre par utilisateur -->
                 <div class="form-group">
                     <label for="user_filter">Utilisateur :</label>
-                    <i class="fas fa-user"></i>
-                    <select class="form-control mr-sm-2" id="user_filter" name="user_filter">
+                    
+                    <select class="form-control" id="user_filter" name="user_filter">
                         <option value="">Tous les utilisateurs</option>
                         {% for user in users %}
                             <option value="{{ user.cin }}" {{ selected_user == user.cin ? 'selected' : '' }}>
@@ -217,14 +238,25 @@
                         {% endfor %}
                     </select>
                 </div>
+                <!-- Filtre par statut -->
+                <div class="form-group">
+                    <label for="statut_filter">Statut :</label>
+                    
+                    <select class="form-control" id="statut_filter" name="statut_filter">
+                        <option value="">Tous les statuts</option>
+                        <option value="en cours" {{ selected_statut == 'en cours' ? 'selected' : '' }}>En cours</option>
+                        <option value="traité" {{ selected_statut == 'traité' ? 'selected' : '' }}>Traité</option>
+                        <option value="refusé" {{ selected_statut == 'refusé' ? 'selected' : '' }}>Refusé</option>
+                    </select>
+                </div>
                 <!-- Filtre par date -->
                 <div class="form-group">
                     <label for="date_filter">Date :</label>
                     <i class="fas fa-calendar-alt"></i>
-                    <input type="date" class="form-control mr-sm-2" id="date_filter" name="date_filter" value="{{ selected_date }}">
+                    <input type="date" class="form-control" id="date_filter" name="date_filter" value="{{ selected_date }}">
                 </div>
-                <button type="submit" class="btn btn-outline-success my-2 my-sm-0">Filtrer</button>
-                <button type="button" class="btn btn-outline-secondary my-2 my-sm-0" onclick="window.location.href='{{ path('admin_reclamation') }}'">Réinitialiser</button>
+                {# <button type="submit" class="btn btn-outline-success">Filtrer</button> #}
+                <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ path('admin_reclamation') }}'">Réinitialiser</button>
             </form>
         </div>
 
@@ -235,8 +267,12 @@
                 <div class="row1" id="reclamationList">
                     {% if reclamations|length > 0 %}
                         {% for reclamation in reclamations %}
-                            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
-                                <div class="card reclamation-card {{ reclamation.statut|replace({' ': '-'})|default('en-cours') }}">
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-4 reclamation-card-container">
+                                <div class="card reclamation-card text-white {{
+                                    reclamation.statut == 'en cours' ? 'bg-primary' :
+                                    reclamation.statut == 'traité' ? 'bg-success' :
+                                    reclamation.statut == 'refusé' ? 'bg-danger' : 'bg-secondary'
+                                }}">
                                     <div class="card-header">
                                         <h6 class="mb-0">Réclamation #{{ reclamation.id }}</h6>
                                     </div>
@@ -249,18 +285,20 @@
                                         <p><i class="fas fa-home"></i> <strong>Logement :</strong> {{ reclamation.logement ? reclamation.logement.id : 'Non défini' }}</p>
                                     </div>
                                     <div class="card-footer">
-                                        <a href="{{ path('admin_reclamation_show', {'id': reclamation.id}) }}" class="btn btn-sm btn-info">Détails</a>
-                                        <a href="{{ path('admin_reclamation_edit_recommend', {'id': reclamation.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                        <a href="{{ path('admin_reclamation_show', {'id': reclamation.id}) }}" class="btn btn-info">Détails</a>
+                                        <a href="{{ path('admin_reclamation_edit_recommend', {'id': reclamation.id}) }}" class="btn btn-warning">Modifier</a>
                                         <form method="post" action="{{ path('admin_reclamation_delete', {'id': reclamation.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?');">
                                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reclamation.id) }}">
-                                            <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                            <button type="submit" class="btn btn-danger">Supprimer</button>
                                         </form>
+                                        <a href="{{ path('admin_reclamation_respond', {'id': reclamation.id}) }}" class="btn btn-success">Répondre</a>
+
                                     </div>
                                 </div>
                             </div>
                         {% endfor %}
                     {% else %}
-                        <div class="col-12">
+                        <div class="col- lessened12">
                             <div class="alert alert-info text-center" role="alert">
                                 Aucune réclamation trouvée.
                             </div>
@@ -273,17 +311,17 @@
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-center">
                             <li class="page-item {{ current_page == 1 ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page - 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'date_filter': selected_date}) }}" aria-label="Previous">
+                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page - 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'statut_filter': selected_statut, 'date_filter': selected_date}) }}" aria-label="Previous">
                                     <span aria-hidden="true">«</span>
                                 </a>
                             </li>
                             {% for i in 1..total_pages %}
                                 <li class="page-item {{ current_page == i ? 'active' : '' }}">
-                                    <a class="page-link" href="{{ path('admin_reclamation', {'page': i, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'date_filter': selected_date}) }}">{{ i }}</a>
+                                    <a class="page-link" href="{{ path('admin_reclamation', {'page': i, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'statut_filter': selected_statut, 'date_filter': selected_date}) }}">{{ i }}</a>
                                 </li>
                             {% endfor %}
                             <li class="page-item {{ current_page == total_pages ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page + 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'date_filter': selected_date}) }}" aria-label="Next">
+                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page + 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'statut_filter': selected_statut, 'date_filter': selected_date}) }}" aria-label="Next">
                                     <span aria-hidden="true">»</span>
                                 </a>
                             </li>
@@ -298,23 +336,97 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
-        // Recherche en temps réel
-        document.getElementById('searchReclamation').addEventListener('input', function(e) {
-            const searchText = e.target.value.toLowerCase();
-            const cards = document.querySelectorAll('.col-lg-4');
-            cards.forEach(card => {
-                const description = card.querySelector('.card-body p:nth-child(3)').textContent.toLowerCase();
-                card.style.display = description.includes(searchText) ? '' : 'none';
-            });
-        });
+        // Ensure DOM is fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchReclamation');
+            const userFilter = document.getElementById('user_filter');
+            const statutFilter = document.getElementById('statut_filter');
 
-        // Tri dynamique
-        document.querySelectorAll('th a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const url = new URL(this.href);
-                window.location.href = url;
-            });
+            // Check if all required elements exist
+            if (!searchInput) {
+                console.error('Search input element not found!');
+                return;
+            }
+            if (!userFilter) {
+                console.error('User filter element not found!');
+                return;
+            }
+            if (!statutFilter) {
+                console.error('Statut filter element not found!');
+                return;
+            }
+
+            // Debounce function to limit the frequency of filter execution
+            function debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+
+            // Filter function that combines search, user, and status filters
+            const applyFilters = debounce(function() {
+                const searchText = searchInput.value.trim().toLowerCase();
+                const selectedUser = userFilter.value.trim();
+                const selectedStatut = statutFilter.value.trim();
+                const cards = document.querySelectorAll('.reclamation-card-container');
+
+                cards.forEach(card => {
+                    // Extract text from multiple fields for search, with null checks
+                    const userElement = card.querySelector('.card-body p:nth-child(1)');
+                    const titleElement = card.querySelector('.card-body p:nth-child(2)');
+                    const descriptionElement = card.querySelector('.card-body p:nth-child(3)');
+                    const dateElement = card.querySelector('.card-body p:nth-child(4)');
+                    const statusElement = card.querySelector('.card-body p:nth-child(5)');
+                    const logementElement = card.querySelector('.card-body p:nth-child(6)');
+
+                    // Use empty string if element is not found
+                    const user = userElement ? userElement.textContent.toLowerCase() : '';
+                    const title = titleElement ? titleElement.textContent.toLowerCase() : '';
+                    const description = descriptionElement ? descriptionElement.textContent.toLowerCase() : '';
+                    const date = dateElement ? dateElement.textContent.toLowerCase() : '';
+                    const status = statusElement ? statusElement.textContent.toLowerCase() : '';
+                    const logement = logementElement ? logementElement.textContent.toLowerCase() : '';
+
+                    // Log for debugging
+                    if (!userElement || !titleElement || !descriptionElement || !dateElement || !statusElement || !logementElement) {
+                        console.warn('Incomplete card structure detected:', {
+                            user: !!userElement,
+                            title: !!titleElement,
+                            description: !!descriptionElement,
+                            date: !!dateElement,
+                            status: !!statusElement,
+                            logement: !!logementElement
+                        });
+                    }
+
+                    // Check if the card matches the search text (if any)
+                    const matchesSearch = searchText === '' || (
+                        user.includes(searchText) ||
+                        title.includes(searchText) ||
+                        description.includes(searchText) ||
+                        date.includes(searchText) ||
+                        status.includes(searchText) ||
+                        logement.includes(searchText)
+                    );
+
+                    // Check if the card matches the selected user (if any)
+                    const userText = userElement ? userElement.textContent : '';
+                    const matchesUser = selectedUser === '' || userText.includes(`cin: ${selectedUser}`);
+
+                    // Check if the card matches the selected status (if any)
+                    const matchesStatut = selectedStatut === '' || status.includes(selectedStatut);
+
+                    // Show the card only if it matches all active filters
+                    card.style.display = matchesSearch && matchesUser && matchesStatut ? '' : 'none';
+                });
+            }, 300); // 300ms debounce delay
+
+            // Add event listeners for all filter inputs
+            searchInput.addEventListener('input', applyFilters);
+            userFilter.addEventListener('change', applyFilters);
+            statutFilter.addEventListener('change', applyFilters);
         });
     </script>
 {% endblock %}

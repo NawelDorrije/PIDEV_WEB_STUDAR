@@ -86,7 +86,10 @@ class Logement
        $this->reclamations = new ArrayCollection();
    }
  
-
+   public function __toString(): string
+   {
+       return $this->type . ' (ID: ' . $this->id . ')';
+   }
     public function getId(): ?int
     {
         return $this->id;

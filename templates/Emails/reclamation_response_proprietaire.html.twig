@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notification : Réponse à une réclamation sur votre logement</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f9;">
+        <tr>
+            <td align="center">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); margin: 20px 0;">
+                    <!-- En-tête -->
+                    <tr>
+                        <td style="background-color: #1a73e8; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 20px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Notification de réponse à une réclamation</h1>
+                        </td>
+                    </tr>
+                    <!-- Corps -->
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p style="font-size: 16px; line-height: 24px; margin: 0 0 10px;">Bonjour {{ proprietaire.nom }} {{ proprietaire.prenom }},</p>
+                            <p style="font-size: 16px; line-height: 24px; margin: 0 0 20px;">
+                                {{ messageForProprietaire }}
+                            </p>
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9f9f9; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+                                <tr>
+                                    <td>
+                                        <p style="font-size: 16px; line-height: 24px; margin: 0 0 10px;"><strong>Détails supplémentaires :</strong></p>
+                                        <p style="font-size: 14px; line-height: 22px; margin: 0 0 5px; color: #555;"><strong>Logement concerné :</strong> ID #{{ logement.id }}</p>
+                                        <p style="font-size: 14px; line-height: 22px; margin: 0 0 5px; color: #555;"><strong>Titre de la réclamation :</strong> {{ reclamation.titre }}</p>
+                                        <p style="font-size: 14px; line-height: 22px; margin: 0; color: #555;"><strong>Réponse de l'administrateur :</strong> {{ reponse.contenueReponse }}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <a href="https://yourdomain.com/proprietaire/logements/{{ logement.id }}" style="background-color: #1a73e8; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">Voir le logement</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Pied de page -->
+                    <tr>
+                        <td style="background-color: #f4f4f9; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; padding: 20px; text-align: center;">
+                            <p style="font-size: 14px; color: #777; margin: 0;">Cordialement,<br>L'équipe de gestion</p>
+                            <p style="font-size: 12px; color: #999; margin: 10px 0 0;">
+                                <a href="https://yourdomain.com" style="color: #1a73e8; text-decoration: none;">Visitez notre site</a> | <a href="mailto:support@yourdomain.com" style="color: #1a73e8; text-decoration: none;">Support</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

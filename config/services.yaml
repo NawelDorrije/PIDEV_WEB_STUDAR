@@ -43,3 +43,4 @@ services:
             $entityManager: '@doctrine.orm.entity_manager'
             $utilisateurRepository: '@App\Repository\UtilisateurRepository'
         public: true # Add this line to make the service public
+    

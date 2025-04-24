@@ -8,6 +8,7 @@ use App\Form\ReclamationType;
 use App\Repository\ReclamationRepository;
 use App\Repository\LogementRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\ReponseRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +16,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Repository\UtilisateurRepository;
 use App\Entity\Utilisateur;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 
 #[Route('/reclamation')]
 class ReclamationController extends AbstractController
@@ -76,54 +79,100 @@ class ReclamationController extends AbstractController
     }
 
     #[Route('/add/{logementId}', name: 'app_reclamation_add', methods: ['POST'])]
-    public function addReclamation(Request $request, int $logementId, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $submittedToken = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('add_reclamation', $submittedToken)) {
-            return new JsonResponse(['error' => 'Invalid CSRF token.'], 400);
-        }
-    
-        $title = $request->request->get('title');
-        $description = $request->request->get('description');
-    
-        if (empty($title) || empty($description)) {
-            return new JsonResponse(['error' => 'Le titre et la description sont requis.'], 400);
-        }
-    
-        $logement = $entityManager->getRepository(Logement::class)->find($logementId);
-        if (!$logement) {
-            return new JsonResponse(['error' => 'Logement non trouvé.'], 404);
-        }
-    
-        $user = $this->getUser();
-        if (!$user) {
-            return new JsonResponse(['error' => 'Utilisateur non connecté.'], 401);
-        }
-    
-        // Ensure the user has a valid CIN
-        $cin = $user->getCin();
-        if (empty($cin)) {
-            return new JsonResponse(['error' => 'L\'utilisateur n\'a pas de CIN valide.'], 400);
-        }
-    
-        $reclamation = new Reclamation();
-        $reclamation->setTitre($title);
-        $reclamation->setDescription($description);
-        $reclamation->setLogement($logement);
-        $reclamation->setTimestamp(new \DateTime());
-        $reclamation->setUtilisateur($user);
-        $reclamation->setCin($cin);
-        $reclamation->setStatut('en cours'); // Explicitly set the status
-    
-        try {
-            $entityManager->persist($reclamation);
-            $entityManager->flush();
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de la réclamation : ' . $e->getMessage()], 500);
-        }
-    
-        return new JsonResponse(['success' => 'Réclamation ajoutée avec succès !']);
+public function addReclamation(Request $request, int $logementId, EntityManagerInterface $entityManager, MailerInterface $mailer): JsonResponse
+{
+    error_log('addReclamation called with logementId: ' . $logementId);
+    $submittedToken = $request->request->get('_token');
+    if (!$this->isCsrfTokenValid('add_reclamation', $submittedToken)) {
+        error_log('Invalid CSRF token');
+        return new JsonResponse(['error' => 'Invalid CSRF token.'], 400);
     }
+
+    $title = $request->request->get('title');
+    $description = $request->request->get('description');
+    error_log('Title: ' . $title . ', Description: ' . $description);
+
+    if (empty($title) || empty($description)) {
+        error_log('Missing title or description');
+        return new JsonResponse(['error' => 'Le titre et la description sont requis.'], 400);
+    }
+
+    $logement = $entityManager->getRepository(Logement::class)->find($logementId);
+    if (!$logement) {
+        error_log('Logement not found: ' . $logementId);
+        return new JsonResponse(['error' => 'Logement non trouvé.'], 404);
+    }
+
+    $user = $this->getUser();
+    if (!$user) {
+        error_log('User not authenticated');
+        return new JsonResponse(['error' => 'Utilisateur non connecté.'], 401);
+    }
+
+    $cin = $user->getCin();
+    if (empty($cin)) {
+        error_log('User has no valid CIN');
+        return new JsonResponse(['error' => 'L\'utilisateur n\'a pas de CIN valide.'], 400);
+    }
+
+    error_log('User details - Email=' . ($user->getEmail() ?? 'null') . ', CIN=' . ($cin ?? 'null'));
+
+    $reclamation = new Reclamation();
+    $reclamation->setTitre($title);
+    $reclamation->setDescription($description);
+    $reclamation->setLogement($logement);
+    $reclamation->setTimestamp(new \DateTime());
+    $reclamation->setUtilisateur($user);
+    $reclamation->setCin($cin);
+    $reclamation->setStatut('en cours');
+
+    try {
+        $entityManager->persist($reclamation);
+        $entityManager->flush();
+        error_log('Reclamation saved successfully');
+
+        $emailAddress = $user->getEmail();
+        if (!$emailAddress || !filter_var($emailAddress, FILTER_VALIDATE_EMAIL)) {
+            error_log('Invalid or missing email address for user ID: ' . $user->getId());
+            return new JsonResponse([
+                'success' => 'Réclamation ajoutée avec succès ! Aucun email envoyé (adresse email manquante ou invalide).',
+                'email_sent' => false,
+                'email_error' => 'Adresse email manquante ou invalide'
+            ]);
+        }
+
+        // Création de l'email
+        $email = (new Email())
+            ->from('no-reply@yourdomain.com') // Utilisez un domaine que vous possédez
+            ->to($emailAddress)
+            ->cc('studar21@gmail.com')
+            ->subject('Nouvelle Réclamation Créée #' . $reclamation->getId())
+            ->html($this->renderView('emails/reclamation_created.html.twig', [
+                'reclamation' => $reclamation,
+                'user' => $user,
+                'logement' => $logement,
+            ]));
+
+        // Envoi synchrone
+        $mailer->send($email);
+        
+        error_log('Email successfully sent to: ' . $emailAddress);
+        return new JsonResponse([
+            'success' => 'Réclamation ajoutée avec succès ! Email de confirmation envoyé.',
+            'email_sent' => true
+        ]);
+
+    } catch (\Exception $e) {
+        error_log('Error: ' . $e->getMessage());
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        
+        return new JsonResponse([
+            'success' => 'Réclamation ajoutée avec succès ! Échec de l\'envoi de l\'email.',
+            'email_sent' => false,
+            'email_error' => $e->getMessage()
+        ]);
+    }
+}
     #[Route('/modify/{id}', name: 'app_reclamation_modify', methods: ['POST'])]
     public function modifyReclamation(Request $request, int $id, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -195,7 +244,7 @@ class ReclamationController extends AbstractController
         return new JsonResponse(['success' => 'Réclamation supprimée avec succès !']);
     }
     #[Route('/admin/reclamation', name: 'admin_reclamation', methods: ['GET'])]
-public function index(Request $request, ReclamationRepository $reclamationRepository, EntityManagerInterface $entityManager): Response
+public function index(Request $request, ReclamationRepository $reclamationRepository,ReponseRepository $reponseRepository,EntityManagerInterface $entityManager): Response
 {
     $page = $request->query->getInt('page', 1);
     $limit = 10; // Nombre d'éléments par page
@@ -203,32 +252,52 @@ public function index(Request $request, ReclamationRepository $reclamationReposi
     $sortOrder = $request->query->get('sort_order', 'desc');
     $userFilter = $request->query->get('user_filter', '');
     $dateFilter = $request->query->get('date_filter', '');
+    $statutFilter = $request->query->get('statut_filter', '');
 
     // Compter le nombre total pour la pagination
-    $countQuery = $reclamationRepository->createQueryBuilder('r');
+    $countQuery = $reclamationRepository->createQueryBuilder('r')
+        ->select('COUNT(r.id)');
+
     if ($userFilter) {
-        $countQuery->andWhere('r.cin = :cin')
+        $countQuery->leftJoin('r.utilisateur', 'u')
+                   ->andWhere('u.cin = :cin')
                    ->setParameter('cin', $userFilter);
     }
     if ($dateFilter) {
-        $countQuery->andWhere('r.timestamp LIKE :date')
-                   ->setParameter('date', $dateFilter . '%');
+        $date = new \DateTime($dateFilter);
+        $dateEnd = (clone $date)->modify('+1 day');
+        $countQuery->andWhere('r.timestamp >= :dateStart AND r.timestamp < :dateEnd')
+                   ->setParameter('dateStart', $date)
+                   ->setParameter('dateEnd', $dateEnd);
     }
-    $totalReclamations = $countQuery->select('COUNT(r.id)')
-                                    ->getQuery()
-                                    ->getSingleScalarResult();
+    if ($statutFilter) {
+        $countQuery->andWhere('r.statut = :statut')
+                   ->setParameter('statut', $statutFilter);
+    }
+
+    $totalReclamations = $countQuery->getQuery()->getSingleScalarResult();
     $totalPages = ceil($totalReclamations / $limit);
 
     // Récupérer les réclamations paginées
     $queryBuilder = $reclamationRepository->createQueryBuilder('r');
+
     if ($userFilter) {
-        $queryBuilder->andWhere('r.cin = :cin')
+        $queryBuilder->leftJoin('r.utilisateur', 'u')
+                     ->andWhere('u.cin = :cin')
                      ->setParameter('cin', $userFilter);
     }
     if ($dateFilter) {
-        $queryBuilder->andWhere('r.timestamp LIKE :date')
-                     ->setParameter('date', $dateFilter . '%');
+        $date = new \DateTime($dateFilter);
+        $dateEnd = (clone $date)->modify('+1 day');
+        $queryBuilder->andWhere('r.timestamp >= :dateStart AND r.timestamp < :dateEnd')
+                     ->setParameter('dateStart', $date)
+                     ->setParameter('dateEnd', $dateEnd);
     }
+    if ($statutFilter) {
+        $queryBuilder->andWhere('r.statut = :statut')
+                     ->setParameter('statut', $statutFilter);
+    }
+
     $queryBuilder->orderBy("r.$sortBy", $sortOrder)
                  ->setFirstResult(($page - 1) * $limit)
                  ->setMaxResults($limit);
@@ -236,11 +305,11 @@ public function index(Request $request, ReclamationRepository $reclamationReposi
     $reclamations = $queryBuilder->getQuery()->getResult();
 
     // Récupérer les utilisateurs pour le filtrage
-    $utilisateurRepository = $entityManager->getRepository(utilisateur::class);
+    $utilisateurRepository = $entityManager->getRepository(Utilisateur::class);
     $usersQuery = $utilisateurRepository->createQueryBuilder('u')
         ->select('u')
         ->distinct()
-        ->innerJoin('App\Entity\Reclamation', 'r', 'WITH', 'r.cin = u.cin')
+        ->innerJoin('App\Entity\Reclamation', 'r', 'WITH', 'r.utilisateur = u')
         ->getQuery();
 
     $users = $usersQuery->getResult();
@@ -254,8 +323,12 @@ public function index(Request $request, ReclamationRepository $reclamationReposi
         'selected_user' => $userFilter,
         'selected_date' => $dateFilter,
         'users' => $users,
+        'selected_statut' => $statutFilter,
+        
     ]);
 }
+
+
 
     #[Route('/admin/reclamation/{id}', name: 'admin_reclamation_show', methods: ['GET'])]
     public function show(Reclamation $reclamation): Response

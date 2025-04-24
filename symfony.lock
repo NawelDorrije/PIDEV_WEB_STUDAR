@@ -178,6 +178,15 @@
             "./src/Kernel.php"
         ]
     },
+    "symfony/infobip-notifier": {
+        "version": "6.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "5.2",
+            "ref": "deed501bbf68e206601e68f4f03319c227278a0c"
+        }
+    },
     "symfony/mailer": {
         "version": "6.4",
         "recipe": {
