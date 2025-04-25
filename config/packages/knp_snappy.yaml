@@ -4,4 +4,4 @@ knp_snappy:
         binary: '"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"'
         options: []
     image:
-        enabled: false
+        enabled: true

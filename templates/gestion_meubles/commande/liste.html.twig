@@ -184,7 +184,7 @@
                         {{ commande.adresseLivraison|default('Non spécifiée') }}
                     </div>
                     <div class="commande-actions">
-                        {% if commande.statut != 'ANNULEE' %}
+                        {% if commande.statut != 'ANNULEE' %}Veuillez indiquer la raison de l'annulation de votre commande. Cette information nous aidera à améliorer notre service.
                             <button class="btn-cancel" data-id="{{ commande.id }}">Annuler</button>
                         {% endif %}
                         <a href="{{ path('app_gestion_meubles_commande_pdf', {'id': commande.id}) }}" class="btn-download">Télécharger PDF</a>

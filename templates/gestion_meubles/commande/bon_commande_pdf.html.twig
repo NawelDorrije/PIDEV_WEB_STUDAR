@@ -21,10 +21,20 @@
             padding: 30px;
         }
         .header {
-            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding-bottom: 20px;
             border-bottom: 2px solid #e2e8f0;
             margin-bottom: 25px;
+        }
+        .header img {
+            max-width: 150px;
+            height: auto;
+            margin-left: 260px;
+        }
+        .header .title-container {
+            text-align: left;
         }
         .header h1 {
             font-size: 28px;
@@ -145,8 +155,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Commande #{{ commande.id }}</h1>
-            <p class="subtitle">Émise le {{ "now"|date('d/m/Y') }} | Studar</p>
+{% if logo %}
+    <img src="{{ logo }}" alt="StuDar" style="width: 150px;">
+{% endif %}
+
+            <div class="title-container">
+                <h1>Commande #{{ commande.id }}</h1>
+                <p class="subtitle">Émise le {{ "now"|date('d/m/Y') }} | Studar</p>
+            </div>
         </div>
         <div class="commande-details">
             <p><strong>Date de commande :</strong> {{ commande.dateCommande|date('d/m/Y H:i') }}</p>
@@ -181,7 +197,7 @@
             {% endif %}
         </div>
         <div class="footer">
-            <p>Merci pour votre confiance ! Contactez notre équipe à <a href="mailto:support@studar.tn">support@studar.tn</a> pour toute question.</p>
+            <p>Merci pour votre confiance ! Contactez notre équipe à <a href="mailto:studar@gmail.com"> studar@gmail.com </a> pour toute question.</p>
         </div>
     </div>
 </body>

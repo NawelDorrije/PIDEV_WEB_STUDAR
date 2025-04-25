@@ -407,4 +407,54 @@ final class MeubleController extends AbstractController
     //         ], Response::HTTP_BAD_REQUEST);
     //     }
     // }
+    #[Route('/statistiques/vendeur', name: 'app_gestion_meubles_statistiques_etudiant')]
+    public function statistiques(Request $request): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour voir vos statistiques.');
+        }
+    
+        $cinVendeur = $utilisateur->getCin();
+    
+        // Existing KPI data
+        $meublesIndisponibles = $this->meubleRepository->countMeublesIndisponibles($cinVendeur);
+        $meublesDisponibles = $this->meubleRepository->countMeublesDisponibles($cinVendeur);
+        $totalMeubles = $this->meubleRepository->countTotalMeubles($cinVendeur);
+        $commandesPayees = $this->meubleRepository->countCommandesPayees($cinVendeur);
+        $commandesEnAttente = $this->meubleRepository->countCommandesEnAttente($cinVendeur);
+        $commandesLivrees = $this->meubleRepository->countCommandesLivrees($cinVendeur);
+        $commandesAnnulees = $this->meubleRepository->countCommandesAnnulees($cinVendeur);
+        $tauxCommandesAnnulees = $this->meubleRepository->getTauxCommandesAnnulees($cinVendeur);
+        $revenuTotal = $this->meubleRepository->getRevenuTotal($cinVendeur);
+        $tauxRetourClients = $this->meubleRepository->getTauxRetourClients($cinVendeur);
+        $meublesAjoutesRecemment = $this->meubleRepository->countMeublesAjoutesRecemment($cinVendeur);
+    
+        // Sample chart data (replace with actual queries)
+        $monthlyRevenue = [
+            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            'data' => [1200, 1900, 3000, 2500, 4000, 3500]
+        ];
+    
+        $furnitureAdded = [
+            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            'data' => [10, 15, 8, 12, 20, 18]
+        ];
+    
+        return $this->render('gestion_meubles/meuble/statistiques-current-etudiant.html.twig', [
+            'meublesIndisponibles' => $meublesIndisponibles,
+            'meublesDisponibles' => $meublesDisponibles,
+            'totalMeubles' => $totalMeubles,
+            'commandesPayees' => $commandesPayees,
+            'commandesEnAttente' => $commandesEnAttente,
+            'commandesLivrees' => $commandesLivrees,
+            'commandesAnnulees' => $commandesAnnulees,
+            'tauxCommandesAnnulees' => $tauxCommandesAnnulees,
+            'revenuTotal' => $revenuTotal,
+            'tauxRetourClients' => $tauxRetourClients,
+            'meublesAjoutesRecemment' => $meublesAjoutesRecemment,
+            'monthlyRevenue' => $monthlyRevenue,
+            'furnitureAdded' => $furnitureAdded,
+        ]);
+    }
 }

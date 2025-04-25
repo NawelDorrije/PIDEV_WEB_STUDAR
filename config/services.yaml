@@ -7,9 +7,18 @@ parameters:
     images_directory: '%kernel.project_dir%/assets/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
+    public_images_directory: '%kernel.project_dir%/public/assets/images'
     stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
     stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
     app_url: '%env(APP_URL)%'
+    apiKey: '%env(OPENAI_API_KEY)%'
+    uclassify_api_key: '%env(UCLASSIFY_API_KEY)%'
+    uclassify_username: '%env(UCLASSIFY_USERNAME)%'
+    google_nl_api_key: '%env(GOOGLE_NL_API_KEY)%'
+
+
+
+    
 
 services:
     App\Security\GoogleAuthenticator:
@@ -56,3 +65,13 @@ services:
         tags: ['controller.service_arguments']
         autowire: true
         autoconfigure: true
+
+    App\Service\IAService:
+        arguments:
+            $client: '@http_client'
+            $openaiApiKey: '%env(OPENAI_API_KEY)%'
+    App\Service\PredictionService:
+        arguments:
+            $httpClient: '@http_client'
+            $googleNlApiKey: '%google_nl_api_key%'
+            $logger: '@monolog.logger'
