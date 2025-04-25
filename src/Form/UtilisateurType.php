@@ -21,7 +21,7 @@ class UtilisateurType extends AbstractType
             ->add('email')
             ->add('mdp', PasswordType::class, [
                 'label' => 'Mot de passe',
-                'required' => false,
+                'required' => true,
             ])
             ->add('numTel')
             ->add('role', EnumType::class, [

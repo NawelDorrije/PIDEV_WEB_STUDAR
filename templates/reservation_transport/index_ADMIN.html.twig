@@ -252,11 +252,61 @@
         font-size: 1.5rem;
         cursor: pointer;
         color: #64748b;
+        z-index: 1001;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: #1e293b;
     }
 
     #compatibilityChart {
         max-width: 100%;
         height: 300px;
+    }
+
+    /* Transporteur List in Modal */
+    .transporteur-list {
+        margin-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .transporteur-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .transporteur-item:last-child {
+        border-bottom: none;
+    }
+
+    .transporteur-name {
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .send-email-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .send-email-btn:hover {
+        background: #059669;
+    }
+
+    .send-email-btn:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
     }
 
     /* Animations */
@@ -329,6 +379,25 @@
             padding: 1rem;
         }
     }
+
+    .compatibility-icon {
+        position: relative;
+    }
+
+    .compatibility-icon:hover:after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        z-index: 10;
+    }
 </style>
 {% endblock %}
 
@@ -348,6 +417,12 @@
                     <option value="confirmée" {% if current_status == 'confirmée' %}selected{% endif %}>Confirmés</option>
                     <option value="en_attente" {% if current_status == 'en_attente' %}selected{% endif %}>En attente</option>
                     <option value="refusée" {% if current_status == 'refusée' %}selected{% endif %}>Refusés</option>
+                </select>
+                <select class="filter-select" id="filtre-compatibilite" onchange="filterByCompatibility()">
+                    <option value="">Toutes compatibilités</option>
+                    <option value="excellent">Excellente</option>
+                    <option value="partial">Partielle</option>
+                    <option value="poor">Faible</option>
                 </select>
                 <input type="date" class="date-input" id="date-start" value="{{ date_start|default('') }}" onchange="applyFilters()">
                 <input type="date" class="date-input" id="date-end" value="{{ date_end|default('') }}" onchange="applyFilters()">
@@ -431,6 +506,7 @@
             <span class="modal-close" onclick="closeModal('compatibilityModal')">×</span>
             <h3>Correspondance des Préférences</h3>
             <canvas id="compatibilityChart"></canvas>
+            <div class="transporteur-list" id="transporteurList"></div>
         </div>
     </div>
 </div>
@@ -448,10 +524,12 @@
         const statut = document.getElementById('filtre-statut').value;
         const dateStart = document.getElementById('date-start').value;
         const dateEnd = document.getElementById('date-end').value;
+        const compatibility = document.getElementById('filtre-compatibilite').value;
         const params = new URLSearchParams();
         if (statut) params.append('status', statut);
         if (dateStart) params.append('date_start', dateStart);
         if (dateEnd) params.append('date_end', dateEnd);
+        if (compatibility) params.append('compatibility', compatibility);
         window.location.href = '{{ path('app_reservation_transport_index_ADMIN') }}?' + params.toString();
     }
 
@@ -503,6 +581,14 @@
             });
         });
         updateCompatibilityIcons();
+
+        // Restore compatibility filter
+        const urlParams = new URLSearchParams(window.location.search);
+        const compatibility = urlParams.get('compatibility');
+        if (compatibility) {
+            document.getElementById('filtre-compatibilite').value = compatibility;
+            filterByCompatibility();
+        }
     });
 
     // Exporter en Excel
@@ -540,8 +626,8 @@
     // Changer le statut
     function toggleStatus(id, element) {
         const statuses = ['confirmée', 'en_attente', 'refusée'];
-        const currentStatus = element.textContent.trim();
-        const nextStatus = statuses[(statuses.indexOf(currentStatus) + 1) % statuses.length];
+        const монтажStatus = element.textContent.trim();
+        const nextStatus = statuses[(statuses.indexOf(montageStatus) + 1) % statuses.length];
         
         fetch('/api/reservation_transport/' + id + '/status', {
             method: 'PATCH',
@@ -593,17 +679,37 @@
     }
 
     function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-        if (modalId === 'compatibilityModal' && compatibilityChart) {
-            compatibilityChart.destroy();
-            compatibilityChart = null;
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            if (modalId === 'compatibilityModal' && compatibilityChart) {
+                compatibilityChart.destroy();
+                compatibilityChart = null;
+            }
         }
     }
+
+    // Close modal on outside click
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('compatibilityModal');
+        const modalContent = modal.querySelector('.modal-content');
+        if (modal.style.display === 'flex' && !modalContent.contains(event.target) && !event.target.closest('.action-btn')) {
+            closeModal('compatibilityModal');
+        }
+    });
 
     function updateCompatibilityChart() {
         const rows = Array.from(document.querySelectorAll('.transport-table tbody tr')).filter(row => row.style.display !== 'none');
         const transporteurs = {{ transporteurs|map(t => {'cin': t.cin, 'nom': t.nom, 'prenom': t.prenom})|json_encode|raw }};
         const compatibility = { excellent: 0, partial: 0, poor: 0 };
+        const transporteurStats = {};
+
+        // Initialize transporteur stats
+        transporteurs.forEach(t => {
+            transporteurStats[t.cin] = { excellent: 0, partial
+
+: 0, poor: 0, enAttenteCount: 0 };
+        });
 
         // Déterminer les zones préférées
         const preferredZones = {};
@@ -615,6 +721,10 @@
                 return [depart, destination];
             }).flat().filter((v, i, a) => a.indexOf(v) === i);
             preferredZones[t.cin] = zones.length > 0 ? zones[0] : 'unknown';
+
+            // Count en_attente reservations for this transporteur
+            const enAttenteRows = res.filter(row => row.querySelector('.status .badge').textContent.trim() === 'en_attente');
+            transporteurStats[t.cin].enAttenteCount = enAttenteRows.length;
         });
 
         rows.forEach(row => {
@@ -623,14 +733,22 @@
 
             const depart = row.dataset.depart.split(' ')[0].toLowerCase();
             const destination = row.dataset.destination.split(' ')[0].toLowerCase();
-            const isMorning = parseInt(row.dataset.id) % 2 === 0; // Simulation horaire (pair = matin)
+            const isMorning = parseInt(row.dataset.id) % 2 === 0;
             const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
             const timeMatch = isMorning;
 
             const score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
-            if (score === 100) compatibility.excellent++;
-            else if (score === 50) compatibility.partial++;
-            else compatibility.poor++;
+
+            if (score === 100) {
+                compatibility.excellent++;
+                transporteurStats[cin].excellent++;
+            } else if (score === 50) {
+                compatibility.partial++;
+                transporteurStats[cin].partial++;
+            } else {
+                compatibility.poor++;
+                transporteurStats[cin].poor++;
+            }
         });
 
         if (compatibilityChart) compatibilityChart.destroy();
@@ -658,7 +776,67 @@
             }
         });
 
+        // Update transporteur list with email buttons
+        const transporteurList = document.getElementById('transporteurList');
+        transporteurList.innerHTML = '<h4>Transporteurs</h4>';
+        transporteurs.forEach(t => {
+            const stats = transporteurStats[t.cin];
+            transporteurList.innerHTML += `
+                <div class="transporteur-item">
+                    <span class="transporteur-name">${t.nom} ${t.prenom}</span>
+                    <button class="send-email-btn" onclick="sendCompatibilityEmail('${t.cin}')" ${stats.enAttenteCount === 0 ? 'disabled' : ''}>
+                        Envoyer Email (${stats.enAttenteCount} en attente)
+                    </button>
+                </div>
+            `;
+        });
+
         updateCompatibilityIcons(preferredZones);
+    }
+
+    function sendCompatibilityEmail(cin) {
+        fetch(`/api/transporteur/${cin}/send-compatibility-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Email envoyé avec succès !');
+            } else {
+                alert(data.error || 'Erreur lors de l\'envoi de l\'email.');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur réseau:', error);
+            alert('Erreur réseau lors de l\'envoi de l\'email.');
+        });
+    }
+
+    function calculateCompatibilityDetails(row, preferredZones) {
+        const cin = row.dataset.transporteur;
+        if (!cin) return { score: 0, reasons: [], recommendations: [] };
+
+        const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+        const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+        const isMorning = parseInt(row.dataset.id) % 2 === 0;
+        const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
+        const timeMatch = isMorning;
+
+        let score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
+        let reasons = [];
+        let recommendations = [];
+
+        if (!zoneMatch) {
+            reasons.push(`La zone de départ (${depart}) ou destination (${destination}) ne correspond pas à la zone préférée (${preferredZones[cin] || 'aucune'}).`);
+            recommendations.push(`Ajoutez ${depart} ou ${destination} à vos zones préférées dans votre profil.`);
+        }
+        if (!timeMatch) {
+            reasons.push(`L'horaire (après-midi) ne correspond pas à votre préférence (matin).`);
+            recommendations.push(`Mettez à jour vos préférences horaires pour inclure les après-midi.`);
+        }
+
+        return { score, reasons, recommendations };
     }
 
     function updateCompatibilityIcons(preferredZones) {
@@ -668,18 +846,34 @@
             const row = rows.find(r => r.dataset.transporteur === cin && r.querySelector('.compatibility-icon') === icon);
             if (!row) return;
 
-            const depart = row.dataset.depart.split(' ')[0].toLowerCase();
-            const destination = row.dataset.destination.split(' ')[0].toLowerCase();
-            const isMorning = parseInt(row.dataset.id) % 2 === 0;
-            const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
-            const timeMatch = isMorning;
-
-            const score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
+            const { score, reasons, recommendations } = calculateCompatibilityDetails(row, preferredZones);
             icon.className = 'fas compatibility-icon ' + (
-                score === 100 ? 'fa-check check' : 
-                score === 50 ? 'fa-exclamation exclamation' : 
+                score === 100 ? 'fa-check check' :
+                score === 50 ? 'fa-exclamation exclamation' :
                 'fa-times times'
             );
+            icon.dataset.reasons = JSON.stringify(reasons);
+            icon.dataset.recommendations = JSON.stringify(recommendations);
+        });
+    }
+
+    function filterByCompatibility() {
+        const compatibility = document.getElementById('filtre-compatibilite').value;
+        const rows = document.querySelectorAll('.transport-table tbody tr');
+        rows.forEach(row => {
+            const icon = row.querySelector('.compatibility-icon');
+            if (!compatibility || !icon) {
+                row.style.display = '';
+                return;
+            }
+            const isExcellent = icon.classList.contains('check');
+            const isPartial = icon.classList.contains('exclamation');
+            const isPoor = icon.classList.contains('times');
+            row.style.display = (
+                (compatibility === 'excellent' && isExcellent) ||
+                (compatibility === 'partial' && isPartial) ||
+                (compatibility === 'poor' && isPoor)
+            ) ? '' : 'none';
         });
     }
 </script>
