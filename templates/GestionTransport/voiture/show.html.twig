@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Voiture{% endblock %}
+
+{% block body %}
+    <h1>Voiture</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>IdVoiture</th>
+                <td>{{ voiture.idVoiture }}</td>
+            </tr>
+            <tr>
+                <th>Model</th>
+                <td>{{ voiture.model }}</td>
+            </tr>
+            <tr>
+                <th>NumSerie</th>
+                <td>{{ voiture.numSerie }}</td>
+            </tr>
+            <tr>
+                <th>Image</th>
+                <td>
+                    {% if voiture.image %}
+                        <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}"
+                             alt="{{ voiture.model }}" 
+                             style="max-width: 300px; max-height: 300px; border-radius: 10px;">
+                    {% else %}
+                        No image available
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Disponibilite</th>
+                <td>{{ voiture.disponibilite.value }}</td>
+            </tr>
+            <tr>
+                <th>Timestamp</th>
+                <td>{{ voiture.timestamp ? voiture.timestamp|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_voiture_index') }}">back to list</a>
+
+    <a href="{{ path('app_voiture_edit', {'idVoiture': voiture.idVoiture}) }}">edit</a>
+
+    {{ include('GestionTransport/voiture/_delete_form.html.twig') }}
+{% endblock %}

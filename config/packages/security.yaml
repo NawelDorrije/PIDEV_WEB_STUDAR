@@ -1,7 +1,9 @@
 security:
+    # security.yaml
     role_hierarchy:
-        ROLE_ADMIN: ['ROLE_PROPRIETAIRE', 'ROLE_TRANSPORTEUR']
+        ROLE_ADMIN: ['ROLE_PROPRIETAIRE', 'ROLE_TRANSPORTEUR', 'ROLE_ETUDIANT']
         ROLE_PROPRIETAIRE: ['ROLE_ETUDIANT']
+        ROLE_TRANSPORTEUR: ['ROLE_ETUDIANT']
     password_hashers:
         App\Entity\Utilisateur:
             algorithm: auto
@@ -18,6 +20,8 @@ security:
             security: false
 
         main:
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator
             provider: app_user_provider
             form_login:
                 login_path: app_utilisateur_signin
@@ -27,6 +31,8 @@ security:
                 enable_csrf: true
                 failure_path: app_utilisateur_signin  # Add this line to redirect back to login on failure
                 failure_forward: false
+                success_handler: App\Security\AuthenticationSuccessHandler
+
             logout:
                 path: app_logout  # The route name for logout
                 target: app_utilisateur_signin  # Where to redirect after logout
@@ -40,11 +46,20 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+         - { path: ^/verify-reset-code, roles: PUBLIC_ACCESS }
+         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+         - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 
 when@test:
     security:
+        firewalls:
+            main:
+                logout:
+                    path: app_logout
+                    target: app_transport_home
         password_hashers:
             # By default, password hashers are resource intensive and take time. This is
             # important to generate secure password hashes. In tests however, secure hashes

@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Les Vehicules{% endblock %}
+
+{% block body %}
+    <h1>Les Vehicules</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>IdVoiture</th>
+                <th>Model</th>
+                <th>NumSerie</th>
+                <th>Image</th>
+                <th>Disponibilite</th>
+                <th>Timestamp</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for voiture in voitures %}
+            <tr>
+                <td>{{ voiture.idVoiture }}</td>
+                <td>{{ voiture.model }}</td>
+                <td>{{ voiture.numSerie }}</td>
+                <td>{% if voiture.image %}
+                        <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}" 
+                             alt="{{ voiture.model }}" 
+                             style="max-height: 100px; max-width: 100px; border-radius: 10px;">
+                    {% else %}
+                        <img src="{{ asset('images/default-car.jpg') }}"
+                             alt="{{ voiture.model }}" 
+                             style="max-height: 100px; max-width: 100px; border-radius: 10px;"> 
+                    {% endif %}
+                </td>
+                <td>{{ voiture.disponibilite.value }}</td>
+                <td>{{ voiture.timestamp ? voiture.timestamp|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}">show</a>
+                    <a href="{{ path('app_voiture_edit', {'idVoiture': voiture.idVoiture}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="7">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_voiture_new') }}">Create new</a>
+{% endblock %}

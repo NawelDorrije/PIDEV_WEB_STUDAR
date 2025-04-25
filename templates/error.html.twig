@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Erreur {{ status_code }}{% endblock %}
+
+{% block body %}
+    <div class="container text-center py-5">
+        <h1>Erreur {{ status_code }}</h1>
+        <p>Une erreur s'est produite : {{ exception.message }}</p>
+        <a href="{{ path('app_gestion_meubles_mes_meubles') }}" class="btn btn-primary">Retour à l'accueil</a>
+    </div>
+{% endblock %}

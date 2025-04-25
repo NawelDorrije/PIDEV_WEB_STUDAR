@@ -31,11 +31,14 @@ class MeubleType extends AbstractType
                 ],
             ])
             ->add('description', TextareaType::class, [
-                 'constraints' => [
-                    new NotBlank(['message' => 'La description du meuble est obligatoire.']),
+                'required' => false, // Rendre non obligatoire
+                'constraints' => [
+                    // Pas de NotBlank pour rendre le champ facultatif
                     new Length([
                         'min' => 10,
                         'minMessage' => 'La description doit contenir au moins {{ limit }} caractères.',
+                        // La contrainte Length s'applique uniquement si le champ n'est pas vide
+                        // Symfony ignore automatiquement la contrainte Length si la valeur est null ou une chaîne vide
                     ]),
                 ],
             ])
@@ -48,17 +51,16 @@ class MeubleType extends AbstractType
             ])
             ->add('image', FileType::class, [
                 'required' => !$isEdit, // Obligatoire uniquement pour l'ajout
-                'mapped' => false,
-                'constraints' => [
+                'mapped' => false, // Non mappé directement à l'entité
+                'constraints' => $isEdit ? [] : [ // Pas de contraintes en mode édition si aucune image n'est uploadée
                     new File([
                         'maxSize' => '5M',
-                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif'],
-                        'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF).',
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                        'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP).',
                         'maxSizeMessage' => 'Le fichier est trop volumineux (max 5MB).',
                     ]),
                 ],
-            ])
-        ;
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
