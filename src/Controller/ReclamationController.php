@@ -14,14 +14,27 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Repository\UtilisateurRepository;
 use App\Entity\Utilisateur;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
-
+use App\Service\PdfGenerator;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag; 
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 #[Route('/reclamation')]
 class ReclamationController extends AbstractController
 {
+    private $entityManager;
+
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+
     #[Route('/new', name: 'app_reclamation_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, LogementRepository $logementRepository): Response
     {
@@ -247,7 +260,7 @@ public function addReclamation(Request $request, int $logementId, EntityManagerI
 public function index(Request $request, ReclamationRepository $reclamationRepository,ReponseRepository $reponseRepository,EntityManagerInterface $entityManager): Response
 {
     $page = $request->query->getInt('page', 1);
-    $limit = 10; // Nombre d'éléments par page
+    $limit = 12; // Nombre d'éléments par page
     $sortBy = $request->query->get('sort_by', 'timestamp');
     $sortOrder = $request->query->get('sort_order', 'desc');
     $userFilter = $request->query->get('user_filter', '');
@@ -330,13 +343,17 @@ public function index(Request $request, ReclamationRepository $reclamationReposi
 
 
 
-    #[Route('/admin/reclamation/{id}', name: 'admin_reclamation_show', methods: ['GET'])]
-    public function show(Reclamation $reclamation): Response
-    {
-        return $this->render('admin/reclamation/show.html.twig', [
-            'reclamation' => $reclamation,
-        ]);
-    }
+   #[Route('/admin/reclamation/{id}', name: 'admin_reclamation_show', methods: ['GET'])]
+public function show(Reclamation $reclamation): Response
+{
+    // Assuming at most one response per reclamation
+    $reponse = $reclamation->getReponses()->first() ?: null;
+
+    return $this->render('admin/reclamation/show.html.twig', [
+        'reclamation' => $reclamation,
+        'reponse' => $reponse,
+    ]);
+}
 
     #[Route('/admin/reclamation/{id}/edit', name: 'admin_reclamation_edit_recommend', methods: ['GET', 'POST'])]
     public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
@@ -388,4 +405,197 @@ public function indexSimple(ReclamationRepository $reclamationRepository): Respo
         'reclamations' => $reclamations,
     ]);
 }
+
+#[Route('/admin/reclamation/{id}/pdf', name: 'admin_reclamation_pdf')]
+    public function exportReclamationToPdf(Reclamation $reclamation, PdfGenerator $pdfGenerator): Response
+    {
+        /// Fetch related response (if any) - adjust based on your entity relationships
+        $reponses = $reclamation->getReponses();
+        $reponse = $reponses->first() ?: null; // Get the first response or null if none exists
+        
+        // Render the Twig template as HTML
+        $html = $this->renderView('pdf/reclamationdetailsforpdf.html.twig', [
+            'reclamation' => $reclamation,
+            'reponse' => $reponse,
+        ]);
+
+        // Generate PDF file
+        $filename = sprintf('reclamation_%s.pdf', $reclamation->getId());
+        $pdfPath = $pdfGenerator->generatePdf($html, $filename);
+
+        // Create response to download the PDF
+        $response = new Response(file_get_contents($pdfPath));
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $filename
+        );
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        // Optionally delete the temporary file
+        unlink($pdfPath);
+
+        return $response;
+    }
+    #[Route('/admin/reclamation/export/excel', name: 'admin_reclamation_export_excel')]
+    public function exportAllToExcel(Request $request): Response
+    {
+        // Get filter parameters
+        $userFilter = $request->query->get('user_filter', '');
+        $statutFilter = $request->query->get('statut_filter', '');
+        $dateFilter = $request->query->get('date_filter', '');
+    
+        // Build query
+        $queryBuilder = $this->entityManager->getRepository(Reclamation::class)->createQueryBuilder('r');
+        if ($userFilter) {
+            $queryBuilder->andWhere('r.utilisateur = :user')
+                         ->setParameter('user', $userFilter);
+        }
+        if ($statutFilter) {
+            $queryBuilder->andWhere('r.statut = :statut')
+                         ->setParameter('statut', $statutFilter);
+        }
+        if ($dateFilter) {
+            $queryBuilder->andWhere('r.timestamp LIKE :date')
+                         ->setParameter('date', $dateFilter . '%');
+        }
+        $reclamations = $queryBuilder->getQuery()->getResult();
+    
+        // Create a new spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Reclamations');
+    
+        // Define headers
+        $headers = [
+            'ID', 'Utilisateur', 'Titre', 'Description', 'Date', 'Logement', 'Statut',
+            'Contenu Réponse', 'Date Réponse', 'Répondant'
+        ];
+    
+        // Write headers using coordinate system
+        $column = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($column . '1', $header);
+            $column++;
+        }
+    
+        // Apply header styling
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F81BD'],
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+        ];
+        $sheet->getStyle('A1:J1')->applyFromArray($headerStyle);
+    
+        // Data styling
+        $dataStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'DDDDDD'],
+                ],
+            ],
+            'alignment' => [
+                'wrapText' => true,
+                'vertical' => Alignment::VERTICAL_TOP,
+            ],
+        ];
+    
+        // Alternate row coloring
+        $alternateRowStyles = [
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'E6E6E6'],
+            ],
+        ];
+    
+        // Populate data
+        $row = 2;
+        foreach ($reclamations as $reclamation) {
+            $reponses = $reclamation->getReponses();
+            $reponse = $reponses->first() ?: null;
+    
+            $sheet->setCellValue('A' . $row, $reclamation->getId());
+            $sheet->setCellValue('B' . $row, $reclamation->getUtilisateur() 
+                ? $reclamation->getUtilisateur()->getNom() . ' ' . $reclamation->getUtilisateur()->getPrenom() 
+                : 'Anonyme');
+            $sheet->setCellValue('C' . $row, $reclamation->getTitre());
+            $sheet->setCellValue('D' . $row, $reclamation->getDescription());
+            $sheet->setCellValue('E' . $row, $reclamation->getTimestamp() 
+                ? $reclamation->getTimestamp()->format('Y-m-d H:i') 
+                : 'Non définie');
+            $sheet->setCellValue('F' . $row, $reclamation->getLogement() 
+                ? $reclamation->getLogement()->getId() 
+                : 'Non associé');
+            $sheet->setCellValue('G' . $row, $reclamation->getStatut() ?: 'Non défini');
+            $sheet->setCellValue('H' . $row, $reponse ? $reponse->getContenueReponse() : '');
+            $sheet->setCellValue('I' . $row, $reponse && $reponse->getTimestamp() 
+                ? $reponse->getTimestamp()->format('Y-m-d H:i') 
+                : '');
+            $sheet->setCellValue('J' . $row, $reponse && $reponse->getAdmin() 
+                ? $reponse->getAdmin()->getNom() . ' ' . $reponse->getAdmin()->getPrenom() 
+                : '');
+    
+            // Apply data styling
+            $sheet->getStyle('A' . $row . ':J' . $row)->applyFromArray($dataStyle);
+    
+            // Alternate row color
+            if ($row % 2 == 0) {
+                $sheet->getStyle('A' . $row . ':J' . $row)->applyFromArray($alternateRowStyles);
+            }
+    
+            $row++;
+        }
+    
+        // Set column widths
+        $sheet->getColumnDimension('A')->setWidth(10);  // ID
+        $sheet->getColumnDimension('B')->setAutoSize(true);  // Utilisateur
+        $sheet->getColumnDimension('C')->setAutoSize(true);  // Titre
+        $sheet->getColumnDimension('D')->setWidth(40);  // Description
+        $sheet->getColumnDimension('E')->setWidth(20);  // Date
+        $sheet->getColumnDimension('F')->setWidth(15);  // Logement
+        $sheet->getColumnDimension('G')->setWidth(15);  // Statut
+        $sheet->getColumnDimension('H')->setWidth(40);  // Contenu Réponse
+        $sheet->getColumnDimension('I')->setWidth(20);  // Date Réponse
+        $sheet->getColumnDimension('J')->setAutoSize(true);  // Répondant
+    
+        // Freeze the header row
+        $sheet->freezePane('A2');
+    
+        // Create the Excel file
+        $writer = new Xlsx($spreadsheet);
+        $filename = 'reclamations_' . date('Y_m_d_His') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'reclamations') . '.xlsx';
+        $writer->save($tempFile);
+    
+        // Create response
+        $response = new Response(file_get_contents($tempFile));
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $filename
+        );
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', $disposition);
+        $response->headers->set('Cache-Control', 'max-age=0');
+    
+        // Clean up
+        unlink($tempFile);
+    
+        return $response;
+    }
 }

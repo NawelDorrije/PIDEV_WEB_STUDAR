@@ -75,4 +75,5 @@ class Reponse
         $this->timestamp = $timestamp;
         return $this;
     }
+    
 }
