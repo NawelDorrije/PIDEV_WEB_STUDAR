@@ -130,7 +130,7 @@
                     if (rooms) params.append('nbrChambre', rooms);
                     if (address) params.append('adresse', address);
 
-                    window.location.href = '{{ path('app_logement_index_filtrage_admin') }}?' + params.toString();
+                    window.location.href = '{{ path('app_logement_index_filtrage') }}?' + params.toString();
 
                     const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                     modal.hide();
@@ -149,7 +149,7 @@
                     if (searchValue) {
                         const params = new URLSearchParams();
                         params.append('adresse', searchValue);
-                        window.location.href = '{{ path('app_logement_index_filtrage_admin') }}?' + params.toString();
+                        window.location.href = '{{ path('app_logement_index_filtrage') }}?' + params.toString();
                     }
                 });
 
@@ -160,7 +160,7 @@
                         if (searchValue) {
                             const params = new URLSearchParams();
                             params.append('adresse', searchValue);
-                            window.location.href = '{{ path('app_logement_index_filtrage_admin') }}?' + params.toString();
+                            window.location.href = '{{ path('app_logement_index_filtrage') }}?' + params.toString();
                         }
                     });
                 }
@@ -191,7 +191,7 @@
                                         <button type="button" class="btn btn-outline-danger btn-sm me-1" data-bs-toggle="modal" data-bs-target="#filterModal">
                                             <i class="fas fa-filter"></i> Filtrer
                                         </button>
-                                        <a href="{{ path('app_logement_new_admin') }}" class="btn btn-outline-primary btn-sm">
+                                        <a href="{{ path('app_logement_new') }}" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-plus"></i> Ajouter
                                         </a>
                                     </div>
@@ -254,7 +254,7 @@
                     {% if filter.prix %} | Prix max: {{ filter.prix }} DNT{% endif %}
                     {% if filter.nbrChambre %} | Chambres: {{ filter.nbrChambre }}{% endif %}
                     {% if filter.adresse %} | Adresse: {{ filter.adresse }}{% endif %}
-                    <a href="{{ path('app_logement_index_admin') }}" class="ms-2">Réinitialiser</a>
+                    <a href="{{ path('app_logement_index') }}" class="ms-2">Réinitialiser</a>
                 </div>
             {% endif %}
 
@@ -268,12 +268,12 @@
                         <div class="col-lg-4 col-md-6">
                             <div class="item">
                                 {% set firstImage = logement.imageLogements|first %}
-                                <a href="{{ path('app_logement_show_admin', {'id': logement.id}) }}">
+                                <a href="{{ path('app_logement_show', {'id': logement.id}) }}">
                                     <img src="{{ firstImage ? asset('Uploads/photos/' ~ firstImage.url) : asset('assets/images/property-03.jpg') }}" alt="Image de {{ logement.adresse|default('Logement') }}">
                                 </a>
                                 <span class="category">{{ logement.type }}</span>
                                 <h6>{{ logement.prix }} €</h6>
-                                <h4><a href="{{ path('app_logement_show_admin', {'id': logement.id}) }}">{{ logement.adresse }}</a></h4>
+                                <h4><a href="{{ path('app_logement_show', {'id': logement.id}) }}">{{ logement.adresse }}</a></h4>
                                 <ul>
                                     <li><strong>Option:</strong>
                                         {% set options = [] %}
@@ -284,7 +284,7 @@
                                     </li>
                                 </ul>
                                 <div class="main-button">
-                                    <a href="{{ path('app_logement_show_admin', {'id': logement.id}) }}">show</a>
+                                    <a href="{{ path('app_logement_show', {'id': logement.id}) }}">show</a>
                                 </div>
                             </div>
                         </div>

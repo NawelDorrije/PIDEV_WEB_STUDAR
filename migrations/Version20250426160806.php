@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20250419181054 extends AbstractMigration
+final class Version20250426160806 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -20,7 +20,6 @@ final class Version20250419181054 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE messenger_messages (id BIGINT AUTO_INCREMENT NOT NULL, body LONGTEXT NOT NULL, headers LONGTEXT NOT NULL, queue_name VARCHAR(190) NOT NULL, created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', available_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', delivered_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\', INDEX IDX_75EA56E0FB7336F0 (queue_name), INDEX IDX_75EA56E0E3BD61CE (available_at), INDEX IDX_75EA56E016BA31DB (delivered_at), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE commandes DROP FOREIGN KEY commandes_ibfk_1');
         $this->addSql('ALTER TABLE commandes DROP FOREIGN KEY commandes_ibfk_2');
         $this->addSql('ALTER TABLE lignes_panier DROP FOREIGN KEY lignes_panier_ibfk_1');
@@ -50,15 +49,14 @@ final class Version20250419181054 extends AbstractMigration
         $this->addSql('ALTER TABLE image_logement DROP FOREIGN KEY image_logement_ibfk_1');
         $this->addSql('ALTER TABLE image_logement ADD CONSTRAINT FK_7F0DCAFF58ABF955 FOREIGN KEY (logement_id) REFERENCES logement (id)');
         $this->addSql('ALTER TABLE image_logement RENAME INDEX image_logement_ibfk_1 TO IDX_7F0DCAFF58ABF955');
-        $this->addSql('ALTER TABLE logement CHANGE nbrChambre nbrChambre INT NOT NULL, CHANGE description description VARCHAR(255) NOT NULL, CHANGE type type VARCHAR(255) NOT NULL, CHANGE statut statut VARCHAR(255) NOT NULL, CHANGE utilisateur_cin utilisateur_cin VARCHAR(8) DEFAULT NULL, CHANGE localisation localisation POINT NOT NULL COMMENT \'(DC2Type:point)\'');
+        $this->addSql('ALTER TABLE logement CHANGE nbrChambre nbrChambre INT NOT NULL, CHANGE description description VARCHAR(255) NOT NULL, CHANGE type type VARCHAR(255) NOT NULL, CHANGE statut statut VARCHAR(255) NOT NULL, CHANGE utilisateur_cin utilisateur_cin VARCHAR(8) DEFAULT NULL, CHANGE localisation localisation POINT NOT NULL COMMENT \'(DC2Type:point)\', CHANGE shareCount shareCount INT DEFAULT 0 NOT NULL, CHANGE emogies emojis JSON DEFAULT NULL');
         $this->addSql('ALTER TABLE logement ADD CONSTRAINT FK_F0FD445726A98CA9 FOREIGN KEY (utilisateur_cin) REFERENCES utilisateur (cin)');
         $this->addSql('ALTER TABLE logement RENAME INDEX fk_utilisateur TO IDX_F0FD445726A98CA9');
         $this->addSql('ALTER TABLE logement_options DROP FOREIGN KEY logement_options_ibfk_1');
         $this->addSql('ALTER TABLE logement_options DROP FOREIGN KEY logement_options_ibfk_2');
         $this->addSql('ALTER TABLE logement_options ADD CONSTRAINT FK_AAE2EAD5A026A8C2 FOREIGN KEY (id_logement) REFERENCES logement (id)');
         $this->addSql('ALTER TABLE logement_options ADD CONSTRAINT FK_AAE2EAD57CB1B55D FOREIGN KEY (id_option) REFERENCES options (id_option)');
-        $this->addSql('ALTER TABLE logement_options RENAME INDEX logement_options_ibfk_2 TO IDX_AAE2EAD57CB1B55D');
-        $this->addSql('ALTER TABLE options CHANGE id_option id_option INT AUTO_INCREMENT NOT NULL');
+        $this->addSql('ALTER TABLE logement_options RENAME INDEX id_option TO IDX_AAE2EAD57CB1B55D');
         $this->addSql('DROP INDEX email ON utilisateur');
         $this->addSql('ALTER TABLE utilisateur CHANGE role role VARCHAR(20) NOT NULL, CHANGE blocked blocked TINYINT(1) NOT NULL, CHANGE created_at created_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
     }
@@ -92,19 +90,17 @@ final class Version20250419181054 extends AbstractMigration
         $this->addSql('ALTER TABLE reservation_logement ADD CONSTRAINT fk_reservation_logement_cinProprietaire FOREIGN KEY (cinProprietaire) REFERENCES utilisateur (cin) ON UPDATE NO ACTION ON DELETE NO ACTION');
         $this->addSql('ALTER TABLE reservation_transport ADD CONSTRAINT fk_reservation_transport_cinEtudiant FOREIGN KEY (cinEtudiant) REFERENCES utilisateur (cin) ON UPDATE NO ACTION ON DELETE NO ACTION');
         $this->addSql('ALTER TABLE reservation_transport ADD CONSTRAINT fk_reservation_transport_cinTransporteur FOREIGN KEY (cinTransporteur) REFERENCES utilisateur (cin) ON UPDATE NO ACTION ON DELETE NO ACTION');
-        $this->addSql('DROP TABLE messenger_messages');
         $this->addSql('ALTER TABLE image_logement DROP FOREIGN KEY FK_7F0DCAFF58ABF955');
         $this->addSql('ALTER TABLE image_logement ADD CONSTRAINT image_logement_ibfk_1 FOREIGN KEY (logement_id) REFERENCES logement (id) ON UPDATE CASCADE ON DELETE CASCADE');
         $this->addSql('ALTER TABLE image_logement RENAME INDEX idx_7f0dcaff58abf955 TO image_logement_ibfk_1');
         $this->addSql('ALTER TABLE logement DROP FOREIGN KEY FK_F0FD445726A98CA9');
-        $this->addSql('ALTER TABLE logement CHANGE utilisateur_cin utilisateur_cin VARCHAR(8) NOT NULL, CHANGE nbrChambre nbrChambre VARCHAR(255) NOT NULL, CHANGE description description TEXT DEFAULT NULL, CHANGE type type VARCHAR(100) DEFAULT NULL, CHANGE localisation localisation POINT DEFAULT NULL COMMENT \'(DC2Type:point)\', CHANGE statut statut VARCHAR(255) DEFAULT \'DISPONIBLE\' NOT NULL');
+        $this->addSql('ALTER TABLE logement CHANGE utilisateur_cin utilisateur_cin VARCHAR(8) NOT NULL, CHANGE nbrChambre nbrChambre VARCHAR(255) NOT NULL, CHANGE description description TEXT DEFAULT NULL, CHANGE type type VARCHAR(100) DEFAULT NULL, CHANGE localisation localisation POINT DEFAULT NULL COMMENT \'(DC2Type:point)\', CHANGE shareCount shareCount INT NOT NULL, CHANGE statut statut VARCHAR(255) DEFAULT \'DISPONIBLE\' NOT NULL, CHANGE emojis emogies JSON DEFAULT NULL');
         $this->addSql('ALTER TABLE logement RENAME INDEX idx_f0fd445726a98ca9 TO fk_utilisateur');
         $this->addSql('ALTER TABLE logement_options DROP FOREIGN KEY FK_AAE2EAD5A026A8C2');
         $this->addSql('ALTER TABLE logement_options DROP FOREIGN KEY FK_AAE2EAD57CB1B55D');
         $this->addSql('ALTER TABLE logement_options ADD CONSTRAINT logement_options_ibfk_1 FOREIGN KEY (id_logement) REFERENCES logement (id) ON UPDATE CASCADE ON DELETE CASCADE');
         $this->addSql('ALTER TABLE logement_options ADD CONSTRAINT logement_options_ibfk_2 FOREIGN KEY (id_option) REFERENCES options (id_option) ON UPDATE CASCADE ON DELETE CASCADE');
-        $this->addSql('ALTER TABLE logement_options RENAME INDEX idx_aae2ead57cb1b55d TO logement_options_ibfk_2');
-        $this->addSql('ALTER TABLE options CHANGE id_option id_option INT NOT NULL');
+        $this->addSql('ALTER TABLE logement_options RENAME INDEX idx_aae2ead57cb1b55d TO id_option');
         $this->addSql('ALTER TABLE utilisateur CHANGE role role VARCHAR(255) NOT NULL, CHANGE blocked blocked TINYINT(1) DEFAULT 0, CHANGE created_at created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL');
         $this->addSql('CREATE UNIQUE INDEX email ON utilisateur (email)');
     }

@@ -1,15 +1,22 @@
 <?php
 namespace App\Controller;
-
+use App\Service\GeminiService;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 use App\Entity\ImageLogement;
 use App\Entity\Logement;
-use App\Entity\LogementOptions;
-use App\Entity\Options;
+use App\Entity\Utilisateur;
 use App\Form\LogementType;
 use App\Repository\LogementRepository;
-use App\Repository\OptionsRepository;
+use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use MailerSend\Helpers\Builder\EmailParams;
+use MailerSend\Helpers\Builder\Recipient;
+use MailerSend\MailerSend;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -21,63 +28,162 @@ use Psr\Log\LoggerInterface;
 final class LogementController extends AbstractController
 {
     private $logger;
-
-    public function __construct(LoggerInterface $logger)
-    {
+    private $mailerFrom;
+    private $mailerFromName;
+    private $geminiService;
+        public function __construct(
+        LoggerInterface $logger,
+        GeminiService $geminiService,
+        string $mailerFrom,
+        string $mailerFromName
+            ) {
         $this->logger = $logger;
+        $this->mailerFrom = $mailerFrom;
+        $this->mailerFromName = $mailerFromName;
+        $this->geminiService = $geminiService;
+
     }
-
-    #[Route('/', name: 'app_logement_index', methods: ['GET'])]
-    public function index(LogementRepository $logementRepository, Request $request): Response
+    private function addReactionData(array $logements): array
     {
-        // Get the current user
-        $user = $this->getUser();
-
-        // Check if the user is logged in
-        if (!$user) {
-            $this->addFlash('error', 'Vous devez être connecté pour voir vos logements.');
-            return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+        $logementsWithReactions = [];
+        foreach ($logements as $logement) {
+            $emojis = $logement->getEmojis() ?? [];
+            $reactionCounts = array_count_values($emojis);
+            $totalReactions = count($emojis);
+            $logementsWithReactions[] = [
+                'entity' => $logement,
+                'reactionCounts' => $reactionCounts,
+                'totalReactions' => $totalReactions,
+                'reactionScore' => ($reactionCounts['❤️'] ?? 0) * 3 + ($reactionCounts['👍'] ?? 0) * 2 + ($reactionCounts['👎'] ?? 0) * -1,
+            ];
         }
-
-        // Fetch logements associated with the user's cin
-        $logements = $logementRepository->findBy(['utilisateur_cin' => $user->getCin()]);
-
-        // Prepare filter values (you can expand this based on request parameters)
-        $filter = [
-            'type' => $request->query->get('type'),
-            'prix' => $request->query->get('prix'),
-            'nbrChambre' => $request->query->get('nbrChambre'),
-            'adresse' => $request->query->get('adresse'),
-        ];
-
-        // Render the template with the fetched logements, filter, and geocodeError flag
+    
+        // Trier par reactionScore
+        usort($logementsWithReactions, function ($a, $b) {
+            return $b['reactionScore'] <=> $a['reactionScore'];
+        });
+    
+        return $logementsWithReactions;
+    }
+    #[Route('/', name: 'app_logement_index', methods: ['GET'])]
+    public function index(LogementRepository $logementRepository): Response
+    {
+        $logements = $logementRepository->findAll();
+        $logementsWithReactions = $this->addReactionData($logements);
+    
         return $this->render('Client/logement/index.html.twig', [
-            'logements' => $logements,
-            'filter' => $filter,
+            'logements' => $logementsWithReactions,
+            'filter' => [
+                'type' => null,
+                'prix' => null,
+                'nbrChambre' => null,
+                'adresse' => null,
+            ],
             'geocodeError' => false,
         ]);
     }
+    #[Route('/logement/users', name: 'app_logement_users', methods: ['GET'])]
+    public function getUsers(UtilisateurRepository $utilisateurRepository): Response
+    {
+        $users = $utilisateurRepository->findAll();
+        // Transform users into a simple array to avoid serialization issues
+        $userData = array_map(function (Utilisateur $user) {
+            return [
+                'id' => $user->getCin(),
+                'nom' => $user->getNom(),
+                'email' => $user->getEmail(),
+            ];
+        }, $users);
+    
+        $this->logger->info('Users retrieved for Share Modal', [
+            'count' => count($users),
+        ]);
+    
+        return $this->json($userData);
+    }
 
+    // New method to handle sharing a logement
+    #[Route('/{id}/share', name: 'app_logement_share', methods: ['POST'])]
+    public function share(Request $request, Logement $logement, UtilisateurRepository $utilisateurRepository, MailerInterface $mailer): JsonResponse
+    {
+        try {
+            $this->logger->info('Starting share method', ['logement_id' => $logement->getId()]);
+    
+            $user = $this->getUser();
+            if (!$user) {
+                $this->logger->info('User not authenticated');
+                return $this->json(['error' => 'Authentication required'], 401);
+            }
+            $this->logger->info('User authenticated', ['user_id' => $user->getUserIdentifier()]);
+    
+            $userId = $request->request->get('userId');
+            if (!$userId) {
+                $this->logger->info('User ID missing');
+                return $this->json(['error' => 'User ID is required'], 400);
+            }
+            $this->logger->info('User ID received', ['user_id' => $userId]);
+    
+            $recipient = $utilisateurRepository->findByCin($userId);
+            if (!$recipient) {
+                $this->logger->info('Recipient not found', ['user_id' => $userId]);
+                return $this->json(['error' => 'User not found'], 404);
+            }
+            $this->logger->info('Recipient found', ['recipient_email' => $recipient->getEmail()]);
+    
+            if (!$recipient->getEmail() || !filter_var($recipient->getEmail(), FILTER_VALIDATE_EMAIL)) {
+                $this->logger->info('Invalid recipient email', ['email' => $recipient->getEmail()]);
+                return $this->json(['error' => 'Recipient email is invalid'], 400);
+            }
+            $this->logger->info('Recipient email validated');
+    
+            if (!$logement->getAdresse()) {
+                $this->logger->info('Logement address missing', ['logement_id' => $logement->getId()]);
+                return $this->json(['error' => 'Logement address is missing'], 400);
+            }
+            $this->logger->info('Logement address validated', ['adresse' => $logement->getAdresse()]);
+    
+            if (!$this->mailerFrom || !filter_var($this->mailerFrom, FILTER_VALIDATE_EMAIL)) {
+                $this->logger->info('Invalid sender email configuration', ['mailer_from' => $this->mailerFrom]);
+                return $this->json(['error' => 'Sender email configuration is invalid'], 500);
+            }
+            $this->logger->info('Sender email validated', ['mailer_from' => $this->mailerFrom]);
+    
+            $this->logger->info('Preparing to send email', [
+                'from' => $this->mailerFrom,
+                'to' => $recipient->getEmail(),
+            ]);
+            $email = (new Email())
+                ->from(new Address($this->mailerFrom, $this->mailerFromName))
+                ->to($recipient->getEmail())
+                ->subject('Partage de logement')
+                ->html('<p>Bonjour, voici un logement qui pourrait vous intéresser : ' . $logement->getAdresse() . '</p>');
+    
+            $this->logger->info('Sending email');
+            $mailer->send($email);
+            $this->logger->info('Email sent successfully');
+    
+            return $this->json(['success' => true, 'message' => 'Logement partagé avec succès !']);
+        } catch (\Throwable $e) {
+            $this->logger->error('Error sharing logement', [
+                'error' => $e->getMessage(),
+                'logement_id' => $logement->getId(),
+                'user_id' => $userId ?? 'unknown',
+                'stack_trace' => $e->getTraceAsString(),
+            ]);
+            return $this->json(['error' => 'Failed to share logement: ' . $e->getMessage()], 500);
+        }
+    }
     #[Route('/filtrage', name: 'app_logement_index_filtrage', methods: ['GET'])]
     public function indexFiltrage(Request $request, LogementRepository $logementRepository): Response
     {
-            // Get the current user
-            $user = $this->getUser();
-
-            // Check if the user is logged in
-            if (!$user) {
-                $this->addFlash('error', 'Vous devez être connecté pour voir vos logements.');
-                return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
-            }
         $filter = [
-            'utilisateur_cin'=>$request->query->get('utilisateur_cin')?:$user,
             'type' => $request->query->get('type') ?: null,
             'prix' => $request->query->get('prix') ? (float) $request->query->get('prix') : null,
             'nbrChambre' => $request->query->get('nbrChambre') ? (int) $request->query->get('nbrChambre') : null,
             'adresse' => $request->query->get('adresse') ?: null,
             'distance' => $request->query->getInt('distance', 10),
         ];
-
+    
         $logements = $logementRepository->findNearby(
             $filter['type'],
             $filter['prix'],
@@ -86,33 +192,35 @@ final class LogementController extends AbstractController
             null,
             $filter['distance']
         );
-
+    
+        $logementsWithReactions = $this->addReactionData($logements);
+    
         return $this->render('Client/logement/index.html.twig', [
-            'logements' => $logements,
+            'logements' => $logementsWithReactions,
             'filter' => $filter,
             'geocodeError' => false,
         ]);
     }
     #[Route('/new', name: 'app_logement_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, Security $security, OptionsRepository $optionsRepository): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, Security $security): Response
     {
         $logement = new Logement();
         $form = $this->createForm(LogementType::class, $logement);
         $form->handleRequest($request);
-    
+
         if ($form->isSubmitted()) {
             $this->logger->info('Form submitted', [
                 'is_valid' => $form->isValid(),
                 'photos_data' => $form->get('photos')->getData() ? count($form->get('photos')->getData()) : 0,
             ]);
-    
+
             if ($form->isValid()) {
                 // Set address
                 $address = $form->get('address')->getData();
                 if ($address) {
                     $logement->setAdresse($address);
                 }
-    
+
                 // Set user
                 $user = $security->getUser();
                 if (!$user) {
@@ -120,21 +228,7 @@ final class LogementController extends AbstractController
                     return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
                 }
                 $logement->setUtilisateurCin($user);
-    
-                // Persist Logement first
-                try {
-                    $entityManager->persist($logement);
-                    $entityManager->flush();
-                    $this->logger->info('Logement persisted', ['id_logement' => $logement->getId()]);
-                } catch (\Exception $e) {
-                    $this->logger->error('Failed to persist logement', ['error' => $e->getMessage()]);
-                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
-                    return $this->render('Client/logement/new.html.twig', [
-                        'form' => $form->createView(),
-                        'logement' => $logement,
-                    ]);
-                }
-    
+
                 // Handle photos
                 $photos = $form->get('photos')->getData();
                 if (!empty($photos)) {
@@ -147,7 +241,7 @@ final class LogementController extends AbstractController
                                 'type' => $file->getMimeType(),
                                 'size' => $file->getSize(),
                             ]);
-    
+
                             $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
                             if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
                                 $this->addFlash('error', 'Invalid file type: ' . $file->getClientOriginalName());
@@ -157,7 +251,7 @@ final class LogementController extends AbstractController
                                 $this->addFlash('error', 'File too large: ' . $file->getClientOriginalName());
                                 continue;
                             }
-    
+
                             try {
                                 $fileName = md5(uniqid()) . '.' . $file->guessExtension();
                                 $file->move($photosDirectory, $fileName);
@@ -178,7 +272,7 @@ final class LogementController extends AbstractController
                 } else {
                     $this->logger->info('No photos uploaded');
                 }
-    
+
                 // Set localisation
                 $lat = $form->get('lat')->getData();
                 $lng = $form->get('lng')->getData();
@@ -192,102 +286,18 @@ final class LogementController extends AbstractController
                         $this->addFlash('warning', 'Invalid coordinates provided.');
                     }
                 }
-    
-                // Handle options
-                $optionsData = $request->request->get('options', '[]');
-                $this->logger->info('Options received', ['optionsData' => $optionsData]);
-                $options = json_decode($optionsData, true);
-                if (is_array($options) && !empty($options)) {
-                    foreach ($options as $optionName) {
-                        $optionName = trim($optionName);
-                        if (!empty($optionName) && strlen($optionName) <= 255) {
-                            $this->logger->info('Processing option', ['optionName' => $optionName]);
-                            $option = $optionsRepository->findOneBy(['nom_option' => $optionName]);
-                            if (!$option) {
-                                try {
-                                    $option = new Options();
-                                    $option->setNomOption($optionName);
-                                    $this->logger->debug('Persisting new option', ['nom_option' => $optionName]);
-                                    $entityManager->persist($option);
-                                    $entityManager->flush();
-                                    $this->logger->info('New option created', ['id_option' => $option->getIdOption()]);
-                                } catch (\Exception $e) {
-                                    $this->logger->error('Failed to create option', [
-                                        'optionName' => $optionName,
-                                        'error' => $e->getMessage(),
-                                        'trace' => $e->getTraceAsString(),
-                                    ]);
-                                    $this->addFlash('error', 'Failed to create option: ' . $optionName);
-                                    continue;
-                                }
-                            } else {
-                                $this->logger->info('Existing option found', ['id_option' => $option->getIdOption()]);
-                            }
-    
-                            if ($option->getIdOption() === null) {
-                                $this->logger->error('Option has no ID', ['optionName' => $optionName]);
-                                $this->addFlash('error', 'Invalid option ID for: ' . $optionName);
-                                continue;
-                            }
-    
-                            try {
-                                $logementOption = new LogementOptions($logement, $option);
-                                $logementOption->setValeur(true);
-                                $this->logger->debug('Persisting LogementOption', [
-                                    'id_logement' => $logement->getId(),
-                                    'id_option' => $option->getIdOption(),
-                                ]);
-                                $entityManager->persist($logementOption);
-                                $logement->addLogementOption($logementOption);
-                                $this->logger->info('LogementOption created', [
-                                    'id_logement' => $logement->getId(),
-                                    'id_option' => $option->getIdOption(),
-                                ]);
-                            } catch (\Exception $e) {
-                                $this->logger->error('Failed to create LogementOption', [
-                                    'optionName' => $optionName,
-                                    'id_logement' => $logement->getId(),
-                                    'id_option' => $option->getIdOption(),
-                                    'error' => $e->getMessage(),
-                                    'trace' => $e->getTraceAsString(),
-                                ]);
-                                $this->addFlash('error', 'Failed to create LogementOption for: ' . $optionName);
-                                continue;
-                            }
-                        } else {
-                            $this->logger->warning('Skipping invalid option name', ['optionName' => $optionName]);
-                            if (empty($optionName)) {
-                                $this->addFlash('warning', 'Empty option name skipped.');
-                            } else {
-                                $this->addFlash('warning', 'Option name too long: ' . $optionName);
-                            }
-                        }
-                    }
-                } else {
-                    $this->logger->info('No valid options provided');
-                }
-    
-                // Final flush
+
                 try {
-                    if (!$entityManager->isOpen()) {
-                        $this->logger->error('EntityManager is closed, cannot proceed with flush');
-                        $this->addFlash('error', 'Database error: Unable to save logement due to a previous error.');
-                        return $this->render('Client/logement/new.html.twig', [
-                            'form' => $form->createView(),
-                            'logement' => $logement,
-                        ]);
-                    }
+                    $entityManager->persist($logement);
                     $entityManager->flush();
                     $this->addFlash('success', 'Logement created successfully!');
                     return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
                 } catch (\Exception $e) {
-                    $this->logger->error('Error saving logement', [
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
-                    ]);
-                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
+                    $this->logger->error('Error saving logement', ['error' => $e->getMessage()]);
+                    $this->addFlash('error', 'Error saving logement.');
                 }
             } else {
+                // Log form errors
                 $errors = $form->getErrors(true, true);
                 $errorMessages = [];
                 foreach ($errors as $error) {
@@ -299,14 +309,17 @@ final class LogementController extends AbstractController
                 }
                 $this->logger->warning('Form validation failed', ['errors' => $errorMessages]);
                 foreach ($errorMessages as $errorMessage) {
-                    $this->addFlash('error', 'Error: ' . $errorMessage);
+                    $this->addFlash('error', $errorMessage);
                 }
             }
         }
-    
+
+        // Reset form view to ensure consistent rendering
+        $formView = $form->createView();
+
         return $this->render('Client/logement/new.html.twig', [
-            'form' => $form->createView(),
-            'logement' => $logement,
+            'form' => $formView,
+            'logement' => $logement, // Pass logement for context
         ]);
     }
     #[Route('/{id}', name: 'app_logement_show', methods: ['GET'])]
@@ -321,33 +334,16 @@ final class LogementController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_logement_edit', methods: ['GET', 'POST'])]
-    public function edit(
-        Request $request,
-        Logement $logement,
-        EntityManagerInterface $entityManager,
-        Security $security,
-        OptionsRepository $optionsRepository
-    ): Response {
+    public function edit(Request $request, Logement $logement, EntityManagerInterface $entityManager, Security $security): Response
+    {
         $form = $this->createForm(LogementType::class, $logement);
         $form->handleRequest($request);
 
-        // Fetch existing options for rendering
-        $options = [];
-        foreach ($logement->getLogementOptions() as $logementOption) {
-            $option = $logementOption->getOption();
-            if ($option) {
-                $options[] = $option->getNomOption();
-            }
-        }
-
         if ($form->isSubmitted()) {
-            $this->logger->info('Edit form submitted', [
-                'is_valid' => $form->isValid(),
-                'photos_data' => $form->get('photos')->getData() ? count($form->get('photos')->getData()) : 0,
-                'options_data' => $request->request->get('options', '[]'),
-            ]);
-
             if ($form->isValid()) {
+                $lat = $form->get('lat')->getData();
+                $lng = $form->get('lng')->getData();
+
                 // Handle deleted photos
                 $deletedPhotoIds = $request->request->get('deleted_photos', '');
                 if ($deletedPhotoIds) {
@@ -377,11 +373,11 @@ final class LogementController extends AbstractController
                         if ($file) {
                             $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
                             if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
-                                $this->addFlash('error', 'Invalid file type: ' . $file->getClientOriginalName());
+                                $this->addFlash('error', 'Invalid file type. Only JPEG, PNG, and GIF are allowed.');
                                 continue;
                             }
                             if ($file->getSize() > 5 * 1024 * 1024) {
-                                $this->addFlash('error', 'File too large: ' . $file->getClientOriginalName());
+                                $this->addFlash('error', 'File is too large. Maximum size is 5MB.');
                                 continue;
                             }
 
@@ -395,125 +391,36 @@ final class LogementController extends AbstractController
                                 $photo->setUrl($fileName);
                                 $logement->addImageLogement($photo);
                                 $entityManager->persist($photo);
-                                $this->logger->info('Photo uploaded', ['file' => $fileName]);
                             } catch (FileException $e) {
-                                $this->logger->error('Photo upload failed', [
-                                    'file' => $file->getClientOriginalName(),
-                                    'error' => $e->getMessage(),
-                                ]);
-                                $this->addFlash('error', 'Error uploading ' . $file->getClientOriginalName());
+                                $this->logger->error('File upload failed: ' . $e->getMessage());
+                                $this->addFlash('error', 'Error uploading file.');
                             }
                         }
                     }
                 }
 
                 // Update localisation
-                $lat = $form->get('lat')->getData();
-                $lng = $form->get('lng')->getData();
-                if ($lat && $lng && is_numeric($lat) && is_numeric($lng)) {
-                    $lat = (float) $lat;
-                    $lng = (float) $lng;
-                    if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
-                        $localisation = new \LongitudeOne\Spatial\PHP\Types\Geography\Point($lat, $lng);
-                        $logement->setLocalisation($localisation);
-                    } else {
-                        $this->addFlash('warning', 'Invalid coordinates provided.');
-                    }
+                if ($lat && $lng) {
+                    $localisation = new \LongitudeOne\Spatial\PHP\Types\Geography\Point($lat, $lng);
+                    $logement->setLocalisation($localisation);
                 }
 
-                // Handle options
-                $optionsData = $request->request->get('options', '[]');
-                $newOptions = json_decode($optionsData, true);
-                $existingOptions = [];
-                foreach ($logement->getLogementOptions() as $logementOption) {
-                    $option = $logementOption->getOption();
-                    $existingOptions[$option->getNomOption()] = $logementOption;
-                }
+                $entityManager->flush();
 
-                if (is_array($newOptions) && !empty($newOptions)) {
-                    foreach ($newOptions as $optionName) {
-                        $optionName = trim($optionName);
-                        if (!empty($optionName) && strlen($optionName) <= 255) {
-                            if (!isset($existingOptions[$optionName])) {
-                                $option = $optionsRepository->findOneBy(['nom_option' => $optionName]);
-                                if (!$option) {
-                                    $option = new Options();
-                                    $option->setNomOption($optionName);
-                                    $entityManager->persist($option);
-                                    $entityManager->flush();
-                                }
-                                $logementOption = new LogementOptions($logement, $option);
-                                $logementOption->setValeur(true);
-                                $entityManager->persist($logementOption);
-                                $logement->addLogementOption($logementOption);
-                                $this->logger->info('LogementOption created', ['option' => $optionName]);
-                            }
-                        }
-                    }
-                }
-
-                foreach ($existingOptions as $optionName => $logementOption) {
-                    if (!in_array($optionName, $newOptions)) {
-                        $logement->removeLogementOption($logementOption);
-                        $entityManager->remove($logementOption);
-                        $this->logger->info('LogementOption removed', ['option' => $optionName]);
-                    }
-                }
-
-                // Final flush
-                try {
-                    if (!$entityManager->isOpen()) {
-                        $this->logger->error('EntityManager is closed, cannot proceed with flush');
-                        $this->addFlash('error', 'Database error: Unable to save logement due to a previous error.');
-                        return $this->render('Client/logement/edit.html.twig', [
-                            'logement' => $logement,
-                            'form' => $form->createView(),
-                            'options' => $options,
-                        ]);
-                    }
-                    $entityManager->flush();
-                    $this->addFlash('success', 'Logement updated successfully!');
-                    return $this->redirectToRoute('app_logement_show', ['id' => $logement->getId()], Response::HTTP_SEE_OTHER);
-                } catch (\Exception $e) {
-                    $this->logger->error('Error saving logement', [
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
-                    ]);
-                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
-                    return $this->render('Client/logement/edit.html.twig', [
-                        'logement' => $logement,
-                        'form' => $form->createView(),
-                        'options' => $options,
-                    ]);
-                }
+                $this->addFlash('success', 'Logement updated successfully!');
+                return $this->redirectToRoute('app_logement_show', ['id' => $logement->getId()], Response::HTTP_SEE_OTHER);
             } else {
-                $errors = $form->getErrors(true, true);
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[] = sprintf(
-                        'Field: %s, Error: %s',
-                        $error->getOrigin() ? $error->getOrigin()->getName() : 'Global',
-                        $error->getMessage()
-                    );
-                }
-                $this->logger->warning('Form validation failed', ['errors' => $errorMessages]);
-                foreach ($errorMessages as $errorMessage) {
-                    $this->addFlash('error', 'Error: ' . $errorMessage);
-                }
-                return $this->render('Client/logement/edit.html.twig', [
-                    'logement' => $logement,
-                    'form' => $form->createView(),
-                    'options' => $options,
-                ]);
+                $this->addFlash('error', 'Please correct the errors in the form.');
+                $this->logger->warning('Form validation failed', ['errors' => $form->getErrors(true)]);
             }
         }
 
         return $this->render('Client/logement/edit.html.twig', [
             'logement' => $logement,
             'form' => $form->createView(),
-            'options' => $options,
         ]);
     }
+
     #[Route('/{id}', name: 'app_logement_delete', methods: ['POST'])]
     public function delete(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
     {
@@ -527,6 +434,7 @@ final class LogementController extends AbstractController
             }
             $entityManager->remove($logement);
             $entityManager->flush();
+            $this->addFlash('success', 'Logement deleted successfully!');
         } else {
             $this->addFlash('error', 'Invalid CSRF token.');
         }
@@ -534,64 +442,107 @@ final class LogementController extends AbstractController
         return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
     }
     #[Route('/logement/{id}/react', name: 'app_logement_react', methods: ['POST'])]
-    public function react(Request $request, Logement $logement, LogementRepository $logementRepository): Response
+    public function react(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
     {
-        // Vérifier si l'utilisateur est connecté
         $user = $this->getUser();
         if (!$user) {
             $this->addFlash('error', 'Vous devez être connecté pour réagir.');
             return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
         }
-
-        // Récupérer l'emoji sélectionné
+    
         $emoji = $request->request->get('emoji');
-
-        // Liste des emojis autorisés
-        $allowedEmojis = ['👍', '❤️', '😢', '😡'];
+        $allowedEmojis = ['👍', '❤️', '😢', '😡', '👎'];
         if (!in_array($emoji, $allowedEmojis)) {
             $this->addFlash('error', 'Emoji non valide.');
             return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
         }
-
-        // Mettre à jour l'emoji du logement
-        $logement->setEmogies($emoji);
-
-        // Sauvegarder les modifications
-        $logementRepository->getEntityManager()->flush();
-
-        // Message de confirmation
+    
+        $logement->addEmoji($user->getCin(), $emoji);
+        $entityManager->flush();
+    
         $this->addFlash('success', 'Réaction mise à jour avec succès !');
-
-        // Rediriger vers la liste des logements
         return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
     }
-
-    /**
-     * Gère le partage d'un logement
-     */
-    #[Route('/logement/{id}/share', name: 'app_logement_share', methods: ['POST'])]
-    public function share(Logement $logement, LogementRepository $logementRepository): Response
+    #[Route('/test-email', name: 'app_test_email', methods: ['GET'])]
+    public function testEmail(MailerInterface $mailer): Response
     {
-        // Vérifier si l'utilisateur est connecté
-        $user = $this->getUser();
-        if (!$user) {
-            $this->addFlash('error', 'Vous devez être connecté pour partager.');
-            return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+        try {
+            $email = (new Email())
+                ->from(new Address($this->mailerFrom, $this->mailerFromName))
+                ->to('oumeimatibaoui@gmai.com') // Replace with a valid email
+                ->subject('Test Email')
+                ->html('<p>This is a test email.</p>');
+    
+            $mailer->send($email);
+    
+            return new Response('Email sent successfully!');
+        } catch (TransportExceptionInterface $e) {
+            $this->logger->error('Test email failed', ['error' => $e->getMessage()]);
+            return new Response('Failed to send email: ' . $e->getMessage(), 500);
         }
+    }
+    #[Route('/search/{query}', name: 'app_logement_search', methods: ['GET'])]
+    public function search(string $query, LogementRepository $logementRepository): JsonResponse
+    {
+        try {
+            $logements = $logementRepository->findAll();
+            $this->logger->info('Logements retrieved', ['count' => count($logements)]);
 
-        // Incrémenter le compteur de partages
-        $logement->setShareCount($logement->getShareCount() + 1);
+            if (empty($logements)) {
+                $this->logger->info('No logements found');
+                return $this->json(['results' => [], 'summary' => 'Aucun logement disponible'], 200);
+            }
 
-        // Sauvegarder les modifications
-        $logementRepository->getEntityManager()->flush();
+            $results = $this->geminiService->interpretQuery($query, $logements);
+            $this->logger->info('Gemini result', ['results' => $results]);
 
-        // Générer un lien de partage
-        $shareLink = $this->generateUrl('app_logement_show', ['id' => $logement->getId()], true);
+            if (empty($results)) {
+                $this->logger->info('No matching logements found');
+                return $this->json(['results' => [], 'summary' => 'Aucun logement correspondant trouvé'], 200);
+            }
 
-        // Message de confirmation avec le lien
-        $this->addFlash('success', 'Logement partagé ! Lien : ' . $shareLink);
+            $resultData = [];
+            foreach ($results as $result) {
+                $logement = $logementRepository->find($result['id']);
+                if ($logement) {
+                    $resultData[] = [
+                        'id' => $logement->getId(),
+                        'adresse' => $logement->getAdresse(),
+                        'description' => $logement->getDescription(),
+                        'prix' => $logement->getPrix(),
+                        'nbrChambre' => $logement->getNbrChambre(),
+                        'type' => $logement->getType(),
+                        'photo' => $logement->getImageLogements()->first() ? '/Uploads/photos/' . $logement->getImageLogements()->first()->getUrl() : '/assets/images/property-03.jpg',
+                        'reason' => $result['reason'],
+                    ];
+                }
+            }
 
-        // Rediriger vers la liste des logements
-        return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+            if (empty($resultData)) {
+                $this->logger->info('No valid logements found after processing');
+                return $this->json(['results' => [], 'summary' => 'Aucun logement valide trouvé'], 200);
+            }
+            usort($resultData, function ($a, $b) {
+                return $b['reactionScore'] <=> $a['reactionScore'];
+            });
+            $summary = $this->geminiService->summarizeResults($logementRepository->find($results[0]['id']), $query);
+          
+            $this->logger->info('Logements selected', [
+                'query' => $query,
+                'count' => count($resultData),
+                'results' => $resultData,
+            ]);
+
+            return $this->json([
+                'results' => $resultData,
+                'summary' => $summary,
+            ], 200);
+        } catch (\Exception $e) {
+            $this->logger->error('Error in search method', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return $this->json(['error' => 'Erreur lors de la recherche'], 500);
+        }
     }
 }

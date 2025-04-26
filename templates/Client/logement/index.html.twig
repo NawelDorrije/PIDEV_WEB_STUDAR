@@ -17,7 +17,15 @@
             --group-color-focus: #fff;
             --group-border-focus: var(--input-border-focus);
             --group-background-focus: #678EFE;
+
+            /* Variables for user list design */
+            --surface1: hsl(0 0% 90%);
+            --surface2: hsl(0 0% 100%);
+            --text1: hsl(0 0% 20%);
+            --avatar-bg: linear-gradient(to top right, orange, deeppink); /* Gradient for avatar background */
         }
+
+        /* Existing styles (unchanged) */
         .form-field {
             display: block;
             width: 100%;
@@ -31,8 +39,8 @@
             border: 1px solid var(--input-border);
             background: var(--input-background);
             transition: border .3s ease;
-            padding-left: 40px; /* Space for icon */
-            height: 41px; /* Match image height */
+            padding-left: 40px;
+            height: 41px;
         }
         .form-field::placeholder {
             color: var(--input-placeholder);
@@ -44,8 +52,8 @@
         .form-group {
             position: relative;
             display: flex;
-            width: 300px; /* Match image width */
-            margin-right: 10px; /* Space between search and buttons */
+            width: 300px;
+            margin-right: 10px;
             margin-top: 20px;
         }
         .form-group > span,
@@ -94,11 +102,11 @@
             color: var(--input-color);
             font-size: 14px;
             z-index: 2;
-            cursor: pointer; /* Make icon clickable */
+            cursor: pointer;
         }
         .button-group .btn {
-            height: 39px; /* Match input height */
-            line-height: 25px; /* Center icon vertically */
+            height: 39px;
+            line-height: 25px;
         }
         * {
             box-sizing: inherit;
@@ -107,14 +115,12 @@
         *:after {
             box-sizing: inherit;
         }
-        /* Styles pour la ligne d'interaction (emojis + partage + show) */
         .interaction-row {
             display: flex;
             align-items: center;
             justify-content: flex-start;
             margin-top: 10px;
         }
-        /* Styles pour la section des emojis */
         .reaction-container {
             position: relative;
             display: inline-flex;
@@ -127,12 +133,12 @@
             padding: 5px 10px;
             border-radius: 15px;
             cursor: pointer;
-            color: #606770; /* Couleur similaire à Facebook */
+            color: #606770;
             font-size: 14px;
         }
         .reaction-toggle i {
             margin-right: 5px;
-            color: #678EFE; /* Couleur du thème pour l'icône */
+            color: #678EFE;
         }
         .reaction-count {
             margin-left: 5px;
@@ -142,7 +148,7 @@
         .emoji-list {
             display: none;
             position: absolute;
-            top: -50px; /* Positionner au-dessus pour ressembler à Facebook */
+            top: -50px;
             left: 0;
             background-color: white;
             border: 1px solid #ddd;
@@ -157,20 +163,19 @@
         .emoji-btn {
             background: none;
             border: none;
-            font-size: 24px; /* Taille plus grande comme dans l'image */
+            font-size: 24px;
             padding: 5px;
             cursor: pointer;
             border-radius: 50%;
             transition: transform 0.2s ease;
         }
         .emoji-btn:hover {
-            transform: scale(1.2); /* Effet de zoom au survol */
+            transform: scale(1.2);
         }
         .current-emoji {
             font-size: 16px;
             margin-right: 3px;
         }
-        /* Styles pour le partage */
         .share-container {
             display: inline-flex;
             align-items: center;
@@ -179,7 +184,7 @@
         .share-btn {
             background: none;
             border: none;
-            color: #606770; /* Couleur similaire à Facebook */
+            color: #606770;
             font-size: 14px;
             padding: 5px 10px;
             border-radius: 5px;
@@ -187,31 +192,98 @@
             transition: background-color 0.3s ease;
         }
         .share-btn:hover {
-            background-color: #f0f2f5; /* Fond gris clair au survol, comme Facebook */
+            background-color: #f0f2f5;
         }
         .share-btn i {
             margin-right: 5px;
         }
-        /* Ajustement du bouton "show" */
         .main-button a {
             padding: 5px 10px;
             font-size: 14px;
-            color: #606770; /* Même couleur que les autres boutons */
+            color: #606770;
             border-radius: 5px;
             transition: background-color 0.3s ease;
         }
         .main-button a:hover {
-            background-color: #f0f2f5; /* Même effet de survol */
+            background-color: #f0f2f5;
+        }
+
+        /* Updated user-list styles for vertical layout with avatar to the left */
+        .user-list {
+            overflow-y: auto; /* Enable vertical scrolling */
+            overscroll-behavior-y: contain;
+            border: 1px solid hsl(0 0% 80%);
+            border-radius: 1ex;
+            background-color: var(--surface2);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            gap: 1rem;
+            max-height: 300px; /* Maintain max height for scrolling */
+        }
+
+        .user-item {
+            display: flex; /* Use flexbox to align avatar and text horizontally */
+            flex-direction: row;
+            align-items: center;
+            gap: 1rem; /* Space between avatar and text */
+            padding: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s ease, transform 0.2s ease-in-out;
+        }
+
+        .user-item:hover {
+            background-color: #f0f2f5;
+            transform: scale(1.02); /* Subtle scale on hover */
+        }
+
+        .user-item .avatar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px; /* Smaller size for the avatar */
+            height: 40px;
+            border-radius: 50%;
+            background: var(--avatar-bg); /* Gradient background */
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            flex-shrink: 0; /* Prevent avatar from shrinking */
+        }
+
+        .user-item .user-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            color: var(--text1);
+        }
+
+        .user-item .user-info .nom {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .user-item .user-info .email {
+            font-size: 12px;
+            color: #606770;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 {% endblock %}
+
+
 
 {% block javascripts %}
     {{ parent() }}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Existing filter and share functionality...
             const applyFilterButton = document.getElementById('applyFilter');
             if (applyFilterButton) {
                 applyFilterButton.addEventListener('click', function() {
@@ -235,35 +307,216 @@
 
             const searchForm = document.getElementById('searchForm');
             const searchInput = document.getElementById('searchInput');
-            const searchIcon = document.querySelector('.search-icon');
+            const searchResultsContainer = document.getElementById('searchResults');
 
             if (searchForm && searchInput) {
-                // Submit on Enter
-                searchForm.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    const searchValue = searchInput.value.trim();
-                    if (searchValue) {
-                        const params = new URLSearchParams();
-                        params.append('adresse', searchValue);
-                        window.location.href = '{{ path('app_logement_index_filtrage') }}?' + params.toString();
-                    }
+                let debounceTimer;
+                // Search-as-you-type functionality
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        const query = searchInput.value.trim();
+                        if (query.length < 1) {
+                            searchResultsContainer.innerHTML = '';
+                            return;
+                        }
+
+                        searchLogements(query);
+                    }, 300); // Debounce delay of 300ms
                 });
 
-                // Submit on icon click
-                if (searchIcon) {
-                    searchIcon.addEventListener('click', function() {
-                        const searchValue = searchInput.value.trim();
-                        if (searchValue) {
-                            const params = new URLSearchParams();
-                            params.append('adresse', searchValue);
-                            window.location.href = '{{ path('app_logement_index_filtrage') }}?' + params.toString();
+                // Prevent form submission
+                searchForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                });
+            }
+
+            // Function to search logements
+            function searchLogements(query) {
+                searchResultsContainer.innerHTML = '<div class="text-center col-12"><i class="fas fa-spinner fa-spin"></i> Recherche en cours...</div>';
+                const searchUrl = '/logement/search/' + encodeURIComponent(query);
+                const showUrlTemplate = '{{ path('app_logement_show', {'id': '__ID__'}) }}'; // Stocker le modèle d'URL
+                fetch(searchUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.error || `Erreur réseau: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    searchResultsContainer.innerHTML = '';
+                    if (data.error) {
+                        searchResultsContainer.innerHTML = `<p class="text-danger col-12">${data.error}</p>`;
+                        return;
+                    }
+
+                    if (data.results.length === 0) {
+                        searchResultsContainer.innerHTML = `<p class="col-12">${data.summary || 'Aucun logement trouvé.'}</p>`;
+                        return;
+                    }
+
+                    searchResultsContainer.innerHTML = '';
+                    data.results.forEach(logement => {
+                        const logementCard = `
+                            <div class="col-md-4 mb-4">
+                                <div class="card">
+                                    <img src="${logement.photo}" class="card-img-top" alt="Photo de logement">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${logement.adresse}</h5>
+                                        <p class="card-text">${logement.description}</p>
+                                        <p class="card-text"><strong>Prix:</strong> ${logement.prix} €</p>
+                                        <p class="card-text"><strong>Chambres:</strong> ${logement.nbrChambre}</p>
+                                        <p class="card-text"><strong>Type:</strong> ${logement.type}</p>
+                                        <div class="interaction-row">
+                                            <div class="reaction-container">
+                                                <div class="reaction-toggle" data-logement-id="${logement.id}">
+                                                    <i class="fas fa-thumbs-up"></i>
+                                                    <span class="current-emoji"></span>
+                                                    <span class="reaction-count">0</span>
+                                                </div>
+                                                <div class="emoji-list">
+                                                    <button class="emoji-btn" data-emoji="👍">👍</button>
+                                                    <button class="emoji-btn" data-emoji="❤️">❤️</button>
+                                                    <button class="emoji-btn" data-emoji="😂">😂</button>
+                                                    <button class="emoji-btn" data-emoji="😮">😮</button>
+                                                    <button class="emoji-btn" data-emoji="😢">😢</button>
+                                                </div>
+                                            </div>
+                                            <div class="share-container">
+                                                <button class="share-btn" data-logement-id="${logement.id}">
+                                                    <i class="fas fa-share"></i> Partager
+                                                </button>
+                                            </div>
+                                            <div class="main-button">
+                                                <a href="${showUrlTemplate.replace('__ID__', logement.id)}">Show</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        searchResultsContainer.innerHTML += logementCard;
+                    });
+                    attachShareButtonListeners();
+                })
+                .catch(error => {
+                    console.error('Error searching logements:', error);
+                    searchResultsContainer.innerHTML = `<p class="text-danger col-12">${error.message}</p>`;
+                });
+            }
+            // Function to attach event listeners to share buttons
+            function attachShareButtonListeners() {
+                const shareButtons = document.querySelectorAll('.share-btn');
+                const userListContainer = document.getElementById('userList');
+                const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+
+                shareButtons.forEach(button => {
+                    button.removeEventListener('click', shareButtonHandler); // Prevent duplicate listeners
+
+                    button.addEventListener('click', shareButtonHandler);
+                });
+
+                function shareButtonHandler() {
+                    const logementId = this.getAttribute('data-logement-id');
+                    document.getElementById('shareLogementId').value = logementId;
+
+                    userListContainer.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>';
+
+                    fetch('{{ path('app_logement_users') }}', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'include'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erreur réseau lors du chargement des utilisateurs');
                         }
+                        return response.json();
+                    })
+                    .then(data => {
+                        userListContainer.innerHTML = '';
+                        if (data.length === 0) {
+                            userListContainer.innerHTML = '<p>Aucun utilisateur disponible.</p>';
+                            shareModal.show();
+                            return;
+                        }
+
+                        data.forEach(user => {
+                            const userItem = document.createElement('div');
+                            userItem.classList.add('user-item');
+                            userItem.setAttribute('data-user-id', user.id);
+                            const initial = user.nom.charAt(0).toUpperCase();
+                            userItem.innerHTML = `
+                                <div class="avatar">${initial}</div>
+                                <div class="user-info">
+                                    <span class="nom">${user.nom}</span>
+                                    <span class="email">${user.email}</span>
+                                </div>
+                            `;
+                            userItem.addEventListener('click', function() {
+                                const userId = this.getAttribute('data-user-id');
+                                const logementId = document.getElementById('shareLogementId').value;
+
+                                fetch('{{ path('app_logement_share', {'id': '__logement_id__'}) }}'.replace('__logement_id__', logementId), {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    },
+                                    body: 'userId=' + encodeURIComponent(userId)
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        return response.text().then(text => {
+                                            console.error('Fetch response (not OK):', response.status, text);
+                                            throw new Error('Network response was not ok: ' + response.status + ' - ' + text);
+                                        });
+                                    }
+                                    return response.json();
+                                })
+                                .then(result => {
+                                    if (result.success) {
+                                        alert('Logement partagé avec succès !');
+                                        shareModal.hide();
+                                    } else {
+                                        alert('Erreur : ' + result.error);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error sharing logement:', error);
+                                    alert('Erreur lors du partage du logement: ' + error.message);
+                                });
+                            });
+                            userListContainer.appendChild(userItem);
+                        });
+
+                        shareModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching users:', error);
+                        userListContainer.innerHTML = '<p class="text-danger">Erreur lors du chargement des utilisateurs</p>';
+                        shareModal.show();
                     });
                 }
             }
+
+            // Initial attachment of share button listeners for existing logements
+            attachShareButtonListeners();
         });
     </script>
 {% endblock %}
+
 
 {% block importmap %}
     {{ importmap('app') }}
@@ -298,7 +551,8 @@
                 </div>
             </div>
 
-            <!-- Filter Modal -->
+            <div id="searchResults" class="mt-4 row"></div>
+
             <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -308,53 +562,83 @@
                         </div>
                         <div class="modal-body">
                             <form id="filterForm">
-                                <div class="mb-2">
-                                    <select id="typeFilter" class="form-select">
-                                        <option value="" {{ filter.type is empty ? 'selected' : '' }}>Tous</option>
-                                        <option value="appartement" {{ filter.type == 'appartement' ? 'selected' : '' }}>Appartement</option>
-                                        <option value="maison" {{ filter.type == 'maison' ? 'selected' : '' }}>Maison</option>
-                                        <option value="studio" {{ filter.type == 'studio' ? 'selected' : '' }}>Studio</option>
+                                <div class="mb-3">
+                                    <label for="typeFilter" class="form-label">Type</label>
+                                    <select class="form-select" id="typeFilter" name="type">
+                                        <option value="">Tous</option>
+                                        <option value="Appartement" {{ filter.type == 'Appartement' ? 'selected' : '' }}>Appartement</option>
+                                        <option value="Maison" {{ filter.type == 'Maison' ? 'selected' : '' }}>Maison</option>
+                                        <option value="Villa" {{ filter.type == 'Villa' ? 'selected' : '' }}>Villa</option>
                                     </select>
                                 </div>
-                                <div class="mb-2">
-                                    <input type="number" id="priceFilter" class="form-control" min="0" placeholder="Entrez le prix max" value="{{ filter.prix ?? '' }}">
+                                <div class="mb-3">
+                                    <label for="priceFilter" class="form-label">Prix maximum (€)</label>
+                                    <input type="number" class="form-control" id="priceFilter" name="prix" value="{{ filter.prix ?: '' }}" min="0">
                                 </div>
-                                <div class="mb-2">
-                                    <input type="number" id="roomsFilter" class="form-control" min="0" placeholder="Entrez le nombre" value="{{ filter.nbrChambre ?? '' }}">
+                                <div class="mb-3">
+                                    <label for="roomsFilter" class="form-label">Nombre de chambres</label>
+                                    <input type="number" class="form-control" id="roomsFilter" name="nbrChambre" value="{{ filter.nbrChambre ?: '' }}" min="0">
                                 </div>
-                                <div class="mb-2">
-                                    <input type="text" id="addressFilter" class="form-control" placeholder="Entrez une adresse" value="{{ filter.adresse ?? '' }}">
+                                <div class="mb-3">
+                                    <label for="addressFilter" class="form-label">Adresse</label>
+                                    <input type="text" class="form-control" id="addressFilter" name="adresse" value="{{ filter.adresse ?: '' }}">
                                 </div>
                             </form>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                            <button type="button" class="btn btn-outline-primary" id="applyFilter">Appliquer</button>
+                            <button type="button" class="btn btn-primary" id="applyFilter">Appliquer</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Geocode Error -->
+            <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="shareModalLabel">Partager ce logement</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="shareLogementId" value="">
+                            <div class="user-list" id="userList"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {% if geocodeError %}
                 <div class="alert alert-warning mt-3">
-                    Impossible de géocoder l'adresse : {{ filter.adresse }}. Veuillez vérifier l'adresse.
+                    Impossible de géocoder l'adresse fournie. Veuillez réessayer avec une adresse différente.
                 </div>
             {% endif %}
 
-            <!-- Filter Feedback -->
-            {% if filter.type or filter.prix or filter.nbrChambre or filter.adresse %}
+            {% if filter.adresse or filter.type or filter.prix or filter.nbrChambre %}
                 <div class="alert alert-info mt-3">
-                    Filtres appliqués :
-                    {% if filter.type %}Type: {{ filter.type }}{% endif %}
-                    {% if filter.prix %} | Prix max: {{ filter.prix }} DNT{% endif %}
-                    {% if filter.nbrChambre %} | Chambres: {{ filter.nbrChambre }}{% endif %}
-                    {% if filter.adresse %} | Adresse: {{ filter.adresse }}{% endif %}
-                    <a href="{{ path('app_logement_index') }}" class="ms-2">Réinitialiser</a>
+                    Résultats filtrés :
+                    {% set filtersApplied = [] %}
+                    {% if filter.type %}
+                        {% set filtersApplied = filtersApplied|merge(['Type: ' ~ filter.type]) %}
+                    {% endif %}
+                    {% if filter.prix %}
+                        {% set filtersApplied = filtersApplied|merge(['Prix max: ' ~ filter.prix ~ ' €']) %}
+                    {% endif %}
+                    {% if filter.nbrChambre %}
+                        {% set filtersApplied = filtersApplied|merge(['Chambres: ' ~ filter.nbrChambre]) %}
+                    {% endif %}
+                    {% if filter.adresse %}
+                        {% set filtersApplied = filtersApplied|merge(['Adresse: ' ~ filter.adresse]) %}
+                    {% endif %}
+                    {{ filtersApplied|join(', ') }}
+                    <a href="{{ path('app_logement_index') }}" class="btn btn-sm btn-outline-danger ms-2">Réinitialiser</a>
                 </div>
             {% endif %}
 
-            <div class="row" style="margin-top:60px;">
+            <div id="defaultLogements" class="row" style="margin-top:60px;">
                 {% if logements is empty %}
                     <div class="col-12">
                         <p class="text-center">Aucun logement trouvé avec ces critères.</p>
@@ -363,51 +647,51 @@
                     {% for logement in logements %}
                         <div class="col-lg-4 col-md-6">
                             <div class="item">
-                                {% set firstImage = logement.imageLogements|first %}
-                                <a href="{{ path('app_logement_show', {'id': logement.id}) }}">
-                                    <img src="{{ firstImage ? asset('Uploads/photos/' ~ firstImage.url) : asset('assets/images/property-03.jpg') }}" alt="Image de {{ logement.adresse|default('Logement') }}">
+                                {% set firstImage = logement.entity.imageLogements|first %}
+                                <a href="{{ path('app_logement_show', {'id': logement.entity.id}) }}">
+                                    <img src="{{ firstImage ? asset('Uploads/photos/' ~ firstImage.url) : asset('assets/images/property-03.jpg') }}" alt="Image de {{ logement.entity.adresse|default('Logement') }}">
                                 </a>
-                                <span class="category">{{ logement.type }}</span>
-                                <h6>{{ logement.prix }} €</h6>
-                                <h4><a href="{{ path('app_logement_show', {'id': logement.id}) }}">{{ logement.adresse }}</a></h4>
+                                <span class="category">{{ logement.entity.type }}</span>
+                                <h6>{{ logement.entity.prix }} €</h6>
+                                <h4><a href="{{ path('app_logement_show', {'id': logement.entity.id}) }}">{{ logement.entity.adresse }}</a></h4>
                                 <ul>
                                     <li><strong>Option:</strong>
                                         {% set options = [] %}
-                                        {% for logement_option in logement.logementOptions %}
+                                        {% for logement_option in logement.entity.logementOptions %}
                                             {% set options = options|merge([logement_option.option.nomOption]) %}
                                         {% endfor %}
                                         {{ options|join(', ') ?: 'Aucune option' }}
                                     </li>
-                                </ul>
-                                <!-- Ligne d'interaction : emojis, partage, et show -->
-                                <div class="interaction-row">
-                                    <!-- Section pour les emojis -->
-                                    <div class="reaction-container">
-                                        <div class="reaction-toggle">
-                                            {% if logement.emogies %}
-                                                <span class="current-emoji">{{ logement.emogies }}</span>
-                                                <span class="reaction-count">1</span> <!-- Compteur statique pour l'exemple -->
+                                    <li>
+                                            {% if logement.reactionCounts %}
+                                                {{ logement.reactionCounts|map((count, emoji) => "#{emoji} #{count}")|join(' ') }}
                                             {% else %}
-                                                <i class="fas fa-thumbs-up"></i> J'aime
+                                                Aucune réaction
                                             {% endif %}
+                                    </li>
+                                </ul>
+                                <div class="interaction-row">
+                                    <div class="reaction-container">
+                                        <div class="reaction-toggle" data-logement-id="{{ logement.entity.id }}">
+                                            <i class="fas fa-thumbs-up"></i>
+                                            <span class="current-emoji"></span>
+                                            <span class="reaction-count">{{ logement.totalReactions }}</span>
                                         </div>
                                         <div class="emoji-list">
-                                            <form action="{{ path('app_logement_react', {'id': logement.id}) }}" method="post" style="display:inline;">
+                                            <form action="{{ path('app_logement_react', {'id': logement.entity.id}) }}" method="post" style="display:inline;">
                                                 <button type="submit" name="emoji" value="👍" class="emoji-btn">👍</button>
                                                 <button type="submit" name="emoji" value="👎" class="emoji-btn">👎</button>
                                                 <button type="submit" name="emoji" value="❤️" class="emoji-btn">❤️</button>
+                                                <button type="submit" name="emoji" value="😢" class="emoji-btn">😢</button>
+                                                <button type="submit" name="emoji" value="😡" class="emoji-btn">😡</button>
                                             </form>
                                         </div>
                                     </div>
-                                    <!-- Section pour le partage -->
                                     <div class="share-container">
-                                        <form action="{{ path('app_logement_share', {'id': logement.id}) }}" method="post" style="display:inline;">
-                                            <button type="submit" class="share-btn"><i class="fas fa-share"></i> Partager</button>
-                                        </form>
+                                        <button class="share-btn" data-logement-id="{{ logement.entity.id }}"><i class="fas fa-share"></i> Partager</button>
                                     </div>
-                                    <!-- Bouton "show" -->
                                     <div class="main-button">
-                                        <a href="{{ path('app_logement_show', {'id': logement.id}) }}">show</a>
+                                        <a href="{{ path('app_logement_show', {'id': logement.entity.id}) }}">Show</a>
                                     </div>
                                 </div>
                             </div>

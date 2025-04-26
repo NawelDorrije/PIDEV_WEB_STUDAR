@@ -380,6 +380,7 @@
                                     
                                         <ul>
                                             {% for photo in logement.imageLogements %}
+                                            {{dump(photo)}}
                                                 <li>
                                                     <a href="#image_{{ loop.index }}">
                                                         <img src="{{ asset('Uploads/photos/' ~ photo.url) }}" 

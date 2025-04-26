@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @extends ServiceEntityRepository<Utilisateur>
@@ -20,6 +21,15 @@ class UtilisateurRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('u')
             ->where('u.email = :email')
             ->setParameter('email', $identifier)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+    
+    public function findByCin(string $cin): ?Utilisateur
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.cin = :cin')
+            ->setParameter('cin', $cin)
             ->getQuery()
             ->getOneOrNullResult();
     }

@@ -8,13 +8,12 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: OptionsRepository::class)]
-#[ORM\Table(name: 'options')]
 class Options
 {
     #[ORM\Id]
-    #[ORM\Column(name: "id_option", type: "integer", options: ["unsigned" => true])]
-    #[ORM\GeneratedValue(strategy: "IDENTITY")]
-    private ?int $id_option = null;
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name:'id_option')]
+    private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $nom_option = null;
@@ -22,7 +21,10 @@ class Options
     /**
      * @var Collection<int, LogementOptions>
      */
-    #[ORM\OneToMany(targetEntity: LogementOptions::class, mappedBy: 'option')]
+    #[ORM\OneToMany(
+        targetEntity: LogementOptions::class, 
+        mappedBy: 'option'  // Must match property name in LogementOptions
+    )]
     private Collection $logementOptions;
 
     public function __construct()
@@ -30,9 +32,9 @@ class Options
         $this->logementOptions = new ArrayCollection();
     }
 
-    public function getIdOption(): ?int
+    public function getId(): ?int
     {
-        return $this->id_option;
+        return $this->id;
     }
 
     public function getNomOption(): ?string
@@ -43,6 +45,7 @@ class Options
     public function setNomOption(string $nom_option): static
     {
         $this->nom_option = $nom_option;
+
         return $this;
     }
 
@@ -58,18 +61,13 @@ class Options
     {
         if (!$this->logementOptions->contains($logementOption)) {
             $this->logementOptions->add($logementOption);
-            $logementOption->setOption($this);
         }
         return $this;
     }
 
     public function removeLogementOption(LogementOptions $logementOption): static
     {
-        if ($this->logementOptions->removeElement($logementOption)) {
-            if ($logementOption->getOption() === $this) {
-                $logementOption->setOption(null);
-            }
-        }
+        $this->logementOptions->removeElement($logementOption);
         return $this;
     }
 }

@@ -4,59 +4,17 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    {# Leaflet CSS #}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    {# FontAwesome for icons #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-    <link rel="stylesheet" href="{{ asset('assets/css/logement.css') }}" />
     <style>
         * {
             box-sizing: border-box;
         }
-        .input-container {
-            margin-bottom: 20px;
-        }
-        #wordInput {
-            padding: 8px;
-            font-size: 16px;
-        }
-        #addButton {
-            padding: 8px 16px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50; /* Green like the CSS button in the image */
-            color: white;
-            border: none;
-            border-radius: 4px;
-        }
-        #addButton:hover {
-            background-color: #45a049;
-        }
-        .word-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .word-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            font-size: 16px;
-            color: white;
-            border-radius: 4px;
-            background-color: #f28c38; /* Orange like the JavaScript button */
-        }
-        .word-item span {
-            margin-right: 8px;
-        }
-        .delete-icon {
-            cursor: pointer;
-            font-size: 14px;
-            color: #ffe4c4;
-        }
-        .delete-icon:hover {
-            color: #ff0000;
-        }
+
         #preview-slider {
-            display: none;
+            display: none; /* Initially hide the preview slider */
             padding: 15px;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
@@ -65,9 +23,11 @@
             margin: auto;
             overflow-x: hidden;
         }
+
         #preview-slider.visible {
-            display: block;
+            display: block; /* Show when photos are added */
         }
+
         .delete-btn {
             position: absolute;
             top: 5px;
@@ -88,51 +48,26 @@
             z-index: 10;
             padding: 0;
         }
+
         .delete-btn:hover {
             background-color: #e63939;
             transform: scale(1.1);
         }
+
         .drag-area {
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            height: 250px;
-            border: 2px dashed #bbb;
-            border-radius: 10px;
-            background-color: #f9f9fc;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            z-index: 1000;
-            pointer-events: auto;
+            transition: background-color 0.3s, border-color 0.3s;
         }
-        .drag-area:hover,
-        .drag-area.dragover {
+
+        .drag-area:hover {
             background-color: #f0f4ff;
             border-color: #999;
         }
-        .drag-area .fa-cloud-upload-alt,
-        .drag-area h5,
-        .drag-area p,
-        .drag-area .paperclip {
-            pointer-events: none;
-        }
-        .drag-area .fa-cloud-upload-alt {
-            color: #8ca0b3;
-            margin-bottom: 10px;
-        }
-        .drag-area h5 {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .drag-area p {
-            color: #6c757d;
-            font-size: 14px;
-            margin: 0;
-        }
+
         .drag-area .paperclip {
             position: absolute;
             right: 20px;
@@ -141,11 +76,14 @@
             font-size: 24px;
             color: #555;
         }
+
+        /* Slider CSS */
         .slider-css-target {
             overflow-x: hidden;
             max-width: 600px;
             margin: auto;
         }
+
         .slider-css-target ul {
             margin: 1rem 0.5rem;
             padding: 0;
@@ -154,158 +92,103 @@
             gap: 0.5rem;
             overflow-x: auto;
             white-space: nowrap;
-            justify-content: center;
-            scrollbar-width: thin;
+            justify-content: center; /* Center thumbnails */
         }
+
         .slider-css-target ul li {
             position: relative;
-            flex: 0 0 auto;
         }
+
         .slider-css-target ul li a {
             display: block;
         }
+
         .slider-css-target ul li img {
             display: block;
             max-width: 100%;
-            width: 60px;
+            width: 60px; /* Reduced size for thumbnails */
             height: 60px;
             object-fit: cover;
             border: 2px solid white;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
             border-radius: 8px;
         }
+
         .slider-css-target-images {
             display: flex;
-            flex-wrap: nowrap;
-            width: 400%;
+            width: 400%; /* Will be dynamically adjusted */
             will-change: transform;
             transition: transform 0.4s ease-in-out;
         }
+
         .slider-css-target-images .description {
             background-color: #dbdbdb;
-            flex: 0 0 100%;
+            flex: 0 1 100%;
             overflow: hidden;
         }
+
         .slider-css-target-images img {
             display: block;
             width: 100%;
-            height Joke: Why did the scarecrow become a motivational speaker? Because he was outstanding in his field! 😄
-            max-height: 300px;
+            height: auto;
+            max-height: 300px; /* Limit large image height */
             object-fit: cover;
         }
+
+        .invalid-feedback,
         .error-message {
             color: #ff4444;
             font-size: 14px;
             margin-top: 5px;
-            display: none;
+            display: block;
         }
-        #clear-photos {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            display: none;
-        }
-        #clear-photos:hover {
-            background-color: #c82333;
+
+        .is-invalid {
+            border-color: #ff4444;
         }
     </style>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    {# Leaflet JS #}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    {# Custom JS #}
+    <script src="{{ asset('assets/js/custom.js') }}"></script>
     <script>
         let map;
         let marker = null;
         let imageCount = 0;
         let allPhotos = [];
-        let Alloptions=[];
-        const wordInput = document.getElementById('wordInput');
-        const addButton = document.getElementById('addButton');
-        const wordList = document.getElementById('wordList');
 
-        function addWord() {
-            const wordInput = document.getElementById('wordInput');
-            const word = wordInput.value.trim();
-            if (word) {
-                Alloptions.push(word);
-                const wordList = document.getElementById('wordList');
-                const wordItem = document.createElement('div');
-                wordItem.className = 'word-item';
-                wordItem.innerHTML = `
-                    <span>${word}</span>
-                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
-                `;
-                wordList.appendChild(wordItem);
-                wordInput.value = '';
-                updateOptionsInput();
-            }
-        }
-        function updateOptionsInput() {
-            const optionsInput = document.getElementById('optionsInput');
-            optionsInput.value = JSON.stringify(Alloptions);
-            console.log('Options updated:', optionsInput.value); // Debug
-        }
-        // Function to delete a word
-        function deleteWord(element, word) {
-            Alloptions = Alloptions.filter(item => item !== word);
-            element.parentElement.remove();
-            updateOptionsInput();
-        }
-
-
-
-        // Add word on button click
-        document.getElementById('addButton')?.addEventListener('click', addWord);
-
-        // Add word on Enter key press
-        document.getElementById('wordInput')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addWord();
-            }
-        });
         function previewImages(event) {
-            console.log('previewImages called with files:', event.target.files);
             const files = event.target.files;
-            if (!files || files.length === 0) {
-                console.warn('No files selected');
-                return;
-            }
+            if (!files || files.length === 0) return;
 
-            Array.from(files).forEach((file, index) => {
-                console.log(`Processing file ${index}:`, file.name, file.type, file.size);
+            Array.from(files).forEach(file => {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    console.log(`File ${file.name} read successfully`);
+                reader.onload = function (e) {
                     allPhotos.push(e.target.result);
                     renderPhotos();
                 };
-                reader.onerror = function(e) {
-                    console.error(`Error reading file ${file.name}:`, e);
-                };
                 reader.readAsDataURL(file);
             });
+
+            // Update the form's file input to ensure files are submitted
+            const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+            const dataTransfer = new DataTransfer();
+            Array.from(files).forEach(file => dataTransfer.items.add(file));
+            formFileInput.files = dataTransfer.files;
+
+            // Clear the preview input to allow adding more photos
+            const previewInput = document.getElementById("file-input");
+            previewInput.value = '';
         }
 
         function renderPhotos() {
-            console.log('renderPhotos called with allPhotos:', allPhotos.length);
             const sliderContainer = document.querySelector(".slider-css-target");
             const thumbnailsList = sliderContainer.querySelector("ul");
             const imagesContainer = document.querySelector(".slider-css-target-images");
-
-            if (!sliderContainer || !thumbnailsList || !imagesContainer) {
-                console.error('Slider elements not found:', {
-                    sliderContainer: !!sliderContainer,
-                    thumbnailsList: !!thumbnailsList,
-                    imagesContainer: !!imagesContainer
-                });
-                return;
-            }
 
             thumbnailsList.innerHTML = '';
             imagesContainer.innerHTML = '';
@@ -314,7 +197,6 @@
             allPhotos.forEach((photoSrc, index) => {
                 imageCount++;
                 const imageId = `image_${imageCount}`;
-                console.log(`Rendering photo ${imageCount}:`, photoSrc);
 
                 const li = document.createElement("li");
                 const a = document.createElement("a");
@@ -337,14 +219,15 @@
                 deleteBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log(`Deleting photo at index ${index}`);
                     allPhotos.splice(index, 1);
                     renderPhotos();
                     updatePreviewVisibility();
-                    if (allPhotos.length === 0) {
-                        const fileInput = document.getElementById("file-input");
-                        if (fileInput) fileInput.value = '';
-                    }
+                    // Update form input
+                    const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+                    const remainingFiles = allPhotos.map((_, i) => formFileInput.files[i]).filter(f => f);
+                    const dataTransfer = new DataTransfer();
+                    remainingFiles.forEach(file => dataTransfer.items.add(file));
+                    formFileInput.files = dataTransfer.files;
                 });
 
                 li.appendChild(a);
@@ -367,37 +250,14 @@
 
         function handleDrop(event) {
             event.preventDefault();
-            event.stopPropagation();
-            console.log('handleDrop called with files:', event.dataTransfer.files);
             const input = document.getElementById("file-input");
-            if (input) {
-                input.files = event.dataTransfer.files;
-                console.log('Files set on input:', input.files);
-                previewImages({ target: input });
-                event.target.classList.remove('dragover');
-            } else {
-                console.error("File input element with ID 'file-input' not found");
-            }
+            input.files = event.dataTransfer.files;
+            previewImages({ target: input });
         }
 
-        function openFileInput(event) {
-            console.log('openFileInput called');
-            const fileInput = document.getElementById("file-input");
-            if (fileInput) {
-                fileInput.click();
-                console.log('File input clicked');
-            } else {
-                console.error("File input element with ID 'file-input' not found");
-            }
-        }
-
-        function clearPhotos() {
-            console.log('Clearing all photos');
-            allPhotos = [];
-            const fileInput = document.getElementById("file-input");
-            if (fileInput) fileInput.value = '';
-            renderPhotos();
-            updatePreviewVisibility();
+        function openFileInput() {
+            const fileInput = document.getElementById('{{ form.photos.vars.id }}');
+            fileInput.click();
         }
 
         function updateSliderWidth() {
@@ -435,16 +295,22 @@
             const previewContainer = document.getElementById("preview-slider");
             const sliderContainer = document.querySelector(".slider-css-target");
             const thumbnailsList = sliderContainer.querySelector("ul");
-            const clearButton = document.getElementById("clear-photos");
 
             if (thumbnailsList.children.length > 0) {
                 previewContainer.classList.add("visible");
-                clearButton.style.display = 'block';
             } else {
                 previewContainer.classList.remove("visible");
-                clearButton.style.display = 'none';
+                const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+                formFileInput.value = '';
             }
         }
+
+        window.addEventListener('popstate', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && hash.startsWith('image_')) {
+                updateSliderTransform(hash);
+            }
+        });
 
         function initMap() {
             map = L.map('map').setView([36.8065, 10.1815], 13);
@@ -468,8 +334,8 @@
         }
 
         async function updateFields(latlng, fromMap = false) {
-            const latField = document.getElementById('logement_lat');
-            const lonField = document.getElementById('logement_lng');
+            const latField = document.getElementById('latitude');
+            const lonField = document.getElementById('longitude');
             const addressField = document.querySelector('input[name="logement[address]"]');
             const errorMessage = document.getElementById('address-error');
 
@@ -482,10 +348,10 @@
                 return;
             }
 
-            latField.value = latlng.lat.toFixed(6);
-            lonField.value = latlng.lng.toFixed(6);
+            latField.value = latlng.lat;
+            lonField.value = latlng.lng;
 
-            if (fromMap && !addressField.value.trim()) {
+            if (fromMap) {
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&addressdetails=1`, {
                         headers: {
@@ -495,29 +361,27 @@
                     const data = await response.json();
                     if (data && data.display_name) {
                         addressField.value = data.display_name;
-                        errorMessage.style.display = 'none';
+                        if (errorMessage) errorMessage.style.display = 'none';
                     } else {
-                        addressField.value = '';
-                        errorMessage.textContent = 'Address not found';
-                        errorMessage.style.display = 'block';
+                        addressField.value = 'Adresse non trouvée';
+                        if (errorMessage) {
+                            errorMessage.textContent = 'Adresse non trouvée';
+                            errorMessage.style.display = 'block';
+                        }
                     }
                 } catch (error) {
-                    console.error('Error fetching address:', error);
-                    addressField.value = '';
-                    errorMessage.textContent = 'Error retrieving address';
-                    errorMessage.style.display = 'block';
+                    console.error('Erreur lors de la récupération de l\'adresse:', error);
+                    addressField.value = 'Erreur lors de la récupération';
+                    if (errorMessage) {
+                        errorMessage.textContent = 'Erreur lors de la récupération de l\'adresse';
+                        errorMessage.style.display = 'block';
+                    }
                 }
             }
         }
 
         async function geocodeAddress(address) {
             const errorMessage = document.getElementById('address-error');
-            if (!address) {
-                errorMessage.textContent = 'Please enter an address.';
-                errorMessage.style.display = 'block';
-                return;
-            }
-
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`, {
                     headers: {
@@ -528,13 +392,12 @@
                 if (data && data.length > 0) {
                     const lat = parseFloat(data[0].lat);
                     const lon = parseFloat(data[0].lon);
-                    if (isNaN(lat) || isNaN(lon)) {
-                        throw new Error('Invalid latitude or longitude');
-                    }
                     const latlng = { lat, lng: lon };
 
                     if (!marker) {
-                        marker = L.marker(latlng, { draggable: false }).addTo(map);
+                        marker = L.marker(latlng, {
+                            draggable: false
+                        }).addTo(map);
                     } else {
                         marker.setLatLng(latlng);
                         marker.options.draggable = false;
@@ -543,102 +406,45 @@
 
                     map.setView(latlng, 13);
                     updateFields(latlng, false);
-                    errorMessage.style.display = 'none';
+                    if (errorMessage) errorMessage.style.display = 'none';
                 } else {
-                    errorMessage.textContent = 'Address not found. Please try a different address.';
-                    errorMessage.style.display = 'block';
+                    if (errorMessage) {
+                        errorMessage.textContent = 'Adresse non trouvée';
+                        errorMessage.style.display = 'block';
+                    }
                 }
             } catch (error) {
-                console.error('Error geocoding address:', error);
-                errorMessage.textContent = 'Error geocoding address. Please try again.';
-                errorMessage.style.display = 'block';
+                console.error('Erreur lors de la géolocalisation:', error);
+                if (errorMessage) {
+                    errorMessage.textContent = 'Erreur lors de la géolocalisation';
+                    errorMessage.style.display = 'block';
+                }
             }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded');
             initMap();
-
             const initialHash = window.location.hash.replace('#', '');
             if (initialHash && initialHash.startsWith('image_')) {
                 updateSliderTransform(initialHash);
             }
 
             const addressField = document.querySelector('input[name="logement[address]"]');
-            if (addressField) {
-                addressField.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const address = this.value.trim();
-                        if (address) {
-                            geocodeAddress(address);
-                        }
-                    }
-                });
-            }
-
-            const dragArea = document.querySelector('.drag-area');
-            if (dragArea) {
-                dragArea.addEventListener('click', openFileInput);
-                dragArea.addEventListener('dragover', (e) => {
+            addressField.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
                     e.preventDefault();
-                    e.target.classList.add('dragover');
-                });
-                dragArea.addEventListener('dragleave', (e) => {
-                    e.target.classList.remove('dragover');
-                });
-                dragArea.addEventListener('drop', handleDrop);
-                console.log('Drag area event listeners attached');
-            } else {
-                console.error('Drag area element not found');
-            }
-
-            const fileInput = document.getElementById('file-input');
-            if (!fileInput) {
-                console.error('File input with ID "file-input" not found in DOM');
-            } else {
-                console.log('File input found:', fileInput);
-            }
-
-            window.addEventListener('popstate', () => {
-                const hash = window.location.hash.replace('#', '');
-                if (hash && hash.startsWith('image_')) {
-                    updateSliderTransform(hash);
+                    const address = this.value.trim();
+                    if (address) {
+                        geocodeAddress(address);
+                    }
                 }
             });
 
-            document.getElementById('contact-form').addEventListener('submit', function(e) {
-                const requiredFields = ['logement_nbrChambre', 'logement_prix', 'logement_type', 'logement_description', 'logement_address'];
-                let isValid = true;
-
-                requiredFields.forEach(id => {
-                    const field = document.getElementById(id);
-                    if (!field.value.trim()) {
-                        isValid = false;
-                        field.classList.add('is-invalid');
-                        const errorDiv = field.parentElement.querySelector('.invalid-feedback') || document.createElement('div');
-                        errorDiv.className = 'invalid-feedback';
-                        errorDiv.textContent = 'This field is required.';
-                        field.parentElement.appendChild(errorDiv);
-                    } else {
-                        field.classList.remove('is-invalid');
-                        const errorDiv = field.parentElement.querySelector('.invalid-feedback');
-                        if (errorDiv) errorDiv.remove();
-                    }
-                });
-
-                const fileInput = document.getElementById('file-input');
-                console.log('Form submission - File input files:', fileInput ? fileInput.files : 'File input not found');
-                if (fileInput && fileInput.files.length > 0) {
-                    console.log('Photos ready for submission:', Array.from(fileInput.files).map(f => f.name));
-                } else {
-                    console.log('No photos selected for submission');
-                }
-
-                if (!isValid) {
-                    e.preventDefault();
-                    alert('Please fill all required fields.');
-                }
+            // Sync custom file input with form input
+            const customFileInput = document.getElementById('file-input');
+            const formFileInput = document.getElementById('{{ form.photos.vars.id }}');
+            customFileInput.addEventListener('change', function() {
+                previewImages({ target: this });
             });
         });
     </script>
@@ -647,11 +453,6 @@
 {% block body %}
     <div class="contact-page section">
         <div class="container">
-            {% for label, messages in app.flashes %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ label }}">{{ message }}</div>
-                {% endfor %}
-            {% endfor %}
             <div class="col-lg-4" style="margin:30px">
                 <h2>Ajouter ta offre!</h2>
             </div>
@@ -661,65 +462,162 @@
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="col-lg-12 mb-3">
-                                {{ form_row(form.nbrChambre) }}
-                                {{ form_errors(form.nbrChambre) }}
+                                {{ form_label(form.nbrChambre, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nbrChambre, {
+                                    'attr': {
+                                        'class': 'form-control' ~ (form.nbrChambre.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'required': 'required'
+                                    }
+                                }) }}
+                                {% if form.nbrChambre.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.nbrChambre) }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="col-lg-12 mb-3">
-                                {{ form_row(form.prix) }}
-                                {{ form_errors(form.prix) }}
+                                {{ form_label(form.prix, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.prix, {
+                                    'attr': {
+                                        'class': 'form-control' ~ (form.prix.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'required': 'required'
+                                    }
+                                }) }}
+                                {% if form.prix.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.prix) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="col-lg-12 mb-3">
-                                {{ form_row(form.description) }}
-                                {{ form_errors(form.description) }}
+                                {{ form_label(form.description, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.description, {
+                                    'attr': {
+                                        'class': 'form-control' ~ (form.description.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'rows': 5,
+                                        'required': 'required'
+                                    }
+                                }) }}
+                                {% if form.description.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.description) }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="col-lg-12 mb-3">
-                                {{ form_row(form.type) }}
-                                {{ form_errors(form.type) }}
+                                {{ form_label(form.type, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.type, {
+                                    'attr': {
+                                        'class': 'form-control' ~ (form.type.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                        'required': 'required'
+                                    }
+                                }) }}
+                                {% if form.type.vars.errors|length > 0 %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors(form.type) }}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div style="width: 100%; max-width: 100%; padding: 15px;">
-                            <div class="drag-area">
-                                <i class="fas fa-cloud-upload-alt fa-3x"></i>
-                                <h5>Parcourir les fichiers</h5>
-                                <p>Glissez et déposez les photos ici</p>
+                            {{ form_label(form.photos, null, {'label_attr': {'class': 'form-label'}}) }}
+                            <div
+                                class="drag-area"
+                                onclick="openFileInput()"
+                                ondragover="event.preventDefault(); this.style.backgroundColor='#f0f4ff'; this.style.borderColor='#999';"
+                                ondragleave="this.style.backgroundColor='#f9f9fc'; this.style.borderColor='#bbb';"
+                                ondrop="handleDrop(event)"
+                                style="
+                                    height: 250px;
+                                    border: 2px dashed #bbb;
+                                    border-radius: 10px;
+                                    background-color: #f9f9fc;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                    text-align: center;
+                                "
+                            >
+                                <i class="fas fa-cloud-upload-alt fa-3x" style="color: #8ca0b3; margin-bottom: 10px;"></i>
+                                <h5 style="font-weight: bold; color: #333; margin-bottom: 5px;">Parcourir les fichiers</h5>
+                                <p style="color: #6c757d; font-size: 14px; margin: 0;">Glissez et déposez les photos ici</p>
                                 <i class="fas fa-paperclip paperclip"></i>
-                                <input type="file" id="file-input" name="logement[photos][]" multiple accept="image/jpeg,image/png,image/gif" style="display: none;" onchange="previewImages(event)">
+                                <input type="file" id="file-input" style="display: none;" onchange="previewImages(event)">
+                                {{ form_widget(form.photos, {
+                                    'attr': {
+                                        'class': 'd-none',
+                                        'multiple': 'multiple',
+                                        'accept': 'image/*'
+                                    }
+                                }) }}
                             </div>
-                            {{ form_errors(form.photos) }}
+                            {% if form.photos.vars.errors|length > 0 %}
+                                <div class="invalid-feedback">
+                                    {{ form_errors(form.photos) }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div id="preview-slider">
                             <div class="slider-css-target">
-                                <ul></ul>
-                                <div class="slider-css-target-images"></div>
+                                <ul>
+                                    <!-- Thumbnails will be dynamically added here -->
+                                </ul>
+                                <div class="slider-css-target-images">
+                                    <!-- Large images will be dynamically added here -->
+                                </div>
                             </div>
-                            <button type="button" id="clear-photos" onclick="clearPhotos()">Clear All Photos</button>
                         </div>
                         <div class="col-lg-12 mb-3">
-                            {{ form_row(form.address) }}
-                            {{ form_errors(form.address) }}
+                            {{ form_label(form.address, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.address, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.address.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'id': 'logement_address',
+                                    'required': 'required'
+                                }
+                            }) }}
+                            {% if form.address.vars.errors|length > 0 %}
+                                <div class="invalid-feedback">
+                                    {{ form_errors(form.address) }}
+                                </div>
+                            {% endif %}
                             <div id="address-error" class="error-message"></div>
                         </div>
-                        <!-- HiddenEyebrow: Hidden fields for coordinates -->
-                        {{ form_widget(form.lat, {'attr': {'id': 'logement_lat'}}) }}
-                        {{ form_widget(form.lng, {'attr': {'id': 'logement_lng'}}) }}  
-                        <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
-                        <div class="input-container">
-                            <input type="text" id="wordInput" placeholder="Add an option (e.g. WiFi, Parking)" class="form-control">
-                            <button type="button" id="addButton" onclick="addWord()">Add Option</button>
+                        <div class="col-lg-12">
+                            {{ form_widget(form.latitude, {
+                                'attr': {
+                                    'id': 'latitude',
+                                    'class': 'd-none'
+                                }
+                            }) }}
+                            {% if form.latitude.vars.errors|length > 0 %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form_errors(form.latitude) }}
+                                </div>
+                            {% endif %}
                         </div>
-                        <div class="word-list" id="wordList"></div>
-                        <div id="options-error" class="error-message"></div>
-                        <input type="hidden" name="options" id="optionsInput">
+                        <div class="col-lg-12">
+                            {{ form_widget(form.longitude, {
+                                'attr': {
+                                    'id': 'longitude',
+                                    'class': 'd-none'
+                                }
+                            }) }}
+                            {% if form.longitude.vars.errors|length > 0 %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form_errors(form.longitude) }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
                         <div class="col-lg-12" style="margin-top: 20px;">
                             <button type="submit" class="orange-button">{{ button_label|default('Enregistrer') }}</button>
-                        </div>                            
-                   
+                        </div>
                     </div>
                     {{ form_end(form) }}
                     <div class="center" style="margin-top: 20px;">
-                        <a href="{{ path('app_logement_index_admin') }}" class="btn btn-secondary">
+                        <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
                             <i class="fa fa-arrow-left"></i> Retour à la liste
                         </a>
                     </div>

@@ -1,5 +1,4 @@
 {% extends 'base.html.twig' %}
-{% form_theme form 'bootstrap_5_layout.html.twig' %}
 
 {% block title %}Edit Logement{% endblock %}
 
@@ -11,50 +10,6 @@
     <style>
         * {
             box-sizing: border-box;
-        }
-        .input-container {
-            margin-bottom: 20px;
-        }
-        #wordInput {
-            padding: 8px;
-            font-size: 16px;
-        }
-        #addButton {
-            padding: 8px 16px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-        }
-        #addButton:hover {
-            background-color: #45a049;
-        }
-        .word-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .word-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            font-size: 16px;
-            color: white;
-            border-radius: 4px;
-            background-color: #f28c38;
-        }
-        .word-item span {
-            margin-right: 8px;
-        }
-        .delete-icon {
-            cursor: pointer;
-            font-size: 14px;
-            color: #ffe4c4;
-        }
-        .delete-icon:hover {
-            color: #ff0000;
         }
         #preview-slider {
             display: none;
@@ -222,80 +177,15 @@
         let map;
         let marker = null;
         let imageCount = 0;
-        let allPhotos = [];
-        let deletedPhotoIds = [];
-        let Alloptions = {{ options|json_encode|raw }} || [];
-
-        // Initialize existing photos
-        let existingPhotos = [
-            {% for photo in logement.imageLogements %}
+        let allPhotos = [
+            {% for image in logement.imageLogements %}
                 {
-                    id: '{{ photo.id }}',
-                    src: '{{ asset('Uploads/photos/' ~ photo.url) }}'
+                    src: "{{ asset('Uploads/photos/' ~ image.url) }}",
+                    id: {{ image.id }}
                 }{% if not loop.last %},{% endif %}
             {% endfor %}
         ];
-
-        // Initialize allPhotos with existing photos
-        allPhotos = existingPhotos;
-
-        function addWord() {
-            const wordInput = document.getElementById('wordInput');
-            const word = wordInput.value.trim();
-            if (word && word.length <= 255) {
-                Alloptions.push(word);
-                const wordList = document.getElementById('wordList');
-                const wordItem = document.createElement('div');
-                wordItem.className = 'word-item';
-                wordItem.innerHTML = `
-                    <span>${word}</span>
-                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
-                `;
-                wordList.appendChild(wordItem);
-                wordInput.value = '';
-                updateOptionsInput();
-            } else {
-                const errorMessage = document.getElementById('options-error');
-                errorMessage.textContent = word ? 'Option name too long (max 255 characters).' : 'Option name cannot be empty.';
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        function updateOptionsInput() {
-            const optionsInput = document.getElementById('optionsInput');
-            optionsInput.value = JSON.stringify(Alloptions);
-            console.log('Options updated:', optionsInput.value);
-        }
-
-        function deleteWord(element, word) {
-            Alloptions = Alloptions.filter(item => item !== word);
-            element.parentElement.remove();
-            updateOptionsInput();
-        }
-
-        function renderOptions() {
-            const wordList = document.getElementById('wordList');
-            wordList.innerHTML = '';
-            Alloptions.forEach(word => {
-                const wordItem = document.createElement('div');
-                wordItem.className = 'word-item';
-                wordItem.innerHTML = `
-                    <span>${word}</span>
-                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
-                `;
-                wordList.appendChild(wordItem);
-            });
-            updateOptionsInput();
-        }
-
-        document.getElementById('addButton')?.addEventListener('click', addWord);
-
-        document.getElementById('wordInput')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addWord();
-            }
-        });
+        let deletedPhotoIds = [];
 
         function previewImages(event) {
             console.log('previewImages called with files:', event.target.files);
@@ -321,7 +211,7 @@
         }
 
         function renderPhotos() {
-            console.log('renderPhotos called with allPhotos:', allPhotos);
+            console.log('renderPhotos called with allPhotos:', allPhotos.length);
             const sliderContainer = document.querySelector(".slider-css-target");
             const thumbnailsList = sliderContainer.querySelector("ul");
             const imagesContainer = document.querySelector(".slider-css-target-images");
@@ -489,14 +379,16 @@
         }
 
         function initMap() {
-            const initialLat = {{ logement.localisation ? (logement.localisation.y|default('36.8065')) : '36.8065' }};
-            const initialLng = {{ logement.localisation ? (logement.localisation.x|default('10.1815')) : '10.1815' }};
+            // Initialize map with logement coordinates or default
+            const initialLat = {{ logement.localisation ? logement.localisation.y|default('36.8065') : '36.8065' }};
+            const initialLng = {{ logement.localisation ? logement.localisation.x|default('10.1815') : '10.1815' }};
             console.log('Initializing map with lat:', initialLat, 'lng:', initialLng);
             map = L.map('map').setView([initialLat, initialLng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
+            // Place marker if coordinates exist
             if (initialLat !== 36.8065 || initialLng !== 10.1815) {
                 marker = L.marker([initialLat, initialLng], {
                     draggable: true
@@ -589,11 +481,11 @@
                     const latlng = { lat, lng: lon };
 
                     if (!marker) {
-                        marker = L.marker(latlng, { draggable: true }).addTo(map);
+                        marker = L.marker(latlng, { draggable: false }).addTo(map);
                     } else {
                         marker.setLatLng(latlng);
-                        marker.options.draggable = true;
-                        marker.dragging.enable();
+                        marker.options.draggable = false;
+                        marker.dragging.disable();
                     }
 
                     map.setView(latlng, 13);
@@ -611,10 +503,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, Alloptions:', Alloptions);
+            console.log('DOM loaded');
             initMap();
             renderPhotos();
-            renderOptions();
 
             const initialHash = window.location.hash.replace('#', '');
             if (initialHash && initialHash.startsWith('image_')) {
@@ -690,7 +581,6 @@
                     console.log('New photos ready for submission:', Array.from(fileInput.files).map(f => f.name));
                 }
                 console.log('Deleted photo IDs:', deletedPhotoIds);
-                console.log('Options to submit:', Alloptions);
 
                 if (!isValid) {
                     e.preventDefault();
@@ -710,7 +600,7 @@
                 {% endfor %}
             {% endfor %}
             <div class="col-lg-4" style="margin:30px">
-                <h2>Modifier l’offre</h2>
+                <h2>Modifier l'offre</h2>
             </div>
             <div class="row row-page">
                 <div class="col-lg-12 right-column">
@@ -766,19 +656,13 @@
                             {{ form_errors(form.address) }}
                             <div id="address-error" class="error-message"></div>
                         </div>
+                        <!-- Hidden fields for coordinates and deleted photos -->
                         {{ form_widget(form.lat, {'attr': {'id': 'logement_lat'}}) }}
                         {{ form_widget(form.lng, {'attr': {'id': 'logement_lng'}}) }}
                         <input type="hidden" id="deleted_photos" name="deleted_photos" value="">
                         <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
-                        <div class="input-container">
-                            <input type="text" id="wordInput" placeholder="Add an option (e.g. WiFi, Parking)" class="form-control">
-                            <button type="button" id="addButton" onclick="addWord()">Add Option</button>
-                        </div>
-                        <div class="word-list" id="wordList"></div>
-                        <div id="options-error" class="error-message"></div>
-                        <input type="hidden" name="options" id="optionsInput" value="{{ options|json_encode|e('html_attr') }}">
                         <div class="col-lg-12" style="margin-top: 20px;">
-                            <button type="submit" class="orange-button">Modifier</button>
+                            <button type="submit" class="orange-button">{{ button_label|default('Enregistrer') }}</button>
                         </div>
                     </div>
                     {{ form_end(form) }}

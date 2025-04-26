@@ -356,7 +356,7 @@
                             <h4>Description</h4>
                             <p>{{ logement.description }}</p>
                             <div class="icon-button mt-3">
-                                <a href="{{ path('app_logement_edit_admin', {'id': logement.id}) }}">
+                                <a href="{{ path('app_logement_edit', {'id': logement.id}) }}">
                                     <i class="fa fa-edit"></i> Modifier
                                 </a>
                             </div>
@@ -364,7 +364,7 @@
                                 <a href="#" onclick="event.preventDefault(); document.getElementById('delete-form').submit();">
                                     <i class="fa fa-trash"></i> Supprimer
                                 </a>
-                                <form id="delete-form" method="post" action="{{ path('app_logement_delete_admin', {'id': logement.id}) }}" style="display: none;">
+                                <form id="delete-form" method="post" action="{{ path('app_logement_delete', {'id': logement.id}) }}" style="display: none;">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ logement.id) }}">
                                 </form>
                             </div>
@@ -410,7 +410,7 @@
 
         <!-- Back Button -->
         <div class="mt-4" style="margin-left:60px;">
-            <a href="{{ path('app_logement_index_admin') }}" class="btn btn-secondary">
+            <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
                 <i class="fa fa-arrow-left"></i> Retour à la liste
             </a>
         </div>
