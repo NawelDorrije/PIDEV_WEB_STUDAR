@@ -15,6 +15,7 @@ parameters:
     uclassify_api_key: '%env(UCLASSIFY_API_KEY)%'
     uclassify_username: '%env(UCLASSIFY_USERNAME)%'
     google_nl_api_key: '%env(GOOGLE_NL_API_KEY)%'
+    exchange_rate_api_key: '%env(EXCHANGE_RATE_API_KEY)%'
 
 
 
@@ -75,3 +76,7 @@ services:
             $httpClient: '@http_client'
             $googleNlApiKey: '%google_nl_api_key%'
             $logger: '@monolog.logger'
+    # Explicitly configure CurrencyConverterService
+    App\Service\CurrencyConverterService:
+        arguments:
+            $exchangeRateApiKey: '%exchange_rate_api_key%'

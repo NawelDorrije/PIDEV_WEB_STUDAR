@@ -24,6 +24,7 @@
         "league/oauth2-google": "*",
         "liip/imagine-bundle": "*",
         "longitude-one/doctrine-spatial": "^5.0",
+        "monolog/monolog": "^3.9",
         "myclabs/php-enum": "^1.8",
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.1",

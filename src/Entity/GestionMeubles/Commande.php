@@ -50,6 +50,8 @@ class Commande
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $raisonAnnulation = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 6, nullable: true)]
+    private ?float $exchangeRate = null;
 
     public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
     public const STATUT_PAYEE = 'PAYÉE';
@@ -57,7 +59,7 @@ class Commande
     public const STATUT_ANNULEE = 'ANNULEE';
 
     public const METHODE_STRIPE = 'card';
-    public const METHODE_PAIEMENT_A_LA_LIVRAISON = 'delivery';
+    public const METHODE_PAIEMENT_A_LA_LIVRAISON = 'Paiement a la livraison';
 
     public function __construct()
     {
@@ -192,7 +194,16 @@ class Commande
         $this->raisonAnnulation = $raisonAnnulation;
         return $this;
     }
+    public function getExchangeRate(): ?float
+    {
+        return $this->exchangeRate;
+    }
 
+    public function setExchangeRate(?float $exchangeRate): self
+    {
+        $this->exchangeRate = $exchangeRate;
+        return $this;
+    }
     public function __toString(): string
     {
         return sprintf(

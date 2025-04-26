@@ -178,13 +178,18 @@
                         Paiement : {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}
                     </div>
                     <div class="commande-amount">
-                        {{ commande.montantTotal|number_format(2, ',', ' ') }} TND
+                        {{ commande.montantTotal|number_format(2, ',', ' ') }} 
+                            {% if commande.methodePaiement == "Stripe" %} EUR
+
+                        {% else %}
+        TND
+    {% endif %}
                     </div>
                     <div class="commande-address">
                         {{ commande.adresseLivraison|default('Non spécifiée') }}
                     </div>
                     <div class="commande-actions">
-                        {% if commande.statut != 'ANNULEE' %}Veuillez indiquer la raison de l'annulation de votre commande. Cette information nous aidera à améliorer notre service.
+                        {% if commande.statut != 'ANNULEE' %}
                             <button class="btn-cancel" data-id="{{ commande.id }}">Annuler</button>
                         {% endif %}
                         <a href="{{ path('app_gestion_meubles_commande_pdf', {'id': commande.id}) }}" class="btn-download">Télécharger PDF</a>
