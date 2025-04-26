@@ -16,12 +16,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use App\Entity\Rendezvous;
 use App\Entity\ReservationTransport;
 use App\Entity\ReservationLogement;
-
-
-
-
-
-
+use App\Repository\UtilisateurRepository;
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
@@ -106,7 +101,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reservationsAsTransporteur = new ArrayCollection();
         $this->reservationsTransportAsEtudiant = new ArrayCollection();
         $this->logements = new ArrayCollection();
-        // $this->userHandle = bin2hex(random_bytes(32));
+       // $this->userHandle = bin2hex(random_bytes(32));
         $this->created_at = new \DateTimeImmutable();
     }
 

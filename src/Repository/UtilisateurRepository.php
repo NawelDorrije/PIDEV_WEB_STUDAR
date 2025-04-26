@@ -6,11 +6,12 @@ use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Webauthn\PublicKeyCredentialUserEntity;
 
 /**
  * @extends ServiceEntityRepository<Utilisateur>
  */
-class UtilisateurRepository extends ServiceEntityRepository implements PublicKeyCredentialUserEntityRepositoryInterface
+class UtilisateurRepository extends ServiceEntityRepository 
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -75,24 +76,24 @@ class UtilisateurRepository extends ServiceEntityRepository implements PublicKey
         );
     }
 
-    public function saveUserEntity(PublicKeyCredentialUserEntity $userEntity): void
-    {
-        $user = $this->createQueryBuilder('u')
-            ->where('u.userHandle = :userHandle')
-            ->setParameter('userHandle', $userEntity->getId())
-            ->getQuery()
-            ->getOneOrNullResult();
+    // public function saveUserEntity(PublicKeyCredentialUserEntity $userEntity): void
+    // {
+    //     $user = $this->createQueryBuilder('u')
+    //         ->where('u.userHandle = :userHandle')
+    //         ->setParameter('userHandle', $userEntity->getCin())
+    //         ->getQuery()
+    //         ->getOneOrNullResult();
 
-        if (!$user) {
-            throw new \RuntimeException('User not found; cannot create new users via WebAuthn');
-        }
+    //     if (!$user) {
+    //         throw new \RuntimeException('User not found; cannot create new users via WebAuthn');
+    //     }
 
-        $user->setEmail($userEntity->getName());
-        $user->setNom($userEntity->getDisplayName());
+    //     $user->setEmail($userEntity->getName());
+    //     $user->setNom($userEntity->getDisplayName());
 
-        $this->getEntityManager()->persist($user);
-        $this->getEntityManager()->flush();
-    }
+    //     $this->getEntityManager()->persist($user);
+    //     $this->getEntityManager()->flush();
+    // }
 
     public function getUserCountByRole(): array
 {
