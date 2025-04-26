@@ -43,4 +43,10 @@ services:
             $entityManager: '@doctrine.orm.entity_manager'
             $utilisateurRepository: '@App\Repository\UtilisateurRepository'
         public: true # Add this line to make the service public
-    
+    # # Default configuration for services
+    # _defaults:
+    #     autowire: true
+    #     autoconfigure: true
+
+    # # Register TranslationService explicitly (optional, as autowire should handle it)
+    # App\Service\TranslationService: ~

@@ -6,7 +6,7 @@
         "@symfony/stimulus-bundle": "^2.23.0",
         "@symfony/ux-chartjs": "^2.23.0",
         "@symfony/webpack-encore": "^5.0.0",
-        "chart.js": "^4.4.8",
+        "chart.js": "^4.4.9",
         "core-js": "^3.38.0",
         "file-loader": "^6.0.0",
         "regenerator-runtime": "^0.13.9",

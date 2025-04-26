@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'Analyse des Réclamations</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            box-sizing: border-box;
+        }
+        .header {
+            position: running(header);
+            text-align: center;
+            padding: 8mm 0;
+            border-bottom: 1px solid #E5E7EB;
+            margin-bottom: 8mm;
+        }
+        .header img.logo {
+            max-height: 25mm;
+            width: auto;
+        }
+        .footer {
+            position: running(footer);
+            text-align: center;
+            font-size: 9pt;
+            color: #6B7280;
+            padding-top: 5mm;
+            border-top: 1px solid #E5E7EB;
+        }
+        .footer .page-number:after {
+            content: counter(page);
+        }
+        h1 {
+            font-size: 16pt;
+            color: #1E40AF;
+            text-align: center;
+            margin: 8mm 0;
+        }
+        h2 {
+            font-size: 13pt;
+            color: #1E40AF;
+            margin: 6mm 0 3mm;
+        }
+        h3 {
+            font-size: 11pt;
+            color: #6B7280;
+            margin-bottom: 3mm;
+        }
+        p, li {
+            margin: 0 0 3mm 0;
+        }
+        ul {
+            margin-left: 8mm;
+            padding-left: 5mm;
+            list-style-type: disc;
+        }
+        .section {
+            margin-bottom: 8mm;
+        }
+        .summary-card {
+            border: 1px solid #E5E7EB;
+            padding: 6mm;
+            margin-bottom: 6mm;
+            background-color: #F9FAFB;
+            border-radius: 3mm;
+        }
+        .summary-card p.value {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #1E40AF;
+            margin-bottom: 2mm;
+        }
+        .summary-card p.description {
+            font-size: 9pt;
+            color: #6B7280;
+        }
+        .data-item {
+            margin-bottom: 5mm;
+        }
+        .data-item p {
+            font-size: 10pt;
+        }
+        .recommendations {
+            page-break-inside: avoid;
+        }
+        .recommendations li {
+            margin-bottom: 3mm;
+        }
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_base64 %}
+            <img src="data:image/png;base64,{{ logo_base64 }}" alt="Logo" class="logo">
+        {% endif %}
+        <h1>Rapport d'Analyse des Réclamations - {{ year }}</h1>
+    </div>
+    <div class="footer">
+        <p>Studar - Rapport Généré le {{ 'now'|date('d/m/Y') }} | Page <span class="page-number"></span></p>
+    </div>
+
+    <div class="page">
+        <!-- Summary Cards -->
+        <div class="section avoid-break">
+            <h2>Résumé</h2>
+            <div class="summary-card">
+                <h3>Total des Réclamations</h3>
+                <p class="value">{{ stats.totalReclamations }}</p>
+                <p class="description">Pour tous les utilisateurs</p>
+            </div>
+            <div class="summary-card">
+                <h3>Taux de Réponse</h3>
+                <p class="value">{{ stats.responseRate|round(0) }}%</p>
+                <p class="description">Réclamations avec réponses</p>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="section">
+            <h2>Analyse des Données</h2>
+            <div class="data-item avoid-break">
+                <h3>Analyse des Tendances</h3>
+                <p>{{ stats.analytics.trend.summary }}</p>
+                {% if stats.analytics.trend.peakMonth %}
+                    <p>Mois de pointe : {{ stats.analytics.trend.peakMonth }}</p>
+                {% endif %}
+            </div>
+            <div class="data-item avoid-break">
+                <h3>Efficacité des Réponses</h3>
+                <p>{{ stats.analytics.responseEfficiency.summary|replace({'$': '', '\\': ''}) }}</p>
+            </div>
+            <div class="data-item avoid-break">
+                <h3>Répartition par Statut</h3>
+                <p>{{ stats.analytics.statusDistribution.summary|replace({'$': '', '\\': ''}) }}</p>
+                <p>
+                    {% for i in 0..(stats.byStatus.labels|length - 1) %}
+                        {{ stats.byStatus.labels[i]|capitalize }} : {{ stats.byStatus.data[i] }} réclamation{{ stats.byStatus.data[i] > 1 ? 's' : '' }}<br>
+                    {% endfor %}
+                </p>
+            </div>
+            <div class="data-item avoid-break">
+                <h3>Temps de Résolution</h3>
+                <p>{{ stats.analytics.resolutionTime.summary|replace({'$': '', '\\': ''}) }}</p>
+                <p>
+                    {% for i in 0..(stats.resolutionTime.labels|length - 1) %}
+                        {{ stats.resolutionTime.labels[i]|replace({'Fast (?7 days)': 'Rapide (≤7 jours)', 'Slow ( $>7$ days or unresolved)': 'Lent (>7 jours ou non résolu)', '$': '', '\\': ''}) }} : {{ stats.resolutionTime.data[i] }} réclamation{{ stats.resolutionTime.data[i] > 1 ? 's' : '' }}<br>
+                    {% endfor %}
+                </p>
+            </div>
+            {% if stats.analytics.recommendations|length > 0 %}
+                <div class="data-item recommendations avoid-break">
+                    <h3>Recommandations</h3>
+                    <ul>
+                        {% for recommendation in stats.analytics.recommendations %}
+                            <li>{{ recommendation|replace({'$': '', '\\': '', '" "': '', '*': ''})|trim }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Chart Summaries -->
+        <div class="section">
+            <h2>Résumé des Données Graphiques</h2>
+            <div class="data-item avoid-break">
+                <h3>Réclamations par Mois ({{ year }})</h3>
+                <p>
+                    {% for i in 0..(stats.byMonth.labels|length - 1) %}
+                        {{ stats.byMonth.labels[i] }} : {{ stats.byMonth.data[i] }} réclamation{{ stats.byMonth.data[i] > 1 ? 's' : '' }}<br>
+                    {% endfor %}
+                </p>
+            </div>
+            <div class="data-item avoid-break">
+                <h3>Réclamations Quotidiennes (Mois {{ month }})</h3>
+                <p>
+                    {% for i in 0..(stats.dailyReclamations.labels|length - 1) %}
+                        {{ stats.dailyReclamations.labels[i] }} : {{ stats.dailyReclamations.data[i] }} réclamation{{ stats.dailyReclamations.data[i] > 1 ? 's' : '' }}<br>
+                    {% endfor %}
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

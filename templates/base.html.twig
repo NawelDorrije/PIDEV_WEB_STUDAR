@@ -66,7 +66,19 @@
                                 </a>
                                 <!-- ***** Logo End ***** -->
 
-                                <!-- ***** Menu Start ***** -->
+                                {# <!-- ***** Menu Start ***** -->
+                                <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                        <i class="fas fa-globe"></i> {{ app.request.locale|upper }} <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="{{ path('switch_language', {'locale': 'en'}) }}">English (EN)</a></li>
+                        <li><a href="{{ path('switch_language', {'locale': 'fr'}) }}">Français (FR)</a></li>
+                        <li><a href="{{ path('switch_language', {'locale': 'ar'}) }}">العربية (AR)</a></li>
+                    </ul>
+                </li>
+            </ul> #}
                                 <ul class="nav">
                                     {% if is_granted('ROLE_ADMIN') %}
                                         <!-- Navigation pour les admins -->
