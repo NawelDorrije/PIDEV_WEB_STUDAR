@@ -42,61 +42,61 @@ public function new(
     $form = $this->createForm(UtilisateurType::class, $utilisateur);
     $form->handleRequest($request);
 
-    if ($form->isSubmitted()) {
-        // Check for duplicate CIN before validation
+    if ($form->isSubmitted() && $form->isValid()) {
+        // Check for duplicate CIN
         if ($utilisateurRepository->findOneBy(['cin' => $utilisateur->getCin()])) {
             $form->get('cin')->addError(new FormError('Ce CIN est déjà utilisé'));
+            return $this->render('utilisateur/new.html.twig', [
+                'form' => $form->createView(),
+            ]);
         }
 
-        // Check for duplicate email before validation
+        // Check for duplicate email
         if ($utilisateurRepository->findOneBy(['email' => $utilisateur->getEmail()])) {
             $form->get('email')->addError(new FormError('Cet email est déjà utilisé'));
+            return $this->render('utilisateur/new.html.twig', [
+                'form' => $form->createView(),
+            ]);
         }
 
-        if ($form->isValid()) {
-            // Handle image upload
-            $imageFile = $form->get('imageFile')->getData();
-            if ($imageFile) {
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+        // Handle image upload
+        $imageFile = $form->get('imageFile')->getData();
+        if ($imageFile) {
+            $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
 
-                try {
-                    $imageFile->move(
-                        $this->getParameter('images_directory'),
-                        $newFilename
-                    );
-                    $utilisateur->setImage($newFilename);
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Une erreur est survenue lors de l\'upload de l\'image');
-                    return $this->redirectToRoute('app_utilisateur_new');
-                }
+            try {
+                $imageFile->move(
+                    $this->getParameter('images_directory'),
+                    $newFilename
+                );
+                $utilisateur->setImage($newFilename);
+            } catch (FileException $e) {
+                $this->addFlash('error', 'Une erreur est survenue lors de l\'upload de l\'image');
+                return $this->redirectToRoute('app_utilisateur_new');
             }
-
-            // Hash the plain password before storing it
-            $hashedPassword = $passwordHasher->hashPassword(
-                $utilisateur,
-                $form->get('mdp')->getData()
-            );
-            
-            $utilisateur->setMdp($hashedPassword);
-            
-            // Set creation date
-            $utilisateur->setCreatedAt(new \DateTimeImmutable());
-            
-            $entityManager->persist($utilisateur);
-            $entityManager->flush();
-            
-            $this->addFlash('success', 'Inscription réussie!');
-            return $this->redirectToRoute('app_utilisateur_signin');
         }
+
+        // Hash the password
+        $hashedPassword = $passwordHasher->hashPassword(
+            $utilisateur,
+            $form->get('mdp')->getData()
+        );
+        $utilisateur->setMdp($hashedPassword);
+        $utilisateur->setCreatedAt(new \DateTimeImmutable());
+        
+        $entityManager->persist($utilisateur);
+        $entityManager->flush();
+        
+        $this->addFlash('success', 'Inscription réussie!');
+        return $this->redirectToRoute('app_utilisateur_signin');
     }
 
     return $this->render('utilisateur/new.html.twig', [
         'form' => $form->createView(),
     ]);
 }
-   
     
     #[Route(
         '/{cin}', 
@@ -270,149 +270,138 @@ public function dashboard(): Response
     
     return $this->render('dashboard.html.twig');
 }
-#[Route('/forgotPassword', name: 'app_utilisateur_forgotPassword', methods: ['GET', 'POST'])]
-public function forgotPassword(
+
+#[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
+    public function forgotPassword(
+        Request $request,
+        UtilisateurRepository $utilisateurRepository,
+        EntityManagerInterface $entityManager,
+        MailerInterface $mailer,
+        LoggerInterface $logger
+    ): Response {
+        if ($request->isMethod('POST')) {
+            $email = $request->request->get('email');
+            $user = $utilisateurRepository->findOneBy(['email' => $email]);
+
+            if (!$user) {
+                $this->addFlash('error', 'Cet email n\'est pas inscrit.');
+                return $this->render('utilisateur/forgot_password.html.twig');
+            }
+
+            // Generate 4-digit reset code
+            $resetCode = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $user->setResetCode($resetCode);
+            $user->setResetCodeExpiresAt(new \DateTimeImmutable('+15 minutes'));
+            $entityManager->flush();
+
+            try {
+                $email = (new Email())
+                    ->from(new Address('studar21@gmail.com', 'Studar'))
+                    ->to($user->getEmail())
+                    ->subject('Réinitialisation de votre mot de passe')
+                    ->text(sprintf(
+                        "Votre code de réinitialisation est : %s\nCe code expirera dans 15 minutes.",
+                        $resetCode
+                    ));
+
+                $mailer->send($email);
+
+                // Store email in session for verification
+                $request->getSession()->set('reset_email', $user->getEmail());
+
+                return $this->redirectToRoute('app_verify_reset_code');
+            } catch (\Exception $e) {
+                $logger->error('Email sending failed: ' . $e->getMessage());
+                $this->addFlash('error', 'Erreur lors de l\'envoi du code');
+                return $this->render('utilisateur/forgot_password.html.twig');
+            }
+        }
+
+        return $this->render('utilisateur/forgot_password.html.twig');
+    }
+#[Route('/verify-reset-code', name: 'app_verify_reset_code', methods: ['GET', 'POST'])]
+public function verifyResetCode(
+    Request $request,
+    UtilisateurRepository $utilisateurRepository,
+    EntityManagerInterface $entityManager
+): Response {
+    $email = $request->getSession()->get('reset_email');
+    if (!$email) {
+        $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
+        return $this->redirectToRoute('app_forgot_password');
+    }
+
+    $user = $utilisateurRepository->findOneBy(['email' => $email]);
+    if (!$user) {
+        $this->addFlash('error', 'Utilisateur non trouvé');
+        return $this->redirectToRoute('app_forgot_password');
+    }
+
+    if ($request->isMethod('POST')) {
+        $submittedCode = $request->request->get('reset_code');
+
+        if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
+            $this->addFlash('error', 'Code incorrect');
+            return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
+        }
+
+        if ($user->getResetCodeExpiresAt() < new \DateTimeImmutable()) {
+            $this->addFlash('error', 'Code expiré');
+            return $this->redirectToRoute('app_forgot_password');
+        }
+
+        return $this->redirectToRoute('app_reset_password');
+    }
+
+    return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
+}
+
+#[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
+public function resetPassword(
     Request $request,
     UtilisateurRepository $utilisateurRepository,
     EntityManagerInterface $entityManager,
-    MailerInterface $mailer,
-    LoggerInterface $logger
+    UserPasswordHasherInterface $passwordHasher
 ): Response {
-    // Handle GET request (coming from signin page)
-    if ($request->isMethod('GET')) {
-        $email = $request->query->get('email');
-        
-        if (empty($email)) {
-            $this->addFlash('error', 'Veuillez saisir votre email');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
-        
-        // Store email in session and render the forgot password page
-        $request->getSession()->set('reset_email', $email);
-        return $this->render('utilisateur/forgotPassword.html.twig', [
-            'email' => $email
-        ]);
+    $email = $request->getSession()->get('reset_email');
+    if (!$email) {
+        $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
+        return $this->redirectToRoute('app_forgot_password');
     }
-    
-    // Handle POST request (from forgot password form)
+
+    $user = $utilisateurRepository->findOneBy(['email' => $email]);
+    if (!$user) {
+        $this->addFlash('error', 'Utilisateur non trouvé');
+        return $this->redirectToRoute('app_forgot_password');
+    }
+
     if ($request->isMethod('POST')) {
-        $email = $request->getSession()->get('reset_email');
-        
-        if (empty($email)) {
-            $this->addFlash('error', 'Session expirée, veuillez recommencer');
-            return $this->redirectToRoute('app_utilisateur_signin');
+        $newPassword = $request->request->get('new_password');
+        $confirmPassword = $request->request->get('confirm_password');
+
+        if ($newPassword !== $confirmPassword) {
+            $this->addFlash('error', 'Les mots de passe ne correspondent pas');
+            return $this->render('utilisateur/reset_password.html.twig');
         }
 
-        $user = $utilisateurRepository->findOneBy(['email' => $email]);
-        if (!$user) {
-            $this->addFlash('error', 'Aucun compte associé à cet email');
-            return $this->redirectToRoute('app_utilisateur_signin');
+        if (strlen($newPassword) < 6) {
+            $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
+            return $this->render('utilisateur/reset_password.html.twig');
         }
 
-        // Generate and save reset code
-        $resetCode = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        $user->setResetCode($resetCode);
-        $user->setResetCodeExpiresAt(new \DateTimeImmutable('+1 hour')); // Code expires in 1 hour
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setMdp($hashedPassword);
+        $user->setResetCode(null);
+        $user->setResetCodeExpiresAt(null);
+
         $entityManager->flush();
 
-        try {
-            // Send email with reset code
-            $email = (new TemplatedEmail())
-                ->from(new Address('studar21@gmail.com', 'Studar'))
-                ->to($user->getEmail())
-                ->subject('Réinitialisation de votre mot de passe')
-                ->htmlTemplate('emails/reset_password.html.twig')
-                ->context([
-                    'resetCode' => $resetCode,
-                    'expiration_date' => new \DateTime('+1 hour')
-                ]);
+        $request->getSession()->remove('reset_email');
 
-            $mailer->send($email);
-            
-            // Redirect to verification page
-            return $this->redirectToRoute('app_utilisateur_verify_reset_code');
-            
-        } catch (\Exception $e) {
-            $logger->error('Erreur d\'envoi d\'email: '.$e->getMessage());
-            $this->addFlash('error', 'Erreur lors de l\'envoi du code');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
+        $this->addFlash('success', 'Mot de passe mis à jour avec succès');
+        return $this->redirectToRoute('app_utilisateur_signin');
     }
+
+    return $this->render('utilisateur/reset_password.html.twig');
 }
-
-
-// #[Route('/verify_reset_code', name: 'app_utilisateur_verify_reset_code', methods: ['GET', 'POST'])]
-// public function verifyResetCode(
-//     Request $request,
-//     UtilisateurRepository $utilisateurRepository
-// ): Response {
-//     $email = $request->getSession()->get('reset_email');
-    
-//     if (!$email) {
-//         $this->addFlash('error', 'Session expirée, veuillez recommencer');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     $user = $utilisateurRepository->findOneBy(['email' => $email]);
-//     if (!$user) {
-//         $this->addFlash('error', 'Utilisateur non trouvé');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     if ($request->isMethod('POST')) {
-//         $submittedCode = $request->request->get('reset_code');
-        
-//         if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
-//             $this->addFlash('error', 'Code incorrect');
-//             return $this->redirectToRoute('app_utilisateur_verify_reset_code');
-//         }
-        
-//         // Code valide, passe à la réinitialisation
-//         $request->getSession()->set('reset_verified', true);
-//         return $this->redirectToRoute('app_reset_password');
-//     }
-    
-//     return $this->render('utilisateur/verify_reset_code.html.twig');
-// }
-// #[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
-// public function resetPassword(
-//     Request $request,
-//     UtilisateurRepository $utilisateurRepository,
-//     EntityManagerInterface $entityManager,
-//     UserPasswordHasherInterface $passwordHasher
-// ): Response {
-//     $email = $request->getSession()->get('reset_email');
-//     $verified = $request->getSession()->get('reset_verified');
-    
-//     if (!$email || !$verified) {
-//         $this->addFlash('error', 'Session expirée, veuillez recommencer');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     $user = $utilisateurRepository->findOneBy(['email' => $email]);
-//     if (!$user) {
-//         $this->addFlash('error', 'Utilisateur non trouvé');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     if ($request->isMethod('POST')) {
-//         $newPassword = $request->request->get('new_password');
-        
-//         // Hash the new password
-//         $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-//         $user->setMdp($hashedPassword);
-//         $user->setResetCode(null); // Clear reset code
-//         $entityManager->flush();
-        
-//         // Clear session
-//         $request->getSession()->remove('reset_email');
-//         $request->getSession()->remove('reset_verified');
-        
-//         $this->addFlash('success', 'Mot de passe mis à jour avec succès');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     return $this->render('utilisateur/reset_password.html.twig');
-// }
-
 }

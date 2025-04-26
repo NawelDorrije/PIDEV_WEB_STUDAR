@@ -7,12 +7,21 @@ parameters:
      app.sender_email: 'studar21@gmail.com'
      app.sender_name: 'Studar'
      images_directory: '%kernel.project_dir%/public/uploads/images'
+     faceio_api_key: '%env(FACEIO_API_KEY)%'
 services:
+    App\Controller\Admin\DashboardController:
+        arguments:
+            $logger: '@logger'
     App\Security\GoogleAuthenticator:
         arguments:
             - '@knpu.oauth2.registry'
             - '@doctrine.orm.entity_manager'
             - '@router.default'
+    # App\Service\FaceAuthService:
+    #     arguments:
+    #         $params: '@parameter_bag'
+    #         $userRepository: '@App\Repository\UtilisateurRepository'
+    #         $faceIoPublicId: '%env(FACEIO_PUBLIC_ID)%'
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.

@@ -365,8 +365,7 @@
             <div class="col-lg-6 right-column">
                 <h3 class="center-title">Connectez-vous !</h3>
                 
-                <form method="post" action="{{ path('app_login_check') }}" id="loginForm" class="mt-4">
-                    <div class="mb-3">
+                <form method="post" action="{{ path('app_login_check') }}" id="loginForm" class="mt-4" novalidate>                    <div class="mb-3">
                         <input 
                             type="email" 
                             value="{{ last_username }}" 
@@ -428,6 +427,11 @@
                     </a>                    
                     <div class="center">
                         <a href="{{ path('app_utilisateur_new') }}" style="text-decoration: underline;">Vous n'avez pas de compte ? Inscrivez-vous</a>
+                    </div>
+                    <div class="center">
+                    </div>
+                    <div class="center">
+                        <a href="#" style="text-decoration: underline;">Mot de passe oublié ?</a>
                     </div>
                     <div class="center">
                     </div>

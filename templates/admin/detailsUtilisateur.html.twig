@@ -13,16 +13,6 @@
             margin: 30px auto 20px;
             width: 800px;
         }
-        /* Dans votre fichier CSS principal */
-.avatar-round {
-    border-radius: 50% !important;
-    object-fit: cover;
-    width: 150px;
-    height: 150px;
-    margin-left: -48px;
-    margin-right: 68px;
-
-}
         .profile-header {
             display: flex;
             align-items: center;
@@ -114,12 +104,9 @@
         {% if utilisateur.image %}
         <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
         {% else %}
-        <!-- <div class="profile-avatar" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+        <div class="profile-avatar" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
             <i class="fas fa-user" style="font-size: 40px; color: #777;"></i>
-        </div> -->
-        <img src="{{ utilisateur.avatarUrl }}" 
-        alt="Avatar"
-        class="avatar-round">
+        </div>
     {% endif %}       
      <div class="profile-content">
             <div class="profile-label">Prénom</div>
@@ -161,7 +148,6 @@
 </div>
 
 <div class="button-container">
-    <a href="{{ path('app_utilisateur_edit', {'cin': utilisateur.cin}) }}" class="btn btn-primary">Modifier</a>
     <a href="{{ path('app_utilisateur_index') }}" class="btn btn-secondary">Retourner</a>
 </div>
 {% endblock %}

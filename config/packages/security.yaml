@@ -1,5 +1,4 @@
 security:
-    # security.yaml
     role_hierarchy:
         ROLE_ADMIN: ['ROLE_PROPRIETAIRE', 'ROLE_TRANSPORTEUR', 'ROLE_ETUDIANT']
         ROLE_PROPRIETAIRE: ['ROLE_ETUDIANT']
@@ -12,7 +11,7 @@ security:
         app_user_provider:
             entity:
                 class: App\Entity\Utilisateur
-                property: email  # Uses email as the user identifier
+                property: email
 
     firewalls:
         dev:
@@ -30,40 +29,30 @@ security:
                 username_parameter: 'email'
                 password_parameter: 'password'
                 enable_csrf: true
-                failure_path: app_utilisateur_signin  # Add this line to redirect back to login on failure
+                failure_path: app_utilisateur_signin
                 failure_forward: false
                 success_handler: App\Security\AuthenticationSuccessHandler
-
             logout:
-                path: app_logout  # The route name for logout
-                target: app_utilisateur_signin  # Where to redirect after logout
+                path: app_logout
+                target: app_utilisateur_signin
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
-
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
     access_control:
-         - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
-         - { path: ^/verify-reset-code, roles: PUBLIC_ACCESS }
-         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
-         - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
-         - { path: ^/admin/user/\d+/toggle-block, roles: ROLE_ADMIN, methods: POST }
+        - { path: ^/utilisateur/signin, roles: PUBLIC_ACCESS }
+        - { path: ^/utilisateur/request-reset-code, roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/verify-reset-code, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin/user/\d+/toggle-block, roles: ROLE_ADMIN, methods: POST }
+        - { path: ^/utilisateur/request-reset-code, roles: PUBLIC_ACCESS }
+        - { path: ^/verify-reset-code, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
 
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

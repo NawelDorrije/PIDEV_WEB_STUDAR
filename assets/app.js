@@ -17,5 +17,12 @@ import './js/counter.js';
 import './js/custom.js';
 import './js/isotope.min.js';
 import './js/owl-carousel.js';
+import $ from 'jquery';
+window.$ = window.jQuery = $;
+import 'bootstrap';
+import 'owl.carousel';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import './js/custom.js';
+import './styles/app.css';
 
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');

@@ -1,3 +1,332 @@
-body {
-    background-color: skyblue;
+/* Theme-specific styles */
+body.theme-dark {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+body.theme-dark .admin-sidebar {
+    background-color: #2c2c2c !important;
+}
+
+body.theme-dark .admin-content {
+    background-color: #1a1a1a !important;
+}
+
+body.theme-dark .parameters-list,
+body.theme-dark .parameters-section {
+    background-color: #2c2c2c !important;
+    box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+}
+
+body.theme-dark .parameters-item {
+    border-color: #555 !important;
+}
+
+body.theme-dark .parameters-item span {
+    color: #ffffff !important;
+}
+
+body.theme-dark .parameters-item:hover {
+    background-color: #3a3a3a !important;
+}
+
+body.theme-dark .modal-content {
+    background-color: #2c2c2c !important;
+    color: #ffffff !important;
+}
+
+body.theme-dark .form-group input,
+body.theme-dark .form-group select {
+    background-color: #3a3a3a !important;
+    color: #ffffff !important;
+    border-color: #555 !important;
+}
+
+body.theme-dark .activity-log th {
+    background-color: #3a3a3a !important;
+}
+
+body.theme-dark .modal-close {
+    color: #ffffff !important;
+}
+
+body.theme-dark .modal-close:hover {
+    color: #f35525 !important;
+}
+
+body.theme-custom {
+    background-color: #f0f0f0 !important;
+    color: #333 !important;
+}
+
+body.theme-custom .admin-sidebar {
+    background-color: #e0e0e0 !important;
+}
+
+body.theme-custom .admin-content {
+    background-color: #f0f0f0 !important;
+}
+
+body.theme-custom .parameters-list,
+body.theme-custom .parameters-section {
+    background-color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+}
+
+/* General admin styles */
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    width: 80px;
+    background-color: white;
+    color: white;
+    padding: 20px 10px;
+    position: fixed;
+    height: 100vh;
+    transition: width 0.3s;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.admin-sidebar:hover {
+    width: 250px;
+}
+
+.admin-content {
+    margin-left: 80px;
+    padding: 30px;
+    flex: 1;
+    transition: margin-left 0.3s;
+    background-color: white;
+}
+
+.admin-sidebar:hover ~ .admin-content {
+    margin-left: 250px;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin-top: 30px;
+}
+
+.sidebar-nav li {
+    margin-bottom: 15px;
+    white-space: nowrap;
+}
+
+.sidebar-nav a {
+    color: #333;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-radius: 50px;
+    transition: all 0.3s;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+    background-color: #f35525;
+    color: white;
+}
+
+.sidebar-nav i {
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(243, 85, 37, 0.1);
+    border-radius: 50%;
+    margin-right: 15px;
+    transition: all 0.3s;
+    color: #f35525;
+}
+
+.sidebar-nav a:hover i,
+.sidebar-nav a.active i {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+    color: white;
+}
+
+.sidebar-nav .nav-text {
+    opacity: 0;
+    transition: opacity 0.2s;
+    transition-delay: 0.1s;
+    font-weight: 500;
+}
+
+.admin-sidebar:hover .nav-text {
+    opacity: 1;
+}
+
+.parameters-list {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.parameters-list h3 {
+    color: #f35525;
+    margin-bottom: 20px;
+}
+
+.parameters-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.parameters-item:hover {
+    background-color: #f8f9fa;
+}
+
+.parameters-item span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+.parameters-item i {
+    color: #f35525;
+    font-size: 18px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.modal-content h3 {
+    color: #f35525;
+    margin-bottom: 20px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
+    color: #f35525;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+}
+
+.orange-button {
+    background-color: #f35525;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.orange-button:hover {
+    background-color: #d9441f;
+}
+
+.activity-log table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.activity-log th,
+.activity-log td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.activity-log th {
+    background-color: #f8f9fa;
+}
+
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 15px;
+    border-radius: 5px;
+    animation: fadeIn 0.5s, fadeOut 0.5s 4.5s;
+}
+
+.alert-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.alert-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
 }
