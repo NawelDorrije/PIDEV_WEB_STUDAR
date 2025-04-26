@@ -275,40 +275,41 @@
                     </div>
                 {% endfor %}
                 
-                {{ form_start(form, {'attr': {'id': 'contact-form', 'enctype': 'multipart/form-data'}}) }}                <h3 class="center">Devenez membre !</h3>
-                
+                {{ form_start(form, {'attr': {'id': 'contact-form', 'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}                
                 <div class="row">
+                
+                    
                     <div class="col-lg-12">
-                        {{ form_widget(form.imageFile, {
-                            'attr': {
-                                'class': 'form-control' ~ (form.imageFile.vars.errors|length > 0 ? ' is-invalid' : ''),
-                            }
-                        }) }}
-                        {% if form.imageFile.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
-                                {% for error in form.imageFile.vars.errors %}
-                                    <div>{{ error.message }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <label for="{{ form.imageFile.vars.id }}" class="form-label">
+                           
+                        </label>
+                        <div class="avatar-preview mb-3" 
+                             style="width:100px; height:100px; border-radius:50%; background:#eee;
+                                    display:flex; align-items:center; justify-content:center;
+                                    font-size:2rem; color:white; margin:0 auto;">
+                            <!-- Aperçu dynamique -->
+                        </div>
+                        {{ form_widget(form.imageFile) }}
+                        <small class="text-muted">Si non fourni, un avatar avec vos initiales sera généré</small>
+                        <div class="invalid-feedback">
+                            {{ form_errors(form.imageFile) }}
+                        </div>
                     </div>
                     {# CIN Field #}
                     <div class="col-lg-12">
-                        {{ form_widget(form.cin, {
-                            'attr': {
-                                'placeholder': 'CIN (8 chiffres)',
-                                'class': 'form-control' ~ (form.cin.vars.errors|length > 0 ? ' is-invalid' : ''),
-                                'required': 'required'
-                            }
-                        }) }}
-                        {% if form.cin.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
+                        <div class="col-lg-12">
+                            {{ form_widget(form.cin, {
+                                'attr': {
+                                    'class': 'form-control' ~ (form.cin.vars.errors|length > 0 ? ' is-invalid' : ''),
+                                    'placeholder': 'Entrez votre CIN'
+                                }
+                            }) }}
+                            <div class="invalid-feedback">
                                 {% for error in form.cin.vars.errors %}
-                                    <div>{{ error.message }}</div>
+                                    {{ error.message }}
                                 {% endfor %}
                             </div>
-                        {% endif %}
-                    </div>
+                        </div>
                     
                     {# First Name Field #}
                     <div class="col-lg-12">
@@ -319,13 +320,10 @@
                                 'required': 'required'
                             }
                         }) }}
-                        {% if form.prenom.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
-                                {% for error in form.prenom.vars.errors %}
-                                    <div>{{ error.message }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <div class="invalid-feedback">
+                            {% for error in form.prenom.vars.errors %}
+                                {{ error.message }}
+                            {% endfor %}
                     </div>
                     
                     {# Last Name Field #}
@@ -337,30 +335,25 @@
                                 'required': 'required'
                             }
                         }) }}
-                        {% if form.nom.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
-                                {% for error in form.nom.vars.errors %}
-                                    <div>{{ error.message }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <div class="invalid-feedback">
+                            {% for error in form.nom.vars.errors %}
+                                {{ error.message }}
+                            {% endfor %}
+                        </div>
                     </div>
                     
                     {# Role Field #}
                     <div class="col-lg-12">
                         {{ form_widget(form.role, {
                             'attr': {
-                                'class': 'form-control' ~ (form.role.vars.errors|length > 0 ? ' is-invalid' : ''),
-                                'required': 'required'
+                                'class': 'form-control' ~ (form.role.vars.errors|length > 0 ? ' is-invalid' : '')
                             }
                         }) }}
-                        {% if form.role.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
-                                {% for error in form.role.vars.errors %}
-                                    <div>{{ error.message }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <div class="invalid-feedback">
+                            {% for error in form.role.vars.errors %}
+                                {{ error.message }}
+                            {% endfor %}
+                        </div>
                     </div>
                     
                     {# Email Field #}
@@ -373,13 +366,11 @@
                                 'pattern': '[^ @]*@[^ @]*'
                             }
                         }) }}
-                        {% if form.email.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
-                                {% for error in form.email.vars.errors %}
-                                    <div>{{ error.message }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <div class="invalid-feedback">
+                            {% for error in form.email.vars.errors %}
+                                {{ error.message }}
+                            {% endfor %}
+                        </div>
                     </div>
                     
                     {# Phone Number Field #}
@@ -391,13 +382,11 @@
                                 'required': 'required'
                             }
                         }) }}
-                        {% if form.numTel.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
-                                {% for error in form.numTel.vars.errors %}
-                                    <div>{{ error.message }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+                        <div class="invalid-feedback">
+                            {% for error in form.numTel.vars.errors %}
+                                {{ error.message }}
+                            {% endfor %}
+                        </div>
                     </div>
                     
                     {# Password Field #}
@@ -406,19 +395,17 @@
                             'attr': {
                                 'placeholder': 'Mot de passe',
                                 'class': 'form-control' ~ (form.mdp.vars.errors|length > 0 ? ' is-invalid' : ''),
-                                'required': 'required',
-                                'type' : 'password'
+                                'required': 'required'
                             }
                         }) }}
                         {% if form.mdp.vars.errors|length > 0 %}
-                            <div class="error-message" style="color: #dc3545; font-size: 0.875em; margin-top: -10px; margin-bottom: 10px;">
+                            <div class="invalid-feedback">
                                 {% for error in form.mdp.vars.errors %}
                                     <div>{{ error.message }}</div>
                                 {% endfor %}
                             </div>
                         {% endif %}
                     </div>
-                    
                     {# Submit Button #}
                     <div class="col-lg-12">
                         <button type="submit" class="orange-button">S'inscrire</button>
@@ -459,6 +446,7 @@
     <script src="{{ asset('assets/js/owl-carousel.js') }}"></script>
     <script src="{{ asset('assets/js/counter.js') }}"></script>
     <script src="{{ asset('assets/js/custom.js') }}"></script>
+    <script src="https://unpkg.com/@github/webauthn-json/dist/browser-global/webauthn-json.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -546,6 +534,109 @@
                 }, 3000);
             }
         });
+       
+    document.addEventListener('DOMContentLoaded', function() {
+        // Disable native HTML5 validation
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                // Add validation classes
+                form.classList.add('was-validated');
+                
+                // Custom validation for each field
+                const fields = form.querySelectorAll('input, select, textarea');
+                fields.forEach(function(field) {
+                    if (!field.value.trim() && field.required) {
+                        field.classList.add('is-invalid');
+                        const errorDiv = field.nextElementSibling;
+                        if (errorDiv && !errorDiv.classList.contains('invalid-feedback')) {
+                            const newErrorDiv = document.createElement('div');
+                            newErrorDiv.className = 'invalid-feedback';
+                            newErrorDiv.textContent = 'Ce champ est obligatoire';
+                            field.parentNode.insertBefore(newErrorDiv, field.nextSibling);
+                        }
+                    }
+                });
+            }, false);
+        });
+        
+        // Real-time validation
+        document.querySelectorAll('.form-control').forEach(function(input) {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    if (this.required) {
+                        this.classList.add('is-invalid');
+                    }
+                }
+            });
+        });
+    });
+    // Dans votre block javascripts
+document.addEventListener('DOMContentLoaded', function() {
+    // Aperçu avatar dynamique
+    const avatarPreview = document.querySelector('.avatar-preview');
+    const firstNameInput = document.querySelector('#{{ form.prenom.vars.id }}');
+    const lastNameInput = document.querySelector('#{{ form.nom.vars.id }}');
+    const fileInput = document.querySelector('#{{ form.imageFile.vars.id }}');
+    
+    function updateAvatarPreview() {
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                avatarPreview.innerHTML = `<img src="${e.target.result}" 
+                    style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            const initials = (
+                (firstNameInput.value ? firstNameInput.value[0] : '') + 
+                (lastNameInput.value ? lastNameInput.value[0] : '')
+            ).toUpperCase();
+            
+            if (initials) {
+                const bgColor = '#' + md5((firstNameInput.value || '') + (lastNameInput.value || ''))
+                    .substring(0, 6);
+                
+                avatarPreview.innerHTML = initials;
+                avatarPreview.style.backgroundColor = bgColor;
+            } else {
+                avatarPreview.innerHTML = '?';
+                avatarPreview.style.backgroundColor = '#ccc';
+            }
+        }
+    }
+    
+    // Écouteurs d'événements
+    [firstNameInput, lastNameInput].forEach(input => {
+        input.addEventListener('input', updateAvatarPreview);
+    });
+    
+    fileInput.addEventListener('change', updateAvatarPreview);
+    
+    // Initialisation
+    updateAvatarPreview();
+    
+    // Fonction MD5 simplifiée pour la couleur de fond
+    function md5(string) {
+        return CryptoJS.MD5(string).toString();
+    }
+});
+  
     </script>
+    <script src="https://cdn.faceio.net/fio.js"></script>
+    <script>
+    
+    </script>
+    
 {% endblock %}
 {% endblock %}

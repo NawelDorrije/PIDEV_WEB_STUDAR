@@ -191,9 +191,10 @@
                  class="profile-avatar"
                  id="avatar-preview">
         {% else %}
-            <div class="avatar-placeholder" id="avatar-preview">
-                <i class="fas fa-user"></i>
-            </div>
+        <img src="{{ utilisateur.avatarUrl(120) }}" 
+        alt="Profile Image" 
+        class="profile-avatar"
+        id="avatar-preview">
         {% endif %}
         
         <div class="file-upload-wrapper">

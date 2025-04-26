@@ -17,11 +17,14 @@ parameters:
     google_nl_api_key: '%env(GOOGLE_NL_API_KEY)%'
     exchange_rate_api_key: '%env(EXCHANGE_RATE_API_KEY)%'
 
-
+    app.sender_email: 'studar21@gmail.com'
 
     
 
 services:
+    App\Controller\Admin\DashboardController:
+        arguments:
+            $logger: '@logger'
     App\Security\GoogleAuthenticator:
         arguments:
             - '@knpu.oauth2.registry'

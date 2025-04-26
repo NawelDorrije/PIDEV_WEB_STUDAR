@@ -6,7 +6,6 @@ use App\Entity\GestionMeubles\Commande;
 use App\Entity\GestionMeubles\Meuble;
 use App\Entity\GestionMeubles\Panier;
 use App\Enums\RoleUtilisateur;
-use App\Repository\UtilisateurRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -24,7 +23,6 @@ use App\Entity\ReservationLogement;
 
 
 
-
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
 #[UniqueEntity(fields: ['cin'], message: 'Ce CIN est déjà enregistré.')]
@@ -32,27 +30,46 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(length: 8, unique: true)]
-    #[Assert\Length(exactly: 8, exactMessage: 'Le CIN doit contenir exactement 8 chiffres.')]
-    #[Assert\Regex(pattern: '/^\d+$/', message: 'Le CIN ne doit contenir que des chiffres.')]
+    #[Assert\Length(
+        exactly: 8,
+        exactMessage: 'Le CIN doit contenir exactement 8 chiffres.'
+    )]
+    #[Assert\Regex(
+        pattern: '/^\d+$/',
+        message: 'Le CIN ne doit contenir que des chiffres.'
+    )]
     private ?string $cin = null;
 
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Le nom ne peut pas être vide.')]
     private ?string $nom = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $image = null;
-
     #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Le prénom ne peut pas être vide.')]
     private ?string $prenom = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 100, unique: true)]
+    #[Assert\NotBlank(message: 'L\'email ne peut pas être vide.')]
+    #[Assert\Email(message: 'L\'email n\'est pas valide.')]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le mot de passe ne peut pas être vide.')]
     private ?string $mdp = null;
 
     #[ORM\Column(name: 'numTel', length: 15, nullable: true)]
+    #[Assert\Regex(
+        pattern: '/^\+?\d{10,15}$/',
+        message: 'Le numéro de téléphone n\'est pas valide.',
+        match: true
+    )]
     private ?string $numTel = null;
+
+    #[ORM\Column(type: 'string', length: 20)]
+    private string $theme = 'light';
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $image = null;
 
     #[ORM\Column(type: 'role_enum')]
     private ?RoleUtilisateur $role = null;
@@ -60,8 +77,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 10, nullable: true)]
     private ?string $reset_code = null;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $reset_code_expires_at = null;
+
     #[ORM\Column]
-    private ?bool $blocked = null;
+    private ?bool $blocked = false;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $created_at = null;
@@ -86,6 +106,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reservationsAsTransporteur = new ArrayCollection();
         $this->reservationsTransportAsEtudiant = new ArrayCollection();
         $this->logements = new ArrayCollection();
+        // $this->userHandle = bin2hex(random_bytes(32));
+        $this->created_at = new \DateTimeImmutable();
     }
 
     // Getters et Setters
@@ -120,7 +142,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->cin;
     }
 
-    public function setCin(string $cin): self
+    public function setCin(string $cin): static
     {
         $this->cin = $cin;
         return $this;
@@ -131,36 +153,18 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->nom;
     }
 
-    public function setNom(string $nom): self
+    public function setNom(string $nom): static
     {
         $this->nom = $nom;
         return $this;
     }
-    public function getImage(): ?string
-    {
-        return $this->image;
-    }
-    public function setImage(string $image): static
-    {
-        $this->image = $image;
 
-        return $this;
-    }
-    // public function getUserIdentifier(): string
-    // {
-    //     return $this->email;
-    // }
-    
-    // public function getRoles(): array
-    // {
-    //     return [$this->role->value];
-    // }
     public function getPrenom(): ?string
     {
         return $this->prenom;
     }
 
-    public function setPrenom(string $prenom): self
+    public function setPrenom(string $prenom): static
     {
         $this->prenom = $prenom;
         return $this;
@@ -199,6 +203,28 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getTheme(): string
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(string $theme): static
+    {
+        $this->theme = $theme;
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): static
+    {
+        $this->image = $image;
+        return $this;
+    }
+
     public function getRole(): ?RoleUtilisateur
     {
         return $this->role;
@@ -209,7 +235,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->role?->value;
     }
 
-    public function setRole(RoleUtilisateur $role): self
+    public function setRole(RoleUtilisateur $role): static
     {
         $this->role = $role;
         return $this;
@@ -219,28 +245,21 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->reset_code;
     }
-    public function getRoles(): array
-    {
-        if (!$this->role) {
-            return ['ROLE_ETUDIANT']; // Default role
-        }
-        
-        // Map enum values to Symfony roles
-        return match($this->role) {
-            RoleUtilisateur::ADMIN => ['ROLE_ADMIN'],
-            RoleUtilisateur::PROPRIETAIRE => ['ROLE_PROPRIETAIRE'],
-            RoleUtilisateur::TRANSPORTEUR => ['ROLE_TRANSPORTEUR'],
-            RoleUtilisateur::ETUDIANT => ['ROLE_ETUDIANT'],
-            default => ['ROLE_ETUDIANT']
-        };
-    }
-    // public function setRoles(RoleUtilisateur $role): static
-    // {
-    //     $this->role = $role;
 
-    public function setResetCode(?string $reset_code): self
+    public function setResetCode(?string $reset_code): static
     {
         $this->reset_code = $reset_code;
+        return $this;
+    }
+
+    public function getResetCodeExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->reset_code_expires_at;
+    }
+
+    public function setResetCodeExpiresAt(?\DateTimeImmutable $reset_code_expires_at): static
+    {
+        $this->reset_code_expires_at = $reset_code_expires_at;
         return $this;
     }
 
@@ -358,9 +377,27 @@ public function removeCommande(Commande $commande): self
     //     return [$roleMap[$this->role->value] ?? 'ROLE_USER'];
     // }
 
+    // public function eraseCredentials(): void
+    // {}
+        // Pas de données temporaires à effacer ici
+    public function getRoles(): array
+    {
+        if (!$this->role) {
+            return ['ROLE_ETUDIANT'];
+        }
+
+        return match ($this->role) {
+            RoleUtilisateur::ADMIN => ['ROLE_ADMIN'],
+            RoleUtilisateur::PROPRIETAIRE => ['ROLE_PROPRIETAIRE'],
+            RoleUtilisateur::TRANSPORTEUR => ['ROLE_TRANSPORTEUR'],
+            RoleUtilisateur::ETUDIANT => ['ROLE_ETUDIANT'],
+            default => ['ROLE_ETUDIANT']
+        };
+    }
+
     public function eraseCredentials(): void
     {
-        // Pas de données temporaires à effacer ici
+        // Clear any temporary sensitive data if needed
     }
 
     public function getUserIdentifier(): string
@@ -557,7 +594,55 @@ public function getReservationsAsTransporteur(): Collection
 
         return $this;
     }
+    // public function getUserHandle(): string
+    // {
+    //     return $this->userHandle;
+    // }
 
+    public function getUserName(): string
+    {
+        return $this->email;
+    }
 
+    public function getDisplayName(): string
+    {
+        return $this->prenom . ' ' . $this->nom;
+    }
 
+    public function getAvatarUrl(int $size = 100): string
+    {
+        if ($this->image) {
+            return '/Uploads/images/' . $this->image;
+        }
+
+        $initials = $this->getInitials();
+        $bgColor = $this->generateBackgroundColor();
+
+        return sprintf(
+            'https://ui-avatars.com/api/?name=%s&background=%s&color=fff&size=%d',
+            urlencode($initials),
+            substr($bgColor, 1),
+            $size
+        );
+    }
+
+    private function getInitials(): string
+    {
+        $firstNameInitial = $this->prenom ? mb_substr($this->prenom, 0, 1) : '';
+        $lastNameInitial = $this->nom ? mb_substr($this->nom, 0, 1) : '';
+
+        return mb_strtoupper($firstNameInitial . $lastNameInitial);
+    }
+
+    private function generateBackgroundColor(): string
+    {
+        $hash = md5($this->cin ?? $this->email);
+        return sprintf('#%s%s%s',
+            substr($hash, 0, 2),
+            substr($hash, 4, 2),
+            substr($hash, 8, 2)
+        );
+    }
 }
+
+
