@@ -36,6 +36,7 @@ security:
             logout:
                 path: app_logout  # The route name for logout
                 target: app_utilisateur_signin  # Where to redirect after logout
+                
 
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -51,7 +52,7 @@ security:
          - { path: ^/reset-password, roles: PUBLIC_ACCESS }
          - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+         - { path: ^/profile, roles: ROLE_USER }
 
 when@test:
     security:

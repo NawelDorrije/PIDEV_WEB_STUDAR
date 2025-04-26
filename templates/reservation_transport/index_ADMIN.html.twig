@@ -483,10 +483,7 @@
                         {% endif %}
                     </td>
                     <td class="actions action-icons">
-                        <a href="{{ path('app_reservation_transport_show_ADMIN', {'id': reservation.id}) }}" title="Voir détails">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <i class="fas fa-edit" onclick="editRow({{ reservation.id }})" title="Modifier"></i>
+                        
                         <i class="fas fa-trash" onclick="deleteRow({{ reservation.id }})" title="Supprimer"></i>
                     </td>
                 </tr>

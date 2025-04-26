@@ -531,6 +531,8 @@
                     <td class="action-icons">
                         <a href="{{ path('app_reservation_logement_show_ADMIN', {'id': reservation.id}) }}" title="Voir détails">
                             <i class="fas fa-eye"></i>
+                          <i class="fas fa-trash" onclick="deleteRow({{ reservation.id }})" title="Supprimer"></i>
+
                         </a>
                     </td>
                 </tr>
