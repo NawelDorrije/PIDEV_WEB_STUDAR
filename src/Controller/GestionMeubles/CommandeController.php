@@ -253,7 +253,6 @@ final class CommandeController extends AbstractController
     private function sendConfirmationEmailToBuyer(Commande $commande, Utilisateur $utilisateur, ?string $address): void
     {
         try {
-          //  $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
             $email = (new Email())
                 ->from('naweldorrije789@gmail.com')
                 ->to($utilisateur->getEmail())
@@ -264,22 +263,27 @@ final class CommandeController extends AbstractController
                     'nom' => $utilisateur->getNom(),
                     'prenom' => $utilisateur->getPrenom(),
                 ]));
-
-            // if (file_exists($logoPath)) {
-            //     $email->embed(fopen($logoPath, 'r'), 'logo.png', 'image/png');
-            // }
-
+    
+            // Embed the logo
+            $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
+            if (file_exists($logoPath)) {
+                $email->embed(fopen($logoPath, 'r'), 'logo.png', 'image/png');
+                $this->logger->info('Logo joint à l\'email de confirmation pour l\'acheteur : ' . $utilisateur->getEmail());
+            } else {
+                $this->logger->error('Fichier logo introuvable à : ' . $logoPath);
+            }
+    
             $this->mailer->send($email);
             $this->logger->info('Email de confirmation envoyé à ' . $utilisateur->getEmail());
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors de l\'envoi de l\'email de confirmation à ' . $utilisateur->getEmail() . ' : ' . $e->getMessage());
         }
     }
-
+    
     private function sendNotificationEmailsToSellers(Commande $commande): void
     {
         $vendeursArticles = [];
-
+    
         foreach ($commande->getPanier()->getLignesPanier() as $ligne) {
             $vendeur = $ligne->getMeuble()->getVendeur();
             if (!isset($vendeursArticles[$vendeur->getCin()])) {
@@ -290,11 +294,11 @@ final class CommandeController extends AbstractController
             }
             $vendeursArticles[$vendeur->getCin()]['articles'][] = $ligne;
         }
-
+    
         foreach ($vendeursArticles as $data) {
             $vendeur = $data['vendeur'];
             $articles = $data['articles'];
-
+    
             try {
                 $email = (new Email())
                     ->from('naweldorrije789@gmail.com')
@@ -306,15 +310,16 @@ final class CommandeController extends AbstractController
                         'nom' => $vendeur->getNom(),
                         'prenom' => $vendeur->getPrenom(),
                     ]));
-
+    
+                // Embed the logo
                 $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
                 if (file_exists($logoPath)) {
                     $email->embed(fopen($logoPath, 'r'), 'logo.png', 'image/png');
-                    $this->logger->info('Logo joint à l\'email pour le vendeur : ' . $vendeur->getEmail());
+                    $this->logger->info('Logo joint à l\'email de notification pour le vendeur : ' . $vendeur->getEmail());
                 } else {
                     $this->logger->error('Fichier logo introuvable à : ' . $logoPath);
                 }
-
+    
                 $this->mailer->send($email);
                 $this->logger->info('Email de notification envoyé à ' . $vendeur->getEmail());
             } catch (\Exception $e) {
@@ -361,13 +366,12 @@ final class CommandeController extends AbstractController
 
         $month = $request->query->get('month');
         $year = $request->query->get('year');
-        $format = $request->query->get('format', 'csv'); // Default to CSV if not specified
+        $format = $request->query->get('format', 'csv');
 
         if (!$month || !$year) {
             throw $this->createNotFoundException('Le mois et l\'année sont requis pour l\'exportation.');
         }
 
-        // Construire les dates de début et de fin pour le mois donné
         $startDate = \DateTime::createFromFormat('Y-m-d', "$year-$month-01");
         if (!$startDate) {
             throw $this->createNotFoundException('Mois ou année invalide.');
@@ -375,7 +379,6 @@ final class CommandeController extends AbstractController
         $endDate = clone $startDate;
         $endDate->modify('last day of this month')->setTime(23, 59, 59);
 
-        // Construire la requête pour récupérer les commandes
         $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
             ->leftJoin('c.acheteur', 'a')
             ->addSelect('a')
@@ -385,7 +388,6 @@ final class CommandeController extends AbstractController
 
         $commandes = $queryBuilder->getQuery()->getResult();
 
-        // Préparer les en-têtes
         $headers = [
             'Code',
             'Acheteur',
@@ -398,7 +400,6 @@ final class CommandeController extends AbstractController
             'Raison d\'annulation',
         ];
 
-        // Préparer les données
         $data = [];
         foreach ($commandes as $commande) {
             $data[] = [
@@ -414,52 +415,38 @@ final class CommandeController extends AbstractController
             ];
         }
 
-        // Générer le nom du fichier
         $filename = sprintf('commandes_%s_%s', $month, $year);
 
         if ($format === 'excel') {
-            // Créer un fichier Excel avec PhpSpreadsheet
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
 
-            // Ajouter les en-têtes
             $sheet->fromArray($headers, null, 'A1');
-
-            // Ajouter les données
             $sheet->fromArray($data, null, 'A2');
 
-            // Ajuster la largeur des colonnes
             foreach (range('A', 'I') as $columnID) {
                 $sheet->getColumnDimension($columnID)->setAutoSize(true);
             }
 
-            // Créer un fichier temporaire
             $writer = new Xlsx($spreadsheet);
             $tempFile = tempnam(sys_get_temp_dir(), 'commandes_export_') . '.xlsx';
             $writer->save($tempFile);
 
-            // Retourner le fichier comme réponse
             $response = new BinaryFileResponse($tempFile);
             $response->setContentDisposition(
                 ResponseHeaderBag::DISPOSITION_ATTACHMENT,
                 $filename . '.xlsx'
             );
             $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            
-            // Supprimer le fichier temporaire après téléchargement
             $response->deleteFileAfterSend(true);
 
             return $response;
         } else {
-            // Générer un fichier CSV
             $response = new StreamedResponse();
             $response->setCallback(function () use ($headers, $data) {
                 $handle = fopen('php://output', 'w+');
 
-                // Ajouter les en-têtes
                 fputcsv($handle, $headers, ';');
-
-                // Ajouter les données
                 foreach ($data as $row) {
                     fputcsv($handle, $row, ';');
                 }
@@ -514,6 +501,184 @@ final class CommandeController extends AbstractController
         ]);
     }
 
+    #[Route('/commandes/mes-ventes', name: 'app_gestion_meubles_mes_ventes')]
+    public function mesVentes(Request $request, PaginatorInterface $paginator): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Vous devez être connecté.');
+        }
+
+        try {
+            $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
+                ->leftJoin('c.panier', 'p')
+                ->leftJoin('p.lignesPanier', 'lp')
+                ->leftJoin('lp.meuble', 'm')
+                ->leftJoin('m.vendeur', 'v')
+                ->andWhere('v = :vendeur')
+                ->setParameter('vendeur', $utilisateur)
+                ->orderBy('c.id', 'DESC');
+
+            $pagination = $paginator->paginate(
+                $queryBuilder,
+                $request->query->getInt('page', 1),
+                5 // Number of items per page
+            );
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la récupération des ventes pour le vendeur ID: ' . $utilisateur->getCin() . ' - ' . $e->getMessage());
+            throw new \RuntimeException('Erreur lors de la récupération des ventes : ' . $e->getMessage());
+        }
+
+        if ($pagination->getTotalItemCount() === 0) {
+            $this->addFlash('warning', 'Aucune vente trouvée.');
+        }
+
+        return $this->render('gestion_meubles/commande/liste_ventes.html.twig', [
+            'pagination' => $pagination,
+            'vendeur' => $utilisateur,
+        ]);
+    }
+
+    #[Route('/commandes/export-ventes', name: 'app_gestion_meubles_export_ventes')]
+    public function exportVentes(Request $request): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Vous devez être connecté.');
+        }
+
+        $format = $request->query->get('format', 'csv');
+
+        try {
+            $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
+                ->leftJoin('c.panier', 'p')
+                ->leftJoin('p.lignesPanier', 'lp')
+                ->leftJoin('lp.meuble', 'm')
+                ->leftJoin('m.vendeur', 'v')
+                ->leftJoin('c.acheteur', 'a')
+                ->addSelect('a')
+                ->andWhere('v = :vendeur')
+                ->setParameter('vendeur', $utilisateur);
+
+            $commandes = $queryBuilder->getQuery()->getResult();
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la récupération des ventes pour l\'exportation (utilisateur ID: ' . $utilisateur->getCin() . '): ' . $e->getMessage());
+            throw new \RuntimeException('Erreur lors de la récupération des ventes pour l\'exportation : ' . $e->getMessage());
+        }
+
+        $headers = [
+            'Code',
+            'Acheteur',
+            'Date',
+            'Statut',
+            'Montant (TND)',
+            'Articles',
+        ];
+
+        $data = [];
+        foreach ($commandes as $commande) {
+            $articles = [];
+            foreach ($commande->getPanier()->getLignesPanier() as $ligne) {
+                if ($ligne->getMeuble()->getVendeur() === $utilisateur) {
+                    $articles[] = $ligne->getMeuble()->getNom() . ' (' . number_format($ligne->getMeuble()->getPrix(), 2, ',', ' ') . ' TND)';
+                }
+            }
+            $articlesStr = implode('; ', $articles);
+
+            $data[] = [
+                $commande->getId(),
+                $commande->getAcheteur() ? $commande->getAcheteur()->getNom() . ' ' . $commande->getAcheteur()->getPrenom() : 'Inconnu',
+                $commande->getDateCommande()->format('d/m/Y H:i'),
+                $commande->getStatut(),
+                number_format($commande->getMontantTotal(), 2, ',', ' '),
+                $articlesStr,
+            ];
+        }
+
+        $filename = sprintf('mes_ventes_%s', date('Y-m-d'));
+
+        if ($format === 'excel') {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $sheet->fromArray($headers, null, 'A1');
+            $sheet->fromArray($data, null, 'A2');
+
+            foreach (range('A', 'F') as $columnID) {
+                $sheet->getColumnDimension($columnID)->setAutoSize(true);
+            }
+
+            $writer = new Xlsx($spreadsheet);
+            $tempFile = tempnam(sys_get_temp_dir(), 'ventes_export_') . '.xlsx';
+            $writer->save($tempFile);
+
+            $response = new BinaryFileResponse($tempFile);
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $filename . '.xlsx'
+            );
+            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response->deleteFileAfterSend(true);
+
+            return $response;
+        } else {
+            $response = new StreamedResponse();
+            $response->setCallback(function () use ($headers, $data) {
+                $handle = fopen('php://output', 'w+');
+
+                fputcsv($handle, $headers, ';');
+                foreach ($data as $row) {
+                    fputcsv($handle, $row, ';');
+                }
+
+                fclose($handle);
+            });
+
+            $response->headers->set('Content-Type', 'text/csv');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '.csv"');
+
+            return $response;
+        }
+    }
+
+    #[Route('/commande/{id}/update-statut', name: 'app_gestion_meubles_commande_update_statut', methods: ['POST'])]
+    public function updateStatutCommande(Request $request, int $id): JsonResponse
+    {
+        $this->logger->info('Tentative de mise à jour du statut de la commande ID: ' . $id);
+
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            $this->logger->warning('Utilisateur non connecté pour mise à jour du statut de la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Vous devez être connecté pour modifier le statut d\'une commande.'], 403);
+        }
+
+        $commande = $this->commandeRepository->find($id);
+        if (!$commande) {
+            $this->logger->warning('Commande non trouvée: ID ' . $id);
+            return new JsonResponse(['error' => 'Commande non trouvée.'], 404);
+        }
+
+        $nouveauStatut = $request->request->get('statut');
+        if (!$nouveauStatut) {
+            $this->logger->warning('Statut non fourni pour la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Le statut est requis.'], 400);
+        }
+
+        try {
+            $success = $this->commandeRepository->updateStatutCommande($id, $nouveauStatut, $utilisateur);
+            if (!$success) {
+                $this->logger->warning('Échec de la mise à jour du statut: commande ID ' . $id);
+                return new JsonResponse(['error' => 'Impossible de mettre à jour le statut de la commande.'], 400);
+            }
+
+            $this->logger->info('Statut de la commande mis à jour avec succès: ID ' . $id . ' - Nouveau statut: ' . $nouveauStatut);
+            return new JsonResponse(['success' => 'Statut de la commande mis à jour avec succès.']);
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de la mise à jour du statut de la commande ID: ' . $id . ' - ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Erreur lors de la mise à jour du statut : ' . $e->getMessage()], 500);
+        }
+    }
+
     #[Route('/admin/statistiques', name: 'app_gestion_meubles_statistiques')]
     public function statistiquesAdmin(
         Request $request,
@@ -532,12 +697,7 @@ final class CommandeController extends AbstractController
         $commandesParStatut = $commandeRepository->getCommandesParStatut($periode);
     
         $caParMoisData = $commandeRepository->getChiffreAffairesParMois($periode);
-        // Débogage : vérifier les données
-        dump('caParMoisData:', $caParMoisData);
-        dump('commandesParStatut:', $commandesParStatut);
-    
         $ventesParJour = $commandeRepository->getVentesParJour($periode);
-        dump('ventesParJour:', $ventesParJour);
     
         $calendarEvents = [];
         foreach ($ventesParJour as $date => $info) {
@@ -555,7 +715,7 @@ final class CommandeController extends AbstractController
             'chiffreAffaires' => $chiffreAffaires,
             'topVendeur' => $topVendeur,
             'commandesParStatut' => $commandesParStatut,
-            'caParMoisData' => $caParMoisData, // Passer directement pour JavaScript
+            'caParMoisData' => $caParMoisData,
             'calendarEvents' => $calendarEvents,
             'filtreStatut' => $statut,
             'filtrePeriode' => $periode,

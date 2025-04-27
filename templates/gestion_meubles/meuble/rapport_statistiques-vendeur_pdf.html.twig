@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport de Statistiques</title>
+    <style>
+        body {
+            font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            margin: 40px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 25px;
+        }
+        .header img {
+            max-width: 150px;
+            height: auto;
+            margin-left: 260px;
+        }
+        .header .title-container {
+            text-align: left;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #1e40af;
+            margin: 0;
+            font-weight: 700;
+        }
+        .header .subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+            font-weight: 400;
+        }
+        .stats-details {
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .stats-details p {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+        .stats-details strong {
+            width: 180px;
+            font-weight: 600;
+            color: #1e293b;
+            position: relative;
+            padding-left: 20px;
+        }
+        .stats-details strong::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #f59e0b;
+            font-size: 16px;
+        }
+        .stats-details .montant strong::before {
+            content: '$';
+            font-size: 14px;
+            top: -1px;
+        }
+        .stats-details .montant span {
+            font-weight: 700;
+            color: #059669;
+        }
+        .section {
+            margin-top: 20px;
+        }
+        .section h2 {
+            font-size: 18px;
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 15px;
+            border-left: 4px solid #f59e0b;
+            padding-left: 10px;
+        }
+        .section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .section th, .section td {
+            padding: 12px 10px;
+            text-align: left;
+            font-size: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section th {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        .section td {
+            color: #475569;
+        }
+        .section tr:last-child td {
+            border-bottom: none;
+        }
+        .section .no-data {
+            text-align: center;
+            color: #64748b;
+            padding: 20px;
+            font-style: italic;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 11px;
+        }
+        .footer a {
+            color: #1e40af;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        @media print {
+            body {
+                background: #ffffff;
+                margin: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-container">
+                <h1>Rapport de Statistiques</h1>
+                <p class="subtitle">Émis le {{ "now"|date('d/m/Y') }} | StuDar</p>
+            </div>
+        </div>
+        <div class="stats-details">
+            <p><strong>Total Meubles :</strong> {{ totalMeubles }}</p>
+            <p class="montant"><strong>Chiffre d'Affaires :</strong> <span>{{ revenuTotal|number_format(2, ',', ' ') }} TND</span></p>
+            <p><strong>Taux Retour Clients :</strong> {{ tauxRetourClients|round(2) }}%</p>
+            <p><strong>Filtres Appliqués :</strong> 
+                Période: 
+                {% if timePeriod == '30days' %}Derniers 30 jours
+                {% elseif timePeriod == '6months' %}6 derniers mois
+                {% elseif timePeriod == 'year' %}Cette année
+                {% endif %}
+            </p>
+        </div>
+        <div class="section">
+            <h2>Répartition des Commandes par Statut ({{ commandesParStatut|length }})</h2>
+            {% if commandesParStatut|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Statut</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for statut, nombre in commandesParStatut %}
+                            <tr>
+                                <td>{{ statut|lower|replace({'_': ' '})|capitalize }}</td>
+                                <td>{{ nombre }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">Aucune commande disponible.</p>
+            {% endif %}
+        </div>
+        <div class="section">
+            <h2>Chiffre d'Affaires par Mois ({{ monthlyRevenue.labels|length }})</h2>
+            {% if monthlyRevenue.labels|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mois</th>
+                            <th>Montant (TND)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in 0..(monthlyRevenue.labels|length - 1) %}
+                            <tr>
+                                <td>{{ monthlyRevenue.labels[i] }}</td>
+                                <td>{{ monthlyRevenue.data[i]|number_format(2, ',', ' ') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">Aucune donnée disponible.</p>
+            {% endif %}
+        </div>
+        <div class="section">
+            <h2>Meubles Ajoutés par Mois ({{ furnitureAdded.labels|length }})</h2>
+            {% if furnitureAdded.labels|length > 0 %}
+Call Stack trace:
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mois</th>
+                        <th>Nombre</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in 0..(furnitureAdded.labels|length - 1) %}
+                        <tr>
+                            <td>{{ furnitureAdded.labels[i] }}</td>
+                            <td>{{ furnitureAdded.data[i] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="no-data">Aucun événement de vente disponible.</p>
+            {% endif %}
+        </div>
+        <div class="footer">
+            <p>Merci pour votre confiance ! Contactez notre équipe à <a href="mailto:studar@gmail.com">studar@gmail.com</a> pour toute question.</p>
+        </div>
+    </div>
+</body>
+</html>

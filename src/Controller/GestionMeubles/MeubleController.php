@@ -25,6 +25,7 @@ use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Knp\Snappy\Pdf;
 
 #[Route('/meubles')]
 final class MeubleController extends AbstractController
@@ -34,19 +35,22 @@ final class MeubleController extends AbstractController
     private PanierRepository $panierRepository;
     private LignePanierRepository $lignePanierRepository;
     private UtilisateurRepository $utilisateurRepository;
+    private Pdf $pdf;
 
     public function __construct(
         MeubleRepository $meubleRepository,
         PanierRepository $panierRepository,
         ValidatorInterface $validator,
         LignePanierRepository $lignePanierRepository,
-        UtilisateurRepository $utilisateurRepository
+        UtilisateurRepository $utilisateurRepository,
+        Pdf $pdf
     ) {
         $this->meubleRepository = $meubleRepository;
         $this->panierRepository = $panierRepository;
         $this->validator = $validator;
         $this->lignePanierRepository = $lignePanierRepository;
         $this->utilisateurRepository = $utilisateurRepository;
+        $this->pdf = $pdf;
     }
 
     #[Route('/admin', name: 'app_gestion_meubles_meuble_admin')]
@@ -376,8 +380,7 @@ final class MeubleController extends AbstractController
             throw $this->createAccessDeniedException('Vous devez être connecté pour consulter vos meubles.');
         }
 
-        $meubles = $this->meubleRepository->findBy(['vendeur' => $utilisateur]);
-
+        $meubles = $this->meubleRepository->findBy(['vendeur' => $utilisateur], ['id' => 'DESC']);
         return $this->render('gestion_meubles/meuble/consulter_mes_meubles.html.twig', [
             'meubles' => $meubles,
             'vendeur' => $utilisateur,
@@ -499,7 +502,7 @@ final class MeubleController extends AbstractController
     
         $cinVendeur = $utilisateur->getCin();
     
-        // Existing KPI data
+        // KPI data
         $meublesIndisponibles = $this->meubleRepository->countMeublesIndisponibles($cinVendeur);
         $meublesDisponibles = $this->meubleRepository->countMeublesDisponibles($cinVendeur);
         $totalMeubles = $this->meubleRepository->countTotalMeubles($cinVendeur);
@@ -512,16 +515,12 @@ final class MeubleController extends AbstractController
         $tauxRetourClients = $this->meubleRepository->getTauxRetourClients($cinVendeur);
         $meublesAjoutesRecemment = $this->meubleRepository->countMeublesAjoutesRecemment($cinVendeur);
     
-        // Sample chart data (replace with actual queries)
-        $monthlyRevenue = [
-            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-            'data' => [1200, 1900, 3000, 2500, 4000, 3500]
-        ];
-    
-        $furnitureAdded = [
-            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-            'data' => [10, 15, 8, 12, 20, 18]
-        ];
+        // Chart data
+        $monthlyRevenue = $this->meubleRepository->getMonthlyRevenue($cinVendeur);
+        $furnitureAdded = $this->meubleRepository->getFurnitureAddedOverTime($cinVendeur);
+
+        // Get the time period filter value
+        $timePeriod = $request->query->get('timePeriod', '30days');
     
         return $this->render('gestion_meubles/meuble/statistiques-current-etudiant.html.twig', [
             'meublesIndisponibles' => $meublesIndisponibles,
@@ -537,6 +536,67 @@ final class MeubleController extends AbstractController
             'meublesAjoutesRecemment' => $meublesAjoutesRecemment,
             'monthlyRevenue' => $monthlyRevenue,
             'furnitureAdded' => $furnitureAdded,
+            'timePeriod' => $timePeriod,
         ]);
+    }
+
+    #[Route('/statistiques/vendeur/export-pdf', name: 'app_gestion_meubles_statistiques_export_pdf')]
+    public function exportStatisticsPdf(Request $request): Response
+    {
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour exporter vos statistiques.');
+        }
+
+        $cinVendeur = $utilisateur->getCin();
+
+        // KPI data
+        $meublesIndisponibles = $this->meubleRepository->countMeublesIndisponibles($cinVendeur);
+        $meublesDisponibles = $this->meubleRepository->countMeublesDisponibles($cinVendeur);
+        $totalMeubles = $this->meubleRepository->countTotalMeubles($cinVendeur);
+        $commandesPayees = $this->meubleRepository->countCommandesPayees($cinVendeur);
+        $commandesEnAttente = $this->meubleRepository->countCommandesEnAttente($cinVendeur);
+        $commandesLivrees = $this->meubleRepository->countCommandesLivrees($cinVendeur);
+        $commandesAnnulees = $this->meubleRepository->countCommandesAnnulees($cinVendeur);
+        $tauxCommandesAnnulees = $this->meubleRepository->getTauxCommandesAnnulees($cinVendeur);
+        $revenuTotal = $this->meubleRepository->getRevenuTotal($cinVendeur);
+        $tauxRetourClients = $this->meubleRepository->getTauxRetourClients($cinVendeur);
+        $meublesAjoutesRecemment = $this->meubleRepository->countMeublesAjoutesRecemment($cinVendeur);
+
+        // Chart data
+        $monthlyRevenue = $this->meubleRepository->getMonthlyRevenue($cinVendeur);
+        $furnitureAdded = $this->meubleRepository->getFurnitureAddedOverTime($cinVendeur);
+
+        // Prepare commandesParStatut array
+        $commandesParStatut = [
+            'Payée' => $commandesPayees,
+            'En Attente' => $commandesEnAttente,
+            'Livrée' => $commandesLivrees,
+            'Annulée' => $commandesAnnulees,
+        ];
+
+        // Get the time period filter value
+        $timePeriod = $request->query->get('timePeriod', '30days');
+
+        // Render the HTML for the PDF
+        $html = $this->renderView('gestion_meubles/meuble/rapport_statistiques-vendeur_pdf.html.twig', [
+            'totalMeubles' => $totalMeubles,
+            'revenuTotal' => $revenuTotal,
+            'tauxRetourClients' => $tauxRetourClients,
+            'commandesParStatut' => $commandesParStatut,
+            'monthlyRevenue' => $monthlyRevenue,
+            'furnitureAdded' => $furnitureAdded,
+            'timePeriod' => $timePeriod,
+        ]);
+
+        // Generate the PDF
+        return new Response(
+            $this->pdf->getOutputFromHtml($html),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="rapport_statistiques_' . date('Ymd') . '.pdf"',
+            ]
+        );
     }
 }
