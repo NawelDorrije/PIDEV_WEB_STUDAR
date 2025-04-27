@@ -121,70 +121,204 @@ public function new(
             'utilisateur' => $utilisateur,
         ]);
     }
-    #[Route('/{cin}/edit', name: 'app_utilisateur_edit', methods: ['GET', 'POST'])]
-    public function edit(
-        Request $request, 
-        Utilisateur $utilisateur, 
-        EntityManagerInterface $entityManager,
-        SluggerInterface $slugger
-    ): Response {
-        dump('Initial load'); // Debug point 1
+    // #[Route('/{cin}/edit', name: 'app_utilisateur_edit', methods: ['GET', 'POST'])]
+    // public function edit(
+    //     Request $request, 
+    //     Utilisateur $utilisateur, 
+    //     EntityManagerInterface $entityManager,
+    //     SluggerInterface $slugger
+    // ): Response {
+    //     dump('Initial load'); // Debug point 1
         
-        $form = $this->createForm(UtilisateurEditType::class, $utilisateur);
-        $form->handleRequest($request);
+    //     $form = $this->createForm(UtilisateurEditType::class, $utilisateur);
+    //     $form->handleRequest($request);
     
-        if ($form->isSubmitted()) {
-            dump('Form submitted'); // Debug point 2
-            dump($form->getData()); // See what data was submitted
+    //     if ($form->isSubmitted()) {
+    //         dump('Form submitted'); // Debug point 2
+    //         dump($form->getData()); // See what data was submitted
             
-            // Handle image upload
-            $imageFile = $form->get('imageFile')->getData();
-            if ($imageFile) {
-                dump('Image file detected'); // Debug point 2.1
+    //         // Handle image upload
+    //         $imageFile = $form->get('imageFile')->getData();
+    //         if ($imageFile) {
+    //             dump('Image file detected'); // Debug point 2.1
                 
-                // Delete old image if exists
+    //             // Delete old image if exists
+    //             if ($utilisateur->getImage()) {
+    //                 $oldImagePath = $this->getParameter('images_directory').'/'.$utilisateur->getImage();
+    //                 if (file_exists($oldImagePath)) {
+    //                     unlink($oldImagePath);
+    //                     dump('Old image deleted'); // Debug point 2.2
+    //                 }
+    //             }
+    
+    //             // Generate new filename
+    //             $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+    //             $safeFilename = $slugger->slug($originalFilename);
+    //             $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+    //             dump('New filename: '.$newFilename); // Debug point 2.3
+    
+    //             try {
+    //                 $imageFile->move(
+    //                     $this->getParameter('images_directory'),
+    //                     $newFilename
+    //                 );
+    //                 $utilisateur->setImage($newFilename);
+    //                 dump('Image uploaded successfully'); // Debug point 2.4
+    //             } catch (FileException $e) {
+    //                 $this->addFlash('error', 'Failed to upload image');
+    //                 dump('Image upload failed: '.$e->getMessage()); // Debug point 2.5
+    //             }
+    //         }
+    
+    //         if ($form->isValid()) {
+    //             dump('Form is valid'); // Debug point 3
+    //             $entityManager->flush();
+    //             $this->addFlash('success', 'Profile updated successfully');
+    //             return $this->redirectToRoute('app_utilisateur_show', ['cin' => $utilisateur->getCin()]);
+    //         } else {
+    //             dump('Form errors:', $form->getErrors(true)); // Debug point 4
+    //         }
+    //     }
+    
+    //     return $this->render('utilisateur/edit.html.twig', [
+    //         'utilisateur' => $utilisateur,
+    //         'form' => $form->createView(),
+    //     ]);
+    // }
+    // #[Route('/{cin}/edit', name: 'app_utilisateur_edit', methods: ['GET', 'POST'])]
+    // public function edit(
+    //     Request $request, 
+    //     Utilisateur $utilisateur, 
+    //     EntityManagerInterface $entityManager,
+    //     SluggerInterface $slugger
+    // ): Response {
+    //     dump('Initial load'); // Debug point 1
+        
+    //     $form = $this->createForm(UtilisateurEditType::class, $utilisateur);
+    //     $form->handleRequest($request);
+    
+    //     if ($form->isSubmitted()) {
+    //         dump('Form submitted'); // Debug point 2
+    //         dump($form->getData()); // See what data was submitted
+            
+    //         // Handle image upload
+    //         $imageFile = $form->get('imageFile')->getData();
+    //         if ($imageFile) {
+    //             dump('Image file detected'); // Debug point 2.1
+                
+    //             // Delete old image if exists
+    //             if ($utilisateur->getImage()) {
+    //                 $oldImagePath = $this->getParameter('images_directory').'/'.$utilisateur->getImage();
+    //                 if (file_exists($oldImagePath)) {
+    //                     unlink($oldImagePath);
+    //                     dump('Old image deleted'); // Debug point 2.2
+    //                 }
+    //             }
+    
+    //             // Generate new filename
+    //             $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+    //             $safeFilename = $slugger->slug($originalFilename);
+    //             $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+    //             dump('New filename: '.$newFilename); // Debug point 2.3
+    
+    //             try {
+    //                 $imageFile->move(
+    //                     $this->getParameter('images_directory'),
+    //                     $newFilename
+    //                 );
+    //                 $utilisateur->setImage($newFilename);
+    //                 dump('Image uploaded successfully'); // Debug point 2.4
+    //             } catch (FileException $e) {
+    //                 $this->addFlash('error', 'Failed to upload image');
+    //                 dump('Image upload failed: '.$e->getMessage()); // Debug point 2.5
+    //             }
+    //         }
+    
+    //         if ($form->isValid()) {
+    //             dump('Form is valid'); // Debug point 3
+    //             $entityManager->flush();
+    //             $this->addFlash('success', 'Profile updated successfully');
+    //             return $this->redirectToRoute('app_utilisateur_show', ['cin' => $utilisateur->getCin()]);
+    //         } else {
+    //             dump('Form errors:', $form->getErrors(true)); // Debug point 4
+    //         }
+    //     }
+    
+    //     return $this->render('utilisateur/edit.html.twig', [
+    //         'utilisateur' => $utilisateur,
+    //         'form' => $form->createView(),
+    //     ]);
+    // }
+    #[Route('/{cin}/edit', name: 'app_utilisateur_edit', methods: ['GET', 'POST'])]
+public function edit(
+    Request $request, 
+    Utilisateur $utilisateur, 
+    EntityManagerInterface $entityManager,
+    SluggerInterface $slugger
+): Response {
+    dump('Initial load'); // Debug point 1
+    
+    $form = $this->createForm(UtilisateurEditType::class, $utilisateur);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+        dump('Form submitted and valid'); // Debug point 2
+        
+        // Handle image upload
+        $imageFile = $form->get('imageFile')->getData();
+        if ($imageFile) {
+            dump('Image file detected'); // Debug point 2.1
+            
+            // Generate new filename
+            $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+            dump('New filename: '.$newFilename); // Debug point 2.2
+
+            try {
+                // Move the new image to the directory
+                $imageFile->move(
+                    $this->getParameter('images_directory'),
+                    $newFilename
+                );
+                
+                // Delete old image only after successful upload
                 if ($utilisateur->getImage()) {
                     $oldImagePath = $this->getParameter('images_directory').'/'.$utilisateur->getImage();
                     if (file_exists($oldImagePath)) {
                         unlink($oldImagePath);
-                        dump('Old image deleted'); // Debug point 2.2
+                        dump('Old image deleted'); // Debug point 2.3
                     }
                 }
-    
-                // Generate new filename
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
-                dump('New filename: '.$newFilename); // Debug point 2.3
-    
-                try {
-                    $imageFile->move(
-                        $this->getParameter('images_directory'),
-                        $newFilename
-                    );
-                    $utilisateur->setImage($newFilename);
-                    dump('Image uploaded successfully'); // Debug point 2.4
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Failed to upload image');
-                    dump('Image upload failed: '.$e->getMessage()); // Debug point 2.5
-                }
-            }
-    
-            if ($form->isValid()) {
-                dump('Form is valid'); // Debug point 3
-                $entityManager->flush();
-                $this->addFlash('success', 'Profile updated successfully');
-                return $this->redirectToRoute('app_utilisateur_show', ['cin' => $utilisateur->getCin()]);
-            } else {
-                dump('Form errors:', $form->getErrors(true)); // Debug point 4
+
+                // Set the new image filename
+                $utilisateur->setImage($newFilename);
+                dump('Image uploaded successfully'); // Debug point 2.4
+            } catch (FileException $e) {
+                dump('Image upload failed: '.$e->getMessage()); // Debug point 2.5
+                $this->addFlash('error', 'Failed to upload image: ' . $e->getMessage());
+                // Continue to render the form with errors
+                return $this->render('utilisateur/edit.html.twig', [
+                    'utilisateur' => $utilisateur,
+                    'form' => $form->createView(),
+                ]);
             }
         }
-    
-        return $this->render('utilisateur/edit.html.twig', [
-            'utilisateur' => $utilisateur,
-            'form' => $form->createView(),
-        ]);
+
+        // Persist changes to the database
+        $entityManager->flush();
+        $this->addFlash('success', 'Profile updated successfully');
+        return $this->redirectToRoute('app_utilisateur_show', ['cin' => $utilisateur->getCin()]);
+    } else if ($form->isSubmitted()) {
+        dump('Form submitted but invalid'); // Debug point 3
+        dump('Form errors:', $form->getErrors(true)); // Debug point 4
     }
+
+    return $this->render('utilisateur/edit.html.twig', [
+        'utilisateur' => $utilisateur,
+        'form' => $form->createView(),
+    ]);
+}
     // #[Route('/{cin}/edit', name: 'app_utilisateur_edit', methods: ['GET', 'POST'])]
     // public function edit(
     //     Request $request, 

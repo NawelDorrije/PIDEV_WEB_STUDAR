@@ -94,6 +94,7 @@
         .form-group {
             margin-bottom: 25px;
             position: relative;
+            margin-right:30px;
         }
         
         .form-control {
@@ -175,7 +176,8 @@
     {{ form_start(form, {
         'attr': {
             'class': 'user-edit-form',
-            'enctype': 'multipart/form-data'
+            'enctype': 'multipart/form-data',
+            'novalidate': 'novalidate'
         },
         'method': 'POST',
         'action': path('app_utilisateur_edit', {'cin': utilisateur.cin})
