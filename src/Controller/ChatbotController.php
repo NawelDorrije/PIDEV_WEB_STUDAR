@@ -16,7 +16,7 @@ class ChatbotController extends AbstractController
         return $this->render('chatbot/index.html.twig');
     }
 
-    #[Route('/chat', name: 'app_chat', methods: ['POST'])]
+    #[Route('/chatia', name: 'app_chatia', methods: ['POST'])]
     public function chat(Request $request, ChatbotService $chatbotService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);

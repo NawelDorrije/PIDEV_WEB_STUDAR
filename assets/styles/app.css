@@ -1,9 +1,9 @@
-/* 
+
 .container { max-width: 800px; margin: 0 auto; padding: 20px; }
     .list-group { list-style: none; padding: 0; }
     .list-group-item { padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; }
     .list-group-item a { text-decoration: none; color: #007bff; }
-    .list-group-item a:hover { text-decoration: underline; } */
+    .list-group-item a:hover { text-decoration: underline; } 
 
     /* .container {
         max-width: 800px;
@@ -35,4 +35,4 @@
         top: 0;
         z-index: 1000;
     }
-     */
+    

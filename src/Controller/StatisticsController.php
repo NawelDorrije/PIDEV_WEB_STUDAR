@@ -258,7 +258,7 @@ class StatisticsController extends AbstractController
             "- Efficacité des réponses : Taux de réponse de %.1f%%, classé comme %s\n".
             "- Répartition par statut : %.1f%% des réclamations sont en cours\n".
             "- Temps de résolution : %.1f%% des réclamations prennent plus de 7 jours ou sont non résolues\n".
-            "Fournissez une liste concise de recommandations (en français, sous forme de points) pour améliorer la gestion des réclamations basée sur ces données.",
+            "Fournissez une liste concise de recommandations (en français, sous forme de points qui ne deppasse pas les 4 lignes et enleve les etoiles avant chaque ligne ) pour améliorer la gestion des réclamations basée sur ces données.",
             date('Y'),
             $analytics['trend']['summary'],
             $analytics['trend']['peakMonth'] ?? 'non disponible',

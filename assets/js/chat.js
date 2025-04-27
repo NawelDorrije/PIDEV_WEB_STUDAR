@@ -8,7 +8,7 @@ function initializeWebSocket(userCin) {
     console.log('Initializing WebSocket for user:', userCin);
     
     try {
-        socket = new WebSocket('ws://127.0.0.1:8080');
+        socket = new WebSocket('ws://localhost/:8080');
         
         socket.onopen = function() {
             console.log('WebSocket connected');
