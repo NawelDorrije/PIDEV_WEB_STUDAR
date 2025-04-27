@@ -15,6 +15,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Knp\Component\Pager\PaginatorInterface;
 use Knp\Snappy\Pdf;
@@ -25,7 +27,10 @@ use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
 use Symfony\UX\Chartjs\Model\Chart;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+#[Route('/gestion/meubles')]
 final class CommandeController extends AbstractController
 {
     private PanierRepository $panierRepository;
@@ -248,7 +253,7 @@ final class CommandeController extends AbstractController
     private function sendConfirmationEmailToBuyer(Commande $commande, Utilisateur $utilisateur, ?string $address): void
     {
         try {
-            $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
+          //  $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
             $email = (new Email())
                 ->from('naweldorrije789@gmail.com')
                 ->to($utilisateur->getEmail())
@@ -260,9 +265,9 @@ final class CommandeController extends AbstractController
                     'prenom' => $utilisateur->getPrenom(),
                 ]));
 
-            if (file_exists($logoPath)) {
-                $email->embed(fopen($logoPath, 'r'), 'logo.png', 'image/png');
-            }
+            // if (file_exists($logoPath)) {
+            //     $email->embed(fopen($logoPath, 'r'), 'logo.png', 'image/png');
+            // }
 
             $this->mailer->send($email);
             $this->logger->info('Email de confirmation envoyé à ' . $utilisateur->getEmail());
@@ -349,7 +354,127 @@ final class CommandeController extends AbstractController
         ]);
     }
 
-    #[Route('/gestion/meubles/commandes/acheteur/{cin}', name: 'app_gestion_meubles_commandes_acheteur')]
+    #[Route('/admin/export-commandes', name: 'app_gestion_meubles_export_commandes')]
+    public function exportCommandes(Request $request): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $month = $request->query->get('month');
+        $year = $request->query->get('year');
+        $format = $request->query->get('format', 'csv'); // Default to CSV if not specified
+
+        if (!$month || !$year) {
+            throw $this->createNotFoundException('Le mois et l\'année sont requis pour l\'exportation.');
+        }
+
+        // Construire les dates de début et de fin pour le mois donné
+        $startDate = \DateTime::createFromFormat('Y-m-d', "$year-$month-01");
+        if (!$startDate) {
+            throw $this->createNotFoundException('Mois ou année invalide.');
+        }
+        $endDate = clone $startDate;
+        $endDate->modify('last day of this month')->setTime(23, 59, 59);
+
+        // Construire la requête pour récupérer les commandes
+        $queryBuilder = $this->commandeRepository->createQueryBuilder('c')
+            ->leftJoin('c.acheteur', 'a')
+            ->addSelect('a')
+            ->where('c.dateCommande BETWEEN :startDate AND :endDate')
+            ->setParameter('startDate', $startDate)
+            ->setParameter('endDate', $endDate);
+
+        $commandes = $queryBuilder->getQuery()->getResult();
+
+        // Préparer les en-têtes
+        $headers = [
+            'Code',
+            'Acheteur',
+            'Date',
+            'Statut',
+            'Montant (TND)',
+            'Méthode',
+            'Adresse',
+            'Date d\'annulation',
+            'Raison d\'annulation',
+        ];
+
+        // Préparer les données
+        $data = [];
+        foreach ($commandes as $commande) {
+            $data[] = [
+                $commande->getId(),
+                $commande->getAcheteur() ? $commande->getAcheteur()->getNom() . ' ' . $commande->getAcheteur()->getPrenom() : 'Inconnu',
+                $commande->getDateCommande()->format('d/m/Y H:i'),
+                $commande->getStatut(),
+                number_format($commande->getMontantTotal(), 2, ',', ' '),
+                $commande->getMethodePaiement() ?? 'N/A',
+                $commande->getAdresseLivraison() ?? 'N/A',
+                $commande->getDateAnnulation() ? $commande->getDateAnnulation()->format('d/m/Y H:i') : 'N/A',
+                $commande->getRaisonAnnulation() ?? 'N/A',
+            ];
+        }
+
+        // Générer le nom du fichier
+        $filename = sprintf('commandes_%s_%s', $month, $year);
+
+        if ($format === 'excel') {
+            // Créer un fichier Excel avec PhpSpreadsheet
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Ajouter les en-têtes
+            $sheet->fromArray($headers, null, 'A1');
+
+            // Ajouter les données
+            $sheet->fromArray($data, null, 'A2');
+
+            // Ajuster la largeur des colonnes
+            foreach (range('A', 'I') as $columnID) {
+                $sheet->getColumnDimension($columnID)->setAutoSize(true);
+            }
+
+            // Créer un fichier temporaire
+            $writer = new Xlsx($spreadsheet);
+            $tempFile = tempnam(sys_get_temp_dir(), 'commandes_export_') . '.xlsx';
+            $writer->save($tempFile);
+
+            // Retourner le fichier comme réponse
+            $response = new BinaryFileResponse($tempFile);
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $filename . '.xlsx'
+            );
+            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            
+            // Supprimer le fichier temporaire après téléchargement
+            $response->deleteFileAfterSend(true);
+
+            return $response;
+        } else {
+            // Générer un fichier CSV
+            $response = new StreamedResponse();
+            $response->setCallback(function () use ($headers, $data) {
+                $handle = fopen('php://output', 'w+');
+
+                // Ajouter les en-têtes
+                fputcsv($handle, $headers, ';');
+
+                // Ajouter les données
+                foreach ($data as $row) {
+                    fputcsv($handle, $row, ';');
+                }
+
+                fclose($handle);
+            });
+
+            $response->headers->set('Content-Type', 'text/csv');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '.csv"');
+
+            return $response;
+        }
+    }
+
+    #[Route('/commandes/acheteur/{cin}', name: 'app_gestion_meubles_commandes_acheteur')]
     public function listeCommandesParAcheteur(string $cin): Response
     {
         $commandes = $this->commandeRepository->findByCinAcheteur($cin);
@@ -364,7 +489,7 @@ final class CommandeController extends AbstractController
         ]);
     }
 
-    #[Route('/gestion/meubles/commandes/mes-commandes', name: 'app_gestion_meubles_mes_commandes')]
+    #[Route('/commandes/mes-commandes', name: 'app_gestion_meubles_mes_commandes')]
     public function mesCommandes(): Response
     {
         $utilisateur = $this->getUser();
@@ -397,83 +522,23 @@ final class CommandeController extends AbstractController
         ChartBuilderInterface $chartBuilder
     ): Response {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-
+    
         $statut = $request->query->get('statut', '');
         $periode = $request->query->get('periode', 'all');
-
+    
         $nombreMeubles = $meubleRepository->count([]);
         $chiffreAffaires = $commandeRepository->getChiffreAffairesTotal($statut, $periode);
         $topVendeur = $commandeRepository->getTopVendeur($periode);
         $commandesParStatut = $commandeRepository->getCommandesParStatut($periode);
-
+    
         $caParMoisData = $commandeRepository->getChiffreAffairesParMois($periode);
-        $caChart = $chartBuilder->createChart(Chart::TYPE_BAR);
-        $caChart->setData([
-            'labels' => array_keys($caParMoisData) ?: ['Aucune donnée'],
-            'datasets' => [
-                [
-                    'label' => 'Chiffre d\'affaires (TND)',
-                    'backgroundColor' => '#10b981',
-                    'data' => array_values($caParMoisData) ?: [0],
-                ],
-            ],
-        ]);
-        $caChart->setOptions([
-            'responsive' => true,
-            'maintainAspectRatio' => false,
-            'scales' => [
-                'y' => [
-                    'beginAtZero' => true,
-                    'title' => [
-                        'display' => true,
-                        'text' => 'Montant (TND)',
-                    ],
-                ],
-                'x' => [
-                    'title' => [
-                        'display' => true,
-                        'text' => 'Mois',
-                    ],
-                ],
-            ],
-            'plugins' => [
-                'legend' => [
-                    'position' => 'top',
-                ],
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => 'function(context) { return context.dataset.label + ": " + context.parsed.y.toFixed(2) + " TND"; }',
-                    ],
-                ],
-            ],
-        ]);
-
-        $statutChart = $chartBuilder->createChart(Chart::TYPE_PIE);
-        $statutChart->setData([
-            'labels' => array_keys($commandesParStatut) ?: ['Aucune donnée'],
-            'datasets' => [
-                [
-                    'data' => array_values($commandesParStatut) ?: [0],
-                    'backgroundColor' => ['#ef4444', '#10b981', '#3b82f6', '#6b7280'],
-                ],
-            ],
-        ]);
-        $statutChart->setOptions([
-            'responsive' => true,
-            'maintainAspectRatio' => false,
-            'plugins' => [
-                'legend' => [
-                    'position' => 'right',
-                ],
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => 'function(context) { const label = context.label || ""; const value = context.raw || 0; const total = context.dataset.data.reduce((a, b) => a + b, 0); const percentage = total ? Math.round((value / total) * 100) : 0; return `${label}: ${value} (${percentage}%)`; }',
-                    ],
-                ],
-            ],
-        ]);
-
+        // Débogage : vérifier les données
+        dump('caParMoisData:', $caParMoisData);
+        dump('commandesParStatut:', $commandesParStatut);
+    
         $ventesParJour = $commandeRepository->getVentesParJour($periode);
+        dump('ventesParJour:', $ventesParJour);
+    
         $calendarEvents = [];
         foreach ($ventesParJour as $date => $info) {
             $montant = $info['montant'];
@@ -484,18 +549,67 @@ final class CommandeController extends AbstractController
                 'borderColor' => $montant > 1000 ? '#10b981' : ($montant > 200 ? '#f97316' : '#6b7280'),
             ];
         }
-
+    
         return $this->render('gestion_meubles/meuble/statistiques-admin.html.twig', [
             'nombreMeubles' => $nombreMeubles,
             'chiffreAffaires' => $chiffreAffaires,
             'topVendeur' => $topVendeur,
             'commandesParStatut' => $commandesParStatut,
-            'caChart' => $caChart,
-            'statutChart' => $statutChart,
+            'caParMoisData' => $caParMoisData, // Passer directement pour JavaScript
             'calendarEvents' => $calendarEvents,
             'filtreStatut' => $statut,
             'filtrePeriode' => $periode,
         ]);
+    }
+
+    #[Route('/admin/export-stats-pdf', name: 'app_gestion_meubles_export_stats_pdf')]
+    public function exportStatsPdf(
+        Request $request,
+        MeubleRepository $meubleRepository,
+        CommandeRepository $commandeRepository
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $statut = $request->query->get('statut', '');
+        $periode = $request->query->get('periode', 'all');
+
+        $nombreMeubles = $meubleRepository->count([]);
+        $chiffreAffaires = $commandeRepository->getChiffreAffairesTotal($statut, $periode);
+        $topVendeur = $commandeRepository->getTopVendeur($periode);
+        $commandesParStatut = $commandeRepository->getCommandesParStatut($periode);
+        $caParMoisData = $commandeRepository->getChiffreAffairesParMois($periode);
+        $ventesParJour = $commandeRepository->getVentesParJour($periode);
+
+        $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
+        $logoBase64 = null;
+        if (file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        }
+
+        $html = $this->renderView('gestion_meubles/meuble/statistiques_pdf.html.twig', [
+            'nombreMeubles' => $nombreMeubles,
+            'chiffreAffaires' => $chiffreAffaires,
+            'topVendeur' => $topVendeur,
+            'commandesParStatut' => $commandesParStatut,
+            'caParMoisData' => $caParMoisData,
+            'ventesParJour' => $ventesParJour,
+            'filtreStatut' => $statut,
+            'filtrePeriode' => $periode,
+            'logo' => $logoBase64,
+        ]);
+
+        $pdfContent = $this->pdf->getOutputFromHtml($html);
+
+        $response = new Response($pdfContent);
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            sprintf('statistiques_%s.pdf', date('Y-m-d'))
+        );
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
     }
 
     #[Route('/commande/{id}/pdf', name: 'app_gestion_meubles_commande_pdf', methods: ['GET'])]

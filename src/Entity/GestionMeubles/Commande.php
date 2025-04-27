@@ -57,6 +57,7 @@ class Commande
     public const STATUT_PAYEE = 'PAYÉE';
     public const STATUT_LIVREE = 'LIVRÉE';
     public const STATUT_ANNULEE = 'ANNULEE';
+    public const STATUT_CONFIRMEE = 'CONFIRMÉE';
 
     public const METHODE_STRIPE = 'card';
     public const METHODE_PAIEMENT_A_LA_LIVRAISON = 'Paiement a la livraison';

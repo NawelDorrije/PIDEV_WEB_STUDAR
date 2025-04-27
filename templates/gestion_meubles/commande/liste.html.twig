@@ -100,13 +100,19 @@
     cursor: pointer;
     font-weight: 500;
     transition: background 0.3s ease, transform 0.2s ease;
+    
 }
 
 .cancel-popup-actions .btn-confirm:hover {
     background: #dc2626;
     transform: translateY(-2px);
 }
-
+.cancel-popup .cancel-popup-content i{
+    margin-left: 100px;
+}
+.cancel-popup .cancel-popup-content i:hover {
+    cursor: pointer;
+}
 .cancel-popup-actions .btn-close {
     background: #6b7280; /* Gris pour fermer */
     color: #fff;
@@ -179,10 +185,7 @@
                     </div>
                     <div class="commande-amount">
                         {{ commande.montantTotal|number_format(2, ',', ' ') }} 
-                            {% if commande.methodePaiement == "Stripe" %} EUR
-
-                        {% else %}
-        TND
+                            {% if commande.methodePaiement == "Stripe" %} EUR {% else %}  TND
     {% endif %}
                     </div>
                     <div class="commande-address">
@@ -220,12 +223,11 @@
     <!-- Nouvelle pop-up pour l'annulation -->
     <div class="cancel-popup" id="cancel-popup">
         <div class="cancel-popup-content">
-            <h2><i class="bi bi-x-circle"></i> Annuler la commande</h2>
+            <h2>Annuler la commande<i class="bi bi-x-circle" id="close-cancel"></i> </h2>
             <p>Veuillez indiquer la raison de l'annulation de votre commande. Cette information nous aidera à améliorer notre service.</p>
             <textarea id="cancel-reason" placeholder="Entrez la raison de l'annulation..."></textarea>
             <div class="cancel-popup-actions">
                 <button class="btn-confirm" id="confirm-cancel">Confirmer l'annulation</button>
-                <button class="btn-close" id="close-cancel">Annuler</button>
             </div>
         </div>
     </div>
@@ -342,7 +344,9 @@
                             <p class="date"><i class="bi bi-calendar"></i> <strong>Date:</strong> <span>${commande.date}</span></p>
                             <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${commande.statut}</span></p>
                             <p class="paiement"><i class="bi bi-credit-card"></i> <strong>Méthode de paiement:</strong> <span>${commande.paiement}</span></p>
-                            <p class="montant"><i class="bi bi-currency-dollar"></i> <strong>Montant total:</strong> <span>${commande.montant}</span></p>
+                            <p class="montant"><i class="bi bi-currency-dollar"></i> <strong>Montant total:</strong> <span>${commande.montant} ${
+                                commande.paiement == "Stripe" ? 'EUR' : 'TND'
+                            }</span></p>
                             <p class="adresse"><i class="bi bi-geo-alt"></i> <strong>Adresse de livraison:</strong> <span>${commande.adresse}</span></p>
                             <p class="items"><i class="bi bi-box-seam"></i> <strong>Articles (${commande.items.length}):</strong></p>
                             <div class="popup-items">

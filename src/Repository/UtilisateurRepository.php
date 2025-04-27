@@ -36,7 +36,7 @@ class UtilisateurRepository extends ServiceEntityRepository
     //         ->getResult();
     // }
 
-    public function findOneByUserHandle(string $userHandle): ?PublicKeyCredentialUserEntity
+    public function findOneByUserHandle(string $userHandle)
     {
         $user = $this->createQueryBuilder('u')
             ->where('u.userHandle = :userHandle')
@@ -48,15 +48,15 @@ class UtilisateurRepository extends ServiceEntityRepository
             return null;
         }
 
-        return new PublicKeyCredentialUserEntity(
-            $user->getEmail(),
-            $user->getUserHandle(),
-            $user->getDisplayName(),
-            $user->getCin()
-        );
+        // return new PublicKeyCredentialUserEntity(
+        //     $user->getEmail(),
+        //     $user->getUserHandle(),
+        //     $user->getDisplayName(),
+        //     $user->getCin()
+        // );
     }
 
-    public function findOneByUsername(string $username): ?PublicKeyCredentialUserEntity
+    public function findOneByUsername(string $username)
     {
         $user = $this->createQueryBuilder('u')
             ->where('u.email = :email')
@@ -68,12 +68,12 @@ class UtilisateurRepository extends ServiceEntityRepository
             return null;
         }
 
-        return new PublicKeyCredentialUserEntity(
-            $user->getEmail(),
-            $user->getUserHandle(),
-            $user->getDisplayName(),
-            $user->getCin()
-        );
+        // return new PublicKeyCredentialUserEntity(
+        //     $user->getEmail(),
+        //     $user->getUserHandle(),
+        //     $user->getDisplayName(),
+        //     $user->getCin()
+        // );
     }
 
     // public function saveUserEntity(PublicKeyCredentialUserEntity $userEntity): void

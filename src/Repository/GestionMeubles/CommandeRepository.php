@@ -326,11 +326,11 @@ class CommandeRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('c')
             ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as mois, COALESCE(SUM(c.montantTotal), 0) as montant")
-            ->where('c.statut != :annulee')
-            ->setParameter('annulee', Commande::STATUT_ANNULEE)
+            ->where('c.statut != :ANNULEE')
+            ->setParameter('ANNULEE', Commande::STATUT_ANNULEE)
             ->groupBy('mois')
             ->orderBy('mois', 'ASC');
-
+    
         if ($periode === 'month') {
             $qb->andWhere('c.dateCommande >= :start')
                ->setParameter('start', (new \DateTime())->modify('first day of this month')->setTime(0, 0));
@@ -338,15 +338,16 @@ class CommandeRepository extends ServiceEntityRepository
             $qb->andWhere('c.dateCommande >= :start')
                ->setParameter('start', (new \DateTime())->modify('first day of this year')->setTime(0, 0));
         }
-
+    
         $results = $qb->getQuery()->getResult();
+        dump('getChiffreAffairesParMois results:', $results); // Débogage
+    
         $data = [];
         foreach ($results as $row) {
             $data[$row['mois']] = (float) $row['montant'];
         }
         return $data;
     }
-
     public function getVentesParJour(string $periode = 'all'): array
     {
         $qb = $this->createQueryBuilder('c')
