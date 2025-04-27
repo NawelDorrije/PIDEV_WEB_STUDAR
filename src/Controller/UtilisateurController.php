@@ -8,9 +8,11 @@ use App\Repository\ActivityLogRepository;
 use App\Entity\Utilisateur;
 use App\Enums\RoleUtilisateur;
 use App\Form\UtilisateurType;
+use App\Repository\LogementRepository;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -27,6 +29,12 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 #[Route('/utilisateur')]
 final class UtilisateurController extends AbstractController
 {
+    private $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
     #[Route(name: 'app_utilisateur_index', methods: ['GET'])]
     public function index(UtilisateurRepository $utilisateurRepository): Response
     {
@@ -642,4 +650,32 @@ public function resetPassword(
 
     return $this->render('utilisateur/reset_password.html.twig');
 }
+}
+// #[Route('/api/users', name: 'app_utilisateur_api_users', methods: ['GET'])]
+// public function getUsersApi(EntityManagerInterface $em): JsonResponse
+// {
+//     if (!$this->getUser()) {
+//         $this->logger->warning('User not authenticated when accessing app_utilisateur_api_users', [
+//             'user' => $this->getUser() ? $this->getUser()->getUserIdentifier() : 'null',
+//         ]);
+//         return $this->json(['error' => 'Authentication required'], 401);
+//     }
+
+//     $users = $em->getRepository(Utilisateur::class)->findAll();
+//     $this->logger->info('Users retrieved for API', [
+//         'count' => count($users),
+//     ]);
+
+//     $userData = array_map(fn($user) => [
+//         'id' => $user->getId(),
+//         'name' => $user->getNom(),
+//         'email' => $user->getEmail(),
+//     ], $users);
+
+//     $this->logger->info('User data prepared for API', [
+//         'userData' => $userData,
+//     ]);
+
+//     return $this->json($userData);
+// }
 }

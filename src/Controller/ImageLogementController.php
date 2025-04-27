@@ -18,7 +18,7 @@ final class ImageLogementController extends AbstractController
     #[Route(name: 'app_image_logement_index', methods: ['GET'])]
     public function index(ImageLogementRepository $imageLogementRepository): Response
     {
-        return $this->render('image_logement/index.html.twig', [
+        return $this->render('client/image_logement/index.html.twig', [
             'image_logements' => $imageLogementRepository->findAll(),
         ]);
     }
@@ -26,7 +26,7 @@ final class ImageLogementController extends AbstractController
     public function showImageLogement(int $id, ImageLogementRepository $imageLogementRepository): Response
     {
         $imageLogements = $imageLogementRepository->findBy(['logement' => $id]);
-        return $this->render('image_logement/index.html.twig', [
+        return $this->render('client/image_logement/index.html.twig', [
             'image_logements' => $imageLogements,
         ]);
     }
@@ -44,7 +44,7 @@ final class ImageLogementController extends AbstractController
             return $this->redirectToRoute('app_image_logement_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('image_logement/new.html.twig', [
+        return $this->render('client/image_logement/new.html.twig', [
             'image_logements' => $imageLogement,
             'form' => $form,
         ]);
@@ -53,7 +53,7 @@ final class ImageLogementController extends AbstractController
     #[Route('/images/{id}', name: 'app_image_logement_show', methods: ['GET'])]
     public function show(ImageLogement $imageLogement): Response
     {
-        return $this->render('image_logement/show.html.twig', [
+        return $this->render('client/image_logement/show.html.twig', [
             'image_logement' => $imageLogement,
         ]);
     }
@@ -70,7 +70,7 @@ final class ImageLogementController extends AbstractController
             return $this->redirectToRoute('app_image_logement_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('image_logement/edit.html.twig', [
+        return $this->render('client/image_logement/edit.html.twig', [
             'image_logement' => $imageLogement,
             'form' => $form,
         ]);

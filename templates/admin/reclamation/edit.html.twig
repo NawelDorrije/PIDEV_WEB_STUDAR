@@ -1,0 +1,26 @@
+{% extends 'admin/dashboard.html.twig' %}
+
+{% block title %}Modifier la Réclamation{% endblock %}
+
+{% block body %}
+    <div class="container-fluid py-4">
+        <h1>Modifier la Réclamation #{{ reclamation.id }}</h1>
+        <div class="card">
+            <div class="card-body">
+                <form method="post" action="{{ path('admin_reclamation_edit_recommend', {'id': reclamation.id}) }}">
+                    <div class="form-group">
+                        <label for="statut">Statut</label>
+                        <select name="statut" id="statut" class="form-control">
+                            <option value="en cours" {{ reclamation.statut == 'en cours' ? 'selected' : '' }}>En cours</option>
+                            <option value="traité" {{ reclamation.statut == 'traité' ? 'selected' : '' }}>Traité</option>
+                            <option value="refusé" {{ reclamation.statut == 'refusé' ? 'selected' : '' }}>Refusé</option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('edit_reclamation') }}">
+                    <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+                    <a href="{{ path('admin_reclamation') }}" class="btn btn-secondary mt-3">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

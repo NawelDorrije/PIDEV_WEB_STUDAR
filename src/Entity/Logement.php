@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity;
 
 use App\Enums\Statut;
@@ -8,26 +7,39 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use LongitudeOne\Spatial\PHP\Types\SpatialInterface;
-
+use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\DBAL\Types\Types;
 #[ORM\Entity(repositoryClass: LogementRepository::class)]
 #[ORM\Table(name: "logement")]
-
 class Logement
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(name:'id')]
-    private int $id ;
+    #[ORM\Column(name: 'id')]
+    private int $id;
+
     #[ORM\Column(name: 'nbrChambre')]
+    #[Assert\NotBlank(message: "Le nombre de chambres ne peut pas être vide.")]
+    #[Assert\GreaterThan(
+        value: 0,
+        message: "Le nombre de chambres doit être supérieur à 0."
+    )]
     private int $nbrChambre;
 
     #[ORM\Column]
-    private float $prix ;
+    #[Assert\NotBlank(message: "Le prix ne peut pas être vide.")]
+    #[Assert\GreaterThan(
+        value: 0,
+        message: "Le prix doit être supérieur à 0."
+    )]
+    private float $prix;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "La description ne peut pas être vide.")]
     private ?string $description = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le type ne peut pas être vide.")]
     private ?string $type = null;
 
     #[ORM\Column(type: 'point')]
@@ -35,6 +47,11 @@ class Logement
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $adresse = null;
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $emogies = [];
+
+    #[ORM\Column(type: "integer",name: "shareCount", options: ["default" => 0])]
+    private int $shareCount = 0;
 
     #[ORM\Column(type: 'string', enumType: Statut::class)]
     private Statut $statut = Statut::DISPONIBLE;
@@ -60,14 +77,24 @@ class Logement
     #[ORM\ManyToOne(inversedBy: 'logements')]
     #[ORM\JoinColumn(name: 'utilisateur_cin', referencedColumnName: 'cin')]
     private ?Utilisateur $utilisateur_cin = null;
+
+    /**
+     * @var Collection<int, Reclamation>
+     */
+    #[ORM\OneToMany(targetEntity: Reclamation::class, mappedBy: 'logement')]
+    private Collection $reclamations;
   
    public function __construct()
    {
        $this->logementOptions = new ArrayCollection();
        $this->imageLogements = new ArrayCollection();
+       $this->reclamations = new ArrayCollection();
    }
  
-
+   public function __toString(): string
+   {
+       return $this->type . ' (ID: ' . $this->id . ')';
+   }
     public function getId(): ?int
     {
         return $this->id;
@@ -221,5 +248,67 @@ public function setUtilisateurCin(?Utilisateur $utilisateur_cin): static
     return $this;
 }
 
+  /**
+ * @return Collection<int, Reclamation>
+ */
+public function getReclamations(): Collection
+{
+    return $this->reclamations;
+}
 
+public function addReclamation(Reclamation $reclamation): static
+{
+    if (!$this->reclamations->contains($reclamation)) {
+        $this->reclamations->add($reclamation);
+        $reclamation->setLogement($this);
+    }
+
+    return $this;
+}
+
+public function removeReclamation(Reclamation $reclamation): static
+{
+    if ($this->reclamations->removeElement($reclamation)) {
+        // set the owning side to null (unless already changed)
+        if ($reclamation->getLogement() === $this) {
+            $reclamation->setLogement(null);
+        }
+    }
+
+    return $this;
+}
+
+public function getEmojis(): ?array
+{
+    return $this->emogies;
+}
+
+public function setEmojis(?array $emogies): static
+{
+    $this->emogies = $emogies;
+    return $this;
+}
+
+public function addEmoji(string $userCin, string $emogies): static
+{
+    $this->emogies[$userCin] = $emogies;
+    return $this;
+}
+
+public function removeEmoji(string $userCin): static
+{
+    unset($this->emogies[$userCin]);
+    return $this;
+}
+
+    public function getShareCount(): int
+    {
+        return $this->shareCount;
+    }
+
+    public function setShareCount(int $shareCount): self
+    {
+        $this->shareCount = $shareCount;
+        return $this;
+    }
 }

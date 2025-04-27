@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <head>
+   <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
         <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap CSS -->   <!-- jQuery (required for Bootstrap 3 JavaScript plugins) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
+
         {% block css %}
-            {# <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}"> #}
+            <!-- Tu peux ajouter des styles supplémentaires ici dans les templates enfants -->
         {% endblock %}
         <style>
             /* Général */
@@ -299,6 +300,19 @@
                                 <!-- *** Logo End *** -->
 
                                 <!-- *** Menu Start *** -->
+                                {# <!-- ***** Menu Start ***** -->
+                                <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                        <i class="fas fa-globe"></i> {{ app.request.locale|upper }} <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="{{ path('switch_language', {'locale': 'en'}) }}">English (EN)</a></li>
+                        <li><a href="{{ path('switch_language', {'locale': 'fr'}) }}">Français (FR)</a></li>
+                        <li><a href="{{ path('switch_language', {'locale': 'ar'}) }}">العربية (AR)</a></li>
+                    </ul>
+                </li>
+            </ul> #}
                                 <ul class="nav">
                                     {% if is_granted('ROLE_ADMIN') %}
                                         <!-- Navigation pour les admins -->
@@ -313,8 +327,8 @@
                                             <ul class="dropdown-menu" aria-labelledby="servicesDropdownAdmin">
                                                 <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Logements</a></li>
-                                            </ul>
+                                                <li><a href="{{ path('app_logement_index') }}">Logements</a></li>
+<li><a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}" href="{{ path('admin_reclamation') }}">Réclamations Avancées</a></li>                                            </ul>
                                         </li>
                                         <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_ADMIN' ? 'active' }}">
                                             <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -462,9 +476,11 @@
             <!-- *** Header Area End *** -->
         {% endif %}
 
-        {% block body %}
-            <!-- Le contenu principal sera inséré ici par les templates enfants -->
-        {% endblock %}
+        <main>
+            {% block body %}
+                <!-- Le contenu principal sera inséré ici par les templates enfants -->
+            {% endblock %}
+        </main>
 
         {# Ne pas afficher le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}

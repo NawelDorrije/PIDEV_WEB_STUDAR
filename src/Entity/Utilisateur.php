@@ -2,9 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\GestionMeubles\Commande;
-use App\Entity\GestionMeubles\Meuble;
-use App\Entity\GestionMeubles\Panier;
 use App\Enums\RoleUtilisateur;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -18,9 +15,9 @@ use App\Entity\ReservationTransport;
 use App\Entity\ReservationLogement;
 use App\Repository\UtilisateurRepository;
 
+/*#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
+#[UniqueEntity(fields: ['cin'], message: 'Ce CIN est déjà enregistré.')]*/
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
-#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
-#[UniqueEntity(fields: ['cin'], message: 'Ce CIN est déjà enregistré.')]
 class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -52,7 +49,8 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\NotBlank(message: 'Le mot de passe ne peut pas être vide.')]
     private ?string $mdp = null;
 
-    #[ORM\Column(name: 'numTel', length: 15, nullable: true)]
+    #[ORM\Column(name: 'numTel',length: 15, nullable: true)]
+
     private ?string $numTel = null;
 
     #[ORM\Column(type: 'string', length: 20)]
@@ -118,26 +116,23 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: ReservationTransport::class, mappedBy: 'etudiant')]
     private Collection $reservationsTransportAsEtudiant;
     /**
-     * @var Collection<int, Logement>
+     * @var Collection<int, Reclamation>
      */
-    #[ORM\OneToMany(targetEntity: Logement::class, mappedBy: 'utilisateur_cin')]
-    private Collection $logements;
+    #[ORM\OneToMany(targetEntity: Reclamation::class, mappedBy: 'cin')]
+    private Collection $reclamations;
 
    
     
-
-
     public function getCin(): ?string
     {
         return $this->cin;
     }
 
+    
     public function setCin(string $cin): static
     {
         $this->cin = $cin;
-        return $this;
     }
-
     public function getNom(): ?string
     {
         return $this->nom;
@@ -157,6 +152,18 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPrenom(string $prenom): static
     {
         $this->prenom = $prenom;
+
+        return $this;
+    }
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(string $nom): static
+    {
+        $this->nom = $nom;
+
         return $this;
     }
 
@@ -165,9 +172,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(string $email): static
     {
         $this->email = $email;
+
         return $this;
     }
 
@@ -176,9 +184,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->mdp;
     }
 
-    public function setMdp(string $mdp): self
+    public function setMdp(string $mdp): static
     {
         $this->mdp = $mdp;
+
         return $this;
     }
 
@@ -187,9 +196,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->numTel;
     }
 
-    public function setNumTel(?string $numTel): self
+    public function setNumTel(?string $numTel): static
     {
         $this->numTel = $numTel;
+
         return $this;
     }
 
@@ -216,14 +226,14 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     public function getRole(): ?RoleUtilisateur
-    {
-        return $this->role;
-    }
+{
+    return $this->role;
+}
 
-    public function getRoleValue(): ?string
-    {
-        return $this->role?->value;
-    }
+public function getRoleValue(): ?string
+{
+    return $this->role?->value;
+}
 
     public function setRole(RoleUtilisateur $role): static
     {
@@ -239,8 +249,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setResetCode(?string $reset_code): static
     {
         $this->reset_code = $reset_code;
+
         return $this;
     }
+    
 
     public function getResetCodeExpiresAt(): ?\DateTimeImmutable
     {
@@ -258,9 +270,10 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->blocked;
     }
 
-    public function setBlocked(bool $blocked): self
+    public function setBlocked(bool $blocked): static
     {
         $this->blocked = $blocked;
+
         return $this;
     }
 
@@ -269,16 +282,15 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->created_at;
     }
 
-    public function setCreatedAt(?\DateTimeImmutable $created_at): self
+    public function setCreatedAt(?\DateTimeImmutable $created_at): static
     {
         $this->created_at = $created_at;
+
         return $this;
     }
+   
 
-    /**
-     * @return Collection<int, Meuble>
-     */
-    public function getMeubles(): Collection
+    public function eraseCredentials()
     {
         return $this->meubles;
     }
@@ -392,193 +404,49 @@ public function removeCommande(Commande $commande): self
 
     public function getUserIdentifier(): string
     {
+        // Return the unique identifier for the user (e.g., email)
         return $this->email;
     }
-
     public function getPassword(): string
-    {
-        return $this->mdp;
-    }
-
-    public function setPassword(string $mdp): self
+{
+    return $this->mdp; // assuming your password field is called 'mdp'
+}
+    public function setPassword(string $mdp) : self
     {
         $this->mdp = $mdp;
+
         return $this;
     }
-
-
-    
-public function getRendezvousAsProprietaire(): Collection
+    public function __construct()
 {
-    return $this->rendezvousAsProprietaire;
+    $this->role = RoleUtilisateur::ADMIN; // Using the most basic role as default
+    $this->reclamations = new ArrayCollection();
 }
 
-public function addRendezvousAsProprietaire(Rendezvous $rendezvous): self
-{
-    if (!$this->rendezvousAsProprietaire->contains($rendezvous)) {
-        $this->rendezvousAsProprietaire->add($rendezvous);
-        $rendezvous->setProprietaire($this);
-    }
-    return $this;
-}
-
-public function removeRendezvousAsProprietaire(Rendezvous $rendezvous): self
-{
-    if ($this->rendezvousAsProprietaire->removeElement($rendezvous)) {
-        // set the owning side to null (unless already changed)
-        if ($rendezvous->getProprietaire() === $this) {
-            $rendezvous->setProprietaire(null);
-        }
-    }
-    return $this;
-}
-
-/**
- * @return Collection<int, Rendezvous>
- */
-public function getRendezvousAsEtudiant(): Collection
-{
-    return $this->rendezvousAsEtudiant;
-}
-
-public function addRendezvousAsEtudiant(Rendezvous $rendezvous): self
-{
-    if (!$this->rendezvousAsEtudiant->contains($rendezvous)) {
-        $this->rendezvousAsEtudiant->add($rendezvous);
-        $rendezvous->setEtudiant($this);
-    }
-    return $this;
-}
-
-public function removeRendezvousAsEtudiant(Rendezvous $rendezvous): self
-{
-    if ($this->rendezvousAsEtudiant->removeElement($rendezvous)) {
-        // set the owning side to null (unless already changed)
-        if ($rendezvous->getEtudiant() === $this) {
-            $rendezvous->setEtudiant(null);
-        }
-    }
-    return $this;
-}
-
-public function getReservationsAsProprietaire(): Collection
-{
-    return $this->reservationsAsProprietaire;
-}
-
-public function addReservationsAsProprietaire(ReservationLogement $reservation): self
-{
-    if (!$this->reservationsAsProprietaire->contains($reservation)) {
-        $this->reservationsAsProprietaire->add($reservation);
-        $reservation->setProprietaire($this);
-    }
-    return $this;
-}
-
-public function removeReservationsAsProprietaire(ReservationLogement $reservation): self
-{
-    if ($this->reservationsAsProprietaire->removeElement($reservation)) {
-        if ($reservation->getProprietaire() === $this) {
-            $reservation->setProprietaire(null);
-        }
-    }
-    return $this;
-}
-
-public function getReservationsAsEtudiant(): Collection
-{
-    return $this->reservationsAsEtudiant;
-}
-
-public function addReservationsAsEtudiant(ReservationLogement $reservation): self
-{
-    if (!$this->reservationsAsEtudiant->contains($reservation)) {
-        $this->reservationsAsEtudiant->add($reservation);
-        $reservation->setEtudiant($this);
-    }
-    return $this;
-}
-
-public function removeReservationsAsEtudiant(ReservationLogement $reservation): self
-{
-    if ($this->reservationsAsEtudiant->removeElement($reservation)) {
-        if ($reservation->getEtudiant() === $this) {
-            $reservation->setEtudiant(null);
-        }
-    }
-    return $this;
-}
-public function getReservationsAsTransporteur(): Collection
-    {
-        return $this->reservationsAsTransporteur;
-    }
-
-    public function addReservationsAsTransporteur(ReservationTransport $reservation): self
-    {
-        if (!$this->reservationsAsTransporteur->contains($reservation)) {
-            $this->reservationsAsTransporteur->add($reservation);
-            $reservation->setTransporteur($this);
-        }
-        return $this;
-    }
-
-    public function removeReservationsAsTransporteur(ReservationTransport $reservation): self
-    {
-        if ($this->reservationsAsTransporteur->removeElement($reservation)) {
-            if ($reservation->getTransporteur() === $this) {
-                $reservation->setTransporteur(null);
-            }
-        }
-        return $this;
-    }
-
-    public function getReservationsTransportAsEtudiant(): Collection
-    {
-        return $this->reservationsTransportAsEtudiant;
-    }
-
-    public function addReservationsTransportAsEtudiant(ReservationTransport $reservation): self
-    {
-        if (!$this->reservationsTransportAsEtudiant->contains($reservation)) {
-            $this->reservationsTransportAsEtudiant->add($reservation);
-            $reservation->setEtudiant($this);
-        }
-        return $this;
-    }
-
-    public function removeReservationsTransportAsEtudiant(ReservationTransport $reservation): self
-    {
-        if ($this->reservationsTransportAsEtudiant->removeElement($reservation)) {
-            if ($reservation->getEtudiant() === $this) {
-                $reservation->setEtudiant(null);
-            }
-        }
-        return $this;
-    }
-      /**
-     * @return Collection<int, Logement>
+    /**
+     * @return Collection<int, Reclamation>
      */
-    public function getLogements(): Collection
+    public function getReclamations(): Collection
     {
-        return $this->logements;
+        return $this->reclamations;
     }
 
-    public function addLogement(Logement $logement): static
+    public function addReclamation(Reclamation $reclamation): static
     {
-        if (!$this->logements->contains($logement)) {
-            $this->logements->add($logement);
-            $logement->setUtilisateurCin($this);
+        if (!$this->reclamations->contains($reclamation)) {
+            $this->reclamations->add($reclamation);
+            $reclamation->setCin($this);
         }
 
         return $this;
     }
 
-    public function removeLogement(Logement $logement): static
+    public function removeReclamation(Reclamation $reclamation): static
     {
-        if ($this->logements->removeElement($logement)) {
+        if ($this->reclamations->removeElement($reclamation)) {
             // set the owning side to null (unless already changed)
-            if ($logement->getUtilisateurCin() === $this) {
-                $logement->setUtilisateurCin(null);
+            if ($reclamation->getCin() === $this) {
+                $reclamation->setCin(null);
             }
         }
 

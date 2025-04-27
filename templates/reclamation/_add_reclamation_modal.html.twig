@@ -1,0 +1,28 @@
+<div class="modal fade" id="addReclamationModal" tabindex="-1" aria-labelledby="addReclamationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addReclamationModalLabel">Ajouter une Réclamation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-reclamation-form" action="{{ path('app_reclamation_add', {'logementId': logement.id}) }}" method="post">
+                    <div class="mb-3">
+                        <label for="reclamation-title" class="form-label">Titre</label>
+                        <input type="text" class="form-control" id="reclamation-title" name="title" placeholder="Entrez le titre de la réclamation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reclamation-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="reclamation-description" name="description" rows="3" placeholder="Décrivez votre réclamation" required></textarea>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('add_reclamation') }}">
+                </form>
+                <div id="form-error" class="error-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="submit-reclamation">Ajouter</button>
+            </div>
+        </div>
+    </div>
+</div>
