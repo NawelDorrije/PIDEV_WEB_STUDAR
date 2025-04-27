@@ -33,7 +33,7 @@ security:
                 failure_forward: false
                 success_handler: App\Security\AuthenticationSuccessHandler
             logout:
-                path: app_logout
+                # path: app_logout
                 target: app_utilisateur_signin
 
     access_control:
@@ -52,9 +52,9 @@ when@test:
     security:
         firewalls:
             main:
-                logout:
-                    path: app_logout
-                    target: app_transport_home
+                # logout:
+                #     path: app_logout
+                #     target: app_utilisateur
         password_hashers:
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 algorithm: auto

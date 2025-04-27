@@ -94,7 +94,7 @@
         .form-group {
             margin-bottom: 25px;
             position: relative;
-            margin-right:30px;
+            margin-right: 30px;
         }
         
         .form-control {
@@ -103,6 +103,7 @@
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 16px;
+            margin-left: 40px;
         }
         
         .form-control-icon {
@@ -164,11 +165,73 @@
             font-size: 0.875em;
             margin-top: 5px;
         }
+
+        /* Dark Theme Styles */
+        body.theme-dark .edit-container {
+            background: #2c2c2c !important;
+            box-shadow: 0 0 15px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .edit-header {
+            border-bottom: 1px solid #555 !important;
+        }
+        body.theme-dark .edit-header h4 {
+            color: #ffffff !important;
+        }
+        body.theme-dark .avatar-placeholder {
+            background-color: #3a3a3a !important;
+            color: #cccccc !important;
+            border-color: #ff7043 !important;
+        }
+        body.theme-dark .profile-avatar {
+            border-color: #ff7043 !important;
+        }
+        body.theme-dark .file-upload-field {
+            background: #3a3a3a !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .file-upload-btn {
+            background: #ff7043 !important;
+        }
+        body.theme-dark .file-upload-btn:hover {
+            background: #f35525 !important;
+        }
+        body.theme-dark .file-name {
+            color: #cccccc !important;
+        }
+        body.theme-dark .form-control {
+            background: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .form-control-icon {
+            color: #cccccc !important;
+        }
+        body.theme-dark .readonly-field {
+            background-color: #4a4a4a !important;
+            color: #cccccc !important;
+        }
+        body.theme-dark .btn-primary {
+            background-color: #ff7043 !important;
+        }
+        body.theme-dark .btn-primary:hover {
+            background-color: #f35525 !important;
+        }
+        body.theme-dark .btn-secondary {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .btn-secondary:hover {
+            background-color: #4a4a4a !important;
+        }
+        body.theme-dark .error-message {
+            color: #ff6666 !important;
+        }
     </style>
 {% endblock %}
 
 {% block body %}
-<div class="edit-container">
+<div class="edit-container" data-theme="{{ app.user.theme ?? 'light' }}">
     <div class="edit-header">
         <h4>Modifier votre profile</h4>
     </div>
@@ -188,15 +251,15 @@
     <!-- Profile Picture Upload - Now inline -->
     <div class="avatar-upload-container">
         {% if utilisateur.image %}
-            <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" 
+            <img src="{{ asset('Uploads/images/' ~ utilisateur.image) }}" 
                  alt="Profile Image" 
                  class="profile-avatar"
                  id="avatar-preview">
         {% else %}
-        <img src="{{ utilisateur.avatarUrl(120) }}" 
-        alt="Profile Image" 
-        class="profile-avatar"
-        id="avatar-preview">
+            <img src="{{ utilisateur.avatarUrl(120) }}" 
+                 alt="Profile Image" 
+                 class="profile-avatar"
+                 id="avatar-preview">
         {% endif %}
         
         <div class="file-upload-wrapper">
@@ -298,29 +361,54 @@
 </div>
 
 <script>
-    function updateFileName(input) {
-        const fileName = input.files[0] ? input.files[0].name : "No file chosen";
-        document.getElementById('file-name').textContent = fileName;
-        
-        // Update image preview
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            const preview = document.getElementById('avatar-preview');
-            
-            reader.onload = function(e) {
-                if (preview.tagName === 'DIV') {
-                    const newImg = document.createElement('img');
-                    newImg.src = e.target.result;
-                    newImg.className = 'profile-avatar';
-                    newImg.id = 'avatar-preview';
-                    preview.parentNode.replaceChild(newImg, preview);
-                } else {
-                    preview.src = e.target.result;
-                }
-            }
-            
-            reader.readAsDataURL(input.files[0]);
-        }
+    // Theme application
+    function applyTheme(theme) {
+        console.log('Applying theme:', theme);
+        document.body.className = `theme-${theme}`;
+        console.log('Body class set to:', document.body.className);
+        // Force style recalculation
+        document.body.offsetHeight;
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+        const container = document.querySelector('.edit-container');
+        if (!container) {
+            console.error('Error: .edit-container not found');
+            return;
+        }
+        const theme = container.dataset.theme || 'light';
+        console.log('Theme from data-theme:', theme);
+        applyTheme(theme);
+
+        // File input handling
+        function updateFileName(input) {
+            const fileName = input.files[0] ? input.files[0].name : "No file chosen";
+            document.getElementById('file-name').textContent = fileName;
+            
+            // Update image preview
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                const preview = document.getElementById('avatar-preview');
+                
+                reader.onload = function(e) {
+                    if (preview.tagName === 'DIV') {
+                        const newImg = document.createElement('img');
+                        newImg.src = e.target.result;
+                        newImg.className = 'profile-avatar';
+                        newImg.id = 'avatar-preview';
+                        preview.parentNode.replaceChild(newImg, preview);
+                    } else {
+                        preview.src = e.target.result;
+                    }
+                }
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Expose updateFileName to global scope for onchange
+        window.updateFileName = updateFileName;
+    });
 </script>
 {% endblock %}

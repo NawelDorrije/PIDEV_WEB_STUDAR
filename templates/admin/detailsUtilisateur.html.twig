@@ -104,10 +104,17 @@
         {% if utilisateur.image %}
         <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
         {% else %}
-        <div class="profile-avatar" style="background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-user" style="font-size: 40px; color: #777;"></i>
-        </div>
-    {% endif %}       
+        <img src="{{ utilisateur.avatarUrl }}"  alt="Profile Image" class="profile-avatar">
+
+    {% endif %}   
+    <!--{% if utilisateur.image %}
+        <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
+        {% else %}
+       
+        <img src="{{ utilisateur.avatarUrl }}" 
+        alt="Avatar"
+        class="avatar-round">
+    {% endif %} -->    
      <div class="profile-content">
             <div class="profile-label">Prénom</div>
             <div class="profile-value">{{ utilisateur.prenom }}</div>
@@ -148,6 +155,6 @@
 </div>
 
 <div class="button-container">
-    <a href="{{ path('app_utilisateur_index') }}" class="btn btn-secondary">Retourner</a>
+    <a href="{{ path('app_admin_dashboard') }}" class="btn btn-secondary">Retourner</a>
 </div>
 {% endblock %}

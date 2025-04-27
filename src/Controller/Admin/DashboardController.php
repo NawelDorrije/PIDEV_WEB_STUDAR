@@ -315,5 +315,27 @@ public function reportUser(
         return $this->json(['success' => false, 'message' => 'Erreur serveur lors du signalement: ' . $e->getMessage()], 500);
     }
 }
+#[Route(
+    '/{cin}', 
+    name: 'app_admin_adminProfile',
+    requirements: ['cin' => '\d{8}'], // Requires exactly 8 digits
+    defaults: ['cin' => null], // Make it optional
+    methods: ['GET']
+)]
+public function show(Utilisateur $utilisateur = null): Response
+{
+    // If no CIN provided and user is logged in, show their profile
+    if (!$utilisateur && $this->getUser()) {
+        $utilisateur = $this->getUser();
+    }
+
+    if (!$utilisateur) {
+        throw $this->createNotFoundException('User not found');
+    }
+
+    return $this->render('admin/adminProfile.html.twig', [
+        'utilisateur' => $utilisateur,
+    ]);
+}
    
 }

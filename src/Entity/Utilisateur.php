@@ -53,11 +53,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $mdp = null;
 
     #[ORM\Column(name: 'numTel', length: 15, nullable: true)]
-    #[Assert\Regex(
-        pattern: '/^\+?\d{10,15}$/',
-        message: 'Le numéro de téléphone n\'est pas valide.',
-        match: true
-    )]
     private ?string $numTel = null;
 
     #[ORM\Column(type: 'string', length: 20)]

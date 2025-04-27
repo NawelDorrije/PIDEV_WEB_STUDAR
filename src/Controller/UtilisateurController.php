@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\ActivityLog;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use App\Repository\ActivityLogRepository;
 use App\Entity\Utilisateur;
 use App\Enums\RoleUtilisateur;
 use App\Form\UtilisateurType;
@@ -98,6 +101,7 @@ public function new(
         'form' => $form->createView(),
     ]);
 }
+
     
     #[Route(
         '/{cin}', 
@@ -121,6 +125,105 @@ public function new(
             'utilisateur' => $utilisateur,
         ]);
     }
+    #[Route('/parametre', name: 'app_utilisateur_parametre')]
+    public function parametre(ActivityLogRepository $activityLogRepository): Response
+    {
+        // $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $user = $this->getUser();
+        if (!$user->getTheme() || !in_array($user->getTheme(), ['light', 'dark', 'custom'])) {
+            $user->setTheme('light');
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        }
+
+        
+
+        return $this->render('utilisateur/parametre.html.twig',);
+    }
+    #[Route('/parametre/theme', name: 'app_utilisateur_parametre_theme', methods: ['POST'])]
+    public function updateTheme(
+        Request $request,
+        EntityManagerInterface $em,
+        ActivityLogRepository $activityLogRepository,
+        SessionInterface $session,
+        UtilisateurRepository $utilisateurRepository
+    ): Response {
+
+        $user = $this->getUser();
+        $theme = $request->request->get('theme');
+
+        if (!in_array($theme, ['light', 'dark', 'custom'])) {
+            $this->addFlash('error', 'Thème invalide.');
+            return $this->redirectToRoute('app_utilisateur_parametre');
+        }
+
+        $user = $utilisateurRepository->find($user->getCin());
+        $user->setTheme($theme);
+        $em->persist($user);
+        $em->flush();
+
+        $log = new ActivityLog();
+        $log->setUser($user);
+        $log->setAction('Thème modifié');
+        $log->setDetails(sprintf('Nouveau thème : %s', $theme));
+        $em->persist($log);
+        $em->flush();
+
+        $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
+        $this->tokenStorage->setToken($token);
+        $session->set('_security_main', serialize($token));
+        $session->migrate(true);
+
+        $this->addFlash('success', 'Thème mis à jour avec succès.');
+        return $this->redirectToRoute('app_utilisateur_parametre');
+    }
+
+    #[Route('/parametre/password', name: 'app_utilisateur_parametre_password', methods: ['POST'])]
+    public function updatePassword(
+        Request $request,
+        EntityManagerInterface $em,
+        SessionInterface $session,
+        UtilisateurRepository $utilisateurRepository
+    ): Response {
+
+        $user = $this->getUser();
+        $oldPassword = $request->request->get('oldPassword');
+        $newPassword = $request->request->get('newPassword');
+        $confirmPassword = $request->request->get('confirmPassword');
+
+        if ($newPassword !== $confirmPassword) {
+            $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas.');
+            return $this->redirectToRoute('app_utilisateur_parametre');
+        }
+
+        $user = $utilisateurRepository->find($user->getCin());
+
+        if (!password_verify($oldPassword, $user->getMdp())) {
+            $this->addFlash('error', 'L\'ancien mot de passe est incorrect.');
+            return $this->redirectToRoute('app_utilisateur_parametre');
+        }
+
+        $user->setMdp(password_hash($newPassword, PASSWORD_BCRYPT));
+        $em->persist($user);
+$em->flush();
+
+        $log = new ActivityLog();
+        $log->setUser($user);
+        $log->setAction('Mot de passe modifié');
+        $log->setDetails('L\'utilisateur a modifié son mot de passe.');
+        $em->persist($log);
+        $em->flush();
+
+        $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
+        $this->tokenStorage->setToken($token);
+        $session->set('_security_main', serialize($token));
+        $session->migrate(true);
+
+        $this->addFlash('success', 'Mot de passe mis à jour avec succès.');
+        return $this->redirectToRoute('app_utilisateur_parametre');
+    }
+
     // #[Route('/{cin}/edit', name: 'app_utilisateur_edit', methods: ['GET', 'POST'])]
     // public function edit(
     //     Request $request, 

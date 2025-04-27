@@ -17,6 +17,34 @@
             color: #64748b;
             font-size: 1rem;
         }
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .nav-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #1e293b;
+            background: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background: #f8fafc;
+            border-color: #4f46e5;
+        }
+        .nav-button.active {
+            background: #2556A7;
+            color: #fff;
+            border-color: #007bff;
+        }
         h1 {
             text-align: center;
             margin-bottom: 2rem;
@@ -111,7 +139,7 @@
         .kpi-card.commandes .value {
             font-size: 16px;
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Two columns for 2x2 layout */
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
             justify-items: center;
         }
@@ -155,17 +183,83 @@
             margin: 20px 0;
             display: none;
         }
-        .nav-button.active  {
-            background: #2556A7;
-            color: #fff;
-            border-color: #007bff;
-        }
         #calendar {
             background: #fff;
             border-radius: 12px;
             padding: 2rem;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
+        /* Dark Theme Styles */
+        body.theme-dark {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+        body.theme-dark .stats-container {
+            background: #1a1a1a !important;
+        }
+        body.theme-dark h1,
+        body.theme-dark .chart-container h2 {
+            color: #ffffff !important;
+        }
+        body.theme-dark .subtitle {
+            color: #cccccc !important;
+        }
+        body.theme-dark .filters-container {
+            background: #3a3a3a !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .filter-select,
+        body.theme-dark .download-button,
+        body.theme-dark .nav-button {
+            background: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .nav-button.active {
+            background: #2556A7 !important;
+            color: #ffffff !important;
+            border-color: #007bff !important;
+        }
+        body.theme-dark .filter-select:focus,
+        body.theme-dark .download-button:focus,
+        body.theme-dark .nav-button:hover {
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+        }
+        body.theme-dark .kpi-card {
+            background: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .kpi-card h3 {
+            color: #cccccc !important;
+        }
+        body.theme-dark .kpi-card .value {
+            color: #f35525 !important;
+        }
+        body.theme-dark .kpi-card .value small {
+            color: #cccccc !important;
+        }
+        body.theme-dark .kpi-card.commandes .status-item {
+            color: #ffffff !important;
+        }
+        body.theme-dark .chart-container,
+        body.theme-dark #calendar {
+            background: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .error-message {
+            color: #ff6666 !important;
+        }
+        body.theme-dark .fc-theme-standard .fc-scrollgrid {
+            background: #2c2c2c !important;
+        }
+        body.theme-dark .fc-theme-standard th,
+        body.theme-dark .fc-theme-standard td {
+            border-color: #555 !important;
+            color: #ffffff !important;
+        }
+
         @media (max-width: 768px) {
             .kpi-grid {
                 grid-template-columns: 1fr;
@@ -178,14 +272,14 @@
                 width: 100%;
             }
             .kpi-card.commandes .value {
-                grid-template-columns: 1fr; /* Stack items on mobile */
+                grid-template-columns: 1fr;
             }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-<div class="stats-container">
+<div class="stats-container" data-theme="{{ app.user.theme ?? 'light' }}">
     <h1>Tableau de Bord Administrateur</h1>
     <p class="subtitle">Statistiques et gestion des meubles</p>
 
@@ -268,7 +362,7 @@
     </div>
 </div>
 <div class="nav-buttons">
-    <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button " title="Consulter les meubles">
+    <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button" title="Consulter les meubles">
         <i class="bi bi-tag"></i>
         <span class="nav-text">Consulter les meubles</span>
     </a>
@@ -276,7 +370,7 @@
         <i class="bi bi-clock-history"></i>
         <span class="nav-text">Consulter les commandes</span>
     </a>
-    <a href="{{ path('app_gestion_meubles_statistiques') }}"class="nav-button active" title="Voir les statistiques">
+    <a href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button active" title="Voir les statistiques">
         <i class="bi bi-bar-chart"></i>
         <span class="nav-text">Statistiques</span>
     </a>
@@ -288,7 +382,27 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
+        // Theme application
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            // Force style recalculation
+            document.body.offsetHeight;
+        }
+
+        // Apply theme on page load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+            const container = document.querySelector('.stats-container');
+            if (!container) {
+                console.error('Error: .stats-container not found');
+                return;
+            }
+            const theme = container.dataset.theme || 'light';
+            console.log('Theme from data-theme:', theme);
+            applyTheme(theme);
+
             // Appliquer les filtres
             window.applyFilters = function() {
                 const statut = document.getElementById('filtre-statut').value;

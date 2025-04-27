@@ -96,16 +96,13 @@
             transition: opacity 0.2s;
             transition-delay: 0.1s;
             font-weight: 500;
-            color: white;
-        }
-      
-        .admin-sidebar:hover .nav-text {
-            opacity: 1;
-            color : white;
- 
         }
         
-        /* Table styling (restored from original) */
+        .admin-sidebar:hover .nav-text {
+            opacity: 1;
+        }
+        
+        /* Table styling */
         .user-table-container {
             background: white;
             border-radius: 8px;
@@ -177,11 +174,11 @@
             transform: scale(1.1);
         }
         
-        /* Report button (distinct styling) */
+        /* Report button */
         .report-btn {
             background: none;
             border: none;
-            color: #e63946; /* Red-orange for warning */
+            color: #e63946;
             font-size: 1.2rem;
             cursor: pointer;
             transition: all 0.3s;
@@ -324,7 +321,7 @@
             background-color: #f8f9fa;
         }
         
-        /* Report modal (distinct styling) */
+        /* Report modal */
         .report-modal {
             display: none;
             position: fixed;
@@ -405,39 +402,102 @@
             background-color: #335f7a;
         }
         
-        /* Dark theme adjustments */
-        body.theme-dark .title-dark {
-            color: #f1f1f1;
+        /* Dark theme styles */
+        body.theme-dark {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
         }
-        body.theme-dark .parameters-list {
+        body.theme-dark .admin-sidebar {
+            background-color: #2c2c2c !important;
+        }
+        body.theme-dark .admin-content {
+            background-color: #1a1a1a !important;
+        }
+        body.theme-dark .user-table-container,
+        body.theme-dark .filter-section {
             background-color: #2c2c2c !important;
             box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
         }
-        body.theme-dark .parameters-item {
+        body.theme-dark .user-table th {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-bottom: 2px solid #555 !important;
+        }
+        body.theme-dark .user-table td {
+            color: #ffffff !important;
+            border-bottom: 1px solid #555 !important;
+        }
+        body.theme-dark .user-table tr:hover td {
+            background-color: #3a3a3a !important;
+        }
+        body.theme-dark .status-active {
+            background-color: #2a6640 !important;
+            color: #c3e6cb !important;
+        }
+        body.theme-dark .status-blocked {
+            background-color: #7b2e35 !important;
+            color: #f5c6cb !important;
+        }
+        body.theme-dark .filter-select {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
             border-color: #555 !important;
+        }
+        body.theme-dark .title-dark {
+            color: #f1f1f1 !important;
+        }
+        body.theme-dark .sidebar-nav a {
+            color: #ffffff !important;
+        }
+        body.theme-dark .sidebar-nav .nav-text {
+            color: #ffffff !important;
+        }
+        body.theme-dark .report-modal-content {
+            background-color: #2c2c2c !important;
+            color: #ffffff !important;
+        }
+        body.theme-dark .report-modal-content h3 {
+            color: #f35525 !important;
+        }
+        body.theme-dark .report-modal-content textarea {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .report-modal-content .submit-btn {
+            background-color: #f35525 !important;
+        }
+        body.theme-dark .report-modal-content .submit-btn:hover {
+            background-color: #e04b20 !important;
+        }
+        body.theme-dark .report-modal-content .cancel-btn {
+            background-color: #6c757d !important;
+        }
+        body.theme-dark .report-modal-content .cancel-btn:hover {
+            background-color: #5a6268 !important;
         }
     </style>
 {% endblock %}
 
 {% block body %}
-<div class="admin-container">
+<div class="admin-container" data-theme="{{ app.user.theme ?? 'light' }}">
     <!-- Sidebar -->
     <div class="admin-sidebar">
         <ul class="sidebar-nav">
             <li>
                 <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
                     <i class="fas fa-users"></i>
-                    <span style="color:white" class="nav-text">Utilisateurs</span>
+                    <span class="nav-text">Utilisateurs</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('app_admin_statistique') }}">
+                <a href="{{ path('app_admin_statistique') }}" class="{{ app.current_route starts with 'app_admin_statistique' ? 'active' : '' }}">
                     <i class="fas fa-chart-pie"></i>
                     <span class="nav-text">Statistiques</span>
                 </a>
             </li>
             <li>
-                <a href="{{ path('app_admin_parametre') }}">
+                <a href="{{ path('app_admin_parametre') }}" class="{{ app.current_route == 'app_admin_parametre' ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
                     <span class="nav-text">Paramètres</span>
                 </a>
@@ -501,9 +561,10 @@
                                  class="profile-avatar"
                                  style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                             {% else %}
-                            <div class="profile-avatar" style="width: 50px; height: 50px; background-color: #f5f5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-user" style="font-size: 20px; color: #777;"></i>
-                            </div>
+                            <img src="{{ user.avatarUrl }}" 
+                                 alt="Profile Image" 
+                                 class="profile-avatar"
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                             {% endif %} 
                         </td>
                         <td>{{ user.nom }}</td>
@@ -568,123 +629,146 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Block button logic
-        const blockButtons = document.querySelectorAll('.block-btn');
-        blockButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                toggleBlockStatus(this);
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Theme application
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            // Force style recalculation
+            document.body.offsetHeight;
+        }
+
+        // Apply theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+            const container = document.querySelector('.admin-container');
+            if (!container) {
+                console.error('Error: .admin-container not found');
+                return;
+            }
+            const theme = container.dataset.theme || 'light';
+            console.log('Theme from data-theme:', theme);
+            applyTheme(theme);
+
+            // Block button logic
+            const blockButtons = document.querySelectorAll('.block-btn');
+            blockButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    toggleBlockStatus(this);
+                });
+            });
+
+            // Report modal logic
+            const modal = document.getElementById('reportModal');
+            const reportForm = document.getElementById('reportForm');
+            const userIdInput = document.getElementById('reportUserId');
+            const userEmailInput = document.getElementById('reportUserEmail');
+            const reasonInput = document.getElementById('reportReason');
+
+            window.showReportModal = function(button) {
+                const userId = button.getAttribute('data-user-id');
+                const userEmail = button.getAttribute('data-user-email');
+                userIdInput.value = userId;
+                userEmailInput.value = userEmail;
+                reasonInput.value = '';
+                modal.style.display = 'flex';
+            };
+
+            window.hideReportModal = function() {
+                modal.style.display = 'none';
+                reasonInput.value = '';
+            };
+
+            reportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const userId = userIdInput.value;
+                const userEmail = userEmailInput.value;
+                const reason = reasonInput.value.trim();
+
+                if (!reason) {
+                    alert('Veuillez entrer une raison pour le signalement.');
+                    return;
+                }
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+                fetch('/admin/user/report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        userEmail: userEmail,
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur lors de l\'envoi du signalement');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('Signalement envoyé avec succès.');
+                        hideReportModal();
+                    } else {
+                        throw new Error(data.message || 'Erreur inconnue');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Une erreur est survenue : ' + error.message);
+                });
             });
         });
 
-        // Report modal logic
-        const modal = document.getElementById('reportModal');
-        const reportForm = document.getElementById('reportForm');
-        const userIdInput = document.getElementById('reportUserId');
-        const userEmailInput = document.getElementById('reportUserEmail');
-        const reasonInput = document.getElementById('reportReason');
-
-        window.showReportModal = function(button) {
+        function toggleBlockStatus(button) {
             const userId = button.getAttribute('data-user-id');
-            const userEmail = button.getAttribute('data-user-email');
-            userIdInput.value = userId;
-            userEmailInput.value = userEmail;
-            reasonInput.value = '';
-            modal.style.display = 'flex';
-        };
-
-        window.hideReportModal = function() {
-            modal.style.display = 'none';
-            reasonInput.value = '';
-        };
-
-        reportForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const userId = userIdInput.value;
-            const userEmail = userEmailInput.value;
-            const reason = reasonInput.value.trim();
-
-            if (!reason) {
-                alert('Veuillez entrer une raison pour le signalement.');
-                return;
-            }
-
+            const icon = button.querySelector('i');
+            const statusBadge = button.closest('tr').querySelector('.status-badge');
+            
             const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-            fetch('/admin/user/report', {
+            fetch(`/admin/user/${userId}/toggle-block`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify({
-                    userId: userId,
-                    userEmail: userEmail,
-                    reason: reason
-                })
+                body: JSON.stringify({})
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Erreur lors de l\'envoi du signalement');
+                    throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
             .then(data => {
                 if (data.success) {
-                    alert('Signalement envoyé avec succès.');
-                    hideReportModal();
-                } else {
-                    throw new Error(data.message || 'Erreur inconnue');
+                    button.classList.toggle('blocked');
+                    button.classList.toggle('unblocked');
+                    icon.classList.toggle('fa-lock');
+                    icon.classList.toggle('fa-unlock');
+                    statusBadge.classList.toggle('status-blocked');
+                    statusBadge.classList.toggle('status-active');
+                    statusBadge.textContent = data.blocked ? 'Bloqué' : 'Actif';
+                    button.setAttribute('title', data.blocked ? 'Débloquer' : 'Bloquer');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Une erreur est survenue : ' + error.message);
+                alert('Une erreur est survenue lors de la mise à jour du statut.');
             });
-        });
-    });
-
-    function toggleBlockStatus(button) {
-        const userId = button.getAttribute('data-user-id');
-        const icon = button.querySelector('i');
-        const statusBadge = button.closest('tr').querySelector('.status-badge');
-        
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-        fetch(`/admin/user/${userId}/toggle-block`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            body: JSON.stringify({})
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                button.classList.toggle('blocked');
-                button.classList.toggle('unblocked');
-                icon.classList.toggle('fa-lock');
-                icon.classList.toggle('fa-unlock');
-                statusBadge.classList.toggle('status-blocked');
-                statusBadge.classList.toggle('status-active');
-                statusBadge.textContent = data.blocked ? 'Bloqué' : 'Actif';
-                button.setAttribute('title', data.blocked ? 'Débloquer' : 'Bloquer');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Une erreur est survenue lors de la mise à jour du statut.');
-        });
-    }
-</script>
+        }
+    </script>
 {% endblock %}
