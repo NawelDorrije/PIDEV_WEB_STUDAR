@@ -5,66 +5,7 @@
 {% block body %}
 <style>
     /* Existing styles remain unchanged */
-    /* Add new styles for charts */
-    .chart-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2.5rem;
-    }
-
-    .chart-container {
-        background: #fff;
-        border-radius: 12px;
-        padding: 2rem;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .chart-container:hover {
-        transform: translateY(-5px);
-    }
-
-    .chart-container h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .chart-container canvas {
-        max-width: 100%;
-        height: 300px !important;
-    }
-
-    /* Filter buttons for charts */
-    .chart-filters {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        justify-content: center;
-    }
-
-    .chart-filter-btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 8px;
-        background: #e2e8f0;
-        color: #1e293b;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    }
-
-    .chart-filter-btn.active,
-    .chart-filter-btn:hover {
-        background: #4f46e5;
-        color: #fff;
-    }
-        .stats-container {
+    .stats-container {
         max-width: 1200px;
         margin: 3rem auto;
         padding: 0 1.5rem;
@@ -98,6 +39,7 @@
         padding: 1rem;
         border-radius: 12px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        align-items: center;
     }
 
     .filter-select {
@@ -120,6 +62,30 @@
         outline: none;
         border-color: #4f46e5;
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    /* Download Button */
+    .download-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .download-btn:hover {
+        background: #3b82f6;
+    }
+
+    .download-btn i {
+        font-size: 1.2rem;
     }
 
     /* Cartes KPI */
@@ -227,6 +193,104 @@
     .kpi-card.commandes .status-item.attente span { color: #f97316; }
     .kpi-card.commandes .status-item.annulee span { color: #ef4444; }
 
+    /* Add new styles for charts */
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .chart-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .chart-container:hover {
+        transform: translateY(-5px);
+    }
+
+    .chart-container h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-container canvas {
+        max-width: 100%;
+        height: 300px !important;
+    }
+
+    /* Filter buttons for charts */
+    .chart-filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        justify-content: center;
+    }
+
+    .chart-filter-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        background: #e2e8f0;
+        color: #1e293b;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .chart-filter-btn.active,
+    .chart-filter-btn:hover {
+        background: #4f46e5;
+        color: #fff;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: fixed;
+        left: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+    }
+
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        background: #4f46e5;
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: background 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-button:hover {
+        background: #3b82f6;
+        transform: translateX(5px);
+    }
+
+    .nav-button i {
+        font-size: 1.2rem;
+    }
+
+    .nav-text {
+        display: inline;
+    }
 </style>
 
 <div class="stats-container">
@@ -236,13 +300,16 @@
     <!-- Filters -->
     <div class="filters-container">
         <select class="filter-select" id="timePeriod">
-            <option value="30days">Derniers 30 jours</option>
-            <option value="6months">6 derniers mois</option>
-            <option value="year">Cette année</option>
+            <option value="30days" {% if timePeriod == '30days' %}selected{% endif %}>Derniers 30 jours</option>
+            <option value="6months" {% if timePeriod == '6months' %}selected{% endif %}>6 derniers mois</option>
+            <option value="year" {% if timePeriod == 'year' %}selected{% endif %}>Cette année</option>
         </select>
+        <a href="{{ path('app_gestion_meubles_statistiques_export_pdf', {'timePeriod': timePeriod}) }}" class="download-btn">
+            <i class="bi bi-download"></i> Télécharger PDF
+        </a>
     </div>
 
-    <!-- KPI Cards (Unchanged) -->
+    <!-- KPI Cards -->
     <div class="kpi-grid">
         <div class="kpi-card meubles-vendus">
             <i class="bi bi-box-seam"></i>
@@ -252,7 +319,7 @@
         <div class="kpi-card ca">
             <i class="bi bi-currency-dollar"></i>
             <h3>Revenu Total</h3>
-            <div class="value ca">{{ revenuTotal }} TND</div>
+            <div class="value ca">{{ revenuTotal|number_format(2, ',', ' ') }} TND</div>
         </div>
         <div class="kpi-card meubles-disponibles">
             <i class="bi bi-box"></i>
@@ -291,7 +358,7 @@
         </div>
     </div>
 
-    <!-- New Chart Section -->
+    <!-- Chart Section -->
     <div class="chart-grid">
         <!-- Area Chart: Revenue Over Time -->
         <div class="chart-container">
@@ -317,25 +384,31 @@
             <canvas id="furniturePieChart"></canvas>
         </div>
     </div>
-      <!-- Barre de navigation verticale à gauche -->
-        <div class="nav-buttons">
-            <a href="{{ path('app_gestion_meubles_a_acheter') }}" class="nav-button" title="Offres de meubles">
-                <i class="bi bi-tag"></i>
-                <span class="nav-text">Offre des meubles</span>
+
+    <!-- Barre de navigation verticale à gauche -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_mes_meubles') }}" class="nav-button " title="Consulter mes meubles">
+                <i class="bi bi-list-ul"></i>
+                <span class="nav-text">Mes meubles</span>
             </a>
-            <a href="{{ path('app_gestion_meubles_mes_commandes') }}"  class="nav-button" title="Historique des transactions">
-                <i class="bi bi-clock-history"></i>
-                <span class="nav-text">Historique Commandes</span>
-            </a>
-            <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="nav-button" title="Voir mon panier">
-                <i class="bi bi-cart3"></i>
-                <span class="nav-text">Panier</span>
-            </a>
-            <a href="{{ path('app_gestion_meubles_statistiques_etudiant') }}" class="nav-button" title="Voir les statistiques">
-                <i class="bi bi-bar-chart"></i>
-                <span class="nav-text">Statistiques</span>
-            </a>
-        </div>
+        <a href="{{ path('app_gestion_meubles_a_acheter') }}" class="nav-button" title="Offres de meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Offre des meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_mes_commandes') }}" class="nav-button" title="Historique des transactions">
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Historique Commandes</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="nav-button" title="Voir mon panier">
+            <i class="bi bi-cart3"></i>
+            <span class="nav-text">Panier</span>
+        </a>
+       
+        <a href="{{ path('app_gestion_meubles_mes_ventes') }}" class="nav-button" title="Suivre mes ventes">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-text">Suivre mes ventes</span>
+        </a>
+    </div>
 </div>
 {% endblock %}
 
@@ -343,12 +416,12 @@
     {{ parent() }}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // Sample data (replace with dynamic data from controller)
+        // Dynamic data from controller
         const revenueData = {
-            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            labels: {{ monthlyRevenue.labels|json_encode|raw }},
             datasets: [{
                 label: 'Revenu (TND)',
-                data: [1200, 1900, 3000, 2500, 4000, 3500],
+                data: {{ monthlyRevenue.data|json_encode|raw }},
                 fill: true,
                 backgroundColor: 'rgba(79, 70, 229, 0.2)',
                 borderColor: '#4f46e5',
@@ -366,10 +439,10 @@
         };
 
         const furnitureAddedData = {
-            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            labels: {{ furnitureAdded.labels|json_encode|raw }},
             datasets: [{
                 label: 'Meubles Ajoutés',
-                data: [10, 15, 8, 12, 20, 18],
+                data: {{ furnitureAdded.data|json_encode|raw }},
                 fill: false,
                 borderColor: '#3b82f6',
                 tension: 0.4
@@ -450,16 +523,10 @@
             }
         });
 
-        // Filter Logic (Placeholder for dynamic updates)
+        // Filter Logic (Update URL with selected time period)
         document.getElementById('timePeriod').addEventListener('change', function() {
             const period = this.value;
-            // Fetch new data via AJAX and update charts
-            console.log('Filter changed to: ' + period);
-            // Example: Update revenueChart.data.datasets[0].data = newData;
-            revenueChart.update();
-            orderChart.update();
-            furnitureLineChart.update();
-            furniturePieChart.update();
+            window.location.href = '{{ path('app_gestion_meubles_statistiques_etudiant') }}?timePeriod=' + period;
         });
     </script>
 {% endblock %}
