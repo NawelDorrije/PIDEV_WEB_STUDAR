@@ -63,8 +63,8 @@ class MeubleRepository extends ServiceEntityRepository
     public function findAllMeubles(): array
     {
         return $this->createQueryBuilder('m')
-            ->orderBy('m.id', 'ASC')
-            ->getQuery()
+        ->orderBy('m.id', 'DESC')
+        ->getQuery()
             ->getResult();
     }
 
@@ -141,6 +141,8 @@ class MeubleRepository extends ServiceEntityRepository
             ->andWhere('m.statut = :statut')
             ->setParameter('cinVendeur', $cinVendeur)
             ->setParameter('statut', 'indisponible')
+            ->orderBy('m.id', 'DESC')
+
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -294,19 +296,30 @@ class MeubleRepository extends ServiceEntityRepository
      */
     public function getTauxRetourClients(string $cinVendeur): float
     {
+        // Count buyers who placed multiple orders
         $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb->select('COUNT(DISTINCT c.acheteur)')
+        $subQuery = $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(c2.id)')
+            ->from(Commande::class, 'c2')
+            ->join('c2.panier', 'p2')
+            ->join('p2.lignesPanier', 'lp2')
+            ->join('lp2.meuble', 'm2')
+            ->where('m2.vendeur = :cinVendeur')
+            ->andWhere('c2.acheteur = c.acheteur')
+            ->getDQL();
+    
+        $clientsRetours = $qb->select('COUNT(DISTINCT c.acheteur)')
             ->from(Commande::class, 'c')
             ->join('c.panier', 'p')
             ->join('p.lignesPanier', 'lp')
             ->join('lp.meuble', 'm')
             ->where('m.vendeur = :cinVendeur')
-            ->groupBy('c.acheteur')
-            ->having('COUNT(c.id) > 1')
-            ->setParameter('cinVendeur', $cinVendeur);
-
-        $clientsRetours = $qb->getQuery()->getSingleScalarResult();
-
+            ->andWhere("($subQuery) > 1")
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->getQuery()
+            ->getSingleScalarResult();
+    
+        // Count total distinct buyers
         $totalClients = $this->getEntityManager()->createQueryBuilder()
             ->select('COUNT(DISTINCT c.acheteur)')
             ->from(Commande::class, 'c')
@@ -317,7 +330,7 @@ class MeubleRepository extends ServiceEntityRepository
             ->setParameter('cinVendeur', $cinVendeur)
             ->getQuery()
             ->getSingleScalarResult();
-
+    
         return $totalClients > 0 ? ($clientsRetours / $totalClients) * 100 : 0;
     }
 
@@ -337,13 +350,21 @@ class MeubleRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
-    public function getMonthlyRevenue(string $cinVendeur): ?array
+/**
+ * Retrieves monthly revenue for a seller based on paid orders.
+ */
+public function getMonthlyRevenue(string $cinVendeur): array
 {
-    $qb = $this->createQueryBuilder('m')
-        ->select('MONTH(m.dateVente) as month, SUM(m.prix) as revenue')
-        ->where('m.vendeurCin = :cin')
-        ->andWhere('m.dateVente IS NOT NULL')
-        ->setParameter('cin', $cinVendeur)
+    $qb = $this->getEntityManager()->createQueryBuilder()
+        ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as month, SUM(c.montantTotal) as revenue")
+        ->from(Commande::class, 'c')
+        ->join('c.panier', 'p')
+        ->join('p.lignesPanier', 'lp')
+        ->join('lp.meuble', 'm')
+        ->where('m.vendeur = :cinVendeur')
+        ->andWhere('c.statut = :statut')
+        ->setParameter('cinVendeur', $cinVendeur)
+        ->setParameter('statut', Commande::STATUT_PAYEE)
         ->groupBy('month')
         ->orderBy('month', 'ASC');
 
@@ -355,34 +376,45 @@ class MeubleRepository extends ServiceEntityRepository
     $labels = [];
     $data = [];
     foreach ($result as $row) {
-        $labels[] = date('M', mktime(0, 0, 0, $row['month'], 1));
-        $data[] = $row['revenue'];
+        $date = \DateTime::createFromFormat('Y-m', $row['month']);
+        $labels[] = $date->format('M');
+        $data[] = (float)$row['revenue'];
     }
 
     return ['labels' => $labels, 'data' => $data];
 }
 
-public function getFurnitureAddedOverTime(string $cinVendeur): ?array
+/**
+ * Retrieves the number of furniture items added over time by the seller.
+ */
+public function getFurnitureAddedOverTime(string $cinVendeur): array
 {
     $qb = $this->createQueryBuilder('m')
-        ->select('MONTH(m.dateAjout) as month, COUNT(m.id) as count')
-        ->where('m.vendeurCin = :cin')
-        ->setParameter('cin', $cinVendeur)
+        ->select("DATE_FORMAT(m.dateEnregistrement, '%Y-%m') as month, COUNT(m.id) as count")
+        ->where('m.vendeur = :cinVendeur')
+        ->setParameter('cinVendeur', $cinVendeur)
         ->groupBy('month')
         ->orderBy('month', 'ASC');
 
     $result = $qb->getQuery()->getResult();
-      if (empty($result)) {
+    if (empty($result)) {
         return ['labels' => [], 'data' => []];
     }
 
     $labels = [];
     $data = [];
     foreach ($result as $row) {
-        $labels[] = date('M', mktime(0, 0, 0, $row['month'], 1));
-        $data[] = $row['count'];
+        $date = \DateTime::createFromFormat('Y-m', $row['month']);
+        $labels[] = $date->format('M');
+        $data[] = (int)$row['count'];
     }
 
     return ['labels' => $labels, 'data' => $data];
 }
+
+/**
+ * Retrieves the number of furniture items added over time by the seller.
+ */
+
+
 }
