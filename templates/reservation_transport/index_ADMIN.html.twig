@@ -1,400 +1,877 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Réservations de Transport{% endblock %}
+{% block title %}Réservations de Transport - Admin Dashboard{% endblock %}
 
 {% block stylesheets %}
 {{ parent() }}
 <style>
-    /* Style général */
+    /* Styles généraux */
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
+        min-height: 100vh;
+    }
 
-    
-    .section {
-        padding: 60px 0;
-        background-color: #f8f9fa;
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-align: center;
+        background: linear-gradient(to right, #4f46e5, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
     }
-    
-    .card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+    .subtitle {
+        font-size: 1rem;
+        color: #64748b;
+        text-align: center;
+        margin-bottom: 2rem;
     }
-    
-    /* Bouton flottant */
-    .floating-details-btn {
-        position: absolute;
-        right: -15px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 40px;
-        height: 40px;
-        background: #4453A6;
-        color: white;
-        border-radius: 50%;
+
+    /* Sections */
+    .dashboard-section {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-section:hover {
+        transform: translateY(-5px);
+    }
+
+    .dashboard-section h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        gap: 0.5rem;
+    }
+
+    .dashboard-section h2 i {
+        color: #4f46e5;
+        font-size: 1.2rem;
+    }
+
+    /* Filtres et actions */
+    .filters-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-select, .action-btn, .search-input, .date-input {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        background: #fff;
         transition: all 0.3s ease;
-        z-index: 2;
     }
-    
-    .floating-details-btn:hover {
-        background: #3a4791;
-        transform: translateY(-50%) scale(1.1);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+
+    .filter-select, .search-input, .date-input {
+        width: 220px;
     }
-    
-    .floating-details-btn::after {
-        content: "Voir détails";
+
+    .filter-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.2rem;
+    }
+
+    .search-input::placeholder, .date-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .filter-select:focus, .action-btn:hover, .search-input:focus, .date-input:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    .action-btn {
+        background: linear-gradient(135deg, #4f46e5, #3b82f6);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-btn:hover {
+        background: linear-gradient(135deg, #3b82f6, #4f46e5);
+        transform: translateY(-2px);
+    }
+
+    .action-btn::before {
+        content: '';
         position: absolute;
-        right: 45px;
-        white-space: nowrap;
-        background: #4453A6;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: left 0.3s ease;
+    }
+
+    .action-btn:hover::before {
+        left: 100%;
+    }
+
+    /* Tableau */
+    .transport-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .transport-table th, .transport-table td {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.95rem;
+        color: #1e293b;
+    }
+
+    .transport-table th {
+        background: linear-gradient(135deg, #4f46e5, #3b82f6);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .transport-table th:hover {
+        background: linear-gradient(135deg, #3b82f6, #4f46e5);
+    }
+
+    .transport-table th::after {
+        content: '↕';
+        position: absolute;
+        right: 10px;
+        opacity: 0.5;
+    }
+
+    .transport-table th.asc::after { content: '↑'; opacity: 1; }
+    .transport-table th.desc::after { content: '↓'; opacity: 1; }
+
+    .transport-table td {
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.3s ease;
+    }
+
+    .transport-table tr:hover td {
+        background: #f8fafc;
+    }
+
+    .badge {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .badge-success { background: #10b981; color: white; }
+    .badge-warning { background: #f97316; color: white; }
+    .badge-danger { background: #ef4444; color: white; }
+
+    .action-icons i {
+        margin-right: 10px;
+        color: #4f46e5;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .action-icons i:hover {
+        color: #3b82f6;
+    }
+
+    .compatibility-icon.check { color: #10b981; }
+    .compatibility-icon.exclamation { color: #f97316; }
+    .compatibility-icon.times { color: #ef4444; }
+
+    /* Modale */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .modal-content h3 {
+        margin-bottom: 1rem;
+        color: #1e293b;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #64748b;
+        z-index: 1001;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: #1e293b;
+    }
+
+    #compatibilityChart {
+        max-width: 100%;
+        height: 300px;
+    }
+
+    /* Transporteur List in Modal */
+    .transporteur-list {
+        margin-top: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .transporteur-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .transporteur-item:last-child {
+        border-bottom: none;
+    }
+
+    .transporteur-name {
+        font-weight: 500;
+        color: #1e293b;
+    }
+
+    .send-email-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .send-email-btn:hover {
+        background: #059669;
+    }
+
+    .send-email-btn:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+    }
+
+    /* Animations */
+    .transport-table tr {
+        animation: fadeInUp 0.6s ease-out;
+        animation-delay: calc(var(--index) * 0.1s);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .filters-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-select, .action-btn, .search-input, .date-input {
+            width: 100%;
+        }
+
+        .transport-table {
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 0 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .dashboard-section h2 {
+            font-size: 1.3rem;
+        }
+
+        .transport-table {
+            display: block;
+            overflow-x: auto;
+        }
+
+        .transport-table th, .transport-table td {
+            min-width: 120px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .transport-table th, .transport-table td {
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+        }
+
+        .modal-content {
+            padding: 1rem;
+        }
+    }
+
+    .compatibility-icon {
+        position: relative;
+    }
+
+    .compatibility-icon:hover:after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
         color: white;
         padding: 5px 10px;
         border-radius: 4px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        font-size: 14px;
-    }
-    
-    .floating-details-btn:hover::after {
-        opacity: 1;
-    }
-    
-    /* Carte de réservation */
-    .transport-card {
-        position: relative;
-        padding-right: 30px;
-        overflow: visible;
-        margin-bottom: 20px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border-left: 4px solid #6c757d;
-          width: 1000px;
-          margin-left:130px;
-    }
-    
-    .transport-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .transport-card.confirmée {
-        border-left-color: #28a745;
-    }
-    
-    .transport-card.en_attente {
-        border-left-color: #ffc107;
-    }
-    
-    .transport-card.refusée {
-        border-left-color: #dc3545;
-    }
-    
-  .card-title {
-        color: #4453A6;
-        margin-bottom: 15px;
-    }
-    
-    .card-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        align-items: center;
-    }
-    
-    .card-meta-div {
-        display: flex;
-        align-items: center;
-    }
-    
-    .card-meta i {
-        margin-right: 8px;
-        color: #F2811D;
-    }
-    
-    .badge {
         font-size: 0.8rem;
-        padding: 5px 10px;
-        font-weight: 500;
-    }
-    
-    /* Options de vue */
-    .view-options {
-        margin-bottom: 30px;
-    }
-    
-    .btn-group {
-        margin-right: 10px;
-    }
-    
-    /* Pastel purple animated button */
-    .btn-nouveau {
-        background-color: #B399D4;
-        color: white;
-        border: none;
-        animation: pop 2s infinite;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-nouveau:hover {
-        background-color: #9F7FDB;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(179, 153, 212, 0.4);
-    }
-    
-    @keyframes pop {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-    
-    /* Map styles */
-    .route-visualization {
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        padding: 20px;
-        margin-bottom: 30px;
-    }
-    
-    #routeMap {
-        height: 300px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-    }
-    
-    .route-info {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
-        
-    }
-    
-    .custom-icon {
-        background: transparent;
-        border: none;
+        white-space: nowrap;
+        z-index: 10;
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<section class="section">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="section-heading d-flex justify-content-between align-items-center mb-4">
-                    <h2 style="color:rgb(94, 68, 166);"><i class="fas fa-bus mr-2"></i>Vos Réservations de Transport</h2>
-                    
-                </div>
-                
-                <!-- Status Filter -->
-                <div class="status-filter btn-group mb-4" role="group">
-                    <a href="{{ path('app_reservation_transport_index_ADMIN') }}" class="btn btn-outline-secondary {{ not current_status ? 'active' }}">Tous</a>
-                    <a href="{{ path('app_reservation_transport_index', {'status': 'confirmée'}) }}" 
-                       class="btn btn-outline-success {{ current_status == 'confirmée' ? 'active' }}">Confirmées</a>
-                    <a href="{{ path('app_reservation_transport_index_ADMIN', {'status': 'en_attente'}) }}" 
-                       class="btn btn-outline-warning {{ current_status == 'en_attente' ? 'active' }}">En attente</a>
-                    <a href="{{ path('app_reservation_transport_index_ADMIN', {'status': 'refusée'}) }}" 
-                       class="btn btn-outline-danger {{ current_status == 'refusée' ? 'active' }}">Refusées</a>
-                </div>
-                
-                <!-- Route Visualization -->
-                <div class="route-visualization">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="fas fa-route mr-2"></i>Visualisation des Trajets</h5>
-                        <div class="map-controls">
-                            <button class="btn btn-sm btn-outline-primary" onclick="zoomIn()">
-                                <i class="fas fa-search-plus"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="zoomOut()">
-                                <i class="fas fa-search-minus"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="routeMap">
-                        <div class="text-center py-5">
-                            <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Sélectionnez une réservation pour voir le trajet</p>
-                        </div>
-                    </div>
-                    <div class="route-info mt-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><i class="fas fa-ruler-combined text-primary"></i> <strong>Distance:</strong> <span id="distanceInfo">-</span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><i class="far fa-clock text-primary"></i> <strong>Temps estimé:</strong> <span id="durationInfo">-</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Reservations List -->
-                <div class="reservation-list">
-                    {% for reservation in reservations %}
-                    
-                    <div class="card transport-card mb-3 {{ reservation.status }}"
-                         onclick="showRoute({{ reservation.id }}, 
-                                  {{ reservation.departureLat|default('null') }}, 
-                                  {{ reservation.departureLng|default('null') }}, 
-                                  {{ reservation.destinationLat|default('null') }}, 
-                                  {{ reservation.destinationLng|default('null') }},
-                                  '{{ reservation.adresseDepart }}',
-                                  '{{ reservation.adresseDestination }}')">
-                        <div class="card-body">
-                            <a href="{{ path('app_reservation_transport_show_ADMIN', {'id': reservation.id}) }}" 
-                               class="floating-details-btn" title="Voir détails">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                            <h5 class="card-title" style="color:rgb(68, 71, 166);">
-                                <i class="fas fa-bus mr-2"></i>Trajet 
-                                <span class="badge badge-{{ 
-                                    reservation.status == 'confirmée' ? 'success' : 
-                                    (reservation.status == 'en_attente' ? 'warning' : 'danger') 
-                                }}">
-                                    {{ reservation.status }}
-                                </span>
-                            </h5>
-                            <div class="card-meta">
-                                <div class="card-meta-div">
-                                    <i class="fas fa-map-marker-alt text-danger"></i> {{ reservation.adresseDepart }}
-                                </div>
-                                <div class="card-meta-div">
-                                    <i class="fas fa-arrow-right text-muted"></i>
-                                </div>
-                                <div class="card-meta-div">
-                                    <i class="fas fa-map-marker-alt text-success"></i> {{ reservation.adresseDestination }}
-                                </div>
-                            </div>
-                            {% if reservation.tempsArrivage %}
-                            <div class="card-meta mt-2">
-                                <div class="card-meta-div">
-                                    <i class="far fa-clock text-info"></i> Temps estimé: {{ reservation.tempsArrivage }}
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle mr-2"></i>Aucune réservation de transport trouvée.
-                    </div>
-                    {% endfor %}
-                </div>
+<div class="dashboard-container">
+    <h1>Réservations de Transport - Admin Dashboard</h1>
+    <p class="subtitle">Optimisez les assignations avec la correspondance intelligente des préférences</p>
+
+    <!-- Filtres et actions -->
+    <div class="dashboard-section">
+        <h2><i class="fas fa-filter"></i> Filtres & Actions</h2>
+        <div class="filters-container">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <input type="text" class="search-input" id="search-input" placeholder="Rechercher par adresse, étudiant ou transporteur..." oninput="searchReservations()">
+                <select class="filter-select" id="filtre-statut" onchange="applyFilters()">
+                    <option value="">Tous les statuts</option>
+                    <option value="confirmée" {% if current_status == 'confirmée' %}selected{% endif %}>Confirmés</option>
+                    <option value="en_attente" {% if current_status == 'en_attente' %}selected{% endif %}>En attente</option>
+                    <option value="refusée" {% if current_status == 'refusée' %}selected{% endif %}>Refusés</option>
+                </select>
+                <select class="filter-select" id="filtre-compatibilite" onchange="filterByCompatibility()">
+                    <option value="">Toutes compatibilités</option>
+                    <option value="excellent">Excellente</option>
+                    <option value="partial">Partielle</option>
+                    <option value="poor">Faible</option>
+                </select>
+                <input type="date" class="date-input" id="date-start" value="{{ date_start|default('') }}" onchange="applyFilters()">
+                <input type="date" class="date-input" id="date-end" value="{{ date_end|default('') }}" onchange="applyFilters()">
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="action-btn" onclick="showCompatibilityAnalytics()"><i class="fas fa-handshake"></i> Correspondance des Préférences</button>
+                <button class="action-btn" onclick="exportToExcel()"><i class="fas fa-download"></i> Exporter Excel</button>
             </div>
         </div>
     </div>
-</section>
+
+    <!-- Tableau des réservations -->
+    <div class="dashboard-section">
+        <h2><i class="fas fa-table"></i> Liste des Réservations</h2>
+        {% if reservations|length > 0 %}
+        <table class="transport-table">
+            <thead>
+                <tr>
+                    <th data-sort="tempsArrivage">Temps Estimé</th>
+                    <th data-sort="adresseDepart">Adresse Départ</th>
+                    <th data-sort="adresseDestination">Adresse Destination</th>
+                    <th data-sort="distance">Distance (km)</th>
+                    <th data-sort="etudiant">Étudiant</th>
+                    <th data-sort="transporteur">Transporteur</th>
+                    <th data-sort="status">Statut</th>
+                    <th data-sort="compatibility">Compatibilité</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                <tr style="--index: {{ loop.index0 }}"
+                    data-id="{{ reservation.id }}"
+                    data-distance="{{ reservation.getDistance()|default(0) }}"
+                    data-temps="{{ reservation.tempsArrivage|default('0 min') }}"
+                    data-transporteur="{{ reservation.transporteur ? reservation.transporteur.cin : '' }}"
+                    data-depart="{{ reservation.adresseDepart|default('') }}"
+                    data-destination="{{ reservation.adresseDestination|default('') }}">
+                    <td class="tempsArrivage">{{ reservation.tempsArrivage ?: '-' }}</td>
+                    <td class="adresseDepart">{{ reservation.adresseDepart ?: '-' }}</td>
+                    <td class="adresseDestination">{{ reservation.adresseDestination ?: '-' }}</td>
+                    <td class="distance">{{ reservation.getDistance() ? reservation.getDistance()|round(2) : '-' }}</td>
+                    <td class="etudiant">{{ reservation.etudiant ? reservation.etudiant.nom ~ ' ' ~ reservation.etudiant.prenom : '-' }}</td>
+                    <td class="transporteur">{{ reservation.transporteur ? reservation.transporteur.nom ~ ' ' ~ reservation.transporteur.prenom : '-' }}</td>
+                    <td class="status">
+                        <span class="badge badge-{{ 
+                            reservation.status == 'confirmée' ? 'success' : 
+                            (reservation.status == 'en_attente' ? 'warning' : 'danger') }}"
+                            onclick="toggleStatus({{ reservation.id }}, this)">
+                            {{ reservation.status }}
+                        </span>
+                    </td>
+                    <td class="compatibility">
+                        {% if reservation.transporteur %}
+                        <i class="fas compatibility-icon" data-cin="{{ reservation.transporteur.cin }}"></i>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="actions action-icons">
+                        
+                        <i class="fas fa-trash" onclick="deleteRow({{ reservation.id }})" title="Supprimer"></i>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i> Aucune réservation de transport trouvée.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modale d'analyse de compatibilité -->
+    <div id="compatibilityModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('compatibilityModal')">×</span>
+            <h3>Correspondance des Préférences</h3>
+            <canvas id="compatibilityChart"></canvas>
+            <div class="transporteur-list" id="transporteurList"></div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
-    {{ parent() }}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+{{ parent() }}
+<script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    let compatibilityChart;
 
-    <script>
-        let map;
-        let routeControl;
-        const defaultCoords = [34.0, -6.0]; // Coordonnées par défaut (Maroc)
-
-        function initMap() {
-            map = L.map('routeMap').setView(defaultCoords, 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
-        }
-
-        function showRoute(id, depLat, depLng, destLat, destLng, depAdresse, destAdresse) {
-            if (!map) initMap();
-            
-            // Vérifie si les coordonnées sont valides
-            if (!depLat || !depLng || !destLat || !destLng) {
-                alert("Les coordonnées de ce trajet ne sont pas disponibles");
-                return;
-            }
-
-            // Nettoie la carte avant d'ajouter un nouveau trajet
-            if (routeControl) {
-                map.removeControl(routeControl);
-            }
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker) {
-                    map.removeLayer(layer);
-                }
-            });
-
-            // Ajoute les marqueurs
-            const departureMarker = L.marker([depLat, depLng], {
-                icon: L.divIcon({
-                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:red"></i>',
-                    className: 'custom-icon'
-                })
-            }).addTo(map).bindPopup(`<b>Départ:</b> ${depAdresse}`);
-
-            const destinationMarker = L.marker([destLat, destLng], {
-                icon: L.divIcon({
-                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:green"></i>',
-                    className: 'custom-icon'
-                })
-            }).addTo(map).bindPopup(`<b>Destination:</b> ${destAdresse}`);
-
-            // Trace l'itinéraire (version simplifiée sans instructions)
-            routeControl = L.Routing.control({
-    waypoints: [
-        L.latLng(depLat, depLng),
-        L.latLng(destLat, destLng)
-    ],
-    routeWhileDragging: false,
-    show: false,                     // Hides instructions panel
-    addWaypoints: false,
-    lineOptions: {
-        styles: [{color: '#4285F4', opacity: 0.7, weight: 5}]
-    },
-    createMarker: function() { return null; }, // Disables intermediate markers
-    // Keep itinerary enabled but empty
-    itinerary: {
-        template: '<div class="hidden-instructions"></div>' // Empty container
+    // Appliquer les filtres
+    function applyFilters() {
+        const statut = document.getElementById('filtre-statut').value;
+        const dateStart = document.getElementById('date-start').value;
+        const dateEnd = document.getElementById('date-end').value;
+        const compatibility = document.getElementById('filtre-compatibilite').value;
+        const params = new URLSearchParams();
+        if (statut) params.append('status', statut);
+        if (dateStart) params.append('date_start', dateStart);
+        if (dateEnd) params.append('date_end', dateEnd);
+        if (compatibility) params.append('compatibility', compatibility);
+        window.location.href = '{{ path('app_reservation_transport_index_ADMIN') }}?' + params.toString();
     }
-}).addTo(map);
 
-// Manually handle route calculation
-routeControl.on('routesfound', function(e) {
-    const routes = e.routes;
-    if (routes && routes[0]) {
-        // Update your distance and time display
-        const distance = (routes[0].summary.totalDistance / 1000).toFixed(1);
-        const duration = Math.round(routes[0].summary.totalTime / 60);
+    // Recherche dans les réservations
+    function searchReservations() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const rows = document.querySelectorAll('.transport-table tbody tr');
+        rows.forEach(row => {
+            const depart = row.querySelector('.adresseDepart').textContent.toLowerCase();
+            const destination = row.querySelector('.adresseDestination').textContent.toLowerCase();
+            const etudiant = row.querySelector('.etudiant').textContent.toLowerCase();
+            const transporteur = row.querySelector('.transporteur').textContent.toLowerCase();
+            row.style.display = (depart.includes(query) || destination.includes(query) || etudiant.includes(query) || transporteur.includes(query)) ? '' : 'none';
+        });
+        updateCompatibilityIcons();
+    }
+
+    // Tri du tableau
+    document.addEventListener('DOMContentLoaded', function() {
+        const headers = document.querySelectorAll('.transport-table th[data-sort]');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.dataset.sort;
+                const isAsc = !header.classList.contains('asc');
+                headers.forEach(h => h.classList.remove('asc', 'desc'));
+                header.classList.add(isAsc ? 'asc' : 'desc');
+
+                const rows = Array.from(document.querySelectorAll('.transport-table tbody tr'));
+                rows.sort((a, b) => {
+                    let aValue = a.querySelector(`.${sortKey}`).textContent.trim();
+                    let bValue = b.querySelector(`.${sortKey}`).textContent.trim();
+                    if (sortKey === 'distance') {
+                        aValue = parseFloat(aValue) || 0;
+                        bValue = parseFloat(bValue) || 0;
+                    } else if (sortKey === 'compatibility') {
+                        aValue = a.querySelector('.compatibility-icon')?.classList.contains('check') ? 3 : 
+                                 a.querySelector('.compatibility-icon')?.classList.contains('exclamation') ? 2 : 1;
+                        bValue = b.querySelector('.compatibility-icon')?.classList.contains('check') ? 3 : 
+                                 b.querySelector('.compatibility-icon')?.classList.contains('exclamation') ? 2 : 1;
+                    }
+                    return isAsc ? 
+                        (aValue > bValue ? 1 : -1) : 
+                        (aValue < bValue ? 1 : -1);
+                });
+
+                const tbody = document.querySelector('.transport-table tbody');
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+        updateCompatibilityIcons();
+
+        // Restore compatibility filter
+        const urlParams = new URLSearchParams(window.location.search);
+        const compatibility = urlParams.get('compatibility');
+        if (compatibility) {
+            document.getElementById('filtre-compatibilite').value = compatibility;
+            filterByCompatibility();
+        }
+    });
+
+    // Exporter en Excel
+    function exportToExcel() {
+        const rows = document.querySelectorAll('.transport-table tr');
+        const data = [
+            ['Temps Estimé', 'Adresse Départ', 'Adresse Destination', 'Distance (km)', 'Étudiant', 'Transporteur', 'Statut', 'Compatibilité']
+        ];
+
+        rows.forEach((row, rowIndex) => {
+            if (rowIndex === 0) return;
+            if (row.style.display === 'none') return;
+            const cols = row.querySelectorAll('td');
+            const compatibility = cols[7].querySelector('.compatibility-icon')?.classList.contains('check') ? 'Excellente' : 
+                                 cols[7].querySelector('.compatibility-icon')?.classList.contains('exclamation') ? 'Partielle' : 
+                                 cols[7].querySelector('.compatibility-icon') ? 'Faible' : '-';
+            data.push([
+                cols[0].textContent.trim(),
+                cols[1].textContent.trim(),
+                cols[2].textContent.trim(),
+                cols[3].textContent.trim(),
+                cols[4].textContent.trim(),
+                cols[5].textContent.trim(),
+                cols[6].textContent.trim(),
+                compatibility
+            ]);
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, "Réservations Transport");
+        XLSX.writeFile(wb, 'transport_reservations_export_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+    }
+
+    // Changer le statut
+    function toggleStatus(id, element) {
+        const statuses = ['confirmée', 'en_attente', 'refusée'];
+        const монтажStatus = element.textContent.trim();
+        const nextStatus = statuses[(statuses.indexOf(montageStatus) + 1) % statuses.length];
         
-        document.getElementById('distanceInfo').textContent = `${distance} km`;
-        document.getElementById('durationInfo').textContent = `${duration} min`;
-        
-        // Force hide any residual elements
-        document.querySelectorAll('.leaflet-routing-container').forEach(el => {
-            el.style.display = 'none';
+        fetch('/api/reservation_transport/' + id + '/status', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: nextStatus })
+        })
+        .then(response => {
+            if (response.ok) {
+                element.textContent = nextStatus;
+                element.className = 'badge badge-' + (
+                    nextStatus === 'confirmée' ? 'success' :
+                    nextStatus === 'en_attente' ? 'warning' : 'danger'
+                );
+                updateCompatibilityIcons();
+            } else {
+                alert('Erreur lors de la mise à jour du statut');
+            }
+        })
+        .catch(() => alert('Erreur réseau'));
+    }
+
+    // Édition inline (placeholder)
+    function editRow(id) {
+        alert('Fonctionnalité d\'édition inline en cours de développement pour Réservation #' + id);
+    }
+
+    // Supprimer une ligne
+    function deleteRow(id) {
+        if (confirm('Voulez-vous vraiment supprimer cette réservation ?')) {
+            fetch('/api/reservation_transport/' + id, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.querySelector(`tr[data-id="${id}"]`).remove();
+                    updateCompatibilityIcons();
+                } else {
+                    alert('Erreur lors de la suppression');
+                }
+            })
+            .catch(() => alert('Erreur réseau'));
+        }
+    }
+
+    // Analyse de compatibilité
+    function showCompatibilityAnalytics() {
+        document.getElementById('compatibilityModal').style.display = 'flex';
+        updateCompatibilityChart();
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            if (modalId === 'compatibilityModal' && compatibilityChart) {
+                compatibilityChart.destroy();
+                compatibilityChart = null;
+            }
+        }
+    }
+
+    // Close modal on outside click
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('compatibilityModal');
+        const modalContent = modal.querySelector('.modal-content');
+        if (modal.style.display === 'flex' && !modalContent.contains(event.target) && !event.target.closest('.action-btn')) {
+            closeModal('compatibilityModal');
+        }
+    });
+
+    function updateCompatibilityChart() {
+        const rows = Array.from(document.querySelectorAll('.transport-table tbody tr')).filter(row => row.style.display !== 'none');
+        const transporteurs = {{ transporteurs|map(t => {'cin': t.cin, 'nom': t.nom, 'prenom': t.prenom})|json_encode|raw }};
+        const compatibility = { excellent: 0, partial: 0, poor: 0 };
+        const transporteurStats = {};
+
+        // Initialize transporteur stats
+        transporteurs.forEach(t => {
+            transporteurStats[t.cin] = { excellent: 0, partial
+
+: 0, poor: 0, enAttenteCount: 0 };
+        });
+
+        // Déterminer les zones préférées
+        const preferredZones = {};
+        transporteurs.forEach(t => {
+            const res = rows.filter(row => row.dataset.transporteur === t.cin);
+            const zones = res.map(row => {
+                const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+                const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+                return [depart, destination];
+            }).flat().filter((v, i, a) => a.indexOf(v) === i);
+            preferredZones[t.cin] = zones.length > 0 ? zones[0] : 'unknown';
+
+            // Count en_attente reservations for this transporteur
+            const enAttenteRows = res.filter(row => row.querySelector('.status .badge').textContent.trim() === 'en_attente');
+            transporteurStats[t.cin].enAttenteCount = enAttenteRows.length;
+        });
+
+        rows.forEach(row => {
+            const cin = row.dataset.transporteur;
+            if (!cin) return;
+
+            const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+            const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+            const isMorning = parseInt(row.dataset.id) % 2 === 0;
+            const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
+            const timeMatch = isMorning;
+
+            const score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
+
+            if (score === 100) {
+                compatibility.excellent++;
+                transporteurStats[cin].excellent++;
+            } else if (score === 50) {
+                compatibility.partial++;
+                transporteurStats[cin].partial++;
+            } else {
+                compatibility.poor++;
+                transporteurStats[cin].poor++;
+            }
+        });
+
+        if (compatibilityChart) compatibilityChart.destroy();
+        const ctx = document.getElementById('compatibilityChart').getContext('2d');
+        compatibilityChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellente (100%)', 'Partielle (50%)', 'Faible (0%)'],
+                datasets: [{
+                    data: [compatibility.excellent, compatibility.partial, compatibility.poor],
+                    backgroundColor: ['rgba(16, 185, 129, 0.7)', 'rgba(249, 115, 22, 0.7)', 'rgba(239, 68, 68, 0.7)'],
+                    borderColor: ['rgba(16, 185, 129, 1)', 'rgba(249, 115, 22, 1)', 'rgba(239, 68, 68, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: context => `${context.label}: ${context.raw} réservations`
+                        }
+                    }
+                }
+            }
+        });
+
+        // Update transporteur list with email buttons
+        const transporteurList = document.getElementById('transporteurList');
+        transporteurList.innerHTML = '<h4>Transporteurs</h4>';
+        transporteurs.forEach(t => {
+            const stats = transporteurStats[t.cin];
+            transporteurList.innerHTML += `
+                <div class="transporteur-item">
+                    <span class="transporteur-name">${t.nom} ${t.prenom}</span>
+                    <button class="send-email-btn" onclick="sendCompatibilityEmail('${t.cin}')" ${stats.enAttenteCount === 0 ? 'disabled' : ''}>
+                        Envoyer Email (${stats.enAttenteCount} en attente)
+                    </button>
+                </div>
+            `;
+        });
+
+        updateCompatibilityIcons(preferredZones);
+    }
+
+    function sendCompatibilityEmail(cin) {
+        fetch(`/api/transporteur/${cin}/send-compatibility-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Email envoyé avec succès !');
+            } else {
+                alert(data.error || 'Erreur lors de l\'envoi de l\'email.');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur réseau:', error);
+            alert('Erreur réseau lors de l\'envoi de l\'email.');
         });
     }
-});
 
-            // Ajuste la vue de la carte
-            const bounds = L.latLngBounds(
-                [depLat, depLng],
-                [destLat, destLng]
+    function calculateCompatibilityDetails(row, preferredZones) {
+        const cin = row.dataset.transporteur;
+        if (!cin) return { score: 0, reasons: [], recommendations: [] };
+
+        const depart = row.dataset.depart.split(' ')[0].toLowerCase();
+        const destination = row.dataset.destination.split(' ')[0].toLowerCase();
+        const isMorning = parseInt(row.dataset.id) % 2 === 0;
+        const zoneMatch = preferredZones[cin] && (depart === preferredZones[cin] || destination === preferredZones[cin]);
+        const timeMatch = isMorning;
+
+        let score = (zoneMatch && timeMatch) ? 100 : (zoneMatch || timeMatch) ? 50 : 0;
+        let reasons = [];
+        let recommendations = [];
+
+        if (!zoneMatch) {
+            reasons.push(`La zone de départ (${depart}) ou destination (${destination}) ne correspond pas à la zone préférée (${preferredZones[cin] || 'aucune'}).`);
+            recommendations.push(`Ajoutez ${depart} ou ${destination} à vos zones préférées dans votre profil.`);
+        }
+        if (!timeMatch) {
+            reasons.push(`L'horaire (après-midi) ne correspond pas à votre préférence (matin).`);
+            recommendations.push(`Mettez à jour vos préférences horaires pour inclure les après-midi.`);
+        }
+
+        return { score, reasons, recommendations };
+    }
+
+    function updateCompatibilityIcons(preferredZones) {
+        const rows = Array.from(document.querySelectorAll('.transport-table tbody tr')).filter(row => row.style.display !== 'none');
+        document.querySelectorAll('.compatibility-icon').forEach(icon => {
+            const cin = icon.dataset.cin;
+            const row = rows.find(r => r.dataset.transporteur === cin && r.querySelector('.compatibility-icon') === icon);
+            if (!row) return;
+
+            const { score, reasons, recommendations } = calculateCompatibilityDetails(row, preferredZones);
+            icon.className = 'fas compatibility-icon ' + (
+                score === 100 ? 'fa-check check' :
+                score === 50 ? 'fa-exclamation exclamation' :
+                'fa-times times'
             );
-            map.fitBounds(bounds, {padding: [50, 50]});
-        }
+            icon.dataset.reasons = JSON.stringify(reasons);
+            icon.dataset.recommendations = JSON.stringify(recommendations);
+        });
+    }
 
-        function zoomIn() {
-            if (map) map.zoomIn();
-        }
-
-        function zoomOut() {
-            if (map) map.zoomOut();
-        }
-
-        // Initialise la carte au chargement
-        document.addEventListener('DOMContentLoaded', initMap);
-    </script>
+    function filterByCompatibility() {
+        const compatibility = document.getElementById('filtre-compatibilite').value;
+        const rows = document.querySelectorAll('.transport-table tbody tr');
+        rows.forEach(row => {
+            const icon = row.querySelector('.compatibility-icon');
+            if (!compatibility || !icon) {
+                row.style.display = '';
+                return;
+            }
+            const isExcellent = icon.classList.contains('check');
+            const isPartial = icon.classList.contains('exclamation');
+            const isPoor = icon.classList.contains('times');
+            row.style.display = (
+                (compatibility === 'excellent' && isExcellent) ||
+                (compatibility === 'partial' && isPartial) ||
+                (compatibility === 'poor' && isPoor)
+            ) ? '' : 'none';
+        });
+    }
+</script>
 {% endblock %}

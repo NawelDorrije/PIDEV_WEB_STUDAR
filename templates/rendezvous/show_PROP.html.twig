@@ -181,10 +181,10 @@
                                         {% endif %}
                                     </span>
                                 </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Logement:</span>
-                                    <span class="detail-value">{{ rendezvou.idLogement }}</span>
-                                </div>
+                                  <div class="detail-item">
+        <span class="detail-label">Logement:</span>
+        <span class="detail-value">{{ rendezvou.getLogementAddress(logement_repo) }}</span>
+    </div>
                             </div>
                             
                           <div class="action-buttons">

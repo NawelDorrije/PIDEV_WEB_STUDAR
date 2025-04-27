@@ -2,8 +2,303 @@
 
 {% block title %}Home - StuDar{% endblock %}
 
-{% block body %}
-<style>
+{% block css %}
+    <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}">
+    <style>
+        .main-banner .carousel-inner {
+            height: 500px;
+            overflow: hidden;
+            border-radius: 15px; /* Subtle rounding */
+            clip-path: polygon(
+                0% 2%, 2% 0%, 98% 0%, 100% 2%,
+                100% 98%, 98% 100%, 2% 100%, 0% 98%
+            ); /* Less bubbly shape */
+            animation: pulse 10s ease-in-out infinite; /* Subtle animation */
+        }
+
+        
+
+        .main-banner .carousel-item {
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            padding: 40px 10%;
+            height: 100%;
+            position: relative;
+        }
+
+        .main-banner .item-1 {
+            background-image: url({{ asset('images/pexels-cottonbro-5077049.jpg') }});
+        }
+
+        .main-banner .item-2 {
+            background-image: url({{ asset('images/meubleocc1.jpg') }});
+        }
+
+        .main-banner .item-3 {
+            background-image: url({{ asset('images/tranposrt.jpg') }});
+        }
+
+        .main-banner .carousel-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .main-banner .header-text {
+            position: absolute;
+            z-index: 2;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            perspective: 1000px;
+            width: 40%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .main-banner .carousel-item.active .header-text {
+            opacity: 1;
+        }
+
+        /* Positioning for each slide */
+        .main-banner .item-1 .header-text,
+        .main-banner .item-3 .header-text {
+            right: 10%;
+            text-align: right;
+            transform: translateY(-50%) translateX(20px);
+        }
+
+        .main-banner .item-2 .header-text {
+            left: 10%;
+            text-align: left;
+            transform: translateY(-50%) translateX(-20px);
+        }
+
+        .main-banner .carousel-item.active .item-1 .header-text,
+        .main-banner .carousel-item.active .item-3 .header-text {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .main-banner .carousel-item.active .item-2 .header-text {
+            transform: translateY(-50%) translateX(0);
+        }
+
+        /* Category Badge - Light Blue-Grey Container with Glassmorphism */
+        .main-banner .header-text span.category {
+            background: rgba(176, 196, 222, 0.3); /* Light blue-grey */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff; /* White for clarity */
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            display: inline-block;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+            animation: shine 2s infinite ease-in-out;
+            transition: transform 0.3s ease; /* Hover animation */
+        }
+
+        .main-banner .header-text span.category:hover {
+            transform: scale(1.05); /* Subtle scale on hover for liveliness */
+        }
+
+        .main-banner .header-text span.category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.5s;
+        }
+
+        .main-banner .carousel-item.active .header-text span.category::before {
+            left: 100%;
+        }
+
+        /* Main Heading - White with White Shadow */
+        /* Main Heading - Light Grey with White Shine */
+        .main-banner .header-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color:rgb(105, 104, 104); /* Light grey */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+            line-height: 1.3;
+            margin: 0 0 20px;
+            padding-bottom: 15px;
+            position: relative;
+            animation: shine 2s infinite ease-in-out;
+        }
+
+        .main-banner .header-text h2:hover {
+            transform: scale(1.05); /* Subtle scale on hover for liveliness */
+        }
+
+        .main-banner .header-text h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 100%; /* Full width of text */
+    height: 5px; /* Fine line */
+    background: linear-gradient(90deg, rgba(129, 127, 127, 0.5), rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.5)); /* Gradient for sparkle */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5); /* Glowing effect */
+    animation: diamondShine 3s ease-in-out infinite; /* Shimmer animation */
+}
+
+.main-banner .item-1 .header-text h2::after,
+.main-banner .item-3 .header-text h2::after {
+    right: 0;
+}
+
+.main-banner .item-2 .header-text h2::after {
+    left: 0;
+}
+
+/* Diamond shine animation */
+@keyframes diamondShine {
+    0%, 100% {
+        background-position: -100%;
+    }
+    50% {
+        background-position: 100%;
+    }
+}
+
+        /* Shine Animation */
+        @keyframes shine {
+            0%, 100% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.7);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0);
+            }
+            50% {
+                transform: translateY(calc(-50% - 10px)) translateX(0);
+            }
+        }
+
+        .main-banner .carousel-control-prev,
+        .main-banner .carousel-control-next {
+            width: 100px;
+            height: 0px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 50%;
+        }
+
+        .main-banner .carousel-control-prev:hover,
+        .main-banner .carousel-control-next:hover {
+            background: rgba(123, 117, 117, 0.8);
+        }
+
+        .main-banner .carousel-control-prev-icon,
+        .main-banner .carousel-control-next-icon {
+            background-image: none;
+            color: #fff;
+            font-size: 30px;
+            line-height: 60px;
+        }
+
+        .main-banner .carousel-control-prev-icon::before {
+            content: '\2039';
+        }
+
+        .main-banner .carousel-control-next-icon::before {
+            content: '\203A';
+        }
+
+        .main-banner .carousel-indicators {
+            bottom: 20px;
+        }
+
+        .main-banner .carousel-indicators [data-bs-target] {
+            width: 12px;
+            height: 12px;
+            background-color: rgba(150, 149, 149, 0.5);
+            border-radius: 50%;
+            margin: 0 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        .main-banner .carousel-indicators .active {
+            background-color: #ffffff;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            .main-banner .header-text {
+                width: 50%;
+            }
+
+            .main-banner .header-text h2 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-banner .carousel-inner {
+                height: 350px;
+                border-radius: 10px;
+                clip-path: polygon(
+                    0% 3%, 3% 0%, 97% 0%, 100% 3%,
+                    100% 97%, 97% 100%, 3% 100%, 0% 97%
+                ); /* Adjusted for smaller screens */
+            }
+
+            .main-banner .header-text {
+                width: 60%;
+            }
+
+            .main-banner .header-text h2 {
+                font-size: 1.8rem;
+                line-height: 1.2;
+                
+            }
+
+            .main-banner .header-text span.category {
+                padding: 8px 20px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-banner .header-text {
+                width: 80%;
+            }
+
+            .main-banner .header-text h2 {
+                font-size: 1.6rem;
+            }
+
+            .main-banner .header-text span.category {
+                padding: 6px 15px;
+                font-size: 0.9rem;
+            }
+        }
+      
 /* Styles pour les cartes (furniture-card utilisé pour toutes les sections) */
 .furniture-card {
     background: #fff;
@@ -329,8 +624,12 @@
         flex: none;
     }
 }
-</style>
 
+    </style>
+{% endblock %}
+
+{% block body %}
+    
 <!-- Carousel -->
 <div id="housingCarousel" class="carousel slide main-banner" data-bs-ride="carousel">
     <div class="carousel-indicators">
@@ -542,6 +841,9 @@
             </div>
         </div>
     </div>
+
+
+
 </div>
 
 <!-- Section Vidéo -->
@@ -580,6 +882,25 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const carousel = document.querySelector('#housingCarousel');
+            const items = carousel.querySelectorAll('.carousel-item');
+
+            // Enhance Bootstrap carousel transitions
+            items.forEach(item => {
+                item.addEventListener('slid.bs.carousel', function () {
+                    const activeItem = carousel.querySelector('.carousel-item.active');
+                    activeItem.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        activeItem.style.transform = 'scale(1)';
+                    }, 500);
+                });
+            });
+        });
+    </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

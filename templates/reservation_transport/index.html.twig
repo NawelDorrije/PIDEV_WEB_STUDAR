@@ -176,6 +176,52 @@
         background: transparent;
         border: none;
     }
+     .reservation-slider {
+        position: relative;
+        min-height: 400px;
+    }
+    
+    .reservation-slide {
+        transition: all 0.5s ease;
+    }
+    
+    .hidden-slide {
+        display: none;
+    }
+    
+    .slider-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+    }
+    
+    .btn-prev, .btn-next {
+        background-color: #4453A6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin: 0 10px;
+    }
+    
+    .btn-prev:hover, .btn-next:hover {
+        background-color: #3a4878;
+    }
+    
+    .btn-prev:disabled, .btn-next:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .page-indicator {
+        font-weight: bold;
+        color: #4453A6;
+        min-width: 100px;
+        text-align: center;
+    }
 </style>
 {% endblock %}
 

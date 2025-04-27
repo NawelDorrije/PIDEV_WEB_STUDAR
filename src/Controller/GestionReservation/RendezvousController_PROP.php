@@ -1,10 +1,13 @@
 <?php
-
 namespace App\Controller\GestionReservation;
 
+use App\Entity\Logement;
 use App\Entity\Rendezvous;
+use App\Entity\Utilisateur;
 use App\Form\RendezvousType;
 use App\Repository\RendezvousRepository;
+use App\Repository\LogementRepository;
+use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +18,11 @@ use Symfony\Component\Routing\Attribute\Route;
 final class RendezvousController_PROP extends AbstractController
 {
     #[Route('/', name: 'app_rendezvous_index_PROP', methods: ['GET'])]
-    public function index(Request $request, RendezvousRepository $rendezvousRepository): Response
+    public function index(
+      Request $request, 
+      RendezvousRepository $rendezvousRepository, 
+      LogementRepository $logementRepository
+  ): Response
     {
         $status = $request->query->get('status');
         
@@ -27,7 +34,9 @@ final class RendezvousController_PROP extends AbstractController
         
         return $this->render('rendezvous/index_PROP.html.twig', [
             'rendezvouses' => $rendezvouses,
-            'current_status' => $status
+            'current_status' => $status,
+            'logement_repo' => $logementRepository
+
         ]);
     }
 
@@ -35,10 +44,12 @@ final class RendezvousController_PROP extends AbstractController
 
 
     #[Route('/{id}', name: 'app_rendezvous_show_PROP', methods: ['GET'])]
-    public function show(Rendezvous $rendezvou): Response
+    public function show(Rendezvous $rendezvou, LogementRepository $logementRepository): Response
     {
         return $this->render('rendezvous/show_PROP.html.twig', [
             'rendezvou' => $rendezvou,
+            'logement_repo' => $logementRepository
+
         ]);
     }
 
