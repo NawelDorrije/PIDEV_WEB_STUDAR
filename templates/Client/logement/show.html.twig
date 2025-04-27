@@ -355,19 +355,22 @@
                         <div class="col-lg-3">
                             <h4>Description</h4>
                             <p>{{ logement.description }}</p>
-                            <div class="icon-button mt-3">
-                                <a href="{{ path('app_logement_edit', {'id': logement.id}) }}">
-                                    <i class="fa fa-edit"></i> Modifier
-                                </a>
-                            </div>
-                            <div class="icon-button mt-2">
-                                <a href="#" onclick="event.preventDefault(); document.getElementById('delete-form').submit();">
-                                    <i class="fa fa-trash"></i> Supprimer
-                                </a>
-                                <form id="delete-form" method="post" action="{{ path('app_logement_delete', {'id': logement.id}) }}" style="display: none;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ logement.id) }}">
-                                </form>
-                            </div>
+                            {# Conditionally show Edit and Delete buttons for admin or owner #}
+                            {% if is_granted('ROLE_ADMIN') or (app.user and app.user.cin == logement.utilisateurCin.cin) %}
+                                <div class="icon-button mt-3">
+                                    <a href="{{ path('app_logement_edit', {'id': logement.id}) }}">
+                                        <i class="fa fa-edit"></i> Modifier
+                                    </a>
+                                </div>
+                                <div class="icon-button mt-2">
+                                    <a href="#" onclick="event.preventDefault(); document.getElementById('delete-form').submit();">
+                                        <i class="fa fa-trash"></i> Supprimer
+                                    </a>
+                                    <form id="delete-form" method="post" action="{{ path('app_logement_delete', {'id': logement.id}) }}" style="display: none;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ logement.id) }}">
+                                    </form>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -377,10 +380,8 @@
                             <div id="preview-slider" class="{{ logement.imageLogements|length > 0 ? 'visible' : '' }}">
                                 <div class="slider-css-target">
                                     {% if logement.imageLogements|length > 0 %}
-                                    
                                         <ul>
                                             {% for photo in logement.imageLogements %}
-                                            {{dump(photo)}}
                                                 <li>
                                                     <a href="#image_{{ loop.index }}">
                                                         <img src="{{ asset('Uploads/photos/' ~ photo.url) }}" 
