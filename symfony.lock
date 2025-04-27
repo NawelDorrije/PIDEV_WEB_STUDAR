@@ -91,6 +91,16 @@
         "files": [
             "./config/packages/liip_imagine.yaml",
             "./config/routes/liip_imagine.yaml"
+    "php-http/discovery": {
+        "version": "1.20",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "1.18",
+            "ref": "f45b5dd173a27873ab19f5e3180b2f661c21de02"
+        },
+        "files": [
+            "./config/packages/http_discovery.yaml"
         ]
     },
     "phpunit/phpunit": {
@@ -179,12 +189,15 @@
         ]
     },
     "symfony/infobip-notifier": {
+    "symfony/google-mailer": {
         "version": "6.4",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
             "version": "5.2",
             "ref": "deed501bbf68e206601e68f4f03319c227278a0c"
+            "version": "4.4",
+            "ref": "f8fd4ddb9b477510f8f4bce2b9c054ab428c0120"
         }
     },
     "symfony/mailer": {

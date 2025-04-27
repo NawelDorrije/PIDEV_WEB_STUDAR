@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\Utilisateur;
 use App\Enums\RoleUtilisateur;
 use App\Form\UtilisateurType;
+use App\Repository\LogementRepository;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,6 +26,12 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 #[Route('/utilisateur')]
 final class UtilisateurController extends AbstractController
 {
+    private $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
     #[Route(name: 'app_utilisateur_index', methods: ['GET'])]
     public function index(UtilisateurRepository $utilisateurRepository): Response
     {
@@ -268,157 +276,31 @@ public function signin(AuthenticationUtils $authenticationUtils): Response
         'error' => $authenticationUtils->getLastAuthenticationError()
     ]);
 }
-// In your UtilisateurController
-#[Route('/dashboard', name: 'app_admin_dashboard')]
-public function dashboard(): Response
-{
-    $this->denyAccessUnlessGranted('ROLE_ADMIN');
-    
-    return $this->render('dashboard.html.twig');
-}
-#[Route('/forgotPassword', name: 'app_utilisateur_forgotPassword', methods: ['GET', 'POST'])]
-public function forgotPassword(
-    Request $request,
-    UtilisateurRepository $utilisateurRepository,
-    EntityManagerInterface $entityManager,
-    MailerInterface $mailer,
-    LoggerInterface $logger
-): Response {
-    // Handle GET request (coming from signin page)
-    if ($request->isMethod('GET')) {
-        $email = $request->query->get('email');
-        
-        if (empty($email)) {
-            $this->addFlash('error', 'Veuillez saisir votre email');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
-        
-        // Store email in session and render the forgot password page
-        $request->getSession()->set('reset_email', $email);
-        return $this->render('utilisateur/forgotPassword.html.twig', [
-            'email' => $email
-        ]);
-    }
-    
-    // Handle POST request (from forgot password form)
-    if ($request->isMethod('POST')) {
-        $email = $request->getSession()->get('reset_email');
-        
-        if (empty($email)) {
-            $this->addFlash('error', 'Session expirée, veuillez recommencer');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
-
-        $user = $utilisateurRepository->findOneBy(['email' => $email]);
-        if (!$user) {
-            $this->addFlash('error', 'Aucun compte associé à cet email');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
-
-        // Generate and save reset code
-        $resetCode = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        $user->setResetCode($resetCode);
-        $user->setResetCodeExpiresAt(new \DateTimeImmutable('+1 hour')); // Code expires in 1 hour
-        $entityManager->flush();
-
-        try {
-            // Send email with reset code
-            $email = (new TemplatedEmail())
-                ->from(new Address('studar21@gmail.com', 'Studar'))
-                ->to($user->getEmail())
-                ->subject('Réinitialisation de votre mot de passe')
-                ->htmlTemplate('emails/reset_password.html.twig')
-                ->context([
-                    'resetCode' => $resetCode,
-                    'expiration_date' => new \DateTime('+1 hour')
-                ]);
-
-            $mailer->send($email);
-            
-            // Redirect to verification page
-            return $this->redirectToRoute('app_utilisateur_verify_reset_code');
-            
-        } catch (\Exception $e) {
-            $logger->error('Erreur d\'envoi d\'email: '.$e->getMessage());
-            $this->addFlash('error', 'Erreur lors de l\'envoi du code');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
-    }
-}
-
-
-// #[Route('/verify_reset_code', name: 'app_utilisateur_verify_reset_code', methods: ['GET', 'POST'])]
-// public function verifyResetCode(
-//     Request $request,
-//     UtilisateurRepository $utilisateurRepository
-// ): Response {
-//     $email = $request->getSession()->get('reset_email');
-    
-//     if (!$email) {
-//         $this->addFlash('error', 'Session expirée, veuillez recommencer');
-//         return $this->redirectToRoute('app_utilisateur_signin');
+// #[Route('/api/users', name: 'app_utilisateur_api_users', methods: ['GET'])]
+// public function getUsersApi(EntityManagerInterface $em): JsonResponse
+// {
+//     if (!$this->getUser()) {
+//         $this->logger->warning('User not authenticated when accessing app_utilisateur_api_users', [
+//             'user' => $this->getUser() ? $this->getUser()->getUserIdentifier() : 'null',
+//         ]);
+//         return $this->json(['error' => 'Authentication required'], 401);
 //     }
-    
-//     $user = $utilisateurRepository->findOneBy(['email' => $email]);
-//     if (!$user) {
-//         $this->addFlash('error', 'Utilisateur non trouvé');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     if ($request->isMethod('POST')) {
-//         $submittedCode = $request->request->get('reset_code');
-        
-//         if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
-//             $this->addFlash('error', 'Code incorrect');
-//             return $this->redirectToRoute('app_utilisateur_verify_reset_code');
-//         }
-        
-//         // Code valide, passe à la réinitialisation
-//         $request->getSession()->set('reset_verified', true);
-//         return $this->redirectToRoute('app_reset_password');
-//     }
-    
-//     return $this->render('utilisateur/verify_reset_code.html.twig');
+
+//     $users = $em->getRepository(Utilisateur::class)->findAll();
+//     $this->logger->info('Users retrieved for API', [
+//         'count' => count($users),
+//     ]);
+
+//     $userData = array_map(fn($user) => [
+//         'id' => $user->getId(),
+//         'name' => $user->getNom(),
+//         'email' => $user->getEmail(),
+//     ], $users);
+
+//     $this->logger->info('User data prepared for API', [
+//         'userData' => $userData,
+//     ]);
+
+//     return $this->json($userData);
 // }
-// #[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
-// public function resetPassword(
-//     Request $request,
-//     UtilisateurRepository $utilisateurRepository,
-//     EntityManagerInterface $entityManager,
-//     UserPasswordHasherInterface $passwordHasher
-// ): Response {
-//     $email = $request->getSession()->get('reset_email');
-//     $verified = $request->getSession()->get('reset_verified');
-    
-//     if (!$email || !$verified) {
-//         $this->addFlash('error', 'Session expirée, veuillez recommencer');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     $user = $utilisateurRepository->findOneBy(['email' => $email]);
-//     if (!$user) {
-//         $this->addFlash('error', 'Utilisateur non trouvé');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     if ($request->isMethod('POST')) {
-//         $newPassword = $request->request->get('new_password');
-        
-//         // Hash the new password
-//         $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-//         $user->setMdp($hashedPassword);
-//         $user->setResetCode(null); // Clear reset code
-//         $entityManager->flush();
-        
-//         // Clear session
-//         $request->getSession()->remove('reset_email');
-//         $request->getSession()->remove('reset_verified');
-        
-//         $this->addFlash('success', 'Mot de passe mis à jour avec succès');
-//         return $this->redirectToRoute('app_utilisateur_signin');
-//     }
-    
-//     return $this->render('utilisateur/reset_password.html.twig');
-// }
-
 }

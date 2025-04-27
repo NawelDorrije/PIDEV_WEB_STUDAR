@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use LongitudeOne\Spatial\PHP\Types\SpatialInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-
+use Doctrine\DBAL\Types\Types;
 #[ORM\Entity(repositoryClass: LogementRepository::class)]
 #[ORM\Table(name: "logement")]
 class Logement
@@ -47,6 +47,11 @@ class Logement
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $adresse = null;
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $emogies = [];
+
+    #[ORM\Column(type: "integer",name: "shareCount", options: ["default" => 0])]
+    private int $shareCount = 0;
 
     #[ORM\Column(type: 'string', enumType: Statut::class)]
     private Statut $statut = Statut::DISPONIBLE;
@@ -243,7 +248,7 @@ public function setUtilisateurCin(?Utilisateur $utilisateur_cin): static
     return $this;
 }
 
-/**
+  /**
  * @return Collection<int, Reclamation>
  */
 public function getReclamations(): Collection
@@ -273,5 +278,37 @@ public function removeReclamation(Reclamation $reclamation): static
     return $this;
 }
 
+public function getEmojis(): ?array
+{
+    return $this->emogies;
+}
 
+public function setEmojis(?array $emogies): static
+{
+    $this->emogies = $emogies;
+    return $this;
+}
+
+public function addEmoji(string $userCin, string $emogies): static
+{
+    $this->emogies[$userCin] = $emogies;
+    return $this;
+}
+
+public function removeEmoji(string $userCin): static
+{
+    unset($this->emogies[$userCin]);
+    return $this;
+}
+
+    public function getShareCount(): int
+    {
+        return $this->shareCount;
+    }
+
+    public function setShareCount(int $shareCount): self
+    {
+        $this->shareCount = $shareCount;
+        return $this;
+    }
 }
