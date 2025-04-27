@@ -2,4 +2,4 @@ framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
         # Force l'envoi synchrone
-        message_bus: null
+        # message_bus: null

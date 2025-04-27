@@ -34,7 +34,10 @@ class UtilisateurRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('u')
             ->where('u.cin = :cin')
-    
+            ->setParameter('cin', $cin)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
     public function findByCin(string $cin): ?Utilisateur
     {
         return $this->createQueryBuilder('u')
@@ -43,6 +46,7 @@ class UtilisateurRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+    
     //    /**
     //     * @return Utilisateur[] Returns an array of Utilisateur objects
     //     */

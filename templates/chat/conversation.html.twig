@@ -662,6 +662,7 @@
     {{ encore_entry_script_tags('app') }}
     {{ encore_entry_script_tags('chat') }}
     <script>
+    
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOMContentLoaded fired');
             if (typeof initializeWebSocket === 'function') {

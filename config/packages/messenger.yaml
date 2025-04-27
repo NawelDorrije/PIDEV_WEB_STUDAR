@@ -1,7 +1,10 @@
 framework:
     messenger:
-        # Désactive complètement le transport asynchrone
-        transports: {}
-        
-        # Désactive le routage des messages
-        routing: {}
+        transports:
+            async: 'sync://'
+        routing:
+            Symfony\Component\Mailer\Messenger\SendEmailMessage: async
+            Symfony\Component\Notifier\Message\ChatMessage: async
+            Symfony\Component\Notifier\Message\SmsMessage: async
+
+
