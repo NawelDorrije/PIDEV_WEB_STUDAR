@@ -1,10 +1,22 @@
 framework:
     messenger:
         transports:
-            async: 'sync://'
+            async:
+                dsn: 'doctrine://default'
+                options:
+                    queue_name: default
         routing:
-            # Symfony\Component\Mailer\Messenger\SendEmailMessage: async
             Symfony\Component\Notifier\Message\ChatMessage: async
             Symfony\Component\Notifier\Message\SmsMessage: async
+
+
+# framework:
+#     messenger:
+#         transports:
+#             async: 'sync://'
+#         routing:
+#             # Symfony\Component\Mailer\Messenger\SendEmailMessage: async
+#             Symfony\Component\Notifier\Message\ChatMessage: async
+#             Symfony\Component\Notifier\Message\SmsMessage: async
 
 
