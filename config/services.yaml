@@ -1,8 +1,8 @@
 # config/services.yaml
 
 # Imports
-imports:
-    - { resource: 'parameters.yaml' }
+# imports:
+#     - { resource: 'parameters.yaml' }
 
 # Parameters
 parameters:
@@ -23,6 +23,8 @@ parameters:
     mailer_from: '%env(MAILER_FROM)%'
     mailer_from_name: '%env(MAILER_FROM_NAME)%'
     app.gemini_api_key: '%env(GEMINI_API_KEY)%'
+    audio_temp_dir: '%kernel.project_dir%/var/audio_temp'
+
 
 # Services
 services:
@@ -87,3 +89,8 @@ services:
         public: true
         autowire: true
         autoconfigure: true
+        
+    App\Service\ChatbotService:
+        arguments:
+            $httpClient: '@http_client'
+            $logger: '@monolog.logger'

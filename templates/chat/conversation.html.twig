@@ -15,7 +15,9 @@
     <style>
      /* Styles CSS intégrés */
         @import '~bootstrap/dist/css/bootstrap.min.css';
-
+.record-btn.active {
+            color: red;
+        }
         .chat-container {
             height: calc(100vh - 106px); /* Adjust for header (56px) + footer (50px) */
             max-height: calc(100vh - 106px); /* Adjust for header and footer */
@@ -483,6 +485,7 @@
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}
+
 {% block body %}
     <div class="chat-container" data-current-user-cin="{{ current_user.cin }}" data-receiver-cin="{{ receiver.cin }}">
         <div class="app-one d-flex">
@@ -574,7 +577,7 @@
                                     </div>
                                 </div>
                             {% endif %}
-                        {% endfor %}
+                            {% endfor %}
                     </div>
                 </div>
             </div>
@@ -643,7 +646,9 @@
                         <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..."></textarea>
                     </div>
                     <div class="reply-recording">
-                        <i class="fas fa-microphone fa-2x" aria-hidden="true"></i>
+                        <button type="button" class="btn btn-link p-0 record-btn" id="record-btn">
+                            <i class="fas fa-microphone fa-2x" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="reply-send">
                         <button type="button" class="btn btn-link p-0" id="send-message-btn">
@@ -660,11 +665,12 @@
     {{ parent() }}
     {{ encore_entry_script_tags('app') }}
     <script>
-        // WebSocket and chat functionality
         let socket;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         const reconnectInterval = 3000;
+        let mediaRecorder;
+        let audioChunks = [];
 
         // Request notification permission
         function requestNotificationPermission() {
@@ -703,7 +709,6 @@
                 return;
             }
 
-            // Check if the document is hidden (tab is in background)
             if (document.hidden) {
                 const notification = new Notification(`New Message from ${senderName}`, {
                     body: messageContent,
@@ -711,7 +716,7 @@
                     badge: 'https://bootdey.com/img/Content/avatar/avatar1.png',
                     timestamp: Date.now(),
                     vibrate: [200, 100, 200],
-                    tag: 'chat-message' // Prevents duplicate notifications
+                    tag: 'chat-message'
                 });
 
                 notification.onclick = function() {
@@ -765,7 +770,6 @@
                             (message.senderCin === receiverCin || message.receiverCin === receiverCin)) {
                             appendMessage(message);
 
-                            // Show notification if the message is from the other user
                             if (message.senderCin !== currentUserCin) {
                                 showNotification('{{ receiver.nom }} {{ receiver.prenom }}', message.content);
                             }
@@ -915,14 +919,77 @@
             }
         }
 
-        // Initialize chat on page load
+        // Voice recording
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        sendVoiceMessage(audioBlob);
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    const recordBtn = document.getElementById('record-btn');
+                    recordBtn.classList.add('active');
+                    console.log('Recording started');
+                })
+                .catch(error => {
+                    console.error('Error accessing microphone:', error);
+                    alert('Unable to access microphone. Please check permissions.');
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                const recordBtn = document.getElementById('record-btn');
+                recordBtn.classList.remove('active');
+                console.log('Recording stopped');
+            }
+        }
+
+      // In conversation.html.twig, update the sendVoiceMessage function
+function sendVoiceMessage(audioBlob) {
+    console.log('Audio Blob MIME type:', audioBlob.type); // Log MIME type
+    const chatContainer = document.querySelector('.chat-container');
+    const receiverCin = chatContainer.dataset.receiverCin;
+    const formData = new FormData();
+    // Force the MIME type to audio/webm
+    const audioBlobWithCorrectMime = new Blob([audioBlob], { type: 'audio/webm' });
+    formData.append('audio', audioBlobWithCorrectMime, 'recording.webm');
+
+    fetch(`/chat/send-voice/${receiverCin}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Voice message sent:', data.message);
+        } else {
+            console.error('Voice message error:', data.error);
+            alert('Error sending voice message: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error uploading voice message:', error);
+        alert('An error occurred while sending the voice message.');
+    });
+}
+
+        // Initialize chat
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOMContentLoaded fired');
 
-            // Request notification permission
             requestNotificationPermission();
-
-            // Initialize WebSocket
             initializeWebSocket('{{ current_user.cin }}');
             const conversation = document.getElementById('conversation');
             if (conversation) {
@@ -931,7 +998,6 @@
                 console.error('Conversation element not found');
             }
 
-            // Bind send message event
             const sendButton = document.getElementById('send-message-btn');
             if (sendButton) {
                 sendButton.addEventListener('click', function() {
@@ -940,6 +1006,22 @@
                 });
             } else {
                 console.error('Send button not found');
+            }
+
+            // Voice recording toggle
+            const recordBtn = document.getElementById('record-btn');
+            if (recordBtn) {
+                let isRecording = false;
+                recordBtn.addEventListener('click', function() {
+                    isRecording = !isRecording;
+                    if (isRecording) {
+                        startRecording();
+                    } else {
+                        stopRecording();
+                    }
+                });
+            } else {
+                console.error('Record button not found');
             }
         });
     </script>
