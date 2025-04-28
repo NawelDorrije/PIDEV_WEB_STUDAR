@@ -66,7 +66,7 @@ final class LogementController extends AbstractController
     
         return $logementsWithReactions;
     }
-    #[Route('/', name: 'app_logement_index', methods: ['GET'])]
+    #[Route('/logement', name: 'app_logement_index', methods: ['GET'])]
     public function index(LogementRepository $logementRepository): Response
     {
         $logements = $logementRepository->findAll();
@@ -102,7 +102,6 @@ final class LogementController extends AbstractController
     
         return $this->json($userData);
     }
-
     // New method to handle sharing a logement
     #[Route('/{id}/share', name: 'app_logement_share', methods: ['POST'])]
     public function share(Request $request, Logement $logement, UtilisateurRepository $utilisateurRepository, MailerInterface $mailer): JsonResponse
@@ -458,7 +457,7 @@ final class LogementController extends AbstractController
             return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
         }
     
-        $logement->addEmoji($user->getCin(), $emoji);
+        $logement->addEmoji($user->getUserIdentifier(), $emoji);
         $entityManager->flush();
     
         $this->addFlash('success', 'Réaction mise à jour avec succès !');

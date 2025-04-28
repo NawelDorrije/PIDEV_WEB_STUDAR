@@ -197,7 +197,6 @@
             "branch": "main",
             "version": "4.4",
             "ref": "f8fd4ddb9b477510f8f4bce2b9c054ab428c0120"
-        }
         },
         "files": [
             "./config/packages/infobip_notifier.yaml"

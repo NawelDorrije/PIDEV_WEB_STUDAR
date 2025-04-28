@@ -1,24 +1,25 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
+
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
         #server_version: '16'
+
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+
         schema_filter: ~^(voiture|transport|utilisateur|reservation_transport)$~
 
         mapping_types:
             enum: string
             point: point
-
         types:
-            point: LongitudeOne\Spatial\DBAL\Types\Geometry\PointType
-            statut: App\Doctrine\DBAL\Types\StatutType
-            role_enum: App\Doctrine\DBAL\Types\RoleEnumType
             voiture_disponibilite: App\Doctrine\DBAL\Types\VoitureDisponibiliteType
             transport_status: App\Doctrine\DBAL\Types\TransportStatusType
+            role_enum: App\Doctrine\DBAL\Types\RoleEnumType
             enum: App\Doctrine\DBAL\Types\EnumType
+            point: App\Doctrine\DBAL\Types\PointType
 
     orm:
         auto_generate_proxy_classes: true
@@ -34,10 +35,14 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+        dql:
+            datetime_functions:
+                date_format: DoctrineExtensions\Query\Mysql\DateFormat
 
 when@test:
     doctrine:
         dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
 when@prod:

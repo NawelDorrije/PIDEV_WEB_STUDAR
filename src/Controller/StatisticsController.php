@@ -21,7 +21,7 @@ class StatisticsController extends AbstractController
         $this->logger = $logger;
     }
 
-    #[Route('/statistics', name: 'app_statistics')]
+    #[Route('/statistics/admin', name: 'app_statistics')]
     public function index(Request $request, ReclamationRepository $reclamationRepository, ChatbotService $chatbotService): Response
     {
         $year = (int) $request->query->get('year', 2025);

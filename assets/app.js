@@ -1,8 +1,8 @@
 // assets/app.js
-import $ from 'jquery';
+//import  from 'jquery';
 import 'owl.carousel';
 
-window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
+//window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
@@ -10,7 +10,7 @@ import './js/custom.js';
 // Importer FlexSlider depuis node_modules
 import './css/flex-slider.css'; // Remplace ./css/flex-slider.css
 import 'flexslider/jquery.flexslider-min.js'; // Si tu utilises FlexSlider JS
-
+import './css/meuble-style.css';
 import './css/animate.css';
 import './css/owl.css';
 import './css/fontawesome.css';

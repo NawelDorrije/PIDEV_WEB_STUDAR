@@ -8,11 +8,9 @@ use App\Repository\ActivityLogRepository;
 use App\Entity\Utilisateur;
 use App\Enums\RoleUtilisateur;
 use App\Form\UtilisateurType;
-use App\Repository\LogementRepository;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -26,15 +24,11 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+
 #[Route('/utilisateur')]
 final class UtilisateurController extends AbstractController
 {
-    private $logger;
-
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
     #[Route(name: 'app_utilisateur_index', methods: ['GET'])]
     public function index(UtilisateurRepository $utilisateurRepository): Response
     {
@@ -517,90 +511,92 @@ public function dashboard(): Response
     return $this->render('dashboard.html.twig');
 }
 
-#[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
-    public function forgotPassword(
-        Request $request,
-        UtilisateurRepository $utilisateurRepository,
-        EntityManagerInterface $entityManager,
-        MailerInterface $mailer,
-        LoggerInterface $logger
-    ): Response {
-        if ($request->isMethod('POST')) {
-            $email = $request->request->get('email');
-            $user = $utilisateurRepository->findOneBy(['email' => $email]);
+// #[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
+//     public function forgotPassword(
+//         Request $request,
+//         UtilisateurRepository $utilisateurRepository,
+//         EntityManagerInterface $entityManager,
+//         MailerInterface $mailer,
+//         LoggerInterface $logger
+//     ): Response {
+//         if ($request->isMethod('POST')) {
+//             $email = $request->request->get('email');
+//             $user = $utilisateurRepository->findOneBy(['email' => $email]);
 
-            if (!$user) {
-                $this->addFlash('error', 'Cet email n\'est pas inscrit.');
-                return $this->render('utilisateur/forgot_password.html.twig');
-            }
+//             if (!$user) {
+//                 $this->addFlash('error', 'Cet email n\'est pas inscrit.');
+//                 return $this->render('utilisateur/forgot_password.html.twig');
+//             }
 
-            // Generate 4-digit reset code
-            $resetCode = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $user->setResetCode($resetCode);
-            $user->setResetCodeExpiresAt(new \DateTimeImmutable('+15 minutes'));
-            $entityManager->flush();
+//             // Generate 4-digit reset code
+//             $resetCode = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+//             $user->setResetCode($resetCode);
+//             $user->setResetCodeExpiresAt(new \DateTimeImmutable('+15 minutes'));
+//             $entityManager->flush();
 
-            try {
-                $email = (new Email())
-                    ->from(new Address('studar21@gmail.com', 'Studar'))
-                    ->to($user->getEmail())
-                    ->subject('Réinitialisation de votre mot de passe')
-                    ->text(sprintf(
-                        "Votre code de réinitialisation est : %s\nCe code expirera dans 15 minutes.",
-                        $resetCode
-                    ));
+//             try {
+//                 $email = (new Email())
+//                     ->from(new Address('studar21@gmail.com', 'Studar'))
+//                     ->to($user->getEmail())
+//                     ->subject('Réinitialisation de votre mot de passe')
+//                     ->text(sprintf(
+//                         "Votre code de réinitialisation est : %s\nCe code expirera dans 15 minutes.",
+//                         $resetCode
+//                     ));
 
-                $mailer->send($email);
+//                 $mailer->send($email);
 
-                // Store email in session for verification
-                $request->getSession()->set('reset_email', $user->getEmail());
+//                 // Store email in session for verification
+//                 $request->getSession()->set('reset_email', $user->getEmail());
 
-                return $this->redirectToRoute('app_verify_reset_code');
-            } catch (\Exception $e) {
-                $logger->error('Email sending failed: ' . $e->getMessage());
-                $this->addFlash('error', 'Erreur lors de l\'envoi du code');
-                return $this->render('utilisateur/forgot_password.html.twig');
-            }
-        }
+//                 return $this->redirectToRoute('app_verify_reset_code');
+//             } catch (\Exception $e) {
+//                 $logger->error('Email sending failed: ' . $e->getMessage());
+//                 $this->addFlash('error', 'Erreur lors de l\'envoi du code');
+//                 return $this->render('utilisateur/forgot_password.html.twig');
+//             }
+//         }
 
-        return $this->render('utilisateur/forgot_password.html.twig');
-    }
-#[Route('/verify-reset-code', name: 'app_verify_reset_code', methods: ['GET', 'POST'])]
-public function verifyResetCode(
-    Request $request,
-    UtilisateurRepository $utilisateurRepository,
-    EntityManagerInterface $entityManager
-): Response {
-    $email = $request->getSession()->get('reset_email');
-    if (!$email) {
-        $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
-        return $this->redirectToRoute('app_forgot_password');
-    }
+//         return $this->render('utilisateur/forgot_password.html.twig');
+//     }
 
-    $user = $utilisateurRepository->findOneBy(['email' => $email]);
-    if (!$user) {
-        $this->addFlash('error', 'Utilisateur non trouvé');
-        return $this->redirectToRoute('app_forgot_password');
-    }
 
-    if ($request->isMethod('POST')) {
-        $submittedCode = $request->request->get('reset_code');
+//     #[Route('/verify-reset-code', name: 'app_verify_reset_code', methods: ['GET', 'POST'])]
+// public function verifyResetCode(
+//     Request $request,
+//     UtilisateurRepository $utilisateurRepository,
+//     EntityManagerInterface $entityManager
+// ): Response {
+//     $email = $request->getSession()->get('reset_email');
+//     if (!$email) {
+//         $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
+//         return $this->redirectToRoute('app_forgot_password');
+//     }
 
-        if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
-            $this->addFlash('error', 'Code incorrect');
-            return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
-        }
+//     $user = $utilisateurRepository->findOneBy(['email' => $email]);
+//     if (!$user) {
+//         $this->addFlash('error', 'Utilisateur non trouvé');
+//         return $this->redirectToRoute('app_forgot_password');
+//     }
 
-        if ($user->getResetCodeExpiresAt() < new \DateTimeImmutable()) {
-            $this->addFlash('error', 'Code expiré');
-            return $this->redirectToRoute('app_forgot_password');
-        }
+//     if ($request->isMethod('POST')) {
+//         $submittedCode = $request->request->get('reset_code');
 
-        return $this->redirectToRoute('app_reset_password');
-    }
+//         if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
+//             $this->addFlash('error', 'Code incorrect');
+//             return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
+//         }
 
-    return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
-}
+//         if ($user->getResetCodeExpiresAt() < new \DateTimeImmutable()) {
+//             $this->addFlash('error', 'Code expiré');
+//             return $this->redirectToRoute('app_forgot_password');
+//         }
+
+//         return $this->redirectToRoute('app_reset_password');
+//     }
+
+//     return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
+// }
 
 #[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
 public function resetPassword(
@@ -650,32 +646,4 @@ public function resetPassword(
 
     return $this->render('utilisateur/reset_password.html.twig');
 }
-}
-// #[Route('/api/users', name: 'app_utilisateur_api_users', methods: ['GET'])]
-// public function getUsersApi(EntityManagerInterface $em): JsonResponse
-// {
-//     if (!$this->getUser()) {
-//         $this->logger->warning('User not authenticated when accessing app_utilisateur_api_users', [
-//             'user' => $this->getUser() ? $this->getUser()->getUserIdentifier() : 'null',
-//         ]);
-//         return $this->json(['error' => 'Authentication required'], 401);
-//     }
-
-//     $users = $em->getRepository(Utilisateur::class)->findAll();
-//     $this->logger->info('Users retrieved for API', [
-//         'count' => count($users),
-//     ]);
-
-//     $userData = array_map(fn($user) => [
-//         'id' => $user->getId(),
-//         'name' => $user->getNom(),
-//         'email' => $user->getEmail(),
-//     ], $users);
-
-//     $this->logger->info('User data prepared for API', [
-//         'userData' => $userData,
-//     ]);
-
-//     return $this->json($userData);
-// }
 }

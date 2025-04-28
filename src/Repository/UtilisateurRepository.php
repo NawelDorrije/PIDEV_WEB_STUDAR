@@ -43,39 +43,18 @@ class UtilisateurRepository extends ServiceEntityRepository
             ->setParameter('userHandle', $userHandle)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-    public function findByCin(string $cin): ?Utilisateur
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.cin = :cin')
-            ->setParameter('cin', $cin)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
-    
-    //    /**
-    //     * @return Utilisateur[] Returns an array of Utilisateur objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
 
-       
+        if (!$user) {
+            return null;
+        }
+
         // return new PublicKeyCredentialUserEntity(
         //     $user->getEmail(),
         //     $user->getUserHandle(),
         //     $user->getDisplayName(),
         //     $user->getCin()
         // );
-    
+    }
 
     public function findOneByUsername(string $username)
     {
@@ -89,7 +68,12 @@ class UtilisateurRepository extends ServiceEntityRepository
             return null;
         }
 
-    
+        // return new PublicKeyCredentialUserEntity(
+        //     $user->getEmail(),
+        //     $user->getUserHandle(),
+        //     $user->getDisplayName(),
+        //     $user->getCin()
+        // );
     }
 
     // public function saveUserEntity(PublicKeyCredentialUserEntity $userEntity): void
