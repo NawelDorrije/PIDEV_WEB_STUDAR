@@ -18,7 +18,7 @@
             padding: 0.5rem 0.5rem;
             font-size: 0.9rem;
             font-weight: 600;
-            text-align: center;
+            text-align: centerPrices;
             text-transform: uppercase;
             color: #fff;
             border-bottom: none;
@@ -212,6 +212,18 @@
 
 {% block body %}
     <main class="main-content position-relative reclamation-container">
+        <!-- Navigation Buttons -->
+        <div class="nav-buttons">
+            <a href="{{ path('app_statistics') }}" class="nav-button {{ app.request.pathinfo == '/statistics/admin' ? 'active' : '' }}" title="Voir les statistiques">
+                <i class="bi bi-bar-chart"></i>
+                <span class="nav-text">Statistiques</span>
+            </a>
+            <a href="{{ path('admin_reclamation') }}" class="nav-button {{ app.request.pathinfo == '/reclamation/admin/reclamation' ? 'active' : '' }}" title="Consulter les réclamations">
+                <i class="bi bi-exclamation-circle"></i>
+                <span class="nav-text">Réclamations</span>
+            </a>
+        </div>
+
         <!-- Barre de navigation pour la recherche et les filtres -->
         <div class="navbar-filter">
             <form class="filter-form" method="get" action="{{ path('admin_reclamation') }}">
@@ -249,12 +261,10 @@
                     <input type="date" class="form-control" id="date_filter" name="date_filter" value="{{ selected_date }}">
                 </div>
                 <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ path('admin_reclamation') }}'">Réinitialiser</button>
-            
             </form>
-              <a href="{{ path('admin_reclamation_export_excel') }}" class="btn btn-success">
-                    <i class="fas fa-download"></i> Exporter en Excel
-                </a>
-          
+            <a href="{{ path('admin_reclamation_export_excel') }}" class="btn btn-success">
+                <i class="fas fa-download"></i> Exporter en Excel
+            </a>
         </div>
 
         <div class="container-fluid py-4 reclamation-details-container">
