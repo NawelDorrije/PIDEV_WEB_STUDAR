@@ -11,12 +11,13 @@
 {% block stylesheets %}
     {{ parent() }}
     {{ encore_entry_link_tags('app') }}
-    {{ encore_entry_link_tags('chat') }}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    {# {{ encore_entry_link_tags('chat_css') }} #}
     <style>
-        /* Styles CSS intégrés */
+     /* Styles CSS intégrés */
         @import '~bootstrap/dist/css/bootstrap.min.css';
-
+.record-btn.active {
+            color: red;
+        }
         .chat-container {
             height: calc(100vh - 106px); /* Adjust for header (56px) + footer (50px) */
             max-height: calc(100vh - 106px); /* Adjust for header and footer */
@@ -482,6 +483,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}
 
 {% block body %}
@@ -575,7 +577,7 @@
                                     </div>
                                 </div>
                             {% endif %}
-                        {% endfor %}
+                            {% endfor %}
                     </div>
                 </div>
             </div>
@@ -644,11 +646,13 @@
                         <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..."></textarea>
                     </div>
                     <div class="reply-recording">
-                        <i class="fas fa-microphone fa-2x" aria-hidden="true"></i>
+                        <button type="button" class="btn btn-link p-0 record-btn" id="record-btn">
+                            <i class="fas fa-microphone fa-2x" aria-hidden="true"></i>
+                        </button>
                     </div>
                     <div class="reply-send">
-                        <button type="button" class="btn btn-link p-0">
-                            <i class="fas fa-paper-plane fa-2x" aria-hidden="true" onclick="sendMessage('{{ current_user.cin }}', '{{ receiver.cin }}')"></i>
+                        <button type="button" class="btn btn-link p-0" id="send-message-btn">
+                            <i class="fas fa-paper-plane fa-2x" aria-hidden="true"></i>
                         </button>
                     </div>
                 </div>
@@ -660,17 +664,364 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('app') }}
-    {{ encore_entry_script_tags('chat') }}
     <script>
-    
+        let socket;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        const reconnectInterval = 3000;
+        let mediaRecorder;
+        let audioChunks = [];
+
+        // Request notification permission
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                console.warn('Notifications are not supported by this browser.');
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                console.log('Notification permission already granted.');
+                return;
+            }
+
+            if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted.');
+                    } else {
+                        console.warn('Notification permission denied.');
+                    }
+                }).catch(error => {
+                    console.error('Error requesting notification permission:', error);
+                });
+            }
+        }
+
+        // Show a browser notification
+        function showNotification(senderName, messageContent) {
+            if (!("Notification" in window)) {
+                console.warn('Notifications are not supported by this browser.');
+                return;
+            }
+
+            if (Notification.permission !== 'granted') {
+                console.warn('Notification permission not granted.');
+                return;
+            }
+
+            if (document.hidden) {
+                const notification = new Notification(`New Message from ${senderName}`, {
+                    body: messageContent,
+                    icon: 'https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png',
+                    badge: 'https://bootdey.com/img/Content/avatar/avatar1.png',
+                    timestamp: Date.now(),
+                    vibrate: [200, 100, 200],
+                    tag: 'chat-message'
+                });
+
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+
+                console.log('Notification shown:', senderName, messageContent);
+            }
+        }
+
+        function initializeWebSocket(userCin) {
+            console.log('Initializing WebSocket for user:', userCin);
+
+            if (!userCin) {
+                console.error('User CIN is undefined');
+                updateSendButtonState(false);
+                return;
+            }
+
+            try {
+                socket = new WebSocket('ws://localhost:8080');
+
+                socket.onopen = function() {
+                    console.log('WebSocket connected');
+                    reconnectAttempts = 0;
+                    socket.send(JSON.stringify({ type: 'register', cin: userCin }));
+                    updateSendButtonState(true);
+                };
+
+                socket.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        console.log('Received:', message);
+
+                        if (!message.senderCin || !message.receiverCin || !message.content) {
+                            console.log('Invalid message format:', message);
+                            return;
+                        }
+
+                        const chatContainer = document.querySelector('.chat-container');
+                        if (!chatContainer) {
+                            console.error('Chat container not found');
+                            return;
+                        }
+                        const currentUserCin = chatContainer.dataset.currentUserCin || '';
+                        const receiverCin = chatContainer.dataset.receiverCin || '';
+
+                        if (currentUserCin && receiverCin &&
+                            (message.senderCin === currentUserCin || message.receiverCin === currentUserCin) &&
+                            (message.senderCin === receiverCin || message.receiverCin === receiverCin)) {
+                            appendMessage(message);
+
+                            if (message.senderCin !== currentUserCin) {
+                                showNotification('{{ receiver.nom }} {{ receiver.prenom }}', message.content);
+                            }
+                        } else {
+                            console.log('Message ignored (not for this conversation):', message);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                    }
+                };
+
+                socket.onclose = function(event) {
+                    console.log('WebSocket closed:', event);
+                    updateSendButtonState(false);
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        console.log(`Attempting to reconnect (${reconnectAttempts + 1}/${maxReconnectAttempts})...`);
+                        setTimeout(() => {
+                            reconnectAttempts++;
+                            initializeWebSocket(userCin);
+                        }, reconnectInterval);
+                    } else {
+                        console.error('Max reconnect attempts reached. Please refresh the page.');
+                        alert('Unable to connect to the chat server. Please try again later.');
+                    }
+                };
+
+                socket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateSendButtonState(false);
+                };
+            } catch (e) {
+                console.error('WebSocket initialization failed:', e);
+                updateSendButtonState(false);
+            }
+        }
+
+        function sendMessage(senderCin, receiverCin) {
+            try {
+                const input = document.getElementById('comment');
+                if (!input) {
+                    console.error('Input element not found');
+                    alert('Chat input field not found. Please refresh the page.');
+                    return;
+                }
+
+                const content = input.value.trim();
+                if (!content) {
+                    console.log('Empty message ignored');
+                    return;
+                }
+
+                if (!senderCin || !receiverCin) {
+                    console.error('Sender or receiver CIN is missing');
+                    alert('Unable to send message: User information missing.');
+                    return;
+                }
+
+                const messageData = {
+                    senderCin: senderCin,
+                    receiverCin: receiverCin,
+                    content: content,
+                    timestamp: new Date().toISOString()
+                };
+
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify(messageData));
+                    input.value = '';
+                    console.log('Sent:', messageData);
+                    appendMessage({
+                        senderCin: senderCin,
+                        receiverCin: receiverCin,
+                        content: content,
+                        timestamp: messageData.timestamp
+                    });
+                } else {
+                    console.error('WebSocket not connected');
+                    alert('Cannot send message: Chat server is not connected. Please try again later.');
+                }
+            } catch (e) {
+                console.error('Error sending message:', e);
+                alert('An error occurred while sending the message. Please try again.');
+            }
+        }
+
+        function appendMessage(message) {
+            try {
+                const conversation = document.getElementById('conversation');
+                if (!conversation) {
+                    console.error('Conversation element not found');
+                    return;
+                }
+
+                const chatContainer = document.querySelector('.chat-container');
+                if (!chatContainer) {
+                    console.error('Chat container not found');
+                    return;
+                }
+                const currentUserCin = chatContainer.dataset.currentUserCin || '';
+                const isSender = message.senderCin === currentUserCin;
+                const messageClass = isSender ? 'message-main-sender' : 'message-main-receiver';
+                const bubbleClass = isSender ? 'sender' : 'receiver';
+
+                const timestamp = new Date(message.timestamp).toLocaleString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const messageHtml = `
+                    <div class="message-body">
+                        <div class="${messageClass}">
+                            <div class="${bubbleClass}">
+                                <div class="message-text">${message.content}</div>
+                                <span class="message-time">${timestamp}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                conversation.insertAdjacentHTML('beforeend', messageHtml);
+                conversation.scrollTop = conversation.scrollHeight;
+                console.log('Appended:', message.content);
+            } catch (e) {
+                console.error('Error appending message:', e);
+            }
+        }
+
+        function updateSendButtonState(isConnected) {
+            const sendButton = document.querySelector('.reply-send i');
+            if (sendButton) {
+                if (isConnected) {
+                    sendButton.classList.remove('text-muted');
+                    sendButton.style.cursor = 'pointer';
+                    sendButton.setAttribute('aria-disabled', 'false');
+                } else {
+                    sendButton.classList.add('text-muted');
+                    sendButton.style.cursor = 'not-allowed';
+                    sendButton.setAttribute('aria-disabled', 'true');
+                }
+            }
+
+            const textarea = document.getElementById('comment');
+            if (textarea) {
+                textarea.disabled = !isConnected;
+            }
+        }
+
+        // Voice recording
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        sendVoiceMessage(audioBlob);
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    const recordBtn = document.getElementById('record-btn');
+                    recordBtn.classList.add('active');
+                    console.log('Recording started');
+                })
+                .catch(error => {
+                    console.error('Error accessing microphone:', error);
+                    alert('Unable to access microphone. Please check permissions.');
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                const recordBtn = document.getElementById('record-btn');
+                recordBtn.classList.remove('active');
+                console.log('Recording stopped');
+            }
+        }
+
+      // In conversation.html.twig, update the sendVoiceMessage function
+function sendVoiceMessage(audioBlob) {
+    console.log('Audio Blob MIME type:', audioBlob.type); // Log MIME type
+    const chatContainer = document.querySelector('.chat-container');
+    const receiverCin = chatContainer.dataset.receiverCin;
+    const formData = new FormData();
+    // Force the MIME type to audio/webm
+    const audioBlobWithCorrectMime = new Blob([audioBlob], { type: 'audio/webm' });
+    formData.append('audio', audioBlobWithCorrectMime, 'recording.webm');
+
+    fetch(`/chat/send-voice/${receiverCin}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Voice message sent:', data.message);
+        } else {
+            console.error('Voice message error:', data.error);
+            alert('Error sending voice message: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error uploading voice message:', error);
+        alert('An error occurred while sending the voice message.');
+    });
+}
+
+        // Initialize chat
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOMContentLoaded fired');
-            if (typeof initializeWebSocket === 'function') {
-                console.log('initializeWebSocket is defined');
-                initializeWebSocket('{{ current_user.cin }}');
-                document.getElementById('conversation').scrollTop = document.getElementById('conversation').scrollHeight;
+
+            requestNotificationPermission();
+            initializeWebSocket('{{ current_user.cin }}');
+            const conversation = document.getElementById('conversation');
+            if (conversation) {
+                conversation.scrollTop = conversation.scrollHeight;
             } else {
-                console.error('initializeWebSocket is not defined - check if chat.js is loaded');
+                console.error('Conversation element not found');
+            }
+
+            const sendButton = document.getElementById('send-message-btn');
+            if (sendButton) {
+                sendButton.addEventListener('click', function() {
+                    console.log('Send button clicked');
+                    sendMessage('{{ current_user.cin }}', '{{ receiver.cin }}');
+                });
+            } else {
+                console.error('Send button not found');
+            }
+
+            // Voice recording toggle
+            const recordBtn = document.getElementById('record-btn');
+            if (recordBtn) {
+                let isRecording = false;
+                recordBtn.addEventListener('click', function() {
+                    isRecording = !isRecording;
+                    if (isRecording) {
+                        startRecording();
+                    } else {
+                        stopRecording();
+                    }
+                });
+            } else {
+                console.error('Record button not found');
             }
         });
     </script>

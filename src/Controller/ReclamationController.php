@@ -355,33 +355,63 @@ public function show(Reclamation $reclamation): Response
     ]);
 }
 
-    #[Route('/admin/reclamation/{id}/edit', name: 'admin_reclamation_edit_recommend', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response
-    {
-        if ($request->isMethod('POST')) {
-            $submittedToken = $request->request->get('_token');
-            if (!$this->isCsrfTokenValid('edit_reclamation', $submittedToken)) {
-                $this->addFlash('error', 'Invalid CSRF token.');
-                return $this->redirectToRoute('admin_reclamation');
-            }
+#[Route('/admin/reclamation/{id}/edit', name: 'admin_reclamation_edit_recommend', methods: ['GET', 'POST'])]
+public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager, ReponseRepository $reponseRepository): Response
+{
+    // Fetch the response (if any)
+    $reponse = $reclamation->getReponses()->first() ?: null;
 
-            $statut = $request->request->get('statut');
-            if (!in_array($statut, ['en cours', 'traité', 'refusé'])) {
-                $this->addFlash('error', 'Statut invalide.');
-                return $this->redirectToRoute('admin_reclamation');
-            }
-
-            $reclamation->setStatut($statut);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Statut de la réclamation mis à jour avec succès.');
+    if ($request->isMethod('POST')) {
+        $submittedToken = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('edit_reclamation', $submittedToken)) {
+            $this->addFlash('error', 'Invalid CSRF token.');
             return $this->redirectToRoute('admin_reclamation');
         }
 
-        return $this->render('admin/reclamation/edit.html.twig', [
-            'reclamation' => $reclamation,
-        ]);
+        // Update reclamation status
+        $statut = $request->request->get('statut');
+        if (!in_array($statut, ['en cours', 'traité', 'refusé'])) {
+            $this->addFlash('error', 'Statut invalide.');
+            return $this->redirectToRoute('admin_reclamation');
+        }
+        $reclamation->setStatut($statut);
+
+        // Update or create response
+        $contenueReponse = $request->request->get('contenue_reponse');
+        if ($contenueReponse) {
+            if ($reponse) {
+                // Update existing response
+                $reponse->setContenueReponse($contenueReponse);
+                $reponse->setTimestamp(new \DateTime());
+            } else {
+                // Create new response
+                $reponse = new Reponse();
+                $reponse->setReclamation($reclamation);
+                $reponse->setAdmin($this->getUser());
+                $reponse->setContenueReponse($contenueReponse);
+                $reponse->setTimestamp(new \DateTime());
+                $entityManager->persist($reponse);
+            }
+        } elseif ($reponse && empty($contenueReponse)) {
+            // If response exists and content is empty, remove the response
+            $entityManager->remove($reponse);
+        }
+
+        try {
+            $entityManager->flush();
+            $this->addFlash('success', 'Réclamation et réponse mises à jour avec succès.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('admin_reclamation');
     }
+
+    return $this->render('admin/reclamation/edit.html.twig', [
+        'reclamation' => $reclamation,
+        'reponse' => $reponse,
+    ]);
+}
 
     #[Route('/admin/reclamation/{id}', name: 'admin_reclamation_delete', methods: ['POST'])]
     public function delete(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): Response

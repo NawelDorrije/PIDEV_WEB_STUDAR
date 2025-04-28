@@ -1,15 +1,18 @@
 <?php
 
 namespace App\Controller;
+
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Entity\Utilisateur;
 use App\Entity\Message;
 use App\Repository\UtilisateurRepository;
 use App\Repository\MessageRepository;
+use App\Service\ChatbotService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ChatController extends AbstractController
@@ -29,7 +32,6 @@ class ChatController extends AbstractController
         ]);
     }
 
-   
     #[Route('/chat/{receiverCin}', name: 'app_chat_conversation')]
     public function conversation(
         string $receiverCin,
@@ -65,6 +67,7 @@ class ChatController extends AbstractController
             'offset' => $offset,
         ]);
     }
+
     #[Route('/chat/{receiverCin}/load-previous', name: 'app_chat_load_previous', methods: ['GET'])]
     public function loadPreviousMessages(
         string $receiverCin,
@@ -105,49 +108,109 @@ class ChatController extends AbstractController
         ]);
     }
 
-    // #[Route('/chat/send', name: 'app_chat_send', methods: ['POST'])]
-    // public function sendMessage(Request $request, EntityManagerInterface $entityManager, UtilisateurRepository $utilisateurRepository): JsonResponse
-    // {
-    //     $currentUser = $this->getUser();
-    //     if (!$currentUser instanceof Utilisateur) {
-    //         error_log('User not authenticated for /chat/send'); // Add this for debugging
-    //         return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté.'], 403);
-    //     }
-    
-    //     $contentType = $request->headers->get('Content-Type');
-    //     if (str_contains($contentType, 'application/json')) {
-    //         $data = json_decode($request->getContent(), true);
-    //         $receiverCin = $data['receiverCin'] ?? null;
-    //         $content = $data['content'] ?? null;
-    //     } else {
-    //         $receiverCin = $request->request->get('receiverCin');
-    //         $content = $request->request->get('content');
-    //     }
-    
-    //     if (!$receiverCin || !$content) {
-    //         return new JsonResponse(['success' => false, 'error' => 'Paramètres manquants.'], 400);
-    //     }
-    
-    //     $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
-    //     if (!$receiver) {
-    //         return new JsonResponse(['success' => false, 'error' => 'Destinataire non trouvé.'], 404);
-    //     }
-    
-    //     $message = new Message();
-    //     $message->setSenderCin($currentUser);
-    //     $message->setReceiverCin($receiver);
-    //     $message->setContent($content);
-    //     $message->setTimestamp(new \DateTime());
-    
-    //     $entityManager->persist($message);
-    //     $entityManager->flush();
-    
-    //     return new JsonResponse([
-    //         'success' => true,
-    //         'message' => [
-    //             'content' => $message->getContent(),
-    //             'timestamp' => $message->getTimestamp()->format('d/m/Y H:i'),
-    //         ],
-    //     ]);
-    // }
+    #[Route('/chat/send-voice/{receiverCin}', name: 'app_chat_send_voice', methods: ['POST'])]
+    public function sendVoiceMessage(
+        string $receiverCin,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UtilisateurRepository $utilisateurRepository,
+        ChatbotService $chatbotService
+    ): JsonResponse {
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof Utilisateur) {
+            return new JsonResponse(['success' => false, 'error' => 'Utilisateur non connecté.'], 403);
+        }
+
+        $receiver = $utilisateurRepository->findOneBy(['cin' => $receiverCin]);
+        if (!$receiver) {
+            return new JsonResponse(['success' => false, 'error' => 'Destinataire non trouvé.'], 404);
+        }
+
+        /** @var UploadedFile|null $audioFile */
+        $audioFile = $request->files->get('audio');
+        if (!$audioFile) {
+            return new JsonResponse(['success' => false, 'error' => 'Aucun fichier audio fourni.'], 400);
+        }
+
+        // Log the MIME type for debugging
+        error_log('Uploaded audio MIME type: ' . $audioFile->getMimeType());
+
+        // Validate file type and size (max 5MB)
+// In ChatController.php, update the $allowedMimeTypes array
+$allowedMimeTypes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm;codecs=opus', 'video/webm'];        if (!in_array($audioFile->getMimeType(), $allowedMimeTypes)) {
+            return new JsonResponse(['success' => false, 'error' => 'Type de fichier non supporté: ' . $audioFile->getMimeType()], 400);
+        }
+        if ($audioFile->getSize() > 5 * 1024 * 1024) {
+            return new JsonResponse(['success' => false, 'error' => 'Fichier trop volumineux (max 5MB).'], 400);
+        }
+
+        // Save temporarily
+        $filename = uniqid('audio_') . '.' . $audioFile->guessExtension();
+        $tempPath = $this->getParameter('audio_temp_dir') . '/' . $filename;
+
+        try {
+            $audioFile->move($this->getParameter('audio_temp_dir'), $filename);
+        } catch (\Exception $e) {
+            return new JsonResponse(['success' => false, 'error' => 'Erreur lors de l\'enregistrement du fichier.'], 500);
+        }
+
+        // Transcribe audio
+        $transcription = '';
+        try {
+            $transcription = $chatbotService->transcribeAudio($tempPath);
+        } catch (\Exception $e) {
+            unlink($tempPath);
+            return new JsonResponse(['success' => false, 'error' => 'Transcription échouée: ' . $e->getMessage()], 500);
+        }
+
+        // Clean up
+        unlink($tempPath);
+
+        if (empty($transcription)) {
+            return new JsonResponse(['success' => false, 'error' => 'Transcription vide.'], 400);
+        }
+
+        // Create Message entity
+        $message = new Message();
+        $message->setSenderCin($currentUser);
+        $message->setReceiverCin($receiver);
+        $message->setContent($transcription);
+        $message->setTimestamp(new \DateTime());
+
+        $entityManager->persist($message);
+        $entityManager->flush();
+
+        // Notify via WebSocket
+        try {
+            $this->notifyViaWebSocket($currentUser, $receiver, $message);
+        } catch (\Exception $e) {
+            error_log('WebSocket notification failed: ' . $e->getMessage());
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => [
+                'content' => $message->getContent(),
+                'timestamp' => $message->getTimestamp()->format('d/m/Y H:i'),
+            ],
+        ]);
+    }
+
+    /**
+     * Notify recipient via WebSocket
+     */
+    private function notifyViaWebSocket(Utilisateur $sender, Utilisateur $receiver, Message $message): void
+    {
+        $messageData = [
+            'senderCin' => $sender->getCin(),
+            'receiverCin' => $receiver->getCin(),
+            'content' => $message->getContent(),
+            'timestamp' => $message->getTimestamp()->format('c'),
+        ];
+
+        // Replace with your Ratchet integration
+        $client = new \WebSocket\Client('ws://localhost:8080');
+        $client->send(json_encode($messageData));
+        $client->close();
+    }
 }
