@@ -190,18 +190,12 @@
             font-weight: 500;
         }
         
-        .form-group input,
         .form-group select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-        }
-        
-        .form-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
         }
         
         .orange-button {
@@ -234,6 +228,11 @@
         
         .activity-log th {
             background-color: #f8f9fa;
+        }
+        
+        /* User activities section */
+        .user-activities {
+            margin-top: 20px;
         }
         
         /* Flash messages */
@@ -280,8 +279,8 @@
         body.theme-dark .admin-content {
             background-color: #1a1a1a !important;
         }
-        body.theme-dark .title-dark{
-         
+        
+        body.theme-dark .title-dark {
             color: #f1f1f1;
         }
         
@@ -307,14 +306,14 @@
             color: #ffffff !important;
         }
         
-        body.theme-dark .form-group input,
         body.theme-dark .form-group select {
             background-color: #3a3a3a !important;
             color: #ffffff !important;
             border-color: #555 !important;
         }
         
-        body.theme-dark .activity-log th {
+        body.theme-dark .activity-log th,
+        body.theme-dark .user-activities th {
             background-color: #3a3a3a !important;
         }
         
@@ -384,8 +383,6 @@
 
     <!-- Main Content -->
     <div class="admin-content">
-
-
         <!-- Flash Messages -->
         {% for message in app.flashes('success') %}
             <div class="alert alert-success">{{ message }}</div>
@@ -417,6 +414,10 @@
                 <span>Authentification à deux facteurs (2FA)</span>
                 <i class="fas fa-chevron-right"></i>
             </div>
+            <div class="parameters-item" data-modal="user-activities-modal">
+                <span>Voir les activités des utilisateurs</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
         </div>
 
         <!-- Modals -->
@@ -425,7 +426,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Changer le mot de passe</h3>
-                <form action="{{ path('app_utilisateur_parametre_password') }}" method="post">
+                <form action="{{ path('app_admin_parametre_password') }}" method="post">
                     <div class="form-group">
                         <label for="oldPassword">Ancien mot de passe</label>
                         <input type="password" id="oldPassword" name="oldPassword" required>
@@ -475,7 +476,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Préférences de notification</h3>
-                
+                <!-- Add notification settings form here -->
             </div>
         </div>
 
@@ -484,7 +485,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Thème de l'interface</h3>
-                <form action="{{ path('app_utilisateur_parametre_theme') }}" method="post" id="theme-form">
+                <form action="{{ path('app_admin_parametre_theme') }}" method="post" id="theme-form">
                     <div class="form-group">
                         <label for="theme">Choisir un thème</label>
                         <select id="theme" name="theme">
@@ -503,12 +504,72 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Authentification à deux facteurs (2FA)</h3>
-                
+                <!-- Add 2FA settings form here -->
             </div>
         </div>
 
-       
-       
+        <!-- User Activities Modal -->
+        <div class="modal" id="user-activities-modal">
+            <div class="modal-content">
+                <i class="fas fa-times modal-close"></i>
+                <h3>Voir les activités des utilisateurs</h3>
+                <form id="user-activities-form">
+                    <div class="form-group">
+                        <label for="user-select">Sélectionner un utilisateur</label>
+                        <select id="user-select" name="user" required>
+                            <option value="">Choisir un utilisateur</option>
+                            <!-- Options will be populated via JavaScript -->
+                        </select>
+                    </div>
+                    <button type="submit" class="orange-button">Afficher les activités</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="parameters-list activity-log">
+            <h3>Journal d'activité</h3>
+            {% if activityLogs is defined and activityLogs|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in activityLogs %}
+                            <tr>
+                                <td>{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.details }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucune activité récente.</p>
+            {% endif %}
+        </div>
+
+        <!-- User Activities -->
+        <div class="parameters-list activity-log user-activities" id="user-activities">
+            <h3>Activités de l'utilisateur</h3>
+            <p id="no-user-activities">Sélectionnez un utilisateur pour voir ses activités.</p>
+            <table id="user-activities-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Action</th>
+                        <th>Détails</th>
+                    </tr>
+                </thead>
+                <tbody id="user-activities-body">
+                    <!-- Activities will be populated via JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -522,11 +583,9 @@
             console.log('Applying theme:', theme);
             document.body.className = `theme-${theme}`;
             console.log('Body class set to:', document.body.className);
-            // Force style recalculation
-            document.body.offsetHeight;
+            document.body.offsetHeight; // Force style recalculation
         }
 
-        // Apply theme on page load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
             console.log('User CIN:', '{{ app.user.cin ?? 'unknown' }}');
@@ -550,6 +609,9 @@
                     const modal = document.getElementById(modalId);
                     if (modal) {
                         modal.style.display = 'flex';
+                        if (modalId === 'user-activities-modal') {
+                            loadUsers();
+                        }
                     }
                 });
             });
@@ -563,12 +625,99 @@
                 });
             });
 
-            // Close modal when clicking outside
             modals.forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
                         modal.style.display = 'none';
                     }
+                });
+            });
+
+            // Load users for dropdown
+            function loadUsers() {
+                const userSelect = document.getElementById('user-select');
+                userSelect.innerHTML = '<option value="">Choisir un utilisateur</option>';
+                
+                fetch('{{ path('app_admin_users') }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur HTTP : ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Users fetched:', data);
+                    data.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.cin;
+                        option.textContent = `${user.nom} ${user.prenom}`;
+                        userSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                    alert('Erreur lors du chargement des utilisateurs : ' + error.message);
+                });
+            }
+
+            // Handle user activities form submission
+            const userActivitiesForm = document.getElementById('user-activities-form');
+            userActivitiesForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const userCin = document.getElementById('user-select').value;
+                if (!userCin) {
+                    alert('Veuillez sélectionner un utilisateur.');
+                    return;
+                }
+
+                fetch(`{{ path('app_admin_user_activities', {'cin': 'USER_CIN'}) }}`.replace('USER_CIN', userCin), {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur HTTP : ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Activities fetched:', data);
+                    const table = document.getElementById('user-activities-table');
+                    const tbody = document.getElementById('user-activities-body');
+                    const noActivities = document.getElementById('no-user-activities');
+
+                    tbody.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(activity => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${activity.createdAt}</td>
+                                <td>${activity.action}</td>
+                                <td>${activity.details}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                        table.style.display = 'table';
+                        noActivities.style.display = 'none';
+                    } else {
+                        table.style.display = 'none';
+                        noActivities.textContent = 'Aucune activité pour cet utilisateur.';
+                        noActivities.style.display = 'block';
+                    }
+
+                    // Close modal
+                    document.getElementById('user-activities-modal').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error fetching activities:', error);
+                    alert('Erreur lors du chargement des activités : ' + error.message);
                 });
             });
         });

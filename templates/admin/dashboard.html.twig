@@ -11,7 +11,6 @@
             min-height: 100vh;
         }
         
-        /* Fixed sidebar */
         .admin-sidebar {
             width: 80px;
             background-color: white;
@@ -140,6 +139,12 @@
             background-color: #f8f9fa;
         }
         
+        /* Center the Statut column */
+        .user-table th:nth-child(5),
+        .user-table td:nth-child(5) {
+            text-align: center;
+        }
+        
         /* Action buttons */
         .action-btn {
             background: none;
@@ -174,7 +179,6 @@
             transform: scale(1.1);
         }
         
-        /* Report button */
         .report-btn {
             background: none;
             border: none;
@@ -191,21 +195,38 @@
         
         /* Status badge */
         .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
             font-weight: 500;
+            line-height: 1;
+            min-width: 80px;
+            text-align: center;
+            box-sizing: border-box;
         }
         
         .status-active {
-            background-color: #d4edda;
-            color: #155724;
+            color: #2e7d32;
+          
+          
         }
         
         .status-blocked {
-            background-color: #f8d7da;
-            color: #721c24;
+            color: #c62828;
+           
+        }
+        
+        /* Ensure status badge aligns properly in table */
+        .user-table td .status-badge {
+            display: inline-flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 100px; /* Limit width to prevent overflow */
+            margin: 0 auto;
+            vertical-align: middle;
         }
         
         /* Filter Section Styles */
@@ -431,12 +452,14 @@
             background-color: #3a3a3a !important;
         }
         body.theme-dark .status-active {
-            background-color: #2a6640 !important;
-            color: #c3e6cb !important;
+            background-color: #2e7d32 !important;
+            color: #ffffff !important;
+            border: 1px solid #4caf50 !important;
         }
         body.theme-dark .status-blocked {
-            background-color: #7b2e35 !important;
-            color: #f5c6cb !important;
+            background-color: #c62828 !important;
+            color: #ffffff !important;
+            border: 1px solid #d32f2f !important;
         }
         body.theme-dark .filter-select {
             background-color: #3a3a3a !important;
@@ -571,7 +594,7 @@
                         <td>{{ user.prenom }}</td>
                         <td>{{ user.role.value }}</td>
                         <td>
-                            <span class="status-badge {{ user.blocked ? 'status-blocked' : 'status-active' }}">
+                            <span class="status-badgee {{ user.blocked ? 'status-blocked' : 'status-active' }}">
                                 {{ user.blocked ? 'Bloqué' : 'Actif' }}
                             </span>
                         </td>
@@ -585,9 +608,10 @@
                                         title="Signaler cet utilisateur">
                                     <i class="fas fa-exclamation-triangle"></i>
                                 </button>
+                                <!-- Block Button -->
                                 <button class="block-btn {{ user.blocked ? 'blocked' : 'unblocked' }}"
                                         data-user-id="{{ user.cin }}"
-                                        onclick="toggleBlock(this)"
+                                        onclick="toggleBlockStatus(this)"
                                         title="{{ user.blocked ? 'Débloquer' : 'Bloquer' }}">
                                     <i class="fas {{ user.blocked ? 'fa-unlock' : 'fa-lock' }}"></i>
                                 </button>
@@ -639,11 +663,65 @@
             console.log('Applying theme:', theme);
             document.body.className = `theme-${theme}`;
             console.log('Body class set to:', document.body.className);
-            // Force style recalculation
-            document.body.offsetHeight;
+            document.body.offsetHeight; // Force style recalculation
         }
 
-        // Apply theme on page load
+        // Toggle block status
+        window.toggleBlockStatus = function(button) {
+            const userId = button.getAttribute('data-user-id');
+            console.log('Toggling block status for userId:', userId);
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (!csrfToken) {
+                console.error('CSRF token not found');
+                alert('Erreur : jeton CSRF manquant.');
+                return;
+            }
+
+            fetch(`/admin/user/${userId}/toggle-block`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            })
+            .then(response => {
+                console.log('Toggle block response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Toggle block response data:', data);
+                if (data.success) {
+                    // Update button
+                    const isBlocked = data.blocked;
+                    button.classList.toggle('blocked', isBlocked);
+                    button.classList.toggle('unblocked', !isBlocked);
+                    button.title = isBlocked ? 'Débloquer' : 'Bloquer';
+                    const icon = button.querySelector('i');
+                    icon.className = `fas ${isBlocked ? 'fa-unlock' : 'fa-lock'}`;
+
+                    // Update status badge
+                    const row = button.closest('tr');
+                    const statusBadge = row.querySelector('.status-badgee');
+                    statusBadge.className = `status-badgee ${isBlocked ? 'status-blocked' : 'status-active'}`;
+                    statusBadge.textContent = isBlocked ? 'Bloqué' : 'Actif';
+
+                    alert(isBlocked ? 'Utilisateur bloqué avec succès.' : 'Utilisateur débloqué avec succès.');
+                } else {
+                    throw new Error(data.message || 'Erreur inconnue');
+                }
+            })
+            .catch(error => {
+                console.error('Toggle block error:', error);
+                alert('Une erreur est survenue : ' + error.message);
+            });
+        };
+
+        // Apply theme and handle report modal
         document.addEventListener('DOMContentLoaded', function() {
             console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
             const container = document.querySelector('.admin-container');
@@ -655,14 +733,6 @@
             console.log('Theme from data-theme:', theme);
             applyTheme(theme);
 
-            // Block button logic
-            const blockButtons = document.querySelectorAll('.block-btn');
-            blockButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    toggleBlockStatus(this);
-                });
-            });
-
             // Report modal logic
             const modal = document.getElementById('reportModal');
             const reportForm = document.getElementById('reportForm');
@@ -673,6 +743,7 @@
             window.showReportModal = function(button) {
                 const userId = button.getAttribute('data-user-id');
                 const userEmail = button.getAttribute('data-user-email');
+                console.log('Opening report modal for userId:', userId, 'email:', userEmail);
                 userIdInput.value = userId;
                 userEmailInput.value = userEmail;
                 reasonInput.value = '';
@@ -695,9 +766,14 @@
                     return;
                 }
 
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    alert('Erreur : jeton CSRF manquant.');
+                    return;
+                }
 
-                fetch('/admin/user/report', {
+                fetch('{{ path('app_admin_user_report') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -711,12 +787,14 @@
                     })
                 })
                 .then(response => {
+                    console.log('Report response status:', response.status);
                     if (!response.ok) {
-                        throw new Error('Erreur lors de l\'envoi du signalement');
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
+                    console.log('Report response data:', data);
                     if (data.success) {
                         alert('Signalement envoyé avec succès.');
                         hideReportModal();
@@ -725,50 +803,10 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    console.error('Report error:', error);
                     alert('Une erreur est survenue : ' + error.message);
                 });
             });
         });
-
-        function toggleBlockStatus(button) {
-            const userId = button.getAttribute('data-user-id');
-            const icon = button.querySelector('i');
-            const statusBadge = button.closest('tr').querySelector('.status-badge');
-            
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-            fetch(`/admin/user/${userId}/toggle-block`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify({})
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    button.classList.toggle('blocked');
-                    button.classList.toggle('unblocked');
-                    icon.classList.toggle('fa-lock');
-                    icon.classList.toggle('fa-unlock');
-                    statusBadge.classList.toggle('status-blocked');
-                    statusBadge.classList.toggle('status-active');
-                    statusBadge.textContent = data.blocked ? 'Bloqué' : 'Actif';
-                    button.setAttribute('title', data.blocked ? 'Débloquer' : 'Bloquer');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Une erreur est survenue lors de la mise à jour du statut.');
-            });
-        }
     </script>
 {% endblock %}

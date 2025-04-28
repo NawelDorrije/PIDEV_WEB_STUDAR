@@ -3,6 +3,11 @@
 namespace App\Controller\Admin;
 
 use App\Entity\ActivityLog;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Endroid\QrCode\QrCode; // Add this
+use Endroid\QrCode\Writer\PngWriter; // Add this
+use libphonenumber\PhoneNumberUtil;
+use libphonenumber\PhoneNumberFormat;
 use Psr\Log\LoggerInterface;
 use App\Entity\Utilisateur;
 use App\Enums\RoleUtilisateur;
@@ -30,6 +35,53 @@ class DashboardController extends AbstractController
         $this->entityManager = $entityManager;
         $this->tokenStorage = $tokenStorage;
     }
+    #[Route('/user/{cin}/qr-code', name: 'app_admin_user_qr_code', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function generateQrCode(string $cin, UtilisateurRepository $utilisateurRepository): StreamedResponse
+    {
+        $user = $utilisateurRepository->findOneBy(['cin' => $cin]);
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur non trouvé');
+        }
+
+        $phoneNumber = $user->getNumTel();
+        if (!$phoneNumber) {
+            throw $this->createNotFoundException('Numéro de téléphone non défini pour cet utilisateur');
+        }
+
+        // Clean and format phone number
+        $phoneNumber = preg_replace('/[^0-9+]/', '', $phoneNumber);
+        if (!str_starts_with($phoneNumber, '+')) {
+            $phoneNumber = '+216' . $phoneNumber; // Default to Tunisia; adjust if needed
+        }
+
+        // Basic validation
+        if (strlen($phoneNumber) < 10) {
+            throw $this->createNotFoundException('Numéro de téléphone invalide');
+        }
+
+        $whatsAppLink = sprintf('https://wa.me/%s', ltrim($phoneNumber, '+'));
+
+        // Generate QR code (version 4.x syntax)
+        $qrCode = new QrCode($whatsAppLink);
+        $qrCode->setSize(200);
+        $qrCode->setMargin(10);
+
+        $writer = new PngWriter();
+        $result = $writer->write($qrCode);
+
+        return new StreamedResponse(
+            function () use ($result) {
+                echo $result->getString();
+            },
+            Response::HTTP_OK,
+            [
+                'Content-Type' => $result->getMimeType(),
+                'Content-Disposition' => 'inline; filename="whatsapp-qr-' . $cin . '.png"',
+            ]
+        );
+    
+}
 
     #[Route('/dashboard', name: 'app_admin_dashboard')]
     public function dashboard(
@@ -228,7 +280,7 @@ $em->flush();
         $log = new ActivityLog();
         $log->setUser($user);
         $log->setAction('Mot de passe modifié');
-        $log->setDetails('L\'utilisateur a modifié son mot de passe.');
+        $log->setDetails('Vous avez modifié votre mot de passe.');
         $em->persist($log);
         $em->flush();
 
@@ -239,6 +291,108 @@ $em->flush();
 
         $this->addFlash('success', 'Mot de passe mis à jour avec succès.');
         return $this->redirectToRoute('app_admin_parametre');
+    }
+    #[Route('/admin/profile/{cin}/modifier', name: 'app_admin_modifier_profile', methods: ['GET', 'POST'])]
+    public function modifierProfile(
+        Request $request,
+        Utilisateur $utilisateur,
+        EntityManagerInterface $entityManager,
+        EntityManagerInterface $em,
+        SluggerInterface $slugger
+    ): Response {
+        // Ensure the user is authorized to edit their own profile
+        if ($this->getUser()->getCin() !== $utilisateur->getCin()) {
+            $this->addFlash('error', 'Vous ne pouvez modifier que votre propre profil.');
+            return $this->redirectToRoute('app_admin_parametre');
+        }
+
+        // Debug initial load
+        dump('Initial load');
+
+        // Handle form submission
+        if ($request->isMethod('POST')) {
+            dump('Form submitted');
+
+            // Get form data
+            $nom = $request->request->get('nom');
+            $prenom = $request->request->get('prenom');
+            $email = $request->request->get('email');
+            $numTel = $request->request->get('numTel');
+            $imageFile = $request->files->get('imageFile');
+
+            // Basic validation
+            if (empty($nom) || empty($prenom) || empty($email)) {
+                dump('Validation failed: Required fields missing');
+                $this->addFlash('error', 'Les champs nom, prénom et email sont obligatoires.');
+                return $this->redirectToRoute('app_admin_parametre');
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                dump('Validation failed: Invalid email');
+                $this->addFlash('error', 'L\'adresse email est invalide.');
+                return $this->redirectToRoute('app_admin_parametre');
+            }
+
+            // Update user entity
+            $utilisateur->setNom($nom);
+            $utilisateur->setPrenom($prenom);
+            $utilisateur->setEmail($email);
+            $utilisateur->setNumTel($numTel ?: null); // Allow empty phone number
+
+            // Handle image upload
+            if ($imageFile) {
+                dump('Image file detected');
+
+                // Generate new filename
+                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+                dump('New filename: '.$newFilename);
+
+                try {
+                    // Move the new image to the directory
+                    $imageFile->move(
+                        $this->getParameter('images_directory'),
+                        $newFilename
+                    );
+
+                    // Delete old image if it exists
+                    if ($utilisateur->getImage()) {
+                        $oldImagePath = $this->getParameter('images_directory').'/'.$utilisateur->getImage();
+                        if (file_exists($oldImagePath)) {
+                            unlink($oldImagePath);
+                            dump('Old image deleted');
+                        }
+                    }
+
+                    // Set the new image filename
+                    $utilisateur->setImage($newFilename);
+                    dump('Image uploaded successfully');
+                } catch (FileException $e) {
+                    dump('Image upload failed: '.$e->getMessage());
+                    $this->addFlash('error', 'Échec du téléchargement de l\'image : ' . $e->getMessage());
+                    return $this->redirectToRoute('app_admin_parametre');
+                }
+            }
+
+            // Persist changes to the database
+            $entityManager->flush();
+            dump('Profile updated successfully');
+            $this->addFlash('success', 'Profil mis à jour avec succès.');
+            $log = new ActivityLog();
+        $log->setUser($utilisateur);
+        $log->setAction('Profile modifié');
+        $log->setDetails('Vous avez modifié votre profile.');
+        $em->persist($log);
+        $em->flush();
+
+            return $this->redirectToRoute('app_admin_parametre');
+        }
+
+        // Render the parameters page (GET request)
+        return $this->render('admin/parametre.html.twig', [
+            'utilisateur' => $utilisateur,
+        ]);
     }
     #[Route('/user/report', name: 'app_admin_user_report', methods: ['POST'])]
 public function reportUser(
@@ -337,5 +491,19 @@ public function show(Utilisateur $utilisateur = null): Response
         'utilisateur' => $utilisateur,
     ]);
 }
+#[Route('/user/{cin}/toggle-block', name: 'app_admin_user_toggle_block', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function toggleBlock(string $cin, UtilisateurRepository $utilisateurRepository): JsonResponse
+    {
+        $user = $utilisateurRepository->findOneBy(['cin' => $cin]);
+        if (!$user) {
+            return new JsonResponse(['success' => false, 'message' => 'Utilisateur non trouvé'], 404);
+        }
+    
+        $user->setBlocked(!$user->isBlocked());
+        $utilisateurRepository->getEntityManager()->flush();
+    
+        return new JsonResponse(['success' => true, 'blocked' => $user->isBlocked()]);
+    }
    
 }

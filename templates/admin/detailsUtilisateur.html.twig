@@ -76,6 +76,11 @@
             gap: 15px;
             width: 800px; /* Match profile container width */
         }
+        .qr-code-img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
         .btn {
             padding: 10px 20px;
             border-radius: 5px;
@@ -151,7 +156,23 @@
             <div class="profile-value">{{ utilisateur.role.value }}</div>
         </div>
     </div>
-
+    <div class="profile-row">
+        <img src="{{ asset('images/qr-icon.png') }}" alt="QR Code" class="profile-icon">
+        <div class="profile-content">
+            <div class="profile-label">QR Code WhatsApp</div>
+            <div class="profile-value">
+                <!-- Debug numTel -->
+                <div>Debug: numTel = "{{ utilisateur.numTel }}"</div>
+                {% if utilisateur.numTel %}
+                    <img src="{{ path('app_admin_user_qr_code', {'cin': utilisateur.cin}) }}" 
+                         alt="WhatsApp QR Code" 
+                         class="qr-code-img">
+                {% else %}
+                    Non disponible
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="button-container">
