@@ -7,7 +7,9 @@ parameters:
     images_directory: '%kernel.project_dir%/assets/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
-    
+    gemini_api_key: '%env(GEMINI_API_KEY)%'
+    gcp_project_id: 'Studar-2025' # Replace with your actual GCP Project ID
+    gcp_region: 'europe-west9'  
 
 services:
     App\Security\GoogleAuthenticator:
@@ -15,13 +17,29 @@ services:
             - '@knpu.oauth2.registry'
             - '@doctrine.orm.entity_manager'
             - '@router.default'
-        
 
+    App\Controller\GestionTransport\TransportController:
+        # autowire: true is inherited from _defaults
+        bind:
+            $gcpProjectId: '%gcp_project_id%'
+            $gcpRegion: '%gcp_region%'
+            $logger: '@monolog.logger'
+        # Arguments are not needed here as bind handles these specific ones
+        # and autowiring handles the services.
+            
+    App\Controller\GestionReservation\ReservationTransportController:
+        arguments:
+            $orsApiKey: '%env(ORS_API_KEY)%'
+            
   
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        # Bind scalar parameters globally
+        bind:
+            $gcpProjectId: '%gcp_project_id%'
+            $gcpRegion: '%gcp_region%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name

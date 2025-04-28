@@ -1,187 +1,467 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Détails du Transport{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        #map { height: 400px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        #directions { font-size: 1rem; line-height: 1.6; }
+        #voiceModal { transition: opacity 0.3s ease; }
+        #voiceModal:not(.hidden) { opacity: 1; }
+        #voiceModal.hidden { opacity: 0; pointer-events: none; }
+        .custom-icon { background: transparent; border: none; }
+        .button-container { 
+            display: flex !important; 
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .leaflet-routing-container { display: none !important; }
+    </style>
+{% endblock %}
 
 {% block body %}
-    <div class="container-fluid px-4 py-4">
-        <div class="card shadow-sm border-0 rounded-lg">
-            <div class="card-header bg-white border-0 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2 class="h4 fw-bold text-blue mb-0">Détails du Transport #{{ transport.id }}</h2>
-                </div>
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="bg-gray-100 p-4">
+                <h2 class="text-2xl font-bold text-blue-600">Détails du Transport #{{ transport.id }}</h2>
             </div>
-            
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-lg-8">
-                        <div class="table-responsive">
-                            <table class="table table-borderless">
-                                <tbody>
-                                    <tr>
-                                        <th class="w-25 text-muted">Trajet</th>
-                                        <td>
-                                            {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
-                                                <div class="d-flex align-items-center">
-                                                    <div class="me-3 text-blue">
-                                                        <i class="fas fa-map-marker-alt"></i>
-                                                    </div>
-                                                    <div>
-                                                        <div>{{ transport.reservation.adresseDepart }}</div>
-                                                        <div class="text-muted small">→ {{ transport.reservation.adresseDestination }}</div>
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <span class="text-muted">N/A</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted">Distance</th>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3 text-blue">
-                                                    <i class="fas fa-road"></i>
-                                                </div>
-                                                <div>
-                                                    {{ transport.trajetEnKm }} km
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted">Tarif</th>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3 text-blue">
-                                                    <i class="fas fa-money-bill-wave"></i>
-                                                </div>
-                                                <div>
-                                                    {{ transport.tarif }} TND
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted">Statut</th>
-                                        <td>
-                                            <span class="fw-bold 
-                                                {% if transport.status.value == 'Complété' %}text-success fs-6
-                                                {% elseif transport.status.value == 'Actif' %}text-warning fs-6
-                                                {% else %}text-secondary fs-6{% endif %}">
-                                                {{ transport.status.value }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="text-muted">Estimé le :</th>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-3 text-blue">
-                                                    <i class="far fa-calendar-alt"></i>
-                                                </div>
-                                                <div>
-    {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : '' }}
-                                               </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2">
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-blue-500 mr-3"></i>
+                                <div>
+                                    {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                        <p class="font-semibold">{{ transport.reservation.adresseDepart }}</p>
+                                        <p class="text-gray-600 text-sm">→ {{ transport.reservation.adresseDestination }}</p>
+                                    {% else %}
+                                        <p class="text-gray-500">N/A</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-road text-blue-500 mr-3"></i>
+                                <p>{{ transport.trajetEnKm }} km</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-money-bill-wave text-blue-500 mr-3"></i>
+                                <p>{{ transport.tarif }} TND</p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                <p class="font-semibold 
+                                    {% if transport.status.value == 'Complété' %}text-green-500
+                                    {% elseif transport.status.value == 'Actif' %}text-yellow-500
+                                    {% else %}text-gray-500{% endif %}">
+                                    {{ transport.status.value }}
+                                </p>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="far fa-calendar-alt text-blue-500 mr-3"></i>
+                                <p>{{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Progress: <span id="progress">0%</span></p>
+                                <p class="text-gray-600">Distance parcourue: <span id="distanceCovered">0</span> km</p>
+                                <p class="text-gray-600">Dernière mise à jour: <span id="timestamp">-</span></p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-white border-0 py-3">
-                                <h5 class="mb-0 text-blue">Véhicule assigné</h5>
-                            </div>
-                            <div class="card-body d-flex flex-column">
-                                {% if transport.voiture %}
-                                    <div class="text-center mb-3">
-                                        {% if transport.voiture.image %}
-                                            <img src="{{ vich_uploader_asset(transport.voiture, 'imageFile') }}" 
-                                                 class="img-fluid rounded" 
-                                                 style="max-height: 150px;">
-                                        {% else %}
-                                            <img src="{{ asset('images/default-car.jpg') }}" 
-                                                 class="img-fluid rounded" 
-                                                 style="max-height: 150px;">
-                                        {% endif %}
-                                    </div>
-                                    <div class="mt-auto">
-                                        <h6 class="fw-bold">{{ transport.voiture.model }}</h6>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span class="text-muted">N° Série:</span>
-                                            <span>{{ transport.voiture.numSerie }}</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span class="text-muted">Disponibilité:</span>
-                                            <span class="badge rounded-pill py-1 px-3 
-                                                {% if transport.voiture.disponibilite.value == 'Disponible' %}bg-success
-                                                {% else %}bg-orange{% endif %}">
-                                                {{ transport.voiture.disponibilite.value }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                {% else %}
-                                    <div class="text-center text-muted my-auto py-4">
-                                        <i class="fas fa-car fa-3x mb-3"></i>
-                                        <p>Aucune voiture assignée</p>
-                                    </div>
-                                {% endif %}
-                            </div>
+                    <div>
+                        <div class="bg-gray-50 p-4 rounded-lg h-full">
+                            <h5 class="text-lg font-semibold text-blue-600 mb-4">Véhicule assigné</h5>
+                            {% if transport.voiture %}
+                                <div class="text-center mb-4">
+                                    {% if transport.voiture.image %}
+                                        <img src="{{ vich_uploader_asset(transport.voiture, 'imageFile') }}" 
+                                             class="w-full h-32 object-cover rounded">
+                                    {% else %}
+                                        <img src="{{ asset('images/default-car.jpg') }}" 
+                                             class="w-full h-32 object-cover rounded">
+                                    {% endif %}
+                                </div>
+                                <p class="font-semibold">{{ transport.voiture.model }}</p>
+                                <p class="text-gray-600">N° Série: {{ transport.voiture.numSerie }}</p>
+                                <p class="text-gray-600">Disponibilité: 
+                                    <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full 
+                                        {% if transport.voiture.disponibilite.value == 'Disponible' %}bg-green-200 text-green-800
+                                        {% else %}bg-yellow-200 text-yellow-800{% endif %}">
+                                        {{ transport.voiture.disponibilite.value }}
+                                    </span>
+                                </p>
+                            {% else %}
+                                <div class="text-center text-gray-500 py-8">
+                                    <i class="fas fa-car fa-3x mb-3"></i>
+                                    <p>Aucune voiture assignée</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-                
-                {% block stylesheets %}
-                    {{ parent() }}
-                    <style>
-                        .text-success {
-                            color: #6FE69B!important; 
-                        }
-                        .bg-success {
-                            background-color: #6FE69B !important;
-                        }
-                          .bg-orange {
-                            background-color: #ffc107 !important;
-                        }
-                        .text-warning {
-                            color: #ffc107 !important;
-                        }
-                        .btn-outline-primary {
-                            color: #1976D2 !important;
-                            border-color: #1976D2 !important;
-                        }
-                        .btn-outline-primary:hover {
-                            color: white !important;
-                            background-color: #1976D2 !important;
-                        }
-                    </style>
-                {% endblock %}
-                
-                <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <a href="{{ path('app_transport_index') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                        <i class="fas fa-arrow-left me-1"></i> Retour
-                    </a>
-                    <div class="d-flex gap-2">
-                        <a href="{{ path('app_transport_edit', {'id': transport.id}) }}" 
-                           class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-edit me-1"></i> Modifier
-                        </a>
-                        <form method="post" action="{{ path('app_transport_delete', {'id': transport.id}) }}" 
-                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce transport ?');">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ transport.id) }}">
-                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="fas fa-trash me-1"></i> Supprimer
-                            </button>
-                        </form>
-                    </div>
+                <h3 class="text-xl font-semibold mt-6 mb-2">Carte de l'itinéraire</h3>
+                <div id="map"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <p><i class="fas fa-ruler-combined text-blue-500 mr-2"></i> Distance: <span id="distanceInfo">-</span></p>
+                    <p><i class="far fa-clock text-blue-500 mr-2"></i> Temps estimé: <span id="durationInfo">-</span></p>
+                </div>
+                <div class="button-container">
+                    <button id="startTracking" data-transport-id="{{ transport.id }}" 
+                            class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition transform hover:-translate-y-1 flex items-center justify-center min-w-[180px]">
+                        <i class="fas fa-play mr-2"></i>
+                        Lancer le Suivi
+                    </button>
+                </div>
+                <div id="directions" class="mt-4 p-4 bg-gray-100 rounded-lg"></div>
+                <div id="alternativeRoutesContainer" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Modal for Voice Assistant Responses -->
+        <div id="voiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg max-w-lg w-full shadow-xl transform transition-all">
+                <h3 class="text-lg font-semibold text-blue-600 mb-4">Réponse de l'Assistant Vocal</h3>
+                <p id="voiceResponse" class="text-gray-700"></p>
+                <div id="loadingSpinner" class="hidden flex justify-center my-4">
+                    <svg class="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                </div>
+                <div class="mt-4 flex gap-2 justify-end">
+                    <button id="closeModal" class="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+                        Fermer
+                    </button>
                 </div>
             </div>
         </div>
-          <a href="{{ path('app_transport_home') }}" class="btn btn-link text-decoration-none ps-0">
-            <i class="fas fa-arrow-left"></i> Retour à l'accueil
-        </a>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/@mercure/EventSourcePolyfill"></script>
+
+    <script>
+        // Config
+        const cfg = {
+            departLat: {{ departLat|default('null')|json_encode|raw }},
+            departLon: {{ departLon|default('null')|json_encode|raw }},
+            arriveeLat: {{ arriveeLat|default('null')|json_encode|raw }},
+            arriveeLon: {{ arriveeLon|default('null')|json_encode|raw }},
+            trackSimulatePath: {{ path('app_transport_track_simulate', {'id': transport.id})|json_encode|raw }},
+            transportId: {{ transport.id|json_encode|raw }},
+            trajetEnKm: {{ transport.trajetEnKm|json_encode|raw }}
+        };
+
+        // Initialize map
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+            attribution: '© OpenStreetMap contributors' 
+        }).addTo(map);
+
+        let routingControl;
+        let selectedWaypoints = null;
+        let isSimulating = false;
+        let vehicleMarker = null;
+        let currentRoutes = null;  // Add this new variable
+
+        // Modal helpers
+        function showModal(msg) {
+            document.getElementById('voiceResponse').innerHTML = msg;
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('voiceModal').classList.remove('hidden');
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+            document.getElementById('voiceResponse').textContent = '';
+            document.getElementById('voiceModal').classList.remove('hidden');
+        }
+        
+        function hideModal() {
+            document.getElementById('voiceModal').classList.add('hidden');
+            if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+            fetch('http://localhost:5000/api/stop-speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            }).catch(err => console.error('Failed to stop speech:', err));
+        }
+
+        // Event listeners
+        document.getElementById('closeModal').addEventListener('click', hideModal);
+        
+        const startButton = document.getElementById('startTracking');
+        startButton.addEventListener('click', async () => {
+            await startNavigation();
+        });
+
+        // Setup routing control with clickable alternatives
+        if (cfg.departLat !== null && cfg.arriveeLat !== null) {
+            const from = L.latLng(cfg.departLat, cfg.departLon);
+            const to = L.latLng(cfg.arriveeLat, cfg.arriveeLon);
+            map.fitBounds([from, to], { padding: [50, 50] });
+
+            L.marker(from, {
+                icon: L.divIcon({
+                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:red"></i>',
+                    className: 'custom-icon'
+                })
+            }).addTo(map).bindPopup('Départ');
+
+            L.marker(to, {
+                icon: L.divIcon({
+                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:green"></i>',
+                    className: 'custom-icon'
+                })
+            }).addTo(map).bindPopup('Destination');
+
+            routingControl = L.Routing.control({
+                waypoints: [from, to],
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    profile: 'driving',
+                    routingOptions: { 
+                        alternatives: true, 
+                        steps: true, 
+                        geometries: 'polyline' 
+                    }
+                }),
+                showAlternatives: true,
+                fitSelectedRoutes: true,
+                altLineOptions: {
+                    styles: [
+                        { color: 'black', weight: 9, opacity: 0.15 },
+                        { color: 'white', weight: 6, opacity: 0.8 },
+                        { color: 'blue', weight: 3, opacity: 0.7 }
+                    ]
+                },
+                createMarker: () => null,
+                lineOptions: { 
+                    styles: [{ color: 'red', weight: 4, opacity: 0.7 }] 
+                }
+            }).addTo(map);
+
+            routingControl.on('routesfound', function(e) {
+                currentRoutes = e.routes;
+                updateRouteDisplay(e.routes[0]); // Update for selected route
+            });
+
+            routingControl.on('routeselected', function(e) {
+                selectedWaypoints = e.route.coordinates.map(pt => [pt.lng, pt.lat]);
+                updateRouteDisplay(e.route); // Update when user selects alternative
+            });
+
+            function updateRouteDisplay(route) {
+                const sum = route.summary;
+                document.getElementById('distanceInfo').innerText = (sum.totalDistance/1000).toFixed(2) + ' km';
+                document.getElementById('durationInfo').innerText = (sum.totalTime/60).toFixed(0) + ' min';
+                
+                const html = route.instructions.map(i => 
+                    `<li>${i.text} (${(i.distance/1000).toFixed(2)} km)</li>`
+                ).join('');
+                
+                document.getElementById('directions').innerHTML = `
+                    <h4 class="text-lg font-semibold text-blue-600">Itinéraire Principal</h4>
+                    <ul class="list-disc list-inside text-gray-700">${html}</ul>
+                `;
+            }
+        }
+
+        // Updated startTracking event listener with Gemini integration
+        // Helper function with timeout
+        function fetchWithTimeout(url, options, timeout) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+            
+            return fetch(url, {
+                ...options,
+                signal: controller.signal
+            }).finally(() => clearTimeout(timeoutId));
+        }
+
+        // Helper function for Gemini processing
+        async function processWithGemini(directions) {
+            try {
+                showLoading();
+                
+                // Fallback if Gemini fails
+                const fallbackDirections = directions.map(d => 
+                    `${d.type} ${d.modifier || ''} ${d.text} (${d.distance})`
+                ).join('. ');
+                
+                let textToSpeak = fallbackDirections;
+                
+                // Try Gemini if available
+                try {
+                    const response = await fetch('http://localhost:5000/api/process-directions', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            directions: directions,
+                            prompt: 'Donne des instructions de navigation en français'
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.text) textToSpeak = data.text;
+                    }
+                } catch (e) {
+                    console.warn('Gemini failed, using fallback:', e);
+                }
+
+                // Speak the directions
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                    utterance.lang = 'fr-FR';
+                    
+                    utterance.onstart = () => {
+                        showModal(textToSpeak);
+                        document.getElementById('directions').style.display = 'none';
+                    };
+                    
+                    utterance.onend = () => {
+                        document.getElementById('directions').style.display = 'block';
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    showModal(textToSpeak);
+                }
+                
+            } catch (error) {
+                console.error('Voice processing error:', error);
+                showModal('Erreur de traitement vocal');
+            }
+        }
+
+        // Main navigation function
+        async function startNavigation() {
+            if (isSimulating) {
+                showModal('Une simulation est déjà en cours.');
+                return;
+            }
+
+            try {
+                isSimulating = true;
+                startButton.disabled = true;
+                startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                showLoading();
+
+                // 1. Get instructions
+                if (!currentRoutes || currentRoutes.length === 0) {
+                    throw new Error('Aucun itinéraire disponible');
+                }
+
+                const route = currentRoutes[0];
+                const instructions = route.instructions.map(instr => ({
+                    type: instr.type || 'Continue',
+                    modifier: instr.modifier || '',
+                    text: instr.text || '',
+                    distance: (instr.distance / 1000).toFixed(2) + ' km'
+                }));
+
+                // Run simulation and voice processing simultaneously
+                const payload = selectedWaypoints ? { coords: selectedWaypoints } : {};
+                await Promise.all([
+                    // Start simulation
+                    fetch(cfg.trackSimulatePath, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    }).then(response => {
+                        if (!response.ok) throw new Error('Erreur de simulation');
+                    }),
+                    // Process voice instructions
+                    processWithGemini(instructions)
+                ]);
+
+            } catch (error) {
+                console.error('Navigation error:', error);
+                showModal('Erreur: ' + error.message);
+                isSimulating = false;
+                startButton.disabled = false;
+                startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } finally {
+                document.getElementById('loadingSpinner').classList.add('hidden');
+            }
+        }
+
+        // Mercure tracking updates
+        const mercureUrl = new URL('http://localhost:3000/.well-known/mercure');
+        mercureUrl.searchParams.append('topic', 'tracking/transport/' + cfg.transportId);
+
+        const eventSource = new EventSource(mercureUrl);
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const latlng = [data.latitude, data.longitude];
+
+            if (vehicleMarker) {
+                vehicleMarker.setLatLng(latlng);
+            } else {
+                vehicleMarker = L.marker(latlng, {
+                    icon: L.divIcon({
+                        html: '<i class="fas fa-truck fa-2x" style="color:blue"></i>',
+                        className: 'custom-icon'
+                    })
+                }).addTo(map).bindPopup('Véhicule en cours');
+            }
+
+            map.panTo(latlng);
+
+            const pct = ((data.distanceCovered / cfg.trajetEnKm) * 100).toFixed(1);
+            document.getElementById('progress').innerText = pct + '%';
+            document.getElementById('distanceCovered').innerText = data.distanceCovered.toFixed(2);
+            document.getElementById('timestamp').innerText = new Date().toLocaleString();
+
+            // Reset simulation state when complete
+            if (data.isComplete) {
+                isSimulating = false;
+                startButton.disabled = false;
+                startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                showModal('Simulation terminée');
+                fetch('http://localhost:5000/api/stop-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).catch(err => console.error('Failed to stop speech:', err));
+            }
+        };
+
+        eventSource.onerror = function(err) {
+            console.error('Mercure error:', err);
+            isSimulating = false;
+            startButton.disabled = false;
+            startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            showModal('Erreur de connexion au serveur de suivi');
+            fetch('http://localhost:5000/api/stop-speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+                }).catch(err => console.error('Failed to stop speech:', err));
+        };
+
+        // Speech synthesis testing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Test speech synthesis
+            console.log('Speech synthesis supported:', 'speechSynthesis' in window);
+            
+            // Test voices
+            if ('speechSynthesis' in window) {
+                speechSynthesis.onvoiceschanged = function() {
+                    const voices = window.speechSynthesis.getVoices();
+                    console.log('Available voices:', voices);
+                    const frenchVoices = voices.filter(v => v.lang.includes('fr'));
+                    console.log('French voices:', frenchVoices);
+                };
+                speechSynthesis.getVoices(); // Trigger voices loading
+            }
+        });
+    </script>
 {% endblock %}

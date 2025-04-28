@@ -1,23 +1,38 @@
 <?php
-
 namespace App\Controller\GestionTransport;
 
 use App\Entity\GestionTransport\Transport;
 use App\Form\GestionTransport\TransportType;
 use App\Repository\GestionTransport\TransportRepository;
+use App\Enums\GestionTransport\TransportStatus;
 use App\Service\DistanceService;
+use App\Service\Geocoder;
+use App\Service\RouteSimulator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-
-
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Service\InfobipService;
 #[IsGranted('ROLE_TRANSPORTEUR')]
 #[Route('/transport')]
-final class TransportController extends AbstractController
+class TransportController extends AbstractController
 {
+    private const OPENSTREETMAP_API_URL = 'https://router.project-osrm.org/route/v1/driving/';
+
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly DistanceService $distanceService,
+        private readonly Geocoder $geocoder,
+        private readonly RouteSimulator $routeSimulator,
+        private readonly HttpClientInterface $httpClient,
+        private readonly InfobipService $infobipService
+    ) {}
+
     #[Route(name: 'app_transport_index', methods: ['GET'])]
     public function index(TransportRepository $transportRepository, Request $request): Response
     {
@@ -35,7 +50,7 @@ final class TransportController extends AbstractController
     }
 
     #[Route('/new', name: 'app_transport_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, DistanceService $distanceService): Response
+    public function new(Request $request): Response
     {
         $transport = new Transport();
         $form = $this->createForm(TransportType::class, $transport);
@@ -43,28 +58,26 @@ final class TransportController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
+                $reservation = $transport->getReservation();
+                $depart = $reservation->getAdresseDepart();
+                $arrivee = $reservation->getAdresseDestination();
+
+                $distanceKm = $this->distanceService->calculateDistanceKm($depart, $arrivee);
+                $transport->setTrajetEnKm($distanceKm);
+
+                $tarif = $distanceKm * 0.5;
+                $transport->setTarif($tarif);
+
+                $this->entityManager->persist($reservation);
+                $this->entityManager->persist($transport);
+                $this->entityManager->flush();
                 
-           
-            $reservation = $transport->getReservation();
-            $depart = $reservation->getAdresseDepart();
-            $arrivee = $reservation->getAdresseDestination();
-
-            $distanceKm = $distanceService->calculateDistanceKm($depart, $arrivee);
-            $transport->setTrajetEnKm($distanceKm);
-
-            // Example tarif calculation
-            $tarif = $distanceKm * 0.5;
-            $transport->setTarif($tarif);
-
-            $entityManager->persist($reservation);
-            $entityManager->persist($transport);
-            $entityManager->flush();
-            $this->addFlash('succès', 'Transport créé avec succès');
-            return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER); }
-            catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-                $this->addFlash('erreur', 'Cette réservation est déjà prise par un autre transport.');
+                $this->addFlash('success', 'Transport créé avec succès');
+                return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
+            } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                $this->addFlash('error', 'Cette réservation est déjà prise par un autre transport.');
             } catch (\Exception $e) {
-                $this->addFlash('erreur', 'Une erreur est survenue lors de la création du transport.');
+                $this->addFlash('error', 'Une erreur est survenue lors de la création du transport.');
             }
         }
 
@@ -77,45 +90,48 @@ final class TransportController extends AbstractController
     #[Route('/{id}', name: 'app_transport_show', methods: ['GET'])]
     public function show(Transport $transport): Response
     {
+        $reservation = $transport->getReservation();
+        $departAddress = $reservation->getAdresseDepart();
+        $arriveeAddress = $reservation->getAdresseDestination();
+
+        $departCoords = $this->geocoder->geocode($departAddress);
+        $arriveeCoords = $this->geocoder->geocode($arriveeAddress);
+
         return $this->render('GestionTransport/transport/show.html.twig', [
             'transport' => $transport,
+            'departLat' => $departCoords['lat'] ?? null,
+            'departLon' => $departCoords['lon'] ?? null,
+            'arriveeLat' => $arriveeCoords['lat'] ?? null,
+            'arriveeLon' => $arriveeCoords['lon'] ?? null,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_transport_edit', methods: ['GET', 'POST'])]
-    public function edit(
-        Request $request, 
-        Transport $transport, 
-        EntityManagerInterface $entityManager,
-        DistanceService $distanceService
-    ): Response {
+    public function edit(Request $request, Transport $transport): Response
+    {
         $form = $this->createForm(TransportType::class, $transport);
         $form->handleRequest($request);
     
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-                
-           
-            // Recalculate distance and tariff when reservation changes
-            $reservation = $transport->getReservation();
-            $depart = $reservation->getAdresseDepart();
-            $arrivee = $reservation->getAdresseDestination();
+                $reservation = $transport->getReservation();
+                $depart = $reservation->getAdresseDepart();
+                $arrivee = $reservation->getAdresseDestination();
     
-            $distanceKm = $distanceService->calculateDistanceKm($depart, $arrivee);
-            $transport->setTrajetEnKm($distanceKm);
+                $distanceKm = $this->distanceService->calculateDistanceKm($depart, $arrivee);
+                $transport->setTrajetEnKm($distanceKm);
     
-            // Recalculate tariff
-            $tarif = $distanceKm * 0.5; // Adjust multiplier as needed
-            $transport->setTarif($tarif);
+                $tarif = $distanceKm * 0.5;
+                $transport->setTarif($tarif);
     
-            $entityManager->flush();
+                $this->entityManager->flush();
+                $this->addFlash('success', 'Transport modifié avec succès');
     
-            return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER); }
-            catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
-                $this->addFlash('erreur', 'Cette réservation est déjà prise par un autre transport.');     
-            }
-            catch (\Exception $e) {
-                $this->addFlash('erreur', 'Une erreur est survenue lors de la modification du transport.'); 
+                return $this->redirectToRoute('app_transport_show', ['id' => $transport->getId()], Response::HTTP_SEE_OTHER);
+            } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                $this->addFlash('error', 'Cette réservation est déjà prise par un autre transport.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Une erreur est survenue lors de la modification du transport.');
             }
         }
     
@@ -126,13 +142,160 @@ final class TransportController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_transport_delete', methods: ['POST'])]
-    public function delete(Request $request, Transport $transport, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, Transport $transport): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$transport->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($transport);
-            $entityManager->flush();
+        if ($this->isCsrfTokenValid('delete'.$transport->getId(), $request->getPayload()->get('_token'))) {
+            $this->entityManager->remove($transport);
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Transport supprimé avec succès');
         }
 
         return $this->redirectToRoute('app_transport_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/track/simulate', name: 'app_transport_track_simulate', methods: ['POST'])]
+    public function simulateTracking(Request $request, Transport $transport, HubInterface $hub): JsonResponse
+    {
+        try {
+            $body = json_decode($request->getContent(), true);
+            $useWaypoints = [];
+
+            if (!empty($body['coords']) && is_array($body['coords'])) {
+                $useWaypoints = array_map(
+                    fn(array $pt) => ['lat' => $pt[1], 'lon' => $pt[0]],
+                    $body['coords']
+                );
+            } else {
+                $reservation = $transport->getReservation();
+                $depart = $reservation->getAdresseDepart();
+                $arrivee = $reservation->getAdresseDestination();
+                
+                $departCoords = $this->geocoder->geocode($depart);
+                $arriveeCoords = $this->geocoder->geocode($arrivee);
+                
+                $url = self::OPENSTREETMAP_API_URL
+                    . "{$departCoords['lon']},{$departCoords['lat']};"
+                    . "{$arriveeCoords['lon']},{$arriveeCoords['lat']}?overview=full&geometries=geojson";
+                
+                $response = $this->httpClient->request('GET', $url);
+                $routeData = $response->toArray();
+                
+                $useWaypoints = array_map(
+                    fn($c) => ['lat' => $c[1], 'lon' => $c[0]],
+                    $routeData['routes'][0]['geometry']['coordinates']
+                );
+            }
+
+            // Start simulation in a separate process to avoid blocking
+            $this->routeSimulator->simulate(
+                $hub,
+                $transport->getId(),
+                $transport->getReservation()->getAdresseDepart(),
+                $transport->getReservation()->getAdresseDestination(),
+                $transport->getTrajetEnKm(),
+                $useWaypoints,
+                count($useWaypoints),
+                1,
+                fn() => $this->completeTransport($transport)
+            );
+
+            return new JsonResponse([
+                'status' => 'success',
+                'message' => 'Simulation started'
+            ]);
+        } catch (\RuntimeException $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_CONFLICT);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    #[Route('/{id}/track/position', name: 'app_transport_track_position', methods: ['GET'])]
+    public function getCurrentPosition(Transport $transport): JsonResponse
+    {
+        try {
+            $position = $this->routeSimulator->getCurrentPosition(
+                $transport->getId(),
+                $transport->getReservation()->getAdresseDepart(),
+                $transport->getReservation()->getAdresseDestination()
+            );
+
+            return new JsonResponse([
+                'status' => 'success',
+                'data' => $position
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    #[Route('/{id}/alternative-directions', name: 'app_transport_alternative_directions', methods: ['POST'])]
+    public function getAlternativeDirections(Request $request, Transport $transport): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            if (!$data || !isset($data['coords']) || count($data['coords']) !== 2) {
+                return new JsonResponse([
+                    'status' => 'error',
+                    'message' => 'Invalid coordinates format'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            [[$lon1, $lat1], [$lon2, $lat2]] = $data['coords'];
+            $url = self::OPENSTREETMAP_API_URL . "{$lon1},{$lat1};{$lon2},{$lat2}?alternatives=true&steps=true&geometries=polyline";
+
+            $response = $this->httpClient->request('GET', $url);
+            $content = $response->toArray();
+
+            if (isset($content['routes']) && count($content['routes']) > 0) {
+                $alternativeRoutes = [];
+                foreach ($content['routes'] as $route) {
+                    $steps = [];
+                    foreach ($route['legs'][0]['steps'] as $step) {
+                        $steps[] = $step['maneuver']['instruction'];
+                    }
+                    $alternativeRoutes[] = [
+                        'distance' => $route['distance'] / 1000,
+                        'duration' => $route['duration'] / 60,
+                        'instructions' => $steps,
+                        'geometry' => $route['geometry'],
+                    ];
+                }
+
+                return new JsonResponse([
+                    'status' => 'success',
+                    'alternatives' => $alternativeRoutes
+                ]);
+            }
+
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'No routes found'
+            ], Response::HTTP_NOT_FOUND);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'OSRM error: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function completeTransport(Transport $transport): void
+    {
+        $transport->setStatus(TransportStatus::COMPLETE);
+        $reservation = $transport->getReservation();
+        $etudiant = $reservation->getEtudiant();
+        $this->entityManager->flush();
+        $message = 'Votre Livraison est arrivée à destination';
+        $this->infobipService->sendSms($etudiant->getNumTel(), $message);
     }
 }

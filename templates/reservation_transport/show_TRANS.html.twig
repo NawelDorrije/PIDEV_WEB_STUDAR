@@ -88,13 +88,6 @@
     100% { transform: scale(1); }
 }
 
-
-.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
 .action-buttons {
     display: flex;
     justify-content: center;
@@ -102,7 +95,7 @@
     margin-top: 25px;
 }
 
-.btn-accepter {
+.btn-primary {
     background-color: #4453A6;
     border: none;
     padding: 8px 20px;
@@ -112,13 +105,24 @@
     color: white;
 }
 
-.btn-accepter:hover {
+.btn-primary:hover {
     background-color: #3a4791;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(68, 83, 166, 0.3);
 }
 
-.btn-refuser {
+.btn-modifier {
+    background-color: #4453A6;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s;
+    color: white;
+}
+
+
+.btn-supprimer {
     background-color: #F2811D;
     border: none;
     padding: 8px 20px;
@@ -128,13 +132,16 @@
     color: white;
 }
 
-.btn-refuser:hover {
+.btn-supprimer:hover {
     background-color: #da7419;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(242, 129, 29, 0.3);
 }
-
-
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 </style>
 {% endblock %}
 
@@ -171,7 +178,6 @@
                                     <span class="detail-value">{{ reservation_transport.tempsArrivage }}</span>
                                 </div>
                                 <div class="detail-item">
-                              <div class="detail-item">
                                     <span class="detail-label">Transporteur::</span>
                                     <span class="detail-value">
                                         {% if reservation_transport.transporteur %}
@@ -194,25 +200,15 @@
                             </div>
                             
                             <div class="action-buttons">
-                                <form method="post" action="{{ path('app_reservationTransport_accept', {'id': reservation_transport.id}) }}" style="display: inline;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('accept' ~ reservation_transport.id) }}">
-                                    <button type="submit" 
-                                            class="btn btn-accepter {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
-                                            {% if not reservation_transport.isModifiable() %}disabled{% endif %}>
-                                        <i class="fas fa-check"></i> Accepter
-                                    </button>
-                                </form>
-                                
-                                <form method="post" action="{{ path('app_reservationTransport_reject', {'id': reservation_transport.id}) }}" 
-                                      onsubmit="return confirm('Êtes-vous sûr de vouloir refuser cette réservation?');"
-                                      style="display: inline;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('reject' ~ reservation_transport.id) }}">
-                                    <button type="submit" 
-                                            class="btn btn-refuser {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
-                                            {% if not reservation_transport.isModifiable() %}disabled{% endif %}>
-                                        <i class="fas fa-times"></i> Refuser
-                                    </button>
-                                </form>
+                                <a href="{{ path('app_reservation_transport_edit', {'id': reservation_transport.id}) }}" 
+                                   class="btn btn-modifier {{ not reservation_transport.isModifiable() ? 'disabled' : '' }}"
+                                   {% if not reservation_transport.isModifiable() %}
+                                       title="Modification impossible pour les réservations confirmées ou refusées"
+                                   {% endif %}>
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                            
+                                {{ include('reservation_transport/_delete_form.html.twig') }}
                             </div>
                         </div>
                     </div>

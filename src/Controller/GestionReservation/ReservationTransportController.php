@@ -9,14 +9,15 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Attribute\Route; 
 use App\Service\Geocoder;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
 
 #[Route('/reservation/transport')]
 final class ReservationTransportController extends AbstractController
 {
+
     #[Route('/', name: 'app_reservation_transport_base', methods: ['GET'])]
     public function baseRedirect(): Response
     {
@@ -67,15 +68,20 @@ final class ReservationTransportController extends AbstractController
     }
 
     #[Route('/new', name: 'app_reservation_transport_new', methods: ['GET', 'POST'])]
-  
     public function new(
         Request $request, 
         EntityManagerInterface $em,
         Geocoder $geocoder
     ): Response {
-        $reservation = new ReservationTransport();
+        $reservation = new ReservationTransport(); 
+
+        // Automatically set the etudiant if the current user is a student
+        if ($this->isGranted('ROLE_ETUDIANT')) {
+            $reservation->setEtudiant($this->getUser());
+        }    
+
         $form = $this->createForm(ReservationTransportType::class, $reservation);
-        
+
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             try {
@@ -104,6 +110,11 @@ final class ReservationTransportController extends AbstractController
                 $em->flush();
                 
                 $this->addFlash('success', 'Réservation créée avec succès');
+                
+                // Redirect based on user role
+                if ($this->isGranted('ROLE_ETUDIANT')) {
+                    return $this->redirectToRoute('app_reservation_transport_etudiant');
+                }
                 return $this->redirectToRoute('app_reservation_transport_index');
                 
             } catch (\Exception $e) {
@@ -117,24 +128,29 @@ final class ReservationTransportController extends AbstractController
         ]);
     }
 
+    
+
     #[Route('/{id}', name: 'app_reservation_transport_show', methods: ['GET'])]
     public function show(ReservationTransport $reservationTransport): Response
     {
         $user = $this->getUser();
         
-        if (!$user || 
-            ($user !== $reservationTransport->getTransporteur() && 
-             $user !== $reservationTransport->getEtudiant())) {
+        if (!$user || ($user !== $reservationTransport->getTransporteur() && $user !== $reservationTransport->getEtudiant())) {
             throw $this->createAccessDeniedException('You can only view your own reservations.');
         }
-        
-        return $this->render('reservation_transport/show.html.twig', [
+    
+        $template = $this->isGranted('ROLE_ETUDIANT') 
+            ? 'reservation_transport/show.html.twig' 
+            : 'reservation_transport/show_TRANS.html.twig';
+    
+        return $this->render($template, [
             'reservation_transport' => $reservationTransport,
+           
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_reservation_transport_edit', methods: ['GET', 'POST'])]
-    
+    #[IsGranted('ROLE_TRANSPORTEUR')]
     public function edit(Request $request, ReservationTransport $reservationTransport, EntityManagerInterface $entityManager): Response
     {
         if ($this->getUser() !== $reservationTransport->getTransporteur()) {
@@ -146,12 +162,14 @@ final class ReservationTransportController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
+            
+            $this->addFlash('success', 'Réservation mise à jour avec succès');
             return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('reservation_transport/edit.html.twig', [
-            'reservation_transport' => $reservationTransport,
-            'form' => $form,
+            'reservation' => $reservationTransport,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -166,26 +184,13 @@ final class ReservationTransportController extends AbstractController
         if ($this->isCsrfTokenValid('delete'.$reservationTransport->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($reservationTransport);
             $entityManager->flush();
+            $this->addFlash('success', 'Réservation supprimée avec succès');
         }
 
         return $this->redirectToRoute('app_reservation_transport_index', [], Response::HTTP_SEE_OTHER);
     }
     
-    #[Route('/api/reservation/{id}/arrival-time', name: 'api_reservation_arrival_time', methods: ['GET'])]
-    #[IsGranted('ROLE_TRANSPORTEUR')]
-    public function getArrivalTimeApi(ReservationTransport $reservation): JsonResponse
-    {
-        if ($this->getUser() !== $reservation->getTransporteur()) {
-            return $this->json(['error' => 'Access denied'], 403);
-        }
-        
-        if (!$reservation) {
-            return $this->json(['error' => 'Reservation not found'], 404);
-        }
-        
-        return $this->json([
-            'arrivalTime' => $reservation->getTempsArrivage(),
-            'formatted' => (new \DateTime($reservation->getTempsArrivage()))->format('l j F Y à H:i')
-        ]);
+    
+
+    
     }
-}

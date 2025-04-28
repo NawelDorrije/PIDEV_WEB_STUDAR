@@ -1,0 +1,14 @@
+{
+    auto_https off
+}
+
+:3000 {
+    mercure {
+        publisher_jwt 4f9Xa1pQ7zL2mW8kY3rN5tV6uJ0iH4gB
+        subscriber_jwt 4f9Xa1pQ7zL2mW8kY3rN5tV6uJ0iH4gB
+        anonymous
+        cors_origins *
+        publish_origins http://localhost:8000
+        demo
+    }
+}
