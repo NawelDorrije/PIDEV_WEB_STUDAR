@@ -1,26 +1,35 @@
-import '../css/chat.css';// Ensure functions are globally accessible
-window.initializeWebSocket = initializeWebSocket;
-window.sendMessage = sendMessage;
+// assets/js/chat.js
 
+// WebSocket and chat functionality
 let socket;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+const reconnectInterval = 3000;
 
 function initializeWebSocket(userCin) {
     console.log('Initializing WebSocket for user:', userCin);
-    
+
+    if (!userCin) {
+        console.error('User CIN is undefined');
+        updateSendButtonState(false);
+        return;
+    }
+
     try {
-        socket = new WebSocket('ws://localhost/:8080');
-        
+        socket = new WebSocket('ws://localhost:8080');
+
         socket.onopen = function() {
             console.log('WebSocket connected');
+            reconnectAttempts = 0;
             socket.send(JSON.stringify({ type: 'register', cin: userCin }));
+            updateSendButtonState(true);
         };
 
         socket.onmessage = function(event) {
             try {
                 const message = JSON.parse(event.data);
                 console.log('Received:', message);
-                
-                // Skip if message lacks required fields
+
                 if (!message.senderCin || !message.receiverCin || !message.content) {
                     console.log('Invalid message format:', message);
                     return;
@@ -33,8 +42,7 @@ function initializeWebSocket(userCin) {
                 }
                 const currentUserCin = chatContainer.dataset.currentUserCin || '';
                 const receiverCin = chatContainer.dataset.receiverCin || '';
-                
-                // Append if message involves current user
+
                 if (currentUserCin && receiverCin &&
                     (message.senderCin === currentUserCin || message.receiverCin === currentUserCin) &&
                     (message.senderCin === receiverCin || message.receiverCin === receiverCin)) {
@@ -47,15 +55,28 @@ function initializeWebSocket(userCin) {
             }
         };
 
-        socket.onclose = function() {
-            console.log('WebSocket closed');
+        socket.onclose = function(event) {
+            console.log('WebSocket closed:', event);
+            updateSendButtonState(false);
+            if (reconnectAttempts < maxReconnectAttempts) {
+                console.log(`Attempting to reconnect (${reconnectAttempts + 1}/${maxReconnectAttempts})...`);
+                setTimeout(() => {
+                    reconnectAttempts++;
+                    initializeWebSocket(userCin);
+                }, reconnectInterval);
+            } else {
+                console.error('Max reconnect attempts reached. Please refresh the page.');
+                alert('Unable to connect to the chat server. Please try again later.');
+            }
         };
 
         socket.onerror = function(error) {
             console.error('WebSocket error:', error);
+            updateSendButtonState(false);
         };
     } catch (e) {
         console.error('WebSocket initialization failed:', e);
+        updateSendButtonState(false);
     }
 }
 
@@ -64,11 +85,19 @@ function sendMessage(senderCin, receiverCin) {
         const input = document.getElementById('comment');
         if (!input) {
             console.error('Input element not found');
+            alert('Chat input field not found. Please refresh the page.');
             return;
         }
+
         const content = input.value.trim();
         if (!content) {
             console.log('Empty message ignored');
+            return;
+        }
+
+        if (!senderCin || !receiverCin) {
+            console.error('Sender or receiver CIN is missing');
+            alert('Unable to send message: User information missing.');
             return;
         }
 
@@ -83,7 +112,6 @@ function sendMessage(senderCin, receiverCin) {
             socket.send(JSON.stringify(messageData));
             input.value = '';
             console.log('Sent:', messageData);
-            // Fallback: append locally if server doesn't broadcast
             appendMessage({
                 senderCin: senderCin,
                 receiverCin: receiverCin,
@@ -92,9 +120,11 @@ function sendMessage(senderCin, receiverCin) {
             });
         } else {
             console.error('WebSocket not connected');
+            alert('Cannot send message: Chat server is not connected. Please try again later.');
         }
     } catch (e) {
         console.error('Error sending message:', e);
+        alert('An error occurred while sending the message. Please try again.');
     }
 }
 
@@ -142,3 +172,29 @@ function appendMessage(message) {
         console.error('Error appending message:', e);
     }
 }
+
+function updateSendButtonState(isConnected) {
+    const sendButton = document.querySelector('.reply-send i');
+    if (sendButton) {
+        if (isConnected) {
+            sendButton.classList.remove('text-muted');
+            sendButton.style.cursor = 'pointer';
+            sendButton.setAttribute('aria-disabled', 'false');
+        } else {
+            sendButton.classList.add('text-muted');
+            sendButton.style.cursor = 'not-allowed';
+            sendButton.setAttribute('aria-disabled', 'true');
+        }
+    }
+
+    const textarea = document.getElementById('comment');
+    if (textarea) {
+        textarea.disabled = !isConnected;
+    }
+}
+
+// Expose functions to global scope
+window.initializeWebSocket = initializeWebSocket;
+window.sendMessage = sendMessage;
+window.appendMessage = appendMessage;
+window.updateSendButtonState = updateSendButtonState;

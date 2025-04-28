@@ -16,6 +16,10 @@
                             <option value="refusé" {{ reclamation.statut == 'refusé' ? 'selected' : '' }}>Refusé</option>
                         </select>
                     </div>
+                    <div class="form-group mt-3">
+                        <label for="contenue_reponse">Réponse</label>
+                        <textarea name="contenue_reponse" id="contenue_reponse" class="form-control" rows="5">{{ reponse ? reponse.contenueReponse : '' }}</textarea>
+                    </div>
                     <input type="hidden" name="_token" value="{{ csrf_token('edit_reclamation') }}">
                     <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
                     <a href="{{ path('admin_reclamation') }}" class="btn btn-secondary mt-3">Annuler</a>

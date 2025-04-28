@@ -82,3 +82,8 @@ services:
     App\Service\GeminiService:
         arguments:
             $params: '@parameter_bag'
+
+    App\WebSocket\ChatServer:
+        public: true
+        autowire: true
+        autoconfigure: true
