@@ -7,6 +7,7 @@ parameters:
     images_directory: '%kernel.project_dir%/assets/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
+    app.timezone: 'Africa/Tunis'
     
 
 services:
@@ -52,3 +53,24 @@ services:
         tags: ['controller.service_arguments']
         autowire: true
         autoconfigure: true
+
+
+    App\Service\TwilioService:
+        arguments:
+            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(TWILIO_AUTH_TOKEN)%'
+            $whatsappNumber: '%env(TWILIO_WHATSAPP_NUMBER)%'
+    
+    App\Command\SendRendezvousRemindersCommand:
+        arguments:
+            $timezone: '%app.timezone%'
+    
+    App\Service\Geocoder:
+        arguments:
+            $client: '@Symfony\Contracts\HttpClient\HttpClientInterface'
+
+    App\Service\GeocodingService:
+        arguments:
+            $geocoder: '@App\Service\Geocoder'
+            $logger: '@logger'
+    

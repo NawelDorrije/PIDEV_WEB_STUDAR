@@ -108,33 +108,100 @@
                                                 <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Logements</a></li>
                                             </ul>
                                         </li>
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_ADMIN' ? 'active' }}">
-    <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Agenda
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="agendaDropdownAdmin">
-        <li class="{{ app.request.get('_route') == 'app_rendezvous_index_ADMIN' ? 'active' }}">
-            <a class="dropdown-item" href="{{ path('app_rendezvous_index_ADMIN') }}">
-                <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
-            </a>
-        </li>
-        <li class="{{ app.request.get('_route') == 'app_reservation_logement_index_ADMIN' ? 'active' }}">
-            <a class="dropdown-item" href="{{ path('app_reservation_logement_index_ADMIN') }}">
-                <i class="fas fa-bed mr-2"></i> Réservation des logements
-            </a>
-        </li>
-        <li class="{{ app.request.get('_route') == 'app_reservation_transport_index_ADMIN' ? 'active' }}">
-            <a class="dropdown-item" href="{{ path('app_reservation_transport_index_ADMIN') }}">
-                <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
-            </a>
-        </li>
-    </ul>
-</li>
+                                       <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_ADMIN' ? 'active' }}">
+                                        <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Agenda
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="agendaDropdownAdmin">
+                                            <li class="{{ app.request.get('_route') == 'app_rendezvous_index_ADMIN' ? 'active' }}">
+                                                <a class="dropdown-item" href="{{ path('app_rendezvous_index_ADMIN') }}">
+                                                    <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
+                                                </a>
+                                            </li>
+                                            <li class="{{ app.request.get('_route') == 'app_reservation_logement_index_ADMIN' ? 'active' }}">
+                                                <a class="dropdown-item" href="{{ path('app_reservation_logement_index_ADMIN') }}">
+                                                    <i class="fas fa-bed mr-2"></i> Réservation des logements
+                                                </a>
+                                            </li>
+                                            <li class="{{ app.request.get('_route') == 'app_reservation_transport_index_ADMIN' ? 'active' }}">
+                                                <a class="dropdown-item" href="{{ path('app_reservation_transport_index_ADMIN') }}">
+                                                    <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
 
 
-<li><a href="{{ path('app_logout') }}"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>    
-                                {% elseif app.user and app.user.role == 'étudiant' %}
-                                        <!-- Navigation pour les non-admins -->
+                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
+                                        {% elseif is_granted('ROLE_TRANSPORTEUR') %}
+                                        <!-- Navigation pour les TRANSPORTEUR -->
+                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
+                                        <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}">Profil</a></li>
+
+                                        <!-- Services Dropdown pour transporteurs -->
+                                        <li class="nav-item dropdown">
+                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Services
+                                            </a>
+                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownTrans">
+                                                <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
+                                            </ul>
+                                        </li>
+                                       <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_TRANS' ? 'active' }}">
+                                        <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownTRANSPORTEUR" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Agenda
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="agendaDropdownTRANSPORTEUR">
+                                        
+                                            <li class="{{ app.request.get('_route') == 'app_reservation_transport_index_TRANS' ? 'active' }}">
+                                                <a class="dropdown-item" href="{{ path('app_reservation_transport_index_TRANS') }}">
+                                                    <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+
+
+                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
+                                        {% elseif is_granted('ROLE_PROPRIETAIRE') %}
+                                        <!-- Navigation pour les PROP -->
+                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
+                                        <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}">Profil</a></li>
+
+                                        <!-- Services Dropdown pour PROP -->
+                                        <li class="nav-item dropdown">
+                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Services
+                                            </a>
+                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownProp">
+                                                <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                            </ul>
+                                        </li>
+                                       <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_PROP' ? 'active' }}">
+                                        <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Agenda
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="agendaDropdownProp">
+                                            <li class="{{ app.request.get('_route') == 'app_rendezvous_index_PROP' ? 'active' }}">
+                                                <a class="dropdown-item" href="{{ path('app_rendezvous_index_PROP') }}">
+                                                    <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
+                                                </a>
+                                            </li>
+                                            <li class="{{ app.request.get('_route') == 'app_reservation_logement_index_PROP' ? 'active' }}">
+                                                <a class="dropdown-item" href="{{ path('app_reservation_logement_index_PROP') }}">
+                                                    <i class="fas fa-bed mr-2"></i> Réservation des logements
+                                                </a>
+                                            </li>
+                                          
+                                        </ul>
+                                    </li>
+
+
+                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
+                          
+                          
+                                    {% else %}
+                                        <!-- Navigation pour les non-admins(etudiant) -->
                                         <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
 
                                         <!-- Services Dropdown -->
@@ -180,65 +247,8 @@
                                         {% else %}
                                             <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
                                         {% endif %}
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> </a></li>
-                                      {% elseif app.user and app.user.role == 'propriétaire' %}
-                                       <!-- Navigation pour les propriétaires -->
-                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
-                                        <!-- Mes Logements -->
-                                        <li><a href="{{ path('app_logement_index_PROP') }}" class="{{ app.request.get('_route') == 'app_logement_index_PROP' ? 'active' : '' }}">Mes Logements</a></li>
-                                        <!-- Agenda Dropdown -->
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdownProp">
-                                                <li class="{{ app.request.get('_route') == 'app_rendezvous_index_PROP' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_rendezvous_index_PROP') }}">
-                                                        <i class="fas fa-calendar-day me-2"></i> Rendez-vous
-                                                    </a>
-                                                </li>
-                                                <li class="{{ app.request.get('_route') == 'app_reservation_logement_index_PROP' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_reservation_logement_index_PROP') }}">
-                                                        <i class="fas fa-bed me-2"></i> Réservation des logements
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="{{ path('app_home') }}">Chat AI</a></li>
-                                        <!-- Profil ou Connexion -->
-                                        {% if app.user %}
-                                            <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
-                                        {% else %}
-                                            <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
-                                        {% endif %}
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
-                                    {% elseif app.user and app.user.role == 'transporteur' %}
-                                        <!-- Navigation pour les transporteurs -->
-                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
-                                        <!-- Mes Transports -->
-                                        <li><a href="{{ path('app_transport_index_TRANS') }}" class="{{ app.request.get('_route') == 'app_transport_index_TRANS' ? 'active' : '' }}">Mes Transports</a></li>
-                                        <!-- Agenda Dropdown -->
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdownTrans">
-                                                <li class="{{ app.request.get('_route') == 'app_reservation_transport_index_TRANS' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_reservation_transport_index_TRANS') }}">
-                                                        <i class="fas fa-bus me-2"></i> Réservation des transporteurs
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="{{ path('app_home') }}">Chat AI</a></li>
-                                        <!-- Profil ou Connexion -->
-                                        {% if app.user %}
-                                            <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
-                                        {% else %}
-                                            <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
-                                        {% endif %}
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
-                                        {% endif %}
+                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
+                                    {% endif %}
                                 </ul>
 
                                 <a class="menu-trigger">
