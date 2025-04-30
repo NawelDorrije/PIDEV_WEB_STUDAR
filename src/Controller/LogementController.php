@@ -348,7 +348,7 @@ final class LogementController extends AbstractController
     
             $this->logger->info('Preparing to send email', [
                 'from' => $this->mailerFrom,
-                'to' => $recipient->getEmail(),
+                'to' => $recipient->getEmai(),
             ]);
             $email = (new Email())
                 ->from(new Address($this->mailerFrom, $this->mailerFromName))

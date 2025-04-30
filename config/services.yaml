@@ -41,6 +41,7 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/Form/'  # Add this line to exclude the Form directory
 
     App\Controller\Admin\DashboardController:
         arguments:
@@ -94,3 +95,4 @@ services:
         arguments:
             $httpClient: '@http_client'
             $logger: '@monolog.logger'
+            

@@ -199,7 +199,8 @@
             font-size: 14px;
         }
         
-        .form-group input[type="checkbox"] {
+        .form-group input[type="checkbox"],
+        .form-group input[type="file"] {
             width: auto;
             margin-right: 10px;
         }
@@ -280,8 +281,7 @@
         body.theme-dark .admin-content {
             background-color: #1a1a1a !important;
         }
-        body.theme-dark .title-dark{
-         
+        body.theme-dark .title-dark {
             color: #f1f1f1;
         }
         
@@ -359,7 +359,7 @@
 {% block body %}
 <div class="admin-container" data-theme="{{ app.user.theme ?? 'light' }}">
     <!-- Sidebar -->
-    <div class="admin-sidebar">
+    <!-- <div class="admin-sidebar">
         <ul class="sidebar-nav">
             <li>
                 <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
@@ -380,12 +380,10 @@
                 </a>
             </li>
         </ul>
-    </div>
+    </div> -->
 
     <!-- Main Content -->
     <div class="admin-content">
-
-
         <!-- Flash Messages -->
         {% for message in app.flashes('success') %}
             <div class="alert alert-success">{{ message }}</div>
@@ -448,7 +446,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Mettre à jour le profil</h3>
-                <form action="#" method="post">
+                <form action="{{ path('app_utilisateur_modifier_profile', {'cin': app.user.cin}) }}" method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="nom">Nom</label>
                         <input type="text" id="nom" name="nom" value="{{ app.user.nom }}" required>
@@ -465,6 +463,10 @@
                         <label for="numTel">Numéro de téléphone</label>
                         <input type="text" id="numTel" name="numTel" value="{{ app.user.numTel }}">
                     </div>
+                    <div class="form-group">
+                        <label for="imageFile">Photo de profil</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                    </div>
                     <button type="submit" class="orange-button">Mettre à jour le profil</button>
                 </form>
             </div>
@@ -475,7 +477,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Préférences de notification</h3>
-                
+                <!-- Add notification preferences form here -->
             </div>
         </div>
 
@@ -503,12 +505,36 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Authentification à deux facteurs (2FA)</h3>
-                
+                <!-- Add 2FA form here -->
             </div>
         </div>
 
-       
-       
+        <!-- Activity Log -->
+        <!-- <div class="parameters-list activity-log">
+            <h3>Journal d'activité</h3>
+            {% if activityLogs is defined and activityLogs|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in activityLogs %}
+                            <tr>
+                                <td>{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.details }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucune activité récente.</p>
+            {% endif %}
+        </div> -->
     </div>
 </div>
 {% endblock %}
