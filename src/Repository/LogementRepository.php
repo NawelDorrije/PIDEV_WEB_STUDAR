@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Logement;
+use App\Entity\Utilisateur;
 use App\Enums\RoleUtilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -17,7 +18,92 @@ class LogementRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Logement::class);
     }
+   /**
+ * Get the top 7 logements by total interactions and calculate interaction differences.
+ *
+ * @param Utilisateur|null $user Optional user to filter by (for ROLE_PROPRIETAIRE)
+ * @return array Interaction differences between consecutive logements
+ */
+    public function getLastLogementsInteractions(?Utilisateur $user = null): array
+    {
+        // Fetch the last 7 logements sorted by ID in descending order
+        $qb = $this->createQueryBuilder('l')
+            ->orderBy('l.id', 'DESC')
+            ->setMaxResults(7);
 
+        if ($user) {
+            $qb->andWhere('l.utilisateur_cin = :user')
+               ->setParameter('user', $user);
+        }
+
+        $logements = $qb->getQuery()->getResult();
+
+        // If fewer than 2 logements, return empty data to avoid calculating differences
+        if (count($logements) < 2) {
+            return [
+                'labels' => [],
+                'jadoreDiffs' => [],
+                'likesDiffs' => [],
+                'dislikesDiffs' => [],
+                'sharesDiffs' => [],
+            'logements' => [],
+            ];
+        }
+
+        // Calculate interactions for each logement
+        $interactions = [];
+        foreach ($logements as $logement) {
+            $emojis = $logement->getEmojis() ?? [];
+            $jadoreCount = 0;
+            $likesCount = 0;
+            $dislikesCount = 0;
+
+            foreach ($emojis as $emoji) {
+                if ($emoji === '❤️') {
+                    $jadoreCount++;
+                } elseif ($emoji === '👍') {
+                    $likesCount++;
+                } elseif ($emoji === '👎') {
+                    $dislikesCount++;
+                }
+            }
+
+            $interactions[] = [
+                'id' => $logement->getId(),
+                'jadore' => $jadoreCount,
+                'likes' => $likesCount,
+                'dislikes' => $dislikesCount,
+                'shares' => $logement->getShareCount(),
+            ];
+        }
+
+        // Calculate differences between consecutive logements
+        $labels = [];
+        $jadoreDiffs = [];
+        $likesDiffs = [];
+        $dislikesDiffs = [];
+        $sharesDiffs = [];
+
+        for ($i = 0; $i < count($interactions) - 1; $i++) {
+            $current = $interactions[$i];
+            $next = $interactions[$i + 1];
+
+            $labels[] = "Logement {$current['id']} → {$next['id']}";
+            $jadoreDiffs[] = $current['jadore'] - $next['jadore'];
+            $likesDiffs[] = $current['likes'] - $next['likes'];
+            $dislikesDiffs[] = $current['dislikes'] - $next['dislikes'];
+            $sharesDiffs[] = $current['shares'] - $next['shares'];
+        }
+
+        return [
+            'labels' => $labels,
+            'jadoreDiffs' => $jadoreDiffs,
+            'likesDiffs' => $likesDiffs,
+            'dislikesDiffs' => $dislikesDiffs,
+            'sharesDiffs' => $sharesDiffs,
+            'logements' => $logements, // For PDF report details
+        ];
+    }
     public function findNearby(
         ?string $type,
         ?float $maxPrice,

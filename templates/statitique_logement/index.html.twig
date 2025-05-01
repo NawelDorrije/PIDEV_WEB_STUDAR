@@ -27,6 +27,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
+            text-decoration: none;
         }
         .cards-container {
             display: flex;
@@ -82,7 +83,7 @@
 <div class="dashboard-container">
     <div class="dashboard-header">
         <h1>Tableau de Bord</h1>
-        <button class="generate-report-btn">Générer un Rapport</button>
+        <a href="{{ path('app_dashboard_generate_report') }}" class="generate-report-btn">Générer un Rapport</a>
     </div>
 
     <div class="cards-container">
@@ -108,8 +109,8 @@
 
     <div class="charts-container">
         <div class="chart-box">
-            <h3>Interactions Hebdomadaires</h3>
-            <canvas id="weeklyInteractionsChart" height="100"></canvas>
+            <h3>Nombre d'Interactions (Top 7 Logements)</h3>
+            <canvas id="interactionChart" height="100"></canvas>
         </div>
         <div class="chart-box small">
             <h3>Propriétaires les Plus Actifs</h3>
@@ -123,36 +124,40 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
-        // Weekly Interactions Line Chart
-        const weeklyCtx = document.getElementById('weeklyInteractionsChart').getContext('2d');
-        new Chart(weeklyCtx, {
-            type: 'line',
+        // Interaction Totals Bar Chart (Histogram)
+        const interactionCtx = document.getElementById('interactionChart').getContext('2d');
+        new Chart(interactionCtx, {
+            type: 'bar',
             data: {
-                labels: [{% if weeklyInteractions is defined %}{% for week in weeklyInteractions %}'{{ week.week }}'{% if not loop.last %},{% endif %}{% endfor %}{% else %}'No Data'{% endif %}],
+                labels: [{% if interactionData.labels is defined %}{% for label in interactionData.labels %}'{{ label }}'{% if not loop.last %},{% endif %}{% endfor %}{% else %}'No Data'{% endif %}],
                 datasets: [
                     {
                         label: 'J\'adore',
-                        data: [{% if weeklyInteractions is defined %}{% for week in weeklyInteractions %}{{ week.jadore }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        data: [{% if interactionData.jadoreCounts is defined %}{% for count in interactionData.jadoreCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(255, 111, 97, 0.6)',
                         borderColor: '#FF6F61',
-                        fill: false
+                        borderWidth: 1
                     },
                     {
                         label: 'Likes',
-                        data: [{% if weeklyInteractions is defined %}{% for week in weeklyInteractions %}{{ week.likes }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        data: [{% if interactionData.likesCounts is defined %}{% for count in interactionData.likesCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(76, 175, 80, 0.6)',
                         borderColor: '#4CAF50',
-                        fill: false
+                        borderWidth: 1
                     },
                     {
                         label: 'Dislikes',
-                        data: [{% if weeklyInteractions is defined %}{% for week in weeklyInteractions %}{{ week.dislikes }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        data: [{% if interactionData.dislikesCounts is defined %}{% for count in interactionData.dislikesCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(244, 67, 54, 0.6)',
                         borderColor: '#F44336',
-                        fill: false
+                        borderWidth: 1
                     },
                     {
                         label: 'Shares',
-                        data: [{% if weeklyInteractions is defined %}{% for week in weeklyInteractions %}{{ week.shares }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        data: [{% if interactionData.sharesCounts is defined %}{% for count in interactionData.sharesCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(33, 150, 243, 0.6)',
                         borderColor: '#2196F3',
-                        fill: false
+                        borderWidth: 1
                     }
                 ]
             },
@@ -162,20 +167,29 @@
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Interaction Count'
-                        }
+                            text: 'Nombre d\'Interactions'
+                        },
+                        beginAtZero: true,
+                        stacked: false
                     },
                     x: {
                         title: {
                             display: true,
-                            text: 'Week'
+                            text: 'Logement'
+                        },
+                        stacked: false
                         }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
                     }
                 }
             }
         });
 
-        // Owner Activity Donut Chart
+        // Owner Activity Donut Chart (unchanged)
         const ownerCtx = document.getElementById('ownerActivityChart').getContext('2d');
         new Chart(ownerCtx, {
             type: 'doughnut',
