@@ -1,0 +1,447 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Commandes{% endblock %}
+
+{% block body %}
+<style>
+/* Styles existants pour les autres éléments */
+.popup-actions .btn-download {
+    background: #1e40af; /* Bleu professionnel */
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-weight: 500;
+}
+
+.popup-actions .btn-download:hover {
+    background: #1e3a8a; /* Bleu plus foncé */
+    transform: translateY(-2px);
+}
+
+/* Nouvelle pop-up d'annulation */
+.cancel-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.cancel-popup-content {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    animation: slideIn 0.3s ease;
+    border-top: 4px solid #ef4444; /* Bordure rouge pour indiquer une action critique */
+}
+
+.cancel-popup-content h2 {
+    font-size: 1.5rem;
+    color: #1f2937; /* Gris foncé */
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cancel-popup-content h2 i {
+    color: #ef4444; /* Icône rouge */
+}
+
+.cancel-popup-content p {
+    color: #4b5563; /* Gris moyen */
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.cancel-popup-content textarea {
+    width: 100%;
+    height: 120px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    resize: none;
+    transition: border-color 0.3s ease;
+}
+
+.cancel-popup-content textarea:focus {
+    outline: none;
+    border-color: #1e40af; /* Bleu au focus */
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.cancel-popup-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.cancel-popup-actions .btn-confirm {
+    background: #ef4444; /* Rouge pour confirmer */
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.2s ease;
+    
+}
+
+.cancel-popup-actions .btn-confirm:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+.cancel-popup .cancel-popup-content i{
+    margin-left: 100px;
+}
+.cancel-popup .cancel-popup-content i:hover {
+    cursor: pointer;
+}
+.cancel-popup-actions .btn-close {
+    background: #6b7280; /* Gris pour fermer */
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.cancel-popup-actions .btn-close:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<div class="commandes-container">
+    <h1>Mes Commandes</h1>
+
+    {% for message in app.flashes('warning') %}
+        <div class="alert-warning">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    <div class="filters-container">
+        <input type="text" class="filter-input" id="filter-code" placeholder="Code commande">
+        <input type="date" class="filter-input" id="filter-date">
+        <select class="filter-select" id="filter-statut">
+            <option value="">Tous les statuts</option>
+            <option value="En attente">En attente</option>
+            <option value="PAYÉE">Payée</option>
+            <option value="LIVRÉE">Livrée</option>
+            <option value="ANNULEE">Annulée</option>
+        </select>
+        <select class="filter-select" id="filter-paiement">
+            <option value="">Méthode de paiement</option>
+            <option value="Stripe">Stripe</option>
+            <option value="Paiement à la livraison">Paiement à la livraison</option>
+        </select>
+        <input type="number" class="filter-input" id="filter-montant" placeholder="Montant min">
+        <input type="text" class="filter-input" id="filter-adresse" placeholder="Adresse">
+    </div>
+
+    {% if commandes|length > 0 %}
+        <div class="commandes-grid" id="commandes-body">
+            {% for commande in commandes %}
+                <div class="commande-card {{ commande.statut|lower == 'annulée' ? 'annulee' : '' }}" data-id="{{ commande.id }}">
+                    <div class="commande-card-header">
+                        <span class="commande-id">#{{ commande.id }}</span>
+                        <span class="commande-date">{{ commande.dateCommande|date('d/m/Y H:i') }}</span>
+                    </div>
+                    <span class="commande-status {{ commande.statut|lower|replace({'é': 'e', '_': '-'}) }}">
+                        {{ commande.statut|lower|replace({'_': ' '})|capitalize }}
+                    </span>
+                    <div class="commande-payment">
+                        Paiement : {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}
+                    </div>
+                    <div class="commande-amount">
+                        {{ commande.montantTotal|number_format(2, ',', ' ') }} 
+                            {% if commande.methodePaiement == "Stripe" %} EUR {% else %}  TND
+    {% endif %}
+                    </div>
+                    <div class="commande-address">
+                        {{ commande.adresseLivraison|default('Non spécifiée') }}
+                    </div>
+                    <div class="commande-actions">
+                        {% if commande.statut != 'ANNULEE' %}
+                            <button class="btn-cancel" data-id="{{ commande.id }}">Annuler</button>
+                        {% endif %}
+                        <a href="{{ path('app_gestion_meubles_commande_pdf', {'id': commande.id}) }}" class="btn-download">Télécharger PDF</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Aucune commande à afficher.</p>
+    {% endif %}
+
+    <p id="no-results" style="display: none;">Aucune commande ne correspond aux filtres.</p>
+
+    <!-- Pop-up pour les détails -->
+    <div class="popup-overlay" id="commande-popup">
+        <div class="popup-content">
+            <button class="popup-close">×</button>
+            <h2>Détails de la commande</h2>
+            <div class="popup-details" id="popup-details">
+                <!-- Les détails seront injectés via JavaScript -->
+            </div>
+            <div class="popup-actions">
+                <a href="#" class="btn-download" id="download-command">Télécharger PDF</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nouvelle pop-up pour l'annulation -->
+    <div class="cancel-popup" id="cancel-popup">
+        <div class="cancel-popup-content">
+            <h2>Annuler la commande<i class="bi bi-x-circle" id="close-cancel"></i> </h2>
+            <p>Veuillez indiquer la raison de l'annulation de votre commande. Cette information nous aidera à améliorer notre service.</p>
+            <textarea id="cancel-reason" placeholder="Entrez la raison de l'annulation..."></textarea>
+            <div class="cancel-popup-actions">
+                <button class="btn-confirm" id="confirm-cancel">Confirmer l'annulation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_mes_meubles') }}" class="nav-button" title="Consulter mes meubles">
+            <i class="bi bi-list-ul"></i>
+            <span class="nav-text">Mes meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_a_acheter') }}" class="nav-button" title="Offres de meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Offre des meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="nav-button" title="Voir mon panier">
+            <i class="bi bi-cart3"></i>
+            <span class="nav-text">Panier</span>
+        </a>
+               <a href="{{ path('app_gestion_meubles_mes_ventes') }}" class="nav-button" title="Suivre mes ventes">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-text">Suivre mes ventes</span>
+        </a>
+        
+        <a href="{{ path('app_gestion_meubles_statistiques_etudiant') }}" class="nav-button" title="Voir les statistiques">
+            <i class="bi bi-bar-chart"></i>
+            <span class="nav-text">Statistiques</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filters = {
+                code: document.getElementById('filter-code'),
+                date: document.getElementById('filter-date'),
+                statut: document.getElementById('filter-statut'),
+                paiement: document.getElementById('filter-paiement'),
+                montant: document.getElementById('filter-montant'),
+                adresse: document.getElementById('filter-adresse')
+            };
+
+            const cards = document.querySelectorAll('.commande-card');
+            const noResultsMessage = document.getElementById('no-results');
+            const popup = document.getElementById('commande-popup');
+            const popupDetails = document.getElementById('popup-details');
+            const popupClose = document.querySelector('.popup-close');
+            const downloadButton = document.getElementById('download-command');
+            const cancelPopup = document.getElementById('cancel-popup');
+            const cancelReason = document.getElementById('cancel-reason');
+            const confirmCancel = document.getElementById('confirm-cancel');
+            const closeCancel = document.getElementById('close-cancel');
+
+            // Données des commandes avec parcours des LignePanier
+            const commandesData = {
+                {% for commande in commandes %}
+                    "{{ commande.id }}": {
+                        id: "{{ commande.id }}",
+                        date: "{{ commande.dateCommande|date('d/m/Y H:i') }}",
+                        statut: "{{ commande.statut|lower|replace({'_': ' '})|capitalize }}",
+                        paiement: "{{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}",
+                        montant: "{{ commande.montantTotal|number_format(2, ',', ' ') }} TND",
+                        adresse: "{{ commande.adresseLivraison|default('Non spécifiée') }}",
+                        pdfUrl: "{{ path('app_gestion_meubles_commande_pdf', {'id': commande.id}) }}",
+                        items: [
+                            {% for ligne in commande.panier.lignesPanier %}
+                                {
+                                    nom: "{{ ligne.meuble.nom|default('Meuble inconnu') }}",
+                                    prix: "{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND",
+                                    vendeur: "{{ ligne.meuble.vendeur.nom|default('Inconnu') }} {{ ligne.meuble.vendeur.prenom|default('') }}"
+                                }{% if not loop.last %},{% endif %}
+                            {% else %}
+                                { nom: "Aucun article", prix: "0,00 TND", vendeur: "N/A" }
+                            {% endfor %}
+                        ]
+                    }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            };
+
+            // Filtrer les cartes
+            Object.values(filters).forEach(filter => {
+                filter.addEventListener('input', applyFilters);
+            });
+
+            function applyFilters() {
+                let visibleCards = 0;
+                cards.forEach(card => {
+                    const id = card.querySelector('.commande-id').textContent.replace('#', '');
+                    const date = card.querySelector('.commande-date').textContent;
+                    const statut = card.querySelector('.commande-status').textContent;
+                    const paiement = card.querySelector('.commande-payment').textContent.replace('Paiement : ', '');
+                    const montant = parseFloat(card.querySelector('.commande-amount').textContent.replace(/[^\d,]/g, '').replace(',', '.'));
+                    const adresse = card.querySelector('.commande-address').textContent;
+
+                    const show = (!filters.code.value || id.includes(filters.code.value)) &&
+                        (!filters.date.value || date.includes(filters.date.value)) &&
+                        (!filters.statut.value || statut.toLowerCase().includes(filters.statut.value.toLowerCase())) &&
+                        (!filters.paiement.value || paiement.toLowerCase().includes(filters.paiement.value.toLowerCase())) &&
+                        (!filters.montant.value || montant >= parseFloat(filters.montant.value)) &&
+                        (!filters.adresse.value || adresse.toLowerCase().includes(filters.adresse.value.toLowerCase()));
+
+                    card.style.display = show ? '' : 'none';
+                    if (show) visibleCards++;
+                });
+                noResultsMessage.style.display = visibleCards === 0 ? 'block' : 'none';
+            }
+
+            // Afficher la pop-up au clic sur une carte
+            cards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('btn-cancel') || e.target.classList.contains('btn-download')) return;
+                    const commandeId = card.getAttribute('data-id');
+                    const commande = commandesData[commandeId];
+                    if (commande) {
+                        popupDetails.innerHTML = `
+                            <p class="id"><i class="bi bi-hash"></i> <strong>Commande #:</strong> <span>${commande.id}</span></p>
+                            <p class="date"><i class="bi bi-calendar"></i> <strong>Date:</strong> <span>${commande.date}</span></p>
+                            <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${commande.statut}</span></p>
+                            <p class="paiement"><i class="bi bi-credit-card"></i> <strong>Méthode de paiement:</strong> <span>${commande.paiement}</span></p>
+                            <p class="montant"><i class="bi bi-currency-dollar"></i> <strong>Montant total:</strong> <span>${commande.montant} ${
+                                commande.paiement == "Stripe" ? 'EUR' : 'TND'
+                            }</span></p>
+                            <p class="adresse"><i class="bi bi-geo-alt"></i> <strong>Adresse de livraison:</strong> <span>${commande.adresse}</span></p>
+                            <p class="items"><i class="bi bi-box-seam"></i> <strong>Articles (${commande.items.length}):</strong></p>
+                            <div class="popup-items">
+                                ${commande.items.map(item => `
+                                    <div class="popup-item">
+                                        <p><strong>Meuble:</strong> ${item.nom}</p>
+                                        <p><strong>Prix:</strong> ${item.prix}</p>
+                                        <p><strong>Vendeur:</strong> ${item.vendeur}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                        downloadButton.href = commande.pdfUrl;
+                        popup.style.display = 'flex';
+                        popup.classList.add('active');
+                    }
+                });
+            });
+
+            // Gestion du bouton Annuler
+            let currentCommandeId = null;
+            document.querySelectorAll('.btn-cancel').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    currentCommandeId = e.target.getAttribute('data-id');
+                    cancelPopup.style.display = 'flex';
+                    cancelReason.value = '';
+                });
+            });
+
+            // Confirmer l'annulation
+            confirmCancel.addEventListener('click', () => {
+                const raison = cancelReason.value.trim();
+                if (!raison) {
+                    alert('Veuillez indiquer une raison pour l\'annulation.');
+                    return;
+                }
+
+                fetch(`{{ path('app_gestion_meubles_commande_annuler', {'id': '__ID__'}) }}`.replace('__ID__', currentCommandeId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `raison=${encodeURIComponent(raison)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.success);
+                        const card = document.querySelector(`.commande-card[data-id="${currentCommandeId}"]`);
+                        if (card) {
+                            card.classList.add('annulee');
+                            card.querySelector('.commande-status').textContent = 'Annulée';
+                            card.querySelector('.commande-actions').innerHTML = `<a href="${commandesData[currentCommandeId].pdfUrl}" class="btn-download">Télécharger PDF</a>`;
+                        }
+                        cancelPopup.style.display = 'none';
+                    } else {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Erreur lors de l\'annulation : ' + error.message);
+                });
+            });
+
+            // Fermer la pop-up d'annulation
+            closeCancel.addEventListener('click', () => {
+                cancelPopup.style.display = 'none';
+            });
+
+            // Fermer la pop-up des détails
+            popupClose.addEventListener('click', () => {
+                popup.style.display = 'none';
+                popup.classList.remove('active');
+            });
+
+            // Fermer la pop-up des détails en cliquant à l'extérieur
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popup.classList.remove('active');
+                }
+            });
+
+            // Fermer la pop-up d'annulation en cliquant à l'extérieur
+            cancelPopup.addEventListener('click', (e) => {
+                if (e.target === cancelPopup) {
+                    cancelPopup.style.display = 'none';
+                }
+            });
+        });
+    </script>
+{% endblock %}

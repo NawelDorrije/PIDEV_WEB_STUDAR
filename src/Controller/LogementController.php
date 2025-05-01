@@ -14,6 +14,7 @@ use App\Entity\Logement;
 use Doctrine\Persistence\ManagerRegistry as PersistenceManagerRegistry;
 use App\Entity\Utilisateur;
 use App\Form\LogementType;
+
 use App\Repository\LogementRepository;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -141,6 +142,173 @@ final class LogementController extends AbstractController
             ]);
         }
     }
+
+    // Weekly interactions for the line chart (last 8 weeks)
+    // $weeklyInteractions = [];
+    // $currentDate = new \DateTime();
+    // for ($i = 7; $i >= 0; $i--) {
+    //     $weekStart = (clone $currentDate)->modify("-{$i} weeks")->setTime(0, 0, 0);
+    //     $weekEnd = (clone $weekStart)->modify('+6 days')->setTime(23, 59, 59);
+    //     $weekLabel = $weekStart->format('M d');
+
+    //     $jadoreCount = 0;
+    //     $likeCount = 0;
+    //     $dislikeCount = 0;
+    //     $shareCount = 0;
+
+    //     foreach ($logements as $logement) {
+    //         $emojis = $logement->getEmojis() ?? [];
+    //         foreach ($emojis as $userCin => $emoji) {
+    //             if ($emoji === '❤️') $jadoreCount++;
+    //             if ($emoji === '👍') $likeCount++;
+    //             if ($emoji === '👎') $dislikeCount++;
+    //         }
+    //         $shareCount += $logement->getShareCount();
+    //     }
+
+    //     $weeklyInteractions[] = [
+    //         'week' => $weekLabel,
+    //         'jadore' => $jadoreCount,
+    //         'likes' => $likeCount,
+    //         'dislikes' => $dislikeCount,
+    //         'shares' => $shareCount,
+    //     ];
+    // }
+
+    // Most active property owner for the donut chart
+    // $owners = $utilisateurRepository->findAll();
+    // $ownerPostCounts = [];
+    // foreach ($owners as $owner) {
+    //     $postCount = count($owner->getLogements());
+    //     if ($postCount > 0) {
+    //         $ownerPostCounts[] = [
+    //             'owner' => $owner->getNom(),
+    //             'postCount' => $postCount,
+    //         ];
+    //     }
+    // }
+    // Sort by post count descending
+    usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
+
+    return $this->render('statitique_logement/index.html.twig', [
+        'mostJadore' => $mostJadore,
+        'mostLikes' => $mostLikes,
+        'mostDislikes' => $mostDislikes,
+        'weeklyInteractions' => $weeklyInteractions,
+        'ownerPostCounts' => $ownerPostCounts,
+    ]);
+}
+    #[Route('/logement', name: 'app_logement_index', methods: ['GET'])]
+    public function index(LogementRepository $logementRepository, Security $security): Response
+    {
+        try {
+            // Get the current user
+            $user = $security->getUser();
+    
+            // Initialize logements array
+            $logements = [];
+    
+            // Check roles and fetch logements accordingly
+            if ($security->isGranted('ROLE_ADMIN') && $user) {
+                // Admins get all logements
+                $logements = $logementRepository->findAll();
+            } elseif ($security->isGranted('ROLE_PROPRIETAIRE') && $user) {
+                // Proprietaires get only their own logements
+                $logements = $logementRepository->findBy(['utilisateur_cin' => $user]);
+            } else {
+                // Default: Other users (including anonymous) get all logements
+                $logements = $logementRepository->findAll();
+            }
+    
+            // Check if no logements are found
+            if (empty($logements)) {
+                $this->logger->info('No logements found for index', [
+                    'user' => $user ? $user->getUserIdentifier() : 'anonymous',
+                    'roles' => $user ? $user->getRoles() : []
+                ]);
+    
+                return $this->render('Client/logement/index.html.twig', [
+                    'logements' => [],
+                    'filter' => [
+                        'type' => null,
+                        'prix' => null,
+                        'nbrChambre' => null,
+                        'adresse' => null,
+                    ],
+                    'geocodeError' => false,
+                    'error' => 'No logements found.',
+                ]);
+            }
+    
+            // Add reaction data to logements
+            $logementsWithReactions = $this->addReactionData($logements);
+    
+            return $this->render('Client/logement/index.html.twig', [
+                'logements' => $logementsWithReactions,
+                'filter' => [
+                    'type' => null,
+                    'prix' => null,
+                    'nbrChambre' => null,
+                    'adresse' => null,
+                ],
+                'geocodeError' => false,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Index error', ['error' => $e->getMessage()]);
+            return $this->render('Client/logement/index.html.twig', [
+                'logements' => [],
+                'filter' => [
+                    'type' => null,
+                    'prix' => null,
+                    'nbrChambre' => null,
+                    'adresse' => null,
+                ],
+                'geocodeError' => false,
+                'error' => 'An error occurred while loading the logements.',
+            ]);
+        }
+    }
+    // private function addReactionData(array $logements): array
+    // {
+    //     $logementsWithReactions = [];
+    //     foreach ($logements as $logement) {
+    //         $emojis = $logement->getEmojis() ?? [];
+    //         $reactionCounts = array_count_values($emojis);
+    //         $totalReactions = count($emojis);
+    //         $logementsWithReactions[] = [
+    //             'entity' => $logement,
+    //             'reactionCounts' => $reactionCounts,
+    //             'totalReactions' => $totalReactions,
+    //             'reactionScore' => ($reactionCounts['❤️'] ?? 0) * 3 + ($reactionCounts['👍'] ?? 0) * 2 + ($reactionCounts['👎'] ?? 0) * -1,
+    //         ];
+    //     }
+    
+    //     // Trier par reactionScore
+    //     usort($logementsWithReactions, function ($a, $b) {
+    //         return $b['reactionScore'] <=> $a['reactionScore'];
+    //     });
+    
+    //     return $logementsWithReactions;
+    // }
+
+
+    // #[Route('/logement', name: 'app_logement_index', methods: ['GET'])]
+    // public function index(LogementRepository $logementRepository): Response
+    // {
+    //     $logements = $logementRepository->findAll();
+    //     $logementsWithReactions = $this->addReactionData($logements);
+    
+    //     return $this->render('Client/logement/index.html.twig', [
+    //         'logements' => $logementsWithReactions,
+    //         'filter' => [
+    //             'type' => null,
+    //             'prix' => null,
+    //             'nbrChambre' => null,
+    //             'adresse' => null,
+    //         ],
+    //         'geocodeError' => false,
+    //     ]);
+    // }
     #[Route('/logement/users', name: 'app_logement_users', methods: ['GET'])]
     public function getUsers(UtilisateurRepository $utilisateurRepository): Response
     {
@@ -160,7 +328,6 @@ final class LogementController extends AbstractController
     
         return $this->json($userData);
     }
-
     // New method to handle sharing a logement
     #[Route('/{id}/share', name: 'app_logement_share', methods: ['POST'])]
     public function share(
@@ -312,7 +479,7 @@ HTML;
     
             $this->logger->info('Preparing to send email', [
                 'from' => $this->mailerFrom,
-                'to' => $recipient->getEmail(),
+                'to' => $recipient->getEmai(),
             ]);
             $email = (new Email())
                 ->from(new Address($this->mailerFrom, $this->mailerFromName))
@@ -787,109 +954,109 @@ HTML;
             'logement' => $logement, // Pass logement for context
         ]);
     }
-//     #[Route('/dashboard', name: 'app_logement_dashboard', methods: ['GET'])]
-//     public function dashboard(LogementRepository $logementRepository, UtilisateurRepository $utilisateurRepository): Response
-// {
-//     // Get all logements
-//     $logements = $logementRepository->findAllSortedByIdDesc();
-//     $logementsWithReactions = $this->addReactionData($logements);
+    #[Route('/dashboard', name: 'app_logement_dashboard', methods: ['GET'])]
+    public function dashboard(LogementRepository $logementRepository, UtilisateurRepository $utilisateurRepository): Response
+{
+    // Get all logements
+    $logements = $logementRepository->findAllSortedByIdDesc();
+    $logementsWithReactions = $this->addReactionData($logements);
 
-//     // Initialize variables for the cards
-//     $mostJadore = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
-//     $mostLikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
-//     $mostDislikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+    // Initialize variables for the cards
+    $mostJadore = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+    $mostLikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+    $mostDislikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
 
-//     // Find logements with the most J'adore, Likes, and Dislikes
-//     foreach ($logementsWithReactions as $logementData) {
-//         $logement = $logementData['entity'];
-//         $reactionCounts = $logementData['reactionCounts'];
+    // Find logements with the most J'adore, Likes, and Dislikes
+    foreach ($logementsWithReactions as $logementData) {
+        $logement = $logementData['entity'];
+        $reactionCounts = $logementData['reactionCounts'];
         
-//         // J'adore (❤️)
-//         $jadoreCount = $reactionCounts['❤️'] ?? 0;
-//         if ($jadoreCount > $mostJadore['count']) {
-//             $mostJadore = [
-//                 'logement' => $logement,
-//                 'count' => $jadoreCount,
-//                 'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
-//             ];
-//         }
+        // J'adore (❤️)
+        $jadoreCount = $reactionCounts['❤️'] ?? 0;
+        if ($jadoreCount > $mostJadore['count']) {
+            $mostJadore = [
+                'logement' => $logement,
+                'count' => $jadoreCount,
+                'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+            ];
+        }
 
-//         // Likes (👍)
-//         $likeCount = $reactionCounts['👍'] ?? 0;
-//         if ($likeCount > $mostLikes['count']) {
-//             $mostLikes = [
-//                 'logement' => $logement,
-//                 'count' => $likeCount,
-//                 'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
-//             ];
-//         }
+        // Likes (👍)
+        $likeCount = $reactionCounts['👍'] ?? 0;
+        if ($likeCount > $mostLikes['count']) {
+            $mostLikes = [
+                'logement' => $logement,
+                'count' => $likeCount,
+                'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+            ];
+        }
 
-//         // Dislikes (👎)
-//         $dislikeCount = $reactionCounts['👎'] ?? 0;
-//         if ($dislikeCount > $mostDislikes['count']) {
-//             $mostDislikes = [
-//                 'logement' => $logement,
-//                 'count' => $dislikeCount,
-//                 'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
-//             ];
-//         }
-//     }
+        // Dislikes (👎)
+        $dislikeCount = $reactionCounts['👎'] ?? 0;
+        if ($dislikeCount > $mostDislikes['count']) {
+            $mostDislikes = [
+                'logement' => $logement,
+                'count' => $dislikeCount,
+                'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+            ];
+        }
+    }
 
-//     // Weekly interactions for the line chart (last 8 weeks)
-//     $weeklyInteractions = [];
-//     $currentDate = new \DateTime();
-//     for ($i = 7; $i >= 0; $i--) {
-//         $weekStart = (clone $currentDate)->modify("-{$i} weeks")->setTime(0, 0, 0);
-//         $weekEnd = (clone $weekStart)->modify('+6 days')->setTime(23, 59, 59);
-//         $weekLabel = $weekStart->format('M d');
+    // Weekly interactions for the line chart (last 8 weeks)
+    $weeklyInteractions = [];
+    $currentDate = new \DateTime();
+    for ($i = 7; $i >= 0; $i--) {
+        $weekStart = (clone $currentDate)->modify("-{$i} weeks")->setTime(0, 0, 0);
+        $weekEnd = (clone $weekStart)->modify('+6 days')->setTime(23, 59, 59);
+        $weekLabel = $weekStart->format('M d');
 
-//         $jadoreCount = 0;
-//         $likeCount = 0;
-//         $dislikeCount = 0;
-//         $shareCount = 0;
+        $jadoreCount = 0;
+        $likeCount = 0;
+        $dislikeCount = 0;
+        $shareCount = 0;
 
-//         foreach ($logements as $logement) {
-//             $emojis = $logement->getEmojis() ?? [];
-//             foreach ($emojis as $userCin => $emoji) {
-//                 if ($emoji === '❤️') $jadoreCount++;
-//                 if ($emoji === '👍') $likeCount++;
-//                 if ($emoji === '👎') $dislikeCount++;
-//             }
-//             $shareCount += $logement->getShareCount();
-//         }
+        foreach ($logements as $logement) {
+            $emojis = $logement->getEmojis() ?? [];
+            foreach ($emojis as $userCin => $emoji) {
+                if ($emoji === '❤️') $jadoreCount++;
+                if ($emoji === '👍') $likeCount++;
+                if ($emoji === '👎') $dislikeCount++;
+            }
+            $shareCount += $logement->getShareCount();
+        }
 
-//         $weeklyInteractions[] = [
-//             'week' => $weekLabel,
-//             'jadore' => $jadoreCount,
-//             'likes' => $likeCount,
-//             'dislikes' => $dislikeCount,
-//             'shares' => $shareCount,
-//         ];
-//     }
+        $weeklyInteractions[] = [
+            'week' => $weekLabel,
+            'jadore' => $jadoreCount,
+            'likes' => $likeCount,
+            'dislikes' => $dislikeCount,
+            'shares' => $shareCount,
+        ];
+    }
 
-//     // Most active property owner for the donut chart
-//     $owners = $utilisateurRepository->findAll();
-//     $ownerPostCounts = [];
-//     foreach ($owners as $owner) {
-//         $postCount = count($owner->getLogements());
-//         if ($postCount > 0) {
-//             $ownerPostCounts[] = [
-//                 'owner' => $owner->getNom(),
-//                 'postCount' => $postCount,
-//             ];
-//         }
-//     }
-//     // Sort by post count descending
-//     usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
+    // Most active property owner for the donut chart
+    $owners = $utilisateurRepository->findAll();
+    $ownerPostCounts = [];
+    foreach ($owners as $owner) {
+        $postCount = count($owner->getLogements());
+        if ($postCount > 0) {
+            $ownerPostCounts[] = [
+                'owner' => $owner->getNom(),
+                'postCount' => $postCount,
+            ];
+        }
+    }
+    // Sort by post count descending
+    usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
 
-//     return $this->render('statitique_logement/index.html.twig', [
-//         'mostJadore' => $mostJadore,
-//         'mostLikes' => $mostLikes,
-//         'mostDislikes' => $mostDislikes,
-//         'weeklyInteractions' => $weeklyInteractions,
-//         'ownerPostCounts' => $ownerPostCounts,
-//     ]);
-// }
+    return $this->render('statitique_logement/index.html.twig', [
+        'mostJadore' => $mostJadore,
+        'mostLikes' => $mostLikes,
+        'mostDislikes' => $mostDislikes,
+        'weeklyInteractions' => $weeklyInteractions,
+        'ownerPostCounts' => $ownerPostCounts,
+    ]);
+}
     #[Route('/{id}', name: 'app_logement_show', methods: ['GET'])]
     public function show(Logement $logement): Response
     {
@@ -1025,7 +1192,7 @@ HTML;
             return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
         }
     
-        $logement->addEmoji($user->getCin(), $emoji);
+        $logement->addEmoji($user->getUserIdentifier(), $emoji);
         $entityManager->flush();
     
         $this->addFlash('success', 'Réaction mise à jour avec succès !');

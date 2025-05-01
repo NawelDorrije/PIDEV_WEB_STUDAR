@@ -92,7 +92,7 @@
           .toFixed(options.decimals)
           .replace(/\B(?=(?:\d{3})+(?!\d))/g, ",");
       }
-    });
+    });gi
   
     // start all the timers
     $(".timer").each(count);

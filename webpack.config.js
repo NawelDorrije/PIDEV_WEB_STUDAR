@@ -20,8 +20,12 @@ Encore
      * Each entry will result in one JavaScript file (e.g. app.js)
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
-    .addEntry('app', './assets/app.js')
-
+    .addEntry('app', './assets/app.js') // Si vous avez un point d'entrée principal
+    .addEntry('chat', './assets/js/chat.js') // Point d'entrée pour le chat// Add the chat entry
+    .copyFiles({
+        from: './node_modules/bootstrap/dist/css',
+        to: 'css/[name].[ext]'
+    })
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
 

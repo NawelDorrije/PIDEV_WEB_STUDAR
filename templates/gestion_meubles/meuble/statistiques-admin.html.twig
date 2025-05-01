@@ -1,0 +1,603 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques - Admin{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #64748b;
+            font-size: 1rem;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .nav-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #1e293b;
+            background: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background: #f8fafc;
+            border-color: #4f46e5;
+        }
+        .nav-button.active {
+            background: #2556A7;
+            color: #fff;
+            border-color: #007bff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1e293b;
+            background: linear-gradient(to right, #4f46e5, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .filters-container {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-select {
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: #1e293b;
+            background: #fff;
+            width: 220px;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.2rem;
+        }
+        .download-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: #fff;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        .download-button:hover {
+            background: #3b82f6;
+        }
+        .download-button i {
+            font-size: 1.2rem;
+        }
+        .filter-select:focus, .download-button:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .kpi-card {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, #4f46e5, #3b82f6);
+            opacity: 0.8;
+        }
+        .kpi-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .kpi-card i {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+        .kpi-card.meubles i { color: #4f46e5; }
+        .kpi-card.ca i { color: #10b981; }
+        .kpi-card.top-vendeur i { color: #f97316; }
+        .kpi-card.commandes i { color: #3b82f6; }
+        .kpi-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .kpi-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+        .kpi-card .value.ca::after {
+            content: ' TND';
+            font-size: 1.2rem;
+            color: #10b981;
+        }
+        .kpi-card .value small {
+            font-size: 0.85rem;
+            color: #64748b;
+            display: block;
+            margin-top: 0.5rem;
+        }
+        .kpi-card.commandes .value {
+            font-size: 1rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            justify-items: center;
+            gap: 0.5rem;
+            text-align: left;
+        }
+        .kpi-card.commandes .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: #f1f5f9;
+            font-size: 0.6rem;
+            color: #1e293b;
+            transition: background 0.3s ease;
+        }
+        .kpi-card.commandes .status-item:hover {
+            background: #e2e8f0;
+        }
+        .kpi-card.commandes .status-item i {
+            font-size: 1.2rem;
+            margin-bottom: 0;
+        }
+        .kpi-card.commandes .status-item.paye span { color: #10b981; }
+        .kpi-card.commandes .status-item.livree span { color: #3b82f6; }
+        .kpi-card.commandes .status-item.attente span { color: #f97316; }
+        .kpi-card.commandes .status-item.annulee span { color: #ef4444; }
+        .chart-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2.5rem;
+            transition: transform 0.3s ease;
+        }
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        .chart-container h2 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+        }
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .nav-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+        .nav-button {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            background: #4f46e5;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: background 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover {
+            background: #3b82f6;
+            transform: translateX(5px);
+        }
+        .nav-button.active {
+            background: #2556A7;
+            color: #fff;
+        }
+        .nav-button i {
+            font-size: 1.2rem;
+        }
+        .nav-text {
+            display: inline;
+        }
+        #calendar {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dark Theme Styles */
+        body.theme-dark {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+        body.theme-dark .stats-container {
+            background: #1a1a1a !important;
+        }
+        body.theme-dark h1,
+        body.theme-dark .chart-container h2 {
+            color: #ffffff !important;
+        }
+        body.theme-dark .subtitle {
+            color: #cccccc !important;
+        }
+        body.theme-dark .filters-container {
+            background: #3a3a3a !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .filter-select,
+        body.theme-dark .download-button,
+        body.theme-dark .nav-button {
+            background: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .nav-button.active {
+            background: #2556A7 !important;
+            color: #ffffff !important;
+            border-color: #007bff !important;
+        }
+        body.theme-dark .filter-select:focus,
+        body.theme-dark .download-button:focus,
+        body.theme-dark .nav-button:hover {
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2) !important;
+        }
+        body.theme-dark .kpi-card {
+            background: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .kpi-card h3 {
+            color: #cccccc !important;
+        }
+        body.theme-dark .kpi-card .value {
+            color: #f35525 !important;
+        }
+        body.theme-dark .kpi-card .value small {
+            color: #cccccc !important;
+        }
+        body.theme-dark .kpi-card.commandes .status-item {
+            color: #ffffff !important;
+        }
+        body.theme-dark .chart-container,
+        body.theme-dark #calendar {
+            background: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+        }
+        body.theme-dark .error-message {
+            color: #ff6666 !important;
+        }
+        body.theme-dark .fc-theme-standard .fc-scrollgrid {
+            background: #2c2c2c !important;
+        }
+        body.theme-dark .fc-theme-standard th,
+        body.theme-dark .fc-theme-standard td {
+            border-color: #555 !important;
+            color: #ffffff !important;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            .filters-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .filter-select, .download-button {
+                width: 100%;
+            }
+            .kpi-card.commandes .value {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="stats-container" data-theme="{{ app.user.theme ?? 'light' }}">
+    <h1>Tableau de Bord Administrateur</h1>
+    <p class="subtitle">Statistiques et gestion des meubles</p>
+
+    <!-- Filtres -->
+    <div class="filters-container">
+        <select class="filter-select" id="filtre-statut" onchange="applyFilters()">
+            <option value="" {% if filtreStatut == '' %}selected{% endif %}>Tous les statuts</option>
+            <option value="EN_ATTENTE" {% if filtreStatut == 'EN_ATTENTE' %}selected{% endif %}>En attente</option>
+            <option value="PAYÉE" {% if filtreStatut == 'PAYÉE' %}selected{% endif %}>Payée</option>
+            <option value="LIVRÉE" {% if filtreStatut == 'LIVRÉE' %}selected{% endif %}>Livrée</option>
+            <option value="ANNULEE" {% if filtreStatut == 'ANNULEE' %}selected{% endif %}>Annulée</option>
+        </select>
+        <select class="filter-select" id="filtre-periode" onchange="applyFilters()">
+            <option value="all" {% if filtrePeriode == 'all' %}selected{% endif %}>Toutes périodes</option>
+            <option value="month" {% if filtrePeriode == 'month' %}selected{% endif %}>Mois courant</option>
+            <option value="year" {% if filtrePeriode == 'year' %}selected{% endif %}>Année courante</option>
+        </select>
+        <a href="{{ path('app_gestion_meubles_export_stats_pdf') }}?statut={{ filtreStatut }}&periode={{ filtrePeriode }}" class="download-button">
+            <i class="bi bi-download"></i> Télécharger PDF
+        </a>
+    </div>
+
+    <!-- Cartes KPI -->
+    <div class="kpi-grid">
+        <div class="kpi-card meubles">
+            <i class="bi bi-box-seam"></i>
+            <h3>Total Meubles</h3>
+            <div class="value">{{ nombreMeubles }}</div>
+        </div>
+        <div class="kpi-card ca">
+            <i class="bi bi-currency-dollar"></i>
+            <h3>Chiffre d'Affaires</h3>
+            <div class="value ca">{{ chiffreAffaires|number_format(2, ',', ' ') }}</div>
+            <small>Période sélectionnée</small>
+        </div>
+        <div class="kpi-card top-vendeur">
+            <i class="bi bi-person-check"></i>
+            <h3>Top Vendeur</h3>
+            <div class="value">
+                {% if topVendeur %}
+                    {{ topVendeur.nom }} {{ topVendeur.prenom }}
+                    <small>{{ topVendeur.totalVentes|number_format(2, ',', ' ') }} TND</small>
+                {% else %}
+                    Aucun
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-card commandes">
+            <i class="bi bi-cart"></i>
+            <h3>Commandes</h3>
+            <div class="value">
+                <div class="status-item paye"><i class="bi bi-credit-card"></i> <span>PAYÉE:</span> {{ commandesParStatut['PAYÉE']|default(0) }}</div>
+                <div class="status-item livree"><i class="bi bi-truck"></i> <span>LIVRÉE:</span> {{ commandesParStatut['LIVRÉE']|default(0) }}</div>
+                <div class="status-item attente"><i class="bi bi-hourglass-split"></i> <span>EN ATTENTE:</span> {{ commandesParStatut['EN_ATTENTE']|default(0) }}</div>
+                <div class="status-item annulee"><i class="bi bi-x-circle"></i> <span>ANNULÉE:</span> {{ commandesParStatut['ANNULEE']|default(0) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="chart-container">
+        <h2><i class="bi bi-graph-up"></i> Chiffre d'Affaires par Mois</h2>
+        <div class="loading-spinner">Chargement...</div>
+        <div class="error-message" id="ca-error">Erreur lors du chargement des données</div>
+        <div class="chart-wrapper">
+            <canvas id="caChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-container">
+        <h2><i class="bi bi-pie-chart"></i> Répartition des Commandes par Statut</h2>
+        <div class="loading-spinner">Chargement...</div>
+        <div class="error-message" id="statut-error">Erreur lors du chargement des données</div>
+        <div class="chart-wrapper">
+            <canvas id="statutChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Calendrier -->
+    <div class="chart-container">
+        <h2><i class="bi bi-calendar"></i> Calendrier des Événements</h2>
+        <div id="calendar"></div>
+    </div>
+</div>
+<div class="nav-buttons">
+    <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button" title="Consulter les meubles">
+        <i class="bi bi-tag"></i>
+        <span class="nav-text">Consulter les meubles</span>
+    </a>
+    <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button" title="Consulter les commandes"> 
+        <i class="bi bi-clock-history"></i>
+        <span class="nav-text">Consulter les commandes</span>
+    </a>
+    <a href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button active" title="Voir les statistiques">
+        <i class="bi bi-bar-chart"></i>
+        <span class="nav-text">Statistiques</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Theme application
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            // Force style recalculation
+            document.body.offsetHeight;
+        }
+
+        // Apply theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+            const container = document.querySelector('.stats-container');
+            if (!container) {
+                console.error('Error: .stats-container not found');
+                return;
+            }
+            const theme = container.dataset.theme || 'light';
+            console.log('Theme from data-theme:', theme);
+            applyTheme(theme);
+
+            // Appliquer les filtres
+            window.applyFilters = function() {
+                const statut = document.getElementById('filtre-statut').value;
+                const periode = document.getElementById('filtre-periode').value;
+                window.location.href = '{{ path('app_gestion_meubles_statistiques') }}?statut=' + encodeURIComponent(statut) + '&periode=' + encodeURIComponent(periode);
+            };
+
+            // Initialiser les graphiques
+            const caData = {{ caParMoisData|json_encode|raw }};
+            const statutData = {{ commandesParStatut|json_encode|raw }};
+
+            const caCtx = document.getElementById('caChart').getContext('2d');
+            const caChart = new Chart(caCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(caData).length ? Object.keys(caData) : ['Aucune donnée'],
+                    datasets: [{
+                        label: 'Chiffre d\'affaires (TND)',
+                        data: Object.values(caData).length ? Object.values(caData) : [0],
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Montant (TND)' } },
+                        x: { title: { display: true, text: 'Mois' } }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' TND';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuad'
+                    }
+                }
+            });
+            document.querySelector('#ca-error').style.display = Object.keys(caData).length ? 'none' : 'block';
+
+            const statutCtx = document.getElementById('statutChart').getContext('2d');
+            const statutChart = new Chart(statutCtx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(statutData).length ? Object.keys(statutData) : ['Aucune donnée'],
+                    datasets: [{
+                        data: Object.values(statutData).length ? Object.values(statutData) : [0],
+                        backgroundColor: ['#ef4444', '#10b981', '#3b82f6', '#6b7280'],
+                        hoverOffset: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true
+                    }
+                }
+            });
+            document.querySelector('#statut-error').style.display = Object.keys(statutData).length ? 'none' : 'block';
+
+            // Cacher les spinners après le chargement
+            document.querySelectorAll('.loading-spinner').forEach(spinner => spinner.style.display = 'none');
+
+            // Initialiser le calendrier
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                height: 'auto',
+                events: {{ calendarEvents|json_encode|raw }},
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                titleFormat: { year: 'numeric', month: 'long' }
+            });
+            calendar.render();
+        });
+    </script>
+{% endblock %}

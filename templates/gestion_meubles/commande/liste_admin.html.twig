@@ -1,0 +1,560 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des commandes - Admin{% endblock %}
+
+{% block body %}
+<style>
+    /* Général */
+    .admin-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 0;
+        text-align: center;
+    }
+
+    /* Filtres et Export */
+    .filters-container {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+    .filter-input,
+    .filter-select {
+        padding: 0.5rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        color: #1a1a1a;
+        width: 200px;
+        max-width: 100%;
+    }
+    .filter-input:focus,
+    .filter-select:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    .download-section {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .download-button {
+        padding: 0.5rem 1rem;
+        background: #2556A7;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .download-button:hover {
+        background: #1e4685;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4b5563;
+        font-size: 0.95rem;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .nav-button:hover {
+        background: #e5e7eb;
+        color: #1a1a1a;
+    }
+    .nav-button.active {
+        background: #2556A7;
+        color: #fff;
+        border-color: #007bff;
+    }
+    .nav-button i {
+        font-size: 1.1rem;
+    }
+
+    /* Tableau des commandes */
+    .commandes-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+    .commandes-table th,
+    .commandes-table td {
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.95rem;
+        color: #1a1a1a;
+    }
+    .commandes-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #4b5563;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .commandes-table td {
+        border-bottom: 1px solid #e5e7eb;
+        transition: background 0.2s ease;
+    }
+    .commandes-table tr {
+        transition: background 0.2s ease;
+    }
+    .commandes-table tr:hover {
+        background: #f1f5f9;
+        cursor: pointer;
+    }
+    .commandes-table .commande-id {
+        font-weight: 600;
+        color: #007bff;
+    }
+    .commandes-table .commande-acheteur,
+    .commandes-table .commande-methode,
+    .commandes-table .commande-adresse,
+    .commandes-table .commande-date-annulation {
+        color: #4b5563;
+    }
+    .commandes-table .commande-montant {
+        color: #10b981;
+        font-weight: 600;
+    }
+    .commandes-table .commande-statut {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    .commandes-table .commande-statut.EN_ATTENTE {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+    .commandes-table .commande-statut.PAYEE {
+        background: #ecfdf5;
+        color: #10b981;
+    }
+    .commandes-table .commande-statut.LIVREE {
+        background: #eff6ff;
+        color: #3b82f6;
+    }
+    .commandes-table .commande-statut.ANNULEE {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    .pagination {
+        display: inline-flex;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .pagination li {
+        margin: 0 0.25rem;
+    }
+    .pagination li a,
+    .pagination li span {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        color: #007bff;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .pagination li a:hover {
+        background: #f1f5f9;
+        color: #0056b3;
+    }
+    .pagination li.active span {
+        background: #2556A7;
+        color: #fff;
+        border-color: #007bff;
+    }
+    .pagination li.disabled span {
+        color: #6b7280;
+        cursor: not-allowed;
+    }
+
+    /* Pop-up */
+    .popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+    }
+    .popup-content {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        position: relative;
+        border-left: 4px solid #007bff;
+    }
+    .popup-overlay.active {
+        display: flex;
+    }
+    .popup-content h2 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+    }
+    .popup-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+    .popup-close:hover {
+        color: #1a1a1a;
+    }
+    .popup-details p {
+        margin: 0.5rem 0;
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        color: #4b5563;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 0.5rem;
+    }
+    .popup-details p:last-child {
+        border-bottom: none;
+    }
+    .popup-details strong {
+        color: #1a1a1a;
+        font-weight: 600;
+        flex: 0 0 30%;
+    }
+    .popup-details i {
+        font-size: 1.1rem;
+        color: #007bff;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filters-container,
+        .download-section {
+            flex-direction: column;
+            align-items: center;
+        }
+        .filter-input,
+        .filter-select {
+            width: 100%;
+        }
+        .commandes-table {
+            display: block;
+            overflow-x: auto;
+        }
+        .commandes-table th,
+        .commandes-table td {
+            min-width: 120px;
+        }
+        .pagination li a,
+        .pagination li span {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+        .nav-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+</style>
+
+<div class="admin-container">
+    <!-- Titre -->
+    <h1>Liste des commandes</h1>
+
+    <!-- Section Téléchargement -->
+    <div class="filters-container">
+        <div class="download-section">
+            <select class="filter-select" id="download-month">
+                <option value="">Mois</option>
+                <option value="1">Janvier</option>
+                <option value="2">Février</option>
+                <option value="3">Mars</option>
+                <option value="4">Avril</option>
+                <option value="5">Mai</option>
+                <option value="6">Juin</option>
+                <option value="7">Juillet</option>
+                <option value="8">Août</option>
+                <option value="9">Septembre</option>
+                <option value="10">Octobre</option>
+                <option value="11">Novembre</option>
+                <option value="12">Décembre</option>
+            </select>
+            <select class="filter-select" id="download-year">
+                <option value="">Année</option>
+                {% for year in 2020..2025 %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="download-format">
+                <option value="csv">CSV</option>
+                <option value="excel">Excel</option>
+            </select>
+            <button class="download-button" onclick="downloadFile()">Télécharger</button>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-container">
+        <input type="text" class="filter-input" id="filter-acheteur" placeholder="Nom de l'acheteur">
+        <input type="number" class="filter-input" id="filter-montant" placeholder="Montant min">
+        <select class="filter-select" id="filter-statut">
+            <option value="">Tous les statuts</option>
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="PAYEE">Payée</option>
+            <option value="LIVREE">Livrée</option>
+            <option value="ANNULEE">Annulée</option>
+        </select>
+        <select class="filter-select" id="filter-methode">
+            <option value="">Toutes les méthodes</option>
+            <option value="Paiement_a_la_livraison">À la livraison</option>
+            <option value="Stripe">Stripe</option>
+        </select>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button" title="Consulter les meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Consulter les meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button active" title="Consulter les commandes">
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Consulter les commandes</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button" title="Voir les statistiques">
+            <i class="bi bi-bar-chart"></i>
+            <span class="nav-text">Statistiques</span>
+        </a>
+    </div>
+
+    <!-- Liste des commandes (Tableau) -->
+    {% if pagination|length > 0 %}
+        <table class="commandes-table" id="commandes-body">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Acheteur</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Montant</th>
+                    <th>Méthode</th>
+                    <th>Adresse</th>
+                    <th>Annulation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for commande in pagination %}
+                    <tr class="commande-row" data-id="{{ commande.id }}">
+                        <td class="commande-id">#{{ commande.id }}</td>
+                        <td class="commande-acheteur">
+                            {{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }}
+                        </td>
+                        <td class="commande-date">
+                            {{ commande.dateCommande|date('d/m/Y H:i') }}
+                        </td>
+                        <td class="commande-statut {{ commande.statut }}">{{ commande.statut }}</td>
+                        <td class="commande-montant">{{ commande.montantTotal|number_format(2, ',', ' ') }} TND</td>
+                        <td class="commande-methode">{{ commande.methodePaiement|default('N/A') }}</td>
+                        <td class="commande-adresse">{{ commande.adresseLivraison|default('N/A') }}</td>
+                        <td class="commande-date-annulation">
+                            {{ commande.dateAnnulation ? commande.dateAnnulation|date('d/m/Y H:i') : 'N/A' }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            {{ knp_pagination_render(pagination) }}
+        </div>
+    {% else %}
+        <p style="text-align: center;">Aucune commande trouvée.</p>
+    {% endif %}
+
+    <!-- Pop-up pour les détails -->
+    <div class="popup-overlay" id="commande-popup">
+        <div class="popup-content">
+            <button class="popup-close">×</button>
+            <h2>Détails de la commande</h2>
+            <div class="popup-details" id="popup-details">
+                <!-- Les détails seront injectés via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filters = {
+                acheteur: document.getElementById('filter-acheteur'),
+                montant: document.getElementById('filter-montant'),
+                statut: document.getElementById('filter-statut'),
+                methode: document.getElementById('filter-methode')
+            };
+
+            const rows = document.querySelectorAll('.commande-row');
+            const popup = document.getElementById('commande-popup');
+            const popupDetails = document.getElementById('popup-details');
+            const popupClose = document.querySelector('.popup-close');
+
+            // Données des commandes
+            const commandesData = {
+                {% for commande in pagination %}
+                    "{{ commande.id }}": {
+                        id: "{{ commande.id }}",
+                        acheteur: "{{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ",
+                        date: "{{ commande.dateCommande|date('d/m/Y H:i') }}",
+                        statut: "{{ commande.statut }}",
+                        montant: "{{ commande.montantTotal|number_format(2, ',', ' ') }} TND",
+                        methode: "{{ commande.methodePaiement|default('N/A') }}",
+                        adresse: "{{ commande.adresseLivraison|default('N/A') }}",
+                        dateAnnulation: "{{ commande.dateAnnulation ? commande.dateAnnulation|date('d/m/Y H:i') : 'N/A' }}",
+                        raisonAnnulation: "{{ commande.raisonAnnulation|default('N/A') }}"
+                    }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            };
+
+            // Filtrer les lignes
+            Object.values(filters).forEach(filter => {
+                filter.addEventListener('input', applyFilters);
+            });
+
+            function applyFilters() {
+                let visibleRows = 0;
+                rows.forEach(row => {
+                    const id = row.querySelector('.commande-id').textContent.replace('#', '');
+                    const acheteur = row.querySelector('.commande-acheteur').textContent;
+                    const montant = parseFloat(row.querySelector('.commande-montant').textContent.replace(/[^\d,]/g, '').replace(',', '.'));
+                    const statut = row.querySelector('.commande-statut').textContent;
+                    const methode = row.querySelector('.commande-methode').textContent;
+
+                    const show = (!filters.acheteur.value || acheteur.toLowerCase().includes(filters.acheteur.value.toLowerCase())) &&
+                        (!filters.montant.value || montant >= parseFloat(filters.montant.value)) &&
+                        (!filters.statut.value || statut.toLowerCase().includes(filters.statut.value.toLowerCase())) &&
+                        (!filters.methode.value || methode.toLowerCase().includes(filters.methode.value.toLowerCase()));
+
+                    row.style.display = show ? '' : 'none';
+                    if (show) visibleRows++;
+                });
+            }
+
+            // Afficher la pop-up au clic sur une ligne
+            rows.forEach(row => {
+                row.addEventListener('click', () => {
+                    const commandeId = row.getAttribute('data-id');
+                    const commande = commandesData[commandeId];
+                    if (commande) {
+                        popupDetails.innerHTML = `
+                            <p><i class="bi bi-hash"></i> <strong>ID:</strong> ${commande.id}</p>
+                            <p><i class="bi bi-person"></i> <strong>Acheteur:</strong> ${commande.acheteur}</p>
+                            <p><i class="bi bi-calendar"></i> <strong>Date:</strong> ${commande.date}</p>
+                            <p><i class="bi bi-check-circle"></i> <strong>Statut:</strong> ${commande.statut}</p>
+                            <p><i class="bi bi-currency-dollar"></i> <strong>Montant:</strong> ${commande.montant}</p>
+                            <p><i class="bi bi-credit-card"></i> <strong>Méthode:</strong> ${commande.methode}</p>
+                            <p><i class="bi bi-geo-alt"></i> <strong>Adresse:</strong> ${commande.adresse}</p>
+                            <p><i class="bi bi-calendar-x"></i> <strong>Date d'annulation:</strong> ${commande.dateAnnulation}</p>
+                            <p><i class="bi bi-x-circle"></i> <strong>Raison d'annulation:</strong> ${commande.raisonAnnulation}</p>
+                        `;
+                        popup.style.display = 'flex';
+                        popup.classList.add('active');
+                    }
+                });
+            });
+
+            // Fermer la pop-up
+            popupClose.addEventListener('click', () => {
+                popup.style.display = 'none';
+                popup.classList.remove('active');
+            });
+
+            // Fermer la pop-up en cliquant à l'extérieur
+            popup.addEventListener('click', (e) => {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                    popup.classList.remove('active');
+                }
+            });
+
+            // Fonction pour télécharger le fichier
+            window.downloadFile = function() {
+                const month = document.getElementById('download-month').value;
+                const year = document.getElementById('download-year').value;
+                const format = document.getElementById('download-format').value;
+
+                if (!month || !year) {
+                    alert('Veuillez sélectionner un mois et une année.');
+                    return;
+                }
+
+                let url = '{{ path('app_gestion_meubles_export_commandes') }}?month=' + encodeURIComponent(month) +
+                    '&year=' + encodeURIComponent(year) +
+                    '&format=' + encodeURIComponent(format);
+
+                window.location.href = url;
+            };
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Réclamation #{{ reclamation.id }} - StuDar</title>
+    <style>
+        /* General Styling */
+        body {
+            font-family: 'Georgia', 'Times New Roman', Times, serif;
+            margin: 0;
+            padding: 0;
+            color: #1c2526;
+            line-height: 1.7;
+            background-color: #f8ece0;
+        }
+        .container {
+            width: 100%;
+            
+            margin: 35mm auto;
+            background: #fffef7;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border: 2px solid #1c6b6b;
+            position: relative;
+        }
+        .container::before {
+            content: 'StuDar';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            color: rgba(28, 107, 107, 0.1);
+            opacity: 0.2;
+            z-index: 0;
+        }
+
+        /* Header Styling */
+        .header {
+            text-align: center;
+            padding: 25px 0;
+            border-bottom: 3px solid #d4a017;
+            background: #1c6b6b;
+            color: #fffef7;
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 {
+            font-size: 34px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .header p {
+            font-size: 15px;
+            margin: 5px 0 0;
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        /* Section Styling */
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #fffef7;
+            border: 1px solid #d4a017;
+            border-radius: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .section h2 {
+            font-size: 20px;
+            color: #1c6b6b;
+            margin: 0 0 15px;
+            font-weight: 600;
+            border-bottom: 2px dotted #d4a017;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section h2::before {
+            content: '✦';
+            color: #d4a017;
+            font-size: 18px;
+        }
+
+        /* Table Styling */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .details-table tr {
+            border-bottom: 1px dashed #d4a017;
+        }
+        .details-table td {
+            padding: 12px 0;
+        }
+        .details-table td.label {
+            width: 170px;
+            font-weight: 700;
+            color: #1c2526;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .details-table td.value {
+            color: #2d3748;
+            font-weight: 400;
+        }
+
+        /* Status Styling */
+        .status {
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid #1c6b6b;
+        }
+        .status-traité {
+            background: #a7e1d4;
+            color: #1c2526;
+        }
+        .status-en-cours {
+            background: #f7d38e;
+            color: #4a2c07;
+        }
+        .status-refusé {
+            background: #f4a7a7;
+            color: #4a1c1c;
+        }
+        .status-non-défini {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        /* Response Section */
+        .response-section {
+            background: #e6f0f0;
+            padding: 20px;
+            border: 1px solid #1c6b6b;
+            border-radius: 8px;
+            margin-top: 25px;
+        }
+
+        /* Footer Styling */
+        .footer {
+            text-align: center;
+            padding: 15px 0;
+            border-top: 2px solid #1c6b6b;
+            margin-top: 30px;
+            font-size: 12px;
+            color: #4b5563;
+            background: #f8ece0;
+            border-radius: 0 0 10px 10px;
+        }
+        .footer a {
+            color: #1c6b6b;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Page Break and Margins */
+        @page {
+            margin: 30mm;
+        }
+        @media print {
+            body {
+                background: #ffffff;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: auto;
+                border: none;
+            }
+            .footer {
+                background: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Réclamation #{{ reclamation.id }}</h1>
+            <p>StuDar - Gestion des Réclamations</p>
+        </div>
+
+        <!-- Reclamation Details -->
+        <div class="section">
+            <h2>Informations de la Réclamation</h2>
+            <table class="details-table">
+                <tr>
+                    <td class="label">Utilisateur</td>
+                    <td class="value">{{ reclamation.utilisateur ? (reclamation.utilisateur.nom|default('') ~ ' ' ~ reclamation.utilisateur.prenom|default('')) : 'Anonyme' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Titre</td>
+                    <td class="value">{{ reclamation.titre }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Description</td>
+                    <td class="value">{{ reclamation.description }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Date</td>
+                    <td class="value">{{ reclamation.timestamp ? reclamation.timestamp|date('Y-m-d H:i') : 'Non définie' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Logement</td>
+                    <td class="value">{{ reclamation.logement ? reclamation.logement.id : 'Non associé' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Statut</td>
+                    <td class="value">
+                        <span class="status status-{{ reclamation.statut|default('non-défini')|replace({' ': '-'})|lower }}">
+                            {{ reclamation.statut|default('Non défini') }}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Response Section -->
+        {% if reclamation.statut == 'traité' and reponse %}
+        <div class="section response-section">
+            <h2>Réponse</h2>
+            <table class="details-table">
+                <tr>
+                    <td class="label">Contenu</td>
+                    <td class="value">{{ reponse.contenueReponse }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Date de réponse</td>
+                    <td class="value">{{ reponse.timestamp ? reponse.timestamp|date('Y-m-d H:i') : 'Non définie' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Répondant</td>
+                    <td class="value">{{ reponse.admin ? (reponse.admin.nom|default('') ~ ' ' ~ reponse.admin.prenom|default('')) : 'Inconnu' }}</td>
+                </tr>
+            </table>
+        </div>
+        {% elseif reclamation.statut == 'traité' %}
+        <div class="section">
+            <p style="font-style: italic; color: #6b7280;">Aucune réponse enregistrée pour cette réclamation.</p>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Copyright © 2025 StuDar. Tous droits réservés.</p>
+            <p>Contact: <a href="mailto:studar21@gmail.com">studar21@gmail.com</a></p>
+        </div>
+    </div>
+</body>
+</html>

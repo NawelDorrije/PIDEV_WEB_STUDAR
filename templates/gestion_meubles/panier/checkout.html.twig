@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Paiement de la commande
+{% endblock %}
+
+{% block body %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    .checkout-wrapper {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        padding: 40px 0;
+    }
+
+    .checkout-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border: none;
+        transition: transform 0.2s;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #4f46e5, #4338ca);
+    }
+</style>
+
+<div class="checkout-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="checkout-card">
+                    <h4 class="mb-4">Finaliser votre commande</h4>
+                    
+                    <div class="mb-4">
+                        <strong>Total à payer : {{ total }} TND</strong>
+                    </div>
+
+                    {% for message in app.flashes('success') %}
+                        <div class="alert alert-success mb-4">{{ message }}</div>
+                    {% endfor %}
+                    {% for message in app.flashes('error') %}
+                        <div class="alert alert-danger mb-4">{{ message }}</div>
+                    {% endfor %}
+
+                    {{ form_start(form) }}
+                        <div class="mb-3">
+                            {{ form_label(form.paymentMethod) }}
+                            {{ form_widget(form.paymentMethod) }}
+                        </div>
+                        <div class="mb-3 delivery-address" style="display: none;">
+                            {{ form_label(form.address) }}
+                            {{ form_widget(form.address) }}
+                        </div>
+                        <button type="submit" class="btn btn-submit w-100">{{ form.submit.vars.label }}</button>
+                    {{ form_end(form) }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const paymentMethods = document.querySelectorAll('input[name="form[paymentMethod]"]');
+        const addressField = document.querySelector('.delivery-address');
+
+        paymentMethods.forEach(method => {
+            method.addEventListener('change', function () {
+                if (this.value === 'delivery') {
+                    addressField.style.display = 'block';
+                } else {
+                    addressField.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
