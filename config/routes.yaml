@@ -24,5 +24,6 @@ connect_google_check:
     controller: App\Controller\GoogleController::connectCheckAction
 
 app_utilisateur_complete_registration:
-    path: /complete-registration
+    path: /utilisateur/complete_registration
     controller: App\Controller\RegistrationController::completeRegistration
+    

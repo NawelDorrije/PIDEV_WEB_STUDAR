@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class RegistrationController extends AbstractController
 {
-    #[Route('/complete-registration', name: 'app_utilisateur_complete_registration')]
+    #[Route('/utilisateur/complete_registration', name: 'app_utilisateur_complete_registration')]
     public function completeRegistration(
         Request $request,
         EntityManagerInterface $entityManager,

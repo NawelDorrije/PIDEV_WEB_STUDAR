@@ -10,8 +10,8 @@
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            margin: 30px auto 20px;
-            width: 800px;
+            margin: 30px auto;
+            width: 1000px;
         }
         .profile-header {
             display: flex;
@@ -28,24 +28,12 @@
             margin-right: 30px;
             border: 3px solid #f35525;
         }
-        .profile-container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            margin: 30px auto 20px; /* Center the container */
-            width: 1000px;
-        }
         .profile-row {
-            display: flex
-;
-    align-items: center;
-    padding: 5px 35px;
-    border-bottom: e;
-    padding-left: 67px;
-    height: 110px;
-    width: 1000px;
-
+            display: flex;
+            align-items: center;
+            padding: 5px 35px;
+            border-bottom: 1px solid #eee;
+            height: 110px;
         }
         .profile-row:last-child {
             border-bottom: none;
@@ -71,10 +59,10 @@
         }
         .button-container {
             display: flex;
-            justify-content: center; /* This centers the buttons */
-            margin: 30px auto; /* Center the container and add vertical spacing */
+            justify-content: center;
+            margin: 30px auto;
             gap: 15px;
-            width: 800px; /* Match profile container width */
+            width: 800px;
         }
         .qr-code-img {
             width: 100px;
@@ -86,7 +74,7 @@
             border-radius: 5px;
             text-decoration: none;
             text-align: center;
-            min-width: 120px; /* Equal width for both buttons */
+            min-width: 120px;
         }
         .btn-primary {
             background-color: #f35525;
@@ -103,24 +91,14 @@
 
 {% block body %}
 <div class="container profile-container">
-
-      <!-- First Name Row -->
+    <!-- First Name Row -->
     <div class="profile-row">
         {% if utilisateur.image %}
-        <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
+            <img src="{{ asset('Uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
         {% else %}
-        <img src="{{ utilisateur.avatarUrl }}"  alt="Profile Image" class="profile-avatar">
-
-    {% endif %}   
-    <!--{% if utilisateur.image %}
-        <img src="{{ asset('uploads/images/' ~ utilisateur.image) }}" alt="Profile Image" class="profile-avatar">
-        {% else %}
-       
-        <img src="{{ utilisateur.avatarUrl }}" 
-        alt="Avatar"
-        class="avatar-round">
-    {% endif %} -->    
-     <div class="profile-content">
+            <img src="{{ utilisateur.avatarUrl }}" alt="Profile Image" class="profile-avatar">
+        {% endif %}
+        <div class="profile-content">
             <div class="profile-label">Prénom</div>
             <div class="profile-value">{{ utilisateur.prenom }}</div>
         </div>
@@ -129,6 +107,7 @@
             <div class="profile-value">{{ utilisateur.nom }}</div>
         </div>
     </div>
+    <!-- CIN and Email Row -->
     <div class="profile-row">
         <img src="{{ asset('images/id-icon.png') }}" alt="CIN" class="profile-icon">
         <div class="profile-content">
@@ -141,14 +120,12 @@
             <div class="profile-value">{{ utilisateur.email }}</div>
         </div>
     </div>
-
-
     <!-- Phone Row -->
     <div class="profile-row">
         <img src="{{ asset('images/phone-icon1.png') }}" alt="Phone" class="profile-icon">
         <div class="profile-content">
             <div class="profile-label">Numéro de téléphone</div>
-            <div class="profile-value">{{ utilisateur.numTel }}</div>
+            <div class="profile-value">{{ utilisateur.numTel ?: 'Non défini' }}</div>
         </div>
         <img src="{{ asset('images/role-icon.png') }}" alt="Role" class="profile-icon">
         <div class="profile-content">
@@ -156,22 +133,22 @@
             <div class="profile-value">{{ utilisateur.role.value }}</div>
         </div>
     </div>
-    <div class="profile-row">
-        <img src="{{ asset('images/qr-icon.png') }}" alt="QR Code" class="profile-icon">
+    <!-- QR Code Row -->
+    <div class="profile-row" style="margin-top: 10px; margin-left:350px">
         <div class="profile-content">
             <div class="profile-label">QR Code WhatsApp</div>
             <div class="profile-value">
-                <!-- Debug numTel -->
-                <div>Debug: numTel = "{{ utilisateur.numTel }}"</div>
                 {% if utilisateur.numTel %}
                     <img src="{{ path('app_admin_user_qr_code', {'cin': utilisateur.cin}) }}" 
                          alt="WhatsApp QR Code" 
-                         class="qr-code-img">
+                         class="qr-code-img"
+                         onerror="this.onerror=null; this.src='{{ asset('images/qr-placeholder.png') }}';">
                 {% else %}
-                    Non disponible
+                    <span>QR Code non disponible (numéro de téléphone requis)</span>
                 {% endif %}
             </div>
         </div>
+    </div>
     </div>
 </div>
 
