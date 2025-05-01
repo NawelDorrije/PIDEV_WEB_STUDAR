@@ -162,13 +162,12 @@
             }
             /* Existing Styles (Unchanged) */
             footer {
-                background: #f8f9fa;
+                background: #235BAA;
                 padding: 1rem 0;
-                margin-top: 2rem;
             }
             footer p {
                 color: #4b5563;
-                font-size: 0.9rem;
+                margin-left: 400px;
             }
             footer a {
                 color: #007bff;
@@ -216,10 +215,11 @@
                 50% { transform: scale(1.5); }
             }
             body.theme-dark footer {
-                background: #2c2c2c !important;
+                background: #235BAA !important;
             }
             body.theme-dark footer p {
                 color: #cccccc !important;
+                margin-left:500px;
             }
             body.theme-dark footer a {
                 color: #66b3ff !important;
@@ -236,20 +236,6 @@
     <body data-theme="{{ app.user.theme ?? 'light' }}">
         <meta name="csrf-token" content="{{ csrf_token('toggle_block') }}">
 
-        <!-- *** Preloader Start *** -->
-        {# <div id="js-preloader" class="js-preloader">
-            <div class="preloader-inner">
-                <span class="dot"></span>
-                <div class="dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
-        </div> #}
-        <!-- *** Preloader End *** -->
-
-        {# Ne pas afficher l'en-tête et le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}
             <div class="sub-header">
                 <div class="container">
@@ -455,14 +441,14 @@
 
         {# Ne pas afficher le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}
-            <footer>
-                <div class="container">
-                    <div class="col-lg-8">
-                        <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
-                        Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
-                    </div>
-                </div>
-            </footer>
+<footer>
+    <div class="container">
+        <div class="col-lg-8">
+            <p>&copy; 2025 StuDar - Tous droits réservés. </p>
+        </div>
+    </div>
+</footer>
+
         {% endif %}
 
         {% block javascripts %}
