@@ -6,6 +6,7 @@ use App\Entity\GestionTransport\Voiture;
 use App\Entity\GestionTransport\Transport;
 use App\Repository\GestionTransport\VoitureRepository;
 use App\Repository\GestionTransport\TransportRepository;
+use App\Service\Geocoder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,51 +16,71 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_ADMIN')]
 #[Route('/gestiontransport')]
-  class AdminTransportController extends AbstractController
-    {
-        #[Route('/adminTransport', name: 'app_gestion_transport_dashboard', methods: ['GET'])]
-        public function adminTransport(
-            VoitureRepository $voitureRepository,
-            TransportRepository $transportRepository,
-            Request $request
-        ): Response {
-            $this->denyAccessUnlessGranted('ROLE_ADMIN');
-            
-            // Get filter parameters
-            $disponibilite = $request->query->get('disponibilite');
-            $status = $request->query->get('status');
-    
-            // Filter vehicles
-            $queryBuilder = $voitureRepository->createQueryBuilder('v');
-            if ($disponibilite) {
-                $queryBuilder->andWhere('v.disponibilite = :disponibilite')
-                            ->setParameter('disponibilite', $disponibilite);
-            }
-            $voitures = $queryBuilder->getQuery()->getResult();
-            
-            // Filter transports
-            try {
-                $transportQb = $transportRepository->createQueryBuilder('t')
-                    ->innerJoin('t.reservation', 'r')
-                    ->addSelect('r');
-                
-                if ($status) {
-                    $transportQb->andWhere('t.status = :status')
-                               ->setParameter('status', $status);
-                }
-                
-                $transports = $transportQb->getQuery()->getResult();
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Error loading transports: ' . $e->getMessage());
-                $transports = [];
-            }
+class AdminTransportController extends AbstractController
+{
+    #[Route('/adminTransport', name: 'app_gestion_transport_dashboard', methods: ['GET'])]
+    public function adminTransport(
+        VoitureRepository $voitureRepository,
+        TransportRepository $transportRepository,
+        Geocoder $geocoder,
+        Request $request
+    ): Response {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
         
-            return $this->render('admin/GestionTransport/dashboard.html.twig', [
-                'voitures' => $voitures,
-                'transports' => $transports,
-            ]);
+        // Get filter parameters
+        $disponibilite = $request->query->get('disponibilite');
+        $status = $request->query->get('status');
+
+        // Filter vehicles
+        $queryBuilder = $voitureRepository->createQueryBuilder('v');
+        if ($disponibilite) {
+            $queryBuilder->andWhere('v.disponibilite = :disponibilite')
+                         ->setParameter('disponibilite', $disponibilite);
         }
-    
+        $voitures = $queryBuilder->getQuery()->getResult();
+        
+        // Filter transports
+        try {
+            $transportQb = $transportRepository->createQueryBuilder('t')
+                ->innerJoin('t.reservation', 'r')
+                ->addSelect('r');
+            
+            if ($status) {
+                $transportQb->andWhere('t.status = :status')
+                           ->setParameter('status', $status);
+            }
+            
+            $transports = $transportQb->getQuery()->getResult();
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Error loading transports: ' . $e->getMessage());
+            $transports = [];
+        }
+
+        // Add coordinates to transports
+        $transportsWithCoords = array_map(function ($transport) use ($geocoder) {
+            $reservation = $transport->getReservation();
+            $departAddress = $reservation->getAdresseDepart();
+            $arriveeAddress = $reservation->getAdresseDestination();
+
+            $departCoords = $departAddress ? $geocoder->geocode($departAddress) : null;
+            $arriveeCoords = $arriveeAddress ? $geocoder->geocode($arriveeAddress) : null;
+
+            return [
+                'transport' => $transport,
+                'departLat' => $departCoords['lat'] ?? null,
+                'departLon' => $departCoords['lon'] ?? null,
+                'arriveeLat' => $arriveeCoords['lat'] ?? null,
+                'arriveeLon' => $arriveeCoords['lon'] ?? null,
+            ];
+        }, $transports);
+
+        return $this->render('admin/GestionTransport/dashboard.html.twig', [
+            'voitures' => $voitures,
+            'transports' => $transports,
+            'transportsWithCoords' => $transportsWithCoords,
+        ]);
+    }
+
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/transport/{id}', name: 'admin_transport_show', methods: ['GET'])]
     public function showTransport(Transport $transport): Response
@@ -68,6 +89,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
             'transport' => $transport,
         ]);
     }
+
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/voiture/{idVoiture}', name: 'admin_voiture_show', methods: ['GET'])]
     public function showVoiture(Voiture $voiture): Response
@@ -76,7 +98,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
             'voiture' => $voiture,
         ]);
     }
-    // Change this route path
+
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/stats', name: 'admin_transport_stats', methods: ['GET'])]
     public function getStats(VoitureRepository $voitureRepo, TransportRepository $transportRepo): JsonResponse
@@ -94,13 +116,6 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
         
         // Get revenue data
         $revenueData = $transportRepo->getRevenueByMonth($yearToUse);
-        
-        // Debug revenue data
-        dump([
-            'year_used' => $yearToUse,
-            'raw_revenue_data' => $revenueData,
-            'normalized_revenue' => $this->normalizeRevenueData($revenueData)
-        ]);
         
         $response = [
             'vehicles' => $this->normalizeMonthlyData($voitureRepo->countByMonth($yearToUse)),
@@ -172,5 +187,4 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
             ))
         ];
     }
-   
 }

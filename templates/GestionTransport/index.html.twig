@@ -1,6 +1,5 @@
 {% extends 'base.html.twig' %}
 
-{# Time-sensitive title block #}
 {% block title %}
     {% set currentHour = "now"|date('H') %}
     {% if currentHour >= 18 or currentHour < 6 %}
@@ -10,75 +9,69 @@
     {% endif %}, {{ app.user.prenom ?? 'M.' }} | Tableau de Bord
 {% endblock %}
 
-{% block navbar %}
-    {{ parent() }}
-{% endblock %}
-
 {% block body %}
-    {# Time-sensitive greeting #}
     {% set currentHour = "now"|date('H') %}
     {% set greeting = currentHour >= 18 or currentHour < 6 ? 'Bonsoir' : 'Bonjour' %}
     
-    <div class="container-fluid px-4 py-4">
+    <div class="container py-4" style="max-width: 1200px;">
         <!-- Dashboard Header -->
-        <div class="dashboard-header mb-5">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h1 class="fw-bold text-blue mb-2">{{ greeting }}, {{ app.user.prenom ?? 'M.' }}</h1>
-                    <p class="lead text-muted">Gérez vos véhicules et vos missions de transport</p>
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center flex-column flex-md-row">
+                <div class="mb-3 mb-md-0">
+                    <h1 class="h4 fw-normal mb-1">{{ greeting }}, {{ app.user.prenom ?? 'M.' }}</h1>
+                    <p class="text-muted small">Gérez vos véhicules et vos missions de transport</p>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="{{ path('app_voiture_new') }}" class="btn btn-blue me-2">
-                        <i class="fas fa-car me-2"></i>Ajouter Véhicule
+                <div class="d-flex gap-2">
+                    <a href="{{ path('app_voiture_new') }}" class="btn btn-outline-dark px-3">
+                        <i class="fas fa-car me-1"></i>Ajouter Véhicule
                     </a>
-                    <a href="{{ path('app_transport_new') }}" class="btn btn-orange">
-                        <i class="fas fa-truck me-2"></i>Nouvelle Mission
+                    <a href="{{ path('app_transport_new') }}" class="btn bg-orange text-white px-3">
+                        <i class="fas fa-truck me-1"></i>Nouvelle Mission
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Quick Stats -->
-        <div class="row mb-5 g-4">
+        <div class="row mb-4 g-3">
             <div class="col-md-4">
-                <div class="card stat-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="stat-icon bg-blue-soft me-4">
-                                <i class="fas fa-car text-blue"></i>
-                            </div>
-                            <div>
-                                <h6 class="text-muted mb-2">Véhicules</h6>
-                                <h3 class="mb-0">{{ voitures|length }}</h3>
-                                <small class="text-muted">{{ voitures|filter(v => v.disponibilite.value == 'Disponible')|length }} disponibles</small>
-                            </div>
+                <div class="bg-white border p-3 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3 text-orange">
+                            <i class="fas fa-car fa-lg"></i>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Quick Stats -->
-            <div class="col-md-4">
-                <div class="card stat-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Missions</h6>
-                                <h3 class="mb-0">{{ stats.total_transports }}</h3>
-                                <small class="text-muted">{{ stats.transports_actifs }} Actif</small>
-                            </div>
+                        <div>
+                            <p class="small text-muted mb-1">Véhicules</p>
+                            <h3 class="h5 mb-0">{{ voitures|length }}</h3>
+                            <p class="small text-muted">{{ voitures|filter(v => v.disponibilite.value == 'Disponible')|length }} disponibles</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card stat-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div>
-                                <h6 class="text-muted mb-2">Missions complétées</h6>
-                                <h3 class="mb-0">{{ stats.transports_completes }}</h3>
-                                <small class="text-muted">Ce mois</small>
-                            </div>
+                <div class="bg-white border p-3 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3 text-orange">
+                            <i class="fas fa-truck fa-lg"></i>
+                        </div>
+                        <div>
+                            <p class="small text-muted mb-1">Missions</p>
+                            <h3 class="h5 mb-0">{{ stats.total_transports }}</h3>
+                            <p class="small text-muted">{{ stats.transports_actifs }} actives</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="bg-white border p-3 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3 text-orange">
+                            <i class="fas fa-check-circle fa-lg"></i>
+                        </div>
+                        <div>
+                            <p class="small text-muted mb-1">Missions complétées</p>
+                            <h3 class="h5 mb-0">{{ stats.transports_completes }}</h3>
+                            <p class="small text-muted">Ce mois</p>
                         </div>
                     </div>
                 </div>
@@ -86,39 +79,46 @@
         </div>
 
         <!-- Main Content -->
-        <div class="row">
+        <div class="row g-3">
             <!-- My Vehicles Section -->
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-white border-0 py-3">
+            <div class="col-lg-6">
+                <div class="bg-white border">
+                    <div class="p-3 border-bottom">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0 text-blue">Mes Véhicules</h5>
-                            <a href="{{ path('app_voiture_index') }}" class="btn btn-sm btn-outline-blue">Voir tout</a>
+                            <h2 class="h5 fw-normal mb-0">Mes Véhicules</h2>
+                            <a href="{{ path('app_voiture_index') }}" class="btn btn-outline-dark btn-sm px-2">
+                                Voir tout
+                            </a>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="p-3">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="bg-light">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="small bg-light">
                                     <tr>
                                         <th>Modèle</th>
                                         <th>N° Série</th>
                                         <th>Disponibilité</th>
-                                        <th>Actions</th>
+                                        <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for voiture in voitures|slice(0, 3) %}
                                         <tr>
-                                            <td class="fw-bold">{{ voiture.model }}</td>
-                                            <td>{{ voiture.numSerie }}</td>
+                                            <td class="fw-normal">{{ voiture.model }}</td>
+                                            <td class="small">{{ voiture.numSerie }}</td>
                                             <td>
-                                                <span class="badge {% if voiture.disponibilite.value == 'Disponible' %}bg-success{% else %}bg-orange{% endif %}">
+                                                <span class="badge bg-transparent border 
+                                                    {% if voiture.disponibilite.value == 'Disponible' %} text-dark border-dark
+                                                    {% else %} text-orange border-orange
+                                                    {% endif %} px-2 py-1">
                                                     {{ voiture.disponibilite.value }}
                                                 </span>
                                             </td>
-                                            <td>
-                                                <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}" class="btn btn-sm btn-outline-blue">Gérer</a>
+                                            <td class="text-end">
+                                                <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}" class="btn btn-outline-dark btn-sm">
+                                                    Gérer
+                                                </a>
                                             </td>
                                         </tr>
                                     {% else %}
@@ -134,23 +134,25 @@
             </div>
 
             <!-- Current Transports Section -->
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header bg-white border-0 py-3">
+            <div class="col-lg-6">
+                <div class="bg-white border">
+                    <div class="p-3 border-bottom">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0 text-blue">Missions Actuelles</h5>
-                            <a href="{{ path('app_transport_index') }}" class="btn btn-sm btn-outline-blue">Voir tout</a>
+                            <h2 class="h5 fw-normal mb-0">Missions Actuelles</h2>
+                            <a href="{{ path('app_transport_index') }}" class="btn btn-outline-dark btn-sm px-2">
+                                Voir tout
+                            </a>
                         </div>
                     </div>
-                    <div class="card-body">
+                    <div class="p-3">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="bg-light">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="small bg-light">
                                     <tr>
                                         <th>Trajet</th>
                                         <th>Véhicule</th>
                                         <th>Statut</th>
-                                        <th>Actions</th>
+                                        <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -158,29 +160,32 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex flex-column">
-                                                    <small class="text-muted">De</small>
-                                                    <span>{{ transport.reservation.adresseDepart }}</span>
-                                                    <small class="text-muted mt-1">À</small>
-                                                    <span>{{ transport.reservation.adresseDestination }}</span>
+                                                    <span class="small text-muted">De</span>
+                                                    <span class="small">{{ transport.reservation.adresseDepart|u.truncate(15, '...') }}</span>
+                                                    <span class="small text-muted mt-1">À</span>
+                                                    <span class="small">{{ transport.reservation.adresseDestination|u.truncate(15, '...') }}</span>
                                                 </div>
                                             </td>
                                             <td>
                                                 {% if transport.voiture %}
-                                                    <span class="badge bg-blue">{{ transport.voiture.model }}</span>
+                                                    <span class="badge bg-transparent border border-dark text-dark px-2 py-1">{{ transport.voiture.model|u.truncate(10, '...') }}</span>
                                                 {% else %}
-                                                    <span class="badge bg-secondary">Non assigné</span>
+                                                    <span class="badge bg-transparent border border-muted text-muted px-2 py-1">Non assigné</span>
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                <span class="badge 
-                                                    {% if transport.status.value == 'Complété' %}bg-#6FE69B
-                                                    {% elseif transport.status.value == 'Actif' %}bg-orange
-                                                    {% else %}bg-secondary{% endif %}">
+                                                <span class="badge bg-transparent 
+                                                    {% if transport.status.value == 'Complété' %} text-dark border border-dark
+                                                    {% elseif transport.status.value == 'Actif' %} text-orange border border-orange
+                                                    {% else %} text-muted border border-muted
+                                                    {% endif %} px-2 py-1">
                                                     {{ transport.status.value }}
                                                 </span>
                                             </td>
-                                            <td>
-                                                <a href="{{ path('app_transport_show', {'id': transport.id}) }}" class="btn btn-sm btn-outline-blue">Détails</a>
+                                            <td class="text-end">
+                                                <a href="{{ path('app_transport_show', {'id': transport.id}) }}" class="btn btn-outline-dark btn-sm">
+                                                    Détails
+                                                </a>
                                             </td>
                                         </tr>
                                     {% else %}
@@ -196,112 +201,33 @@
             </div>
         </div>
     </div>
-{% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
     <style>
         :root {
-            --blue: #1976D2;
-            --orange: #FF5722;
-            --blue-soft: rgba(25, 118, 210, 0.1);
-            --orange-soft: rgba(255, 87, 34, 0.1);
-            --green-soft: rgba(40, 167, 69, 0.1);
-            --success: #6FE69B;
+            --orange: #FF6B00;
+            --orange-light: rgba(255, 107, 0, 0.1);
         }
-        
-        .text-blue { color: var(--blue); }
-        .text-orange { color: var(--orange); }
-        .bg-blue { background-color: var(--blue); }
-        .bg-orange { background-color: var(--orange); }
-        .bg-blue-soft { background-color: var(--blue-soft); }
-        .bg-orange-soft { background-color: var(--orange-soft); }
-        .bg-green-soft { background-color: var(--green-soft); }
-        
-        .btn-blue {
-            background-color: var(--blue);
-            color: white;
-            border: none;
+        .text-orange {
+            color: var(--orange);
         }
-        
-        .btn-blue:hover {
-            background-color: #1565C0;
-            color: white;
+        .border-orange {
+            border-color: var(--orange);
         }
-        
-        .btn-orange {
+        .bg-orange {
             background-color: var(--orange);
-            color: white;
-            border: none;
         }
-        
-        .btn-orange:hover {
-            background-color: #E64A19;
-            color: white;
-        }
-        
-        .btn-outline-blue {
-            border-color: var(--blue);
-            color: var(--blue);
-        }
-        
-        .btn-outline-blue:hover {
-            background-color: var(--blue);
-            color: white;
-        }
-        
-        .stat-card {
-            border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .stat-icon i {
-            font-size: 1.25rem;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-        
-        .card-header {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-        
-        .table {
-            margin-bottom: 0;
-        }
-        
-        .table thead th {
-            border-bottom: none;
-            font-weight: 600;
-            color: #6c757d;
-        }
-        
         .badge {
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-            font-size: 0.75em;
+            font-weight: 400;
+            border-radius: 0;
         }
-        
-        .bg-success {
-            background-color: #6FE69B !important;
+        .table-hover tbody tr:hover {
+            background-color: var(--orange-light);
+        }
+        .btn-outline-dark {
+            border-radius: 0;
+        }
+        .bg-light {
+            background-color: #f8f9fa !important;
         }
     </style>
 {% endblock %}

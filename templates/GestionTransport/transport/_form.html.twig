@@ -1,110 +1,133 @@
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
- {# Flash messages display #}
-            {% for type, messages in app.flashes %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endfor %}
-            <div class="card shadow">
-                <div class="card-body">
-                    <h2 class="card-title mb-4">
-                        {% if form.vars.data and form.vars.data.id %}
-                            Modifier le transport
-                        {% else %}
-                            Créer un nouveau transport
-                        {% endif %}
-                    </h2>
-
-                    {{ form_start(form) }}
-                        <div class="mb-3">
-                            {{ form_label(form.reservation) }}
-                            {{ form_widget(form.reservation, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.reservation) }}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form_label(form.tempsArrivageDisplay) }}
-                            {{ form_widget(form.tempsArrivageDisplay) }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form_label(form.voiture) }}
-                            {{ form_widget(form.voiture, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.voiture) }}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ form_label(form.status) }}
-                            {{ form_widget(form.status, {'attr': {'class': 'form-select'}}) }}
-                            {{ form_errors(form.status) }}
-                        </div>
-
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ path('app_transport_index') }}" class="btn" style="background-color: #1976D2; color: white;">
-                                {{ form.vars.data and form.vars.data.id ? 'Annuler' : 'Retour à la liste' }}
-                            </a>
-                            <button type="submit" class="btn" style="background-color: #FF5722; color: white;">
-                                {{ button_label|default(form.vars.data and form.vars.data.id ? 'Mettre à jour' : 'Enregistrer') }}
-                            </button>
-                        </div>
-
-                     <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                        const reservationSelect = document.getElementById('{{ form.reservation.vars.id }}');
-                        const arrivalDisplay = document.getElementById('{{ form.tempsArrivageDisplay.vars.id }}');
-
-    if (reservationSelect && arrivalDisplay) {
-        // Initial load if value exists
-        if (reservationSelect.value) {
-            fetchArrivalTime(reservationSelect.value);
-        }
-
-        // On change event
-        reservationSelect.addEventListener('change', function() {
-            arrivalDisplay.value = 'Loading...';
-            if (this.value) {
-                fetchArrivalTime(this.value);
-            } else {
-                arrivalDisplay.value = '';
-            }
-        });
-
-        function fetchArrivalTime(reservationId) {
-            fetch("{{ path('api_reservation_arrival_time', {'id': 'PLACEHOLDER'}) }}".replace('PLACEHOLDER', reservationId))
-                .then(response => {
-                    if (!response.ok) throw new Error('Error fetching data');
-                    return response.json();
-                })
-                .then(data => {
-                    arrivalDisplay.value = data.formatted || 
-                        new Date(data.arrivalTime).toLocaleDateString('fr-FR', {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    arrivalDisplay.value = 'Error loading arrival time';
-                });
-        }
-    }
-});
-</script>
-                    {{ form_end(form) }}
-                </div>
+<div class="container py-4" style="max-width: 1200px;">
+    {# Flash messages #}
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} mb-4 p-3 rounded-0">
+                {{ message }}
             </div>
-        </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="bg-white p-4 border mb-4">
+        <h2 class="h5 fw-normal mb-4">
+            {% if form.vars.data and form.vars.data.id %}
+                Modifier le transport #{{ form.vars.data.id }}
+            {% else %}
+                Nouveau transport
+            {% endif %}
+        </h2>
+
+        {{ form_start(form) }}
+            <div class="mb-3">
+                {{ form_label(form.reservation, 'Réservation', {'label_attr': {'class': 'form-label small'}}) }}
+                {{ form_widget(form.reservation, {'attr': {'class': 'form-control rounded-0'}}) }}
+                {{ form_errors(form.reservation) }}
+            </div>
+
+            <div class="mb-3">
+                {{ form_label(form.tempsArrivageDisplay, 'Heure d\'arrivée estimée', {'label_attr': {'class': 'form-label small'}}) }}
+                {{ form_widget(form.tempsArrivageDisplay, {'attr': {'class': 'form-control rounded-0'}}) }}
+                {{ form_errors(form.tempsArrivageDisplay) }}
+            </div>
+
+            <div class="mb-3">
+                {{ form_label(form.etudiantDisplay, 'Étudiant', {'label_attr': {'class': 'form-label small'}}) }}
+                {{ form_widget(form.etudiantDisplay, {'attr': {'class': 'form-control rounded-0'}}) }}
+                {{ form_errors(form.etudiantDisplay) }}
+            </div>
+
+            <div class="mb-3">
+                {{ form_label(form.voiture, 'Véhicule', {'label_attr': {'class': 'form-label small'}}) }}
+                {{ form_widget(form.voiture, {'attr': {'class': 'form-control rounded-0'}}) }}
+                {{ form_errors(form.voiture) }}
+            </div>
+
+            <div class="mb-3">
+                {{ form_label(form.status, 'Statut', {'label_attr': {'class': 'form-label small'}}) }}
+                {{ form_widget(form.status, {'attr': {'class': 'form-select rounded-0'}}) }}
+                {{ form_errors(form.status) }}
+            </div>
+
+            {% if form.trajetEnKm is defined %}
+                <div class="mb-3">
+                    {{ form_label(form.trajetEnKm, 'Distance du trajet (km)', {'label_attr': {'class': 'form-label small'}}) }}
+                    {{ form_widget(form.trajetEnKm, {'attr': {'class': 'form-control rounded-0'}}) }}
+                    {{ form_errors(form.trajetEnKm) }}
+                </div>
+            {% endif %}
+
+            {% if form.tarif is defined %}
+                <div class="mb-3">
+                    {{ form_label(form.tarif, 'Tarif (TND)', {'label_attr': {'class': 'form-label small'}}) }}
+                    {{ form_widget(form.tarif, {'attr': {'class': 'form-control rounded-0'}}) }}
+                    {{ form_errors(form.tarif) }}
+                </div>
+            {% endif %}
+
+            {% if form.extraCost is defined %}
+                <div class="mb-3">
+                    {{ form_label(form.extraCost, 'Coût supplémentaire (TND)', {'label_attr': {'class': 'form-label small'}}) }}
+                    {{ form_widget(form.extraCost, {'attr': {'class': 'form-control rounded-0'}}) }}
+                    {{ form_errors(form.extraCost) }}
+                </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ path('app_transport_index') }}" class="btn btn-outline-dark rounded-0 px-4">
+                    {{ form.vars.data and form.vars.data.id ? 'Annuler' : 'Retour' }}
+                </a>
+                <button type="submit" class="btn bg-orange text-white rounded-0 px-4">
+                    {{ button_label|default(form.vars.data and form.vars.data.id ? 'Mettre à jour' : 'Enregistrer') }}
+                </button>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const reservationSelect = document.getElementById('{{ form.reservation.vars.id }}');
+                    const arrivalDisplay = document.getElementById('{{ form.tempsArrivageDisplay.vars.id }}');
+                    const etudiantDisplay = document.getElementById('{{ form.etudiantDisplay.vars.id }}');
+
+                    if (reservationSelect && arrivalDisplay && etudiantDisplay) {
+                        if (reservationSelect.value) {
+                            fetchReservationData(reservationSelect.value);
+                        }
+
+                        reservationSelect.addEventListener('change', function() {
+                            arrivalDisplay.value = 'Chargement...';
+                            etudiantDisplay.value = 'Chargement...';
+                            if (this.value) {
+                                fetchReservationData(this.value);
+                            } else {
+                                arrivalDisplay.value = '';
+                                etudiantDisplay.value = '';
+                            }
+                        });
+
+                        function fetchReservationData(reservationId) {
+                            const url = "{{ path('api_reservation_arrival_time', {'id': 'PLACEHOLDER'}) }}".replace('PLACEHOLDER', reservationId);
+                            fetch(url)
+                                .then(response => {
+                                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    arrivalDisplay.value = data.formatted || 'Non défini';
+                                    etudiantDisplay.value = data.etudiant ? 
+                                        `${data.etudiant.nom} ${data.etudiant.prenom}` : 
+                                        'Aucun étudiant associé';
+                                })
+                                .catch(error => {
+                                    arrivalDisplay.value = 'Erreur lors du chargement';
+                                    etudiantDisplay.value = 'Erreur lors du chargement';
+                                });
+                        }
+                    }
+                });
+            </script>
+        {{ form_end(form) }}
     </div>
-    <a href="{{ path('app_transport_home') }}" class="text-decoration-none" style="color: #1976D2;">
-        <i class="fas fa-arrow-left me-2"></i>
-      {{ form.vars.data and form.vars.data.id ? 'Annuler' : "Retour à l'accueil" }}
+
+    <a href="{{ path('app_transport_home') }}" class="text-dark text-decoration-none small">
+        ← Retour à l'accueil
     </a>
 </div>

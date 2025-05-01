@@ -1,0 +1,55 @@
+{# pickup.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Confirmer la prise en charge du transport{% endblock %}
+
+{% block body %}
+<div class="container py-4" style="max-width: 1200px;">
+    <h1 class="h4 fw-normal mb-4">Confirmer la prise en charge</h1>
+    
+    {# Flash messages #}
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} mb-4 p-3 rounded-0">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="bg-white p-4 border mb-4">
+        <h2 class="h5 fw-normal mb-3">Transport #{{ transport.id }}</h2>
+        <p class="mb-4">Confirmez la prise en charge du transport. Un SMS sera envoyé à l'étudiant.</p>
+        
+        <div class="mb-4">
+            <h3 class="h6 fw-normal mb-2">Détails :</h3>
+            <ul class="list-unstyled">
+                <li class="mb-2"><strong>Trajet :</strong> {{ transport.reservation.adresseDepart }} → {{ transport.reservation.adresseDestination }}</li>
+                <li class="mb-2"><strong>Étudiant :</strong> {{ transport.reservation.etudiant ? transport.reservation.etudiant.nom ~ ' ' ~ transport.reservation.etudiant.prenom : 'Non défini' }}</li>
+                <li class="mb-2"><strong>Véhicule :</strong> {{ transport.voiture ? transport.voiture.model ~ ' (' ~ transport.voiture.numSerie ~ ')' : 'Non défini' }}</li>
+                <li class="mb-2"><strong>Statut :</strong> 
+                    <span class="badge bg-transparent border 
+                        {% if transport.status.value == 'Complété' %} text-dark border-dark
+                        {% elseif transport.status.value == 'Actif' %} text-orange border-orange
+                        {% else %} text-muted border-muted
+                        {% endif %} px-2 py-1 small">
+                        {{ transport.status.value }}
+                    </span>
+                </li>
+                <li class="mb-2"><strong>Distance :</strong> {{ transport.trajetEnKm }} km</li>
+                <li class="mb-2"><strong>Tarif :</strong> {{ transport.tarif }} TND</li>
+            </ul>
+        </div>
+
+        {{ form_start(form) }}
+            <div class="d-flex justify-content-between">
+                <a href="{{ path('app_transport_index') }}" class="btn btn-outline-dark rounded-0 px-4">Annuler</a>
+                <button type="submit" class="btn bg-orange text-white rounded-0 px-4">Confirmer</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    <a href="{{ path('app_transport_home') }}" class="text-dark text-decoration-none small">
+        ← Retour à l'accueil
+    </a>
+</div>
+{% endblock %}

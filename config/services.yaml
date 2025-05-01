@@ -10,6 +10,12 @@ parameters:
     gemini_api_key: '%env(GEMINI_API_KEY)%'
     gcp_project_id: 'Studar-2025' # Replace with your actual GCP Project ID
     gcp_region: 'europe-west9'  
+    app.sender_email: 'studar21@gmail.com'
+    mailer_from: '%env(MAILER_FROM)%'
+    mailer_from_name: '%env(MAILER_FROM_NAME)%'
+    STRIPE_SECRET_KEY: '%env(STRIPE_SECRET_KEY)%'
+  
+
 
 services:
     App\Security\GoogleAuthenticator:
@@ -30,7 +36,38 @@ services:
     App\Controller\GestionReservation\ReservationTransportController:
         arguments:
             $orsApiKey: '%env(ORS_API_KEY)%'
+
+    App\Command\CheckTransportBillingCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $stripeService: '@App\Service\StripeService'
+            $infobipService: '@App\Service\InfobipService'
             
+    App\Twig\AppExtension:
+        tags: ['twig.extension']
+        
+    App\Service\StripeService:
+        arguments:
+            $secretKey: '%env(STRIPE_SECRET_KEY)%'
+            $publishableKey: '%env(STRIPE_PUBLISHABLE_KEY)%'
+            $webhookSecret: '%env(STRIPE_WEBHOOK_SECRET)%'
+    # App\Service\EmailService:
+    #     arguments:
+    #         $httpClient: '@http_client'
+    #         $twig: '@twig'
+    #         $pdfGenerator: '@knp_snappy.pdf'
+    #         $userId: '%env(EMAILJS_USER_ID)%'
+    #         $serviceId: '%env(EMAILJS_SERVICE_ID)%'
+    #         $templateId: '%env(EMAILJS_TEMPLATE_ID)%'
+    #         $accessToken: '%env(EMAILJS_ACCESS_TOKEN)%'
+    #         $fromEmail: '%env(EMAILJS_FROM_EMAIL)%'
+    #         $publicPath: '%kernel.project_dir%/public'
+    #         $baseUrl: '%env(APP_BASE_URL)%'
+
+    knp_snappy.pdf:
+        class: Knp\Snappy\Pdf
+        arguments:
+            - 'wkhtmltopdf' # Adjust path if needed
   
     # default configuration for services in *this* file
     _defaults:
@@ -40,7 +77,8 @@ services:
         bind:
             $gcpProjectId: '%gcp_project_id%'
             $gcpRegion: '%gcp_region%'
-
+            $mailerFrom: '%mailer_from%'
+            $mailerFromName: '%mailer_from_name%'
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
@@ -70,3 +108,6 @@ services:
         tags: ['controller.service_arguments']
         autowire: true
         autoconfigure: true
+
+    # Configure StripeService explicitly
+   

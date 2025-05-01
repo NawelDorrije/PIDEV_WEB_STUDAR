@@ -3,146 +3,164 @@
 {% block title %}Mes Véhicules{% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">Mes Véhicules</h1>
-            <a href="{{ path('app_voiture_new') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Ajouter un véhicule
-            </a>
+<div class="container py-4" style="max-width: 1200px;">
+    {# Header Section #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h4 fw-normal mb-1">Mes Véhicules</h1>
+            <p class="text-muted small">Gérez votre flotte de véhicules</p>
         </div>
-
-        {# Status Filter #}
-        <div class="mb-4">
-            <div class="btn-group" role="group">
-                <a href="{{ path('app_voiture_index') }}" 
-                   class="btn btn-sm"
-                   style="{% if app.request.query.get('disponibilite') is null %}
-                       background-color: transparent;
-                       border-color: #0d6efd;
-                       color: #0d6efd;
-                       border: 1px solid;
-                   {% else %}
-                       color: #0d6efd;
-                       border-color: #0d6efd;
-                       background-color: transparent;
-                       border: 1px solid;
-                   {% endif %}">
-                    Tous
-                </a>
-                <a href="{{ path('app_voiture_index', {'disponibilite': 'Disponible'}) }}" 
-                   class="btn btn-sm"
-                   style="{% if app.request.query.get('disponibilite') == 'Disponible' %}
-                       background-color: #6FE69B;
-                       border-color: #6FE69B;
-                       color: #000;
-                   {% else %}
-                       color: #6FE69B;
-                       border-color: #6FE69B;
-                       background-color: transparent;
-                       border: 1px solid;
-                   {% endif %}">
-                    Disponibles
-                </a>
-                <a href="{{ path('app_voiture_index', {'disponibilite': 'Non disponible'}) }}" 
-                   class="btn btn-sm"
-                   style="{% if app.request.query.get('disponibilite') == 'Non disponible' %}
-                       background-color: #ffc107;
-                       border-color: #ffc107;
-                       color: #000;
-                   {% else %}
-                       color: #ffc107;
-                       border-color: #ffc107;
-                       background-color: transparent;
-                       border: 1px solid;
-                   {% endif %}">
-                    Non disponibles
-                </a>
-            </div>
-        </div>
-
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Modèle</th>
-                                <th>Numéro de série</th>
-                                <th>Image</th>
-                                <th>Disponibilité</th>
-                                <th>Date d'ajout</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for voiture in voitures %}
-                            {% if voiture.utilisateur and voiture.utilisateur.cin == app.user.cin %}
-                            <tr>
-                                <td>{{ voiture.model }}</td>
-                                <td>{{ voiture.numSerie }}</td>
-                                <td>
-                                    {% if voiture.image %}
-                                        <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}" 
-                                             alt="{{ voiture.model }}" 
-                                             class="img-thumbnail"
-                                             style="max-height: 80px; max-width: 80px;">
-                                    {% else %}
-                                        <img src="{{ asset('images/default-car.jpg') }}"
-                                             alt="{{ voiture.model }}" 
-                                             class="img-thumbnail"
-                                             style="max-height: 80px; max-width: 80px;">
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge" 
-                                          style="{% if voiture.disponibilite.value == 'Disponible' %}background-color: #6FE69B;
-                                          {% elseif voiture.disponibilite.value == 'Non disponible' %}background-color: #ffc107;
-                                          {% else %}background-color: #6c757d;{% endif %}">
-                                        {{ voiture.disponibilite.value }}
-                                    </span>
-                                </td>
-                                <td>{{ voiture.timestamp ? voiture.timestamp|date('d/m/Y H:i') : '' }}</td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}" 
-                                           class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ path('app_voiture_edit', {'idVoiture': voiture.idVoiture}) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form method="post" action="{{ path('app_voiture_delete', {'idVoiture': voiture.idVoiture}) }}" 
-                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?');">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ voiture.idVoiture) }}">
-                                            <button type="submit" class="btn btn-link text-danger p-0 border-0" style="background: none;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endif %}
-                        {% else %}
-                            <tr>
-                                <td colspan="6" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="fas fa-car fa-3x mb-3"></i>
-                                        <p>Aucun véhicule enregistré</p>
-                                        <a href="{{ path('app_voiture_new') }}" class="btn btn-primary mt-2">
-                                            Ajouter un véhicule
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <a href="{{ path('app_transport_home') }}" class="btn btn-link text-decoration-none ps-0">
-            <i class="fas fa-arrow-left"></i> Retour à l'accueil
+        <a href="{{ path('app_voiture_new') }}" class="btn bg-orange text-white px-3">
+            <i class="fas fa-plus me-1"></i> Ajouter
         </a>
     </div>
+
+    {# Status Filter - Black/White/Orange only #}
+    <div class="mb-4">
+        <div class="d-flex gap-2">
+            <a href="{{ path('app_voiture_index') }}" 
+               class="btn btn-sm {% if app.request.query.get('disponibilite') is null %}bg-black text-white{% else %}btn-outline-dark{% endif %}">
+                Tous
+            </a>
+            <a href="{{ path('app_voiture_index', {'disponibilite': 'Disponible'}) }}" 
+               class="btn btn-sm {% if app.request.query.get('disponibilite') == 'Disponible' %}bg-white text-black border-black{% else %}btn-outline-dark{% endif %}">
+                Disponibles
+            </a>
+            <a href="{{ path('app_voiture_index', {'disponibilite': 'Non disponible'}) }}" 
+               class="btn btn-sm {% if app.request.query.get('disponibilite') == 'Non disponible' %}bg-orange text-white{% else %}btn-outline-dark text-orange{% endif %}">
+                Non disponibles
+            </a>
+        </div>
+    </div>
+
+    {# Vehicles Grid #}
+    {% if voitures|length > 0 %}
+        <div class="row g-4">
+            {% for voiture in voitures %}
+                {% if voiture.utilisateur and voiture.utilisateur.cin == app.user.cin %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border">
+                        {# Vehicle Image #}
+                        <div class="card-img-top ratio ratio-16x9 bg-white d-flex align-items-center justify-content-center">
+                            {% if voiture.image %}
+                                <img src="{{ vich_uploader_asset(voiture, 'imageFile') }}" 
+                                     class="img-fluid p-2" 
+                                     style="object-fit: contain; max-height: 180px;">
+                            {% else %}
+                                <div class="text-muted">
+                                    <i class="fas fa-car fa-4x opacity-25"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {# Vehicle Details #}
+                        <div class="card-body">
+                            <h3 class="h5 card-title mb-2">{{ voiture.model }}</h3>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-transparent border 
+                                    {% if voiture.disponibilite.value == 'Disponible' %} 
+                                        text-black border-black
+                                    {% else %} 
+                                        text-orange border-orange
+                                    {% endif %} 
+                                    px-2 py-1 me-2">
+                                    {{ voiture.disponibilite.value }}
+                                </span>
+                                <small class="text-muted">#{{ voiture.numSerie }}</small>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small class="text-muted">
+                                    <i class="far fa-calendar-alt me-1"></i>
+                                    {{ voiture.timestamp ? voiture.timestamp|date('d/m/Y') : '' }}
+                                </small>
+                                
+                                <div class="dropdown">
+                                    <button class="btn btn-sm p-0 text-dark" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end border">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ path('app_voiture_show', {'idVoiture': voiture.idVoiture}) }}">
+                                                <i class="fas fa-eye me-2"></i> Détails
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ path('app_voiture_edit', {'idVoiture': voiture.idVoiture}) }}">
+                                                <i class="fas fa-edit me-2"></i> Modifier
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <form method="post" action="{{ path('app_voiture_delete', {'idVoiture': voiture.idVoiture}) }}" 
+                                                  onsubmit="return confirm('Supprimer ce véhicule ?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ voiture.idVoiture) }}">
+                                                <button type="submit" class="dropdown-item text-dark">
+                                                    <i class="fas fa-trash me-2"></i> Supprimer
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        {# Empty State #}
+        <div class="text-center py-5">
+            <div class="bg-white p-5 border">
+                <i class="fas fa-car fa-4x text-muted mb-4"></i>
+                <h3 class="h5 mb-3">Aucun véhicule enregistré</h3>
+                <p class="text-muted mb-4">Commencez par ajouter votre premier véhicule</p>
+                <a href="{{ path('app_voiture_new') }}" class="btn bg-orange text-white px-4">
+                    <i class="fas fa-plus me-1"></i> Ajouter un véhicule
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    {# Back Link #}
+    <div class="mt-4">
+        <a href="{{ path('app_transport_home') }}" class="text-dark text-decoration-none">
+            <i class="fas fa-arrow-left me-1"></i> Retour à l'accueil
+        </a>
+    </div>
+</div>
+
+<style>
+    :root {
+        --orange: #FF6B00;
+    }
+    .bg-orange {
+        background-color: var(--orange);
+    }
+    .text-orange {
+        color: var(--orange);
+    }
+    .border-orange {
+        border-color: var(--orange);
+    }
+    .card {
+        transition: transform 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+    }
+    .dropdown-menu {
+        border-radius: 0;
+    }
+    .btn-outline-dark {
+        border-radius: 0;
+    }
+    .bg-black {
+        background-color: #000;
+    }
+</style>
 {% endblock %}

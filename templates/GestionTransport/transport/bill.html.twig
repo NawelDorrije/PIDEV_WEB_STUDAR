@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: system-ui, sans-serif, Arial;
+            font-size: 14px;
+            color: #333;
+            padding: 14px 8px;
+            background-color: #f5f5f5;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-top: 6px solid #FF6200; /* Orange to match STUDAR logo */
+            padding: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .header img {
+            height: 32px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        .header span {
+            font-size: 16px;
+            vertical-align: middle;
+            border-left: 1px solid #333;
+            padding-left: 8px;
+        }
+        .content {
+            padding: 0 16px;
+        }
+        .message {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .transport-id {
+            text-align: left;
+            font-size: 14px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid #333;
+        }
+        .details table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .details th, .details td {
+            padding: 8px;
+            text-align: left;
+        }
+        .details th {
+            width: 200px;
+            font-weight: bold;
+        }
+        .summary {
+            padding: 24px 0;
+        }
+        .summary .divider {
+            border-top: 2px solid #333;
+        }
+        .summary table {
+            border-collapse: collapse;
+            width: 100%;
+            text-align: right;
+        }
+        .summary td {
+            padding: 8px;
+            white-space: nowrap;
+        }
+        .summary .total-row td {
+            border-top: 2px solid #333;
+            padding: 16px 8px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #FF6200;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover {
+            background-color: #E55700;
+        }
+        .footer {
+            max-width: 600px;
+            margin: 20px auto 0;
+            padding-top: 16px;
+        }
+        .footer p {
+            color: #999;
+            font-size: 14px;
+            text-align: center;
+        }
+        .preview-mode {
+            background-color: #f8f8f8;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+        .preview-notice {
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ asset('images/logo.png') }}" alt="STUDAR Logo" height="32px" />
+            <span>
+                <strong>Facture pour Votre Transport</strong>
+            </span>
+        </div>
+        <div class="content">
+            <p class="message">
+                Voici un aperçu de la facture qui sera envoyée au client.
+            </p>
+            <div class="transport-id">
+                <strong>Transport #{{ transport.id }}</strong>
+            </div>
+            <div class="details">
+                <table>
+                    <tr>
+                        <th>Client</th>
+                        <td>{{ transport.reservation.etudiant.nom }} {{ transport.reservation.etudiant.prenom }}</td>
+                    </tr>
+                    <tr>
+                        <th>CIN</th>
+                        <td>{{ transport.reservation.etudiant.cin }}</td>
+                    </tr>
+                    <tr>
+                        <th>Trajet</th>
+                        <td>{{ transport.reservation.adresseDepart }} → {{ transport.reservation.adresseDestination }}</td>
+                    </tr>
+                    <tr>
+                        <th>Distance</th>
+                        <td>{{ transport.trajetEnKm }} km</td>
+                    </tr>
+                    <tr>
+                        <th>Date</th>
+                        <td>{{ invoiceData.date is defined ? invoiceData.date|date('d/m/Y') : "now"|date('d/m/Y') }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="summary">
+                <div class="divider"></div>
+                <table>
+                    <tr>
+                        <td style="width: 60%">Tarif de base</td>
+                        <td>{{ transport.tarif|number_format(2, ',', ' ') }} TND</td>
+                    </tr>
+                    {% if transport.extraCost is defined and transport.extraCost > 0 %}
+                    <tr>
+                        <td>Frais supplémentaires</td>
+                        <td>{{ transport.extraCost|number_format(2, ',', ' ') }} TND</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="total-row">
+                        <td><strong>Total TTC</strong></td>
+                        <td><strong>{{ (transport.tarif + (transport.extraCost|default(0)))|number_format(2, ',', ' ') }} TND</strong></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="preview-mode">
+                <p class="preview-notice">Ceci est un aperçu de la facture. Le client recevra un email avec ces informations.</p>
+                <form action="{{ path('app_transport_bill', {'id': transport.id}) }}" method="POST">
+                    <button type="submit" class="button">
+                        Envoyer la facture au client
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>
+            Email sera envoyé à: {{ transport.reservation.etudiant.email }}<br>
+            Référence: {{ invoiceData.reference is defined ? invoiceData.reference : 'INV-' ~ transport.id ~ '-' ~ date('Ymd') }}
+        </p>
+    </div>
+</body>
+</html>

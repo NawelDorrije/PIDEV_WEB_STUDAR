@@ -19,6 +19,11 @@
             margin-top: 1rem;
         }
         .leaflet-routing-container { display: none !important; }
+        .text-orange { color: #FF6B00; }
+        .bg-orange { background-color: #FF6B00; }
+        .hover-orange:hover { background-color: #E55700; }
+        .text-black { color: #000; }
+        .bg-white { background-color: #fff; }
     </style>
 {% endblock %}
 
@@ -26,14 +31,14 @@
     <div class="container mx-auto px-4 py-8">
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="bg-gray-100 p-4">
-                <h2 class="text-2xl font-bold text-blue-600">Détails du Transport #{{ transport.id }}</h2>
+                <h2 class="text-2xl font-bold text-orange">Détails du Transport #{{ transport.id }}</h2>
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2">
                         <div class="space-y-4">
                             <div class="flex items-center">
-                                <i class="fas fa-map-marker-alt text-blue-500 mr-3"></i>
+                                <i class="fas fa-map-marker-alt text-orange mr-3"></i>
                                 <div>
                                     {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
                                         <p class="font-semibold">{{ transport.reservation.adresseDepart }}</p>
@@ -44,15 +49,15 @@
                                 </div>
                             </div>
                             <div class="flex items-center">
-                                <i class="fas fa-road text-blue-500 mr-3"></i>
+                                <i class="fas fa-road text-orange mr-3"></i>
                                 <p>{{ transport.trajetEnKm }} km</p>
                             </div>
                             <div class="flex items-center">
-                                <i class="fas fa-money-bill-wave text-blue-500 mr-3"></i>
+                                <i class="fas fa-money-bill-wave text-orange mr-3"></i>
                                 <p>{{ transport.tarif }} TND</p>
                             </div>
                             <div class="flex items-center">
-                                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                <i class="fas fa-info-circle text-orange mr-3"></i>
                                 <p class="font-semibold 
                                     {% if transport.status.value == 'Complété' %}text-green-500
                                     {% elseif transport.status.value == 'Actif' %}text-yellow-500
@@ -61,7 +66,7 @@
                                 </p>
                             </div>
                             <div class="flex items-center">
-                                <i class="far fa-calendar-alt text-blue-500 mr-3"></i>
+                                <i class="far fa-calendar-alt text-orange mr-3"></i>
                                 <p>{{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : 'N/A' }}</p>
                             </div>
                             <div>
@@ -73,7 +78,7 @@
                     </div>
                     <div>
                         <div class="bg-gray-50 p-4 rounded-lg h-full">
-                            <h5 class="text-lg font-semibold text-blue-600 mb-4">Véhicule assigné</h5>
+                            <h5 class="text-lg font-semibold text-orange mb-4">Véhicule assigné</h5>
                             {% if transport.voiture %}
                                 <div class="text-center mb-4">
                                     {% if transport.voiture.image %}
@@ -102,15 +107,15 @@
                         </div>
                     </div>
                 </div>
-                <h3 class="text-xl font-semibold mt-6 mb-2">Carte de l'itinéraire</h3>
+                <h3 class="text-xl font-semibold mt-6 mb-2 text-orange">Carte de l'itinéraire</h3>
                 <div id="map"></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                    <p><i class="fas fa-ruler-combined text-blue-500 mr-2"></i> Distance: <span id="distanceInfo">-</span></p>
-                    <p><i class="far fa-clock text-blue-500 mr-2"></i> Temps estimé: <span id="durationInfo">-</span></p>
+                    <p><i class="fas fa-ruler-combined text-orange mr-2"></i> Distance: <span id="distanceInfo">-</span></p>
+                    <p><i class="far fa-clock text-orange mr-2"></i> Temps estimé: <span id="durationInfo">-</span></p>
                 </div>
                 <div class="button-container">
                     <button id="startTracking" data-transport-id="{{ transport.id }}" 
-                            class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition transform hover:-translate-y-1 flex items-center justify-center min-w-[180px]">
+                            class="bg-orange text-white px-6 py-2 rounded-full hover-orange transition transform hover:-translate-y-1 flex items-center justify-center min-w-[180px]">
                         <i class="fas fa-play mr-2"></i>
                         Lancer le Suivi
                     </button>
@@ -123,16 +128,16 @@
         <!-- Modal for Voice Assistant Responses -->
         <div id="voiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
             <div class="bg-white p-6 rounded-lg max-w-lg w-full shadow-xl transform transition-all">
-                <h3 class="text-lg font-semibold text-blue-600 mb-4">Réponse de l'Assistant Vocal</h3>
+                <h3 class="text-lg font-semibold text-orange mb-4">Réponse de l'Assistant Vocal</h3>
                 <p id="voiceResponse" class="text-gray-700"></p>
                 <div id="loadingSpinner" class="hidden flex justify-center my-4">
-                    <svg class="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-6 w-6 text-orange" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                     </svg>
                 </div>
                 <div class="mt-4 flex gap-2 justify-end">
-                    <button id="closeModal" class="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+                    <button id="closeModal" class="bg-orange text-white px-4 py-2 rounded-full hover-orange transition">
                         Fermer
                     </button>
                 </div>
@@ -169,7 +174,7 @@
         let selectedWaypoints = null;
         let isSimulating = false;
         let vehicleMarker = null;
-        let currentRoutes = null;  // Add this new variable
+        let currentRoutes = null;
 
         // Modal helpers
         function showModal(msg) {
@@ -251,12 +256,12 @@
 
             routingControl.on('routesfound', function(e) {
                 currentRoutes = e.routes;
-                updateRouteDisplay(e.routes[0]); // Update for selected route
+                updateRouteDisplay(e.routes[0]);
             });
 
             routingControl.on('routeselected', function(e) {
                 selectedWaypoints = e.route.coordinates.map(pt => [pt.lng, pt.lat]);
-                updateRouteDisplay(e.route); // Update when user selects alternative
+                updateRouteDisplay(e.route);
             });
 
             function updateRouteDisplay(route) {
@@ -269,37 +274,22 @@
                 ).join('');
                 
                 document.getElementById('directions').innerHTML = `
-                    <h4 class="text-lg font-semibold text-blue-600">Itinéraire Principal</h4>
+                    <h4 class="text-lg font-semibold text-orange">Itinéraire Principal</h4>
                     <ul class="list-disc list-inside text-gray-700">${html}</ul>
                 `;
             }
         }
 
-        // Updated startTracking event listener with Gemini integration
-        // Helper function with timeout
-        function fetchWithTimeout(url, options, timeout) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), timeout);
-            
-            return fetch(url, {
-                ...options,
-                signal: controller.signal
-            }).finally(() => clearTimeout(timeoutId));
-        }
-
-        // Helper function for Gemini processing
         async function processWithGemini(directions) {
             try {
                 showLoading();
                 
-                // Fallback if Gemini fails
                 const fallbackDirections = directions.map(d => 
                     `${d.type} ${d.modifier || ''} ${d.text} (${d.distance})`
                 ).join('. ');
                 
                 let textToSpeak = fallbackDirections;
                 
-                // Try Gemini if available
                 try {
                     const response = await fetch('http://localhost:5000/api/process-directions', {
                         method: 'POST',
@@ -318,7 +308,6 @@
                     console.warn('Gemini failed, using fallback:', e);
                 }
 
-                // Speak the directions
                 if ('speechSynthesis' in window) {
                     const utterance = new SpeechSynthesisUtterance(textToSpeak);
                     utterance.lang = 'fr-FR';
@@ -343,7 +332,6 @@
             }
         }
 
-        // Main navigation function
         async function startNavigation() {
             if (isSimulating) {
                 showModal('Une simulation est déjà en cours.');
@@ -356,7 +344,6 @@
                 startButton.classList.add('opacity-50', 'cursor-not-allowed');
                 showLoading();
 
-                // 1. Get instructions
                 if (!currentRoutes || currentRoutes.length === 0) {
                     throw new Error('Aucun itinéraire disponible');
                 }
@@ -369,10 +356,8 @@
                     distance: (instr.distance / 1000).toFixed(2) + ' km'
                 }));
 
-                // Run simulation and voice processing simultaneously
                 const payload = selectedWaypoints ? { coords: selectedWaypoints } : {};
                 await Promise.all([
-                    // Start simulation
                     fetch(cfg.trackSimulatePath, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -380,7 +365,6 @@
                     }).then(response => {
                         if (!response.ok) throw new Error('Erreur de simulation');
                     }),
-                    // Process voice instructions
                     processWithGemini(instructions)
                 ]);
 
@@ -395,7 +379,6 @@
             }
         }
 
-        // Mercure tracking updates
         const mercureUrl = new URL('http://localhost:3000/.well-known/mercure');
         mercureUrl.searchParams.append('topic', 'tracking/transport/' + cfg.transportId);
 
@@ -417,7 +400,8 @@
 
             map.panTo(latlng);
 
-            const pct = ((data.distanceCovered / cfg.trajetEnKm) * 100).toFixed(1);
+            const pct = ((
+                data.distanceCovered / cfg.trajetEnKm) * 100).toFixed(1);
             document.getElementById('progress').innerText = pct + '%';
             document.getElementById('distanceCovered').innerText = data.distanceCovered.toFixed(2);
             document.getElementById('timestamp').innerText = new Date().toLocaleString();

@@ -3,149 +3,193 @@
 {% block title %}Mes Transports{% endblock %}
 
 {% block body %}
-    <div class="container mt-5">
+    <div class="container py-4" style="max-width: 1200px;">
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} mb-4 p-3 rounded-0">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">Mes Transports</h1>
-            <a href="{{ path('app_transport_new') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Ajouter un transport
+            <div>
+                <h1 class="h4 fw-normal mb-1">Mes Transports</h1>
+            </div>
+            <a href="{{ path('app_transport_new') }}" class="btn btn-sm border text-dark px-3 hover-orange">
+                + Ajouter
             </a>
         </div>
 
         {# Status Filter #}
         <div class="mb-4">
-            <div class="btn-group" role="group">
-                <a href="{{ path('app_transport_index') }}" 
-                   class="btn btn-sm"
-                   style="{% if app.request.query.get('status') is null %}
-                       background-color: transparent;
-                       border-color: #0d6efd;
-                       color: #0d6efd;
-                       border: 1px solid;
-                   {% else %}
-                       color: #0d6efd;
-                       border-color: #0d6efd;
-                       background-color: transparent;
-                       border: 1px solid;
-                   {% endif %}">
-                    Tous
-                </a>
-                <a href="{{ path('app_transport_index', {'status': 'Actif'}) }}" 
-                   class="btn btn-sm" 
-                   style="{% if app.request.query.get('status') == 'Actif' %}
-                       background-color: #ffc107; 
-                       border-color: #ffc107;
-                       color: #000;
-                   {% else %}
-                       color: #ffc107;
-                       border-color: #ffc107;
-                       background-color: transparent;
-                   {% endif %}">
-                    Actifs
-                </a>
-                <a href="{{ path('app_transport_index', {'status': 'Complété'}) }}" 
-                   class="btn btn-sm"
-                   style="{% if app.request.query.get('status') == 'Complété' %}
-                       background-color: #6FE69B;
-                       border-color: #6FE69B;
-                       color: #000;
-                   {% else %}
-                       color: #6FE69B;
-                       border-color: #6FE69B;
-                       background-color: transparent;
-                   {% endif %}">
-                    Complétés
-                </a>
+            <div class="d-flex gap-2">
+                <a class="filter-link {% if app.request.query.get('status') is null %}active{% endif %}" 
+                   href="{{ path('app_transport_index') }}">Tous</a>
+                <a class="filter-link {% if app.request.query.get('status') == 'Actif' %}active{% endif %}" 
+                   href="{{ path('app_transport_index', {'status': 'Actif'}) }}">Actifs</a>
+                <a class="filter-link {% if app.request.query.get('status') == 'En attente' %}active{% endif %}" 
+                   href="{{ path('app_transport_index', {'status': 'En attente'}) }}">En attente</a>
+                <a class="filter-link {% if app.request.query.get('status') == 'Complété' %}active{% endif %}" 
+                   href="{{ path('app_transport_index', {'status': 'Complété'}) }}">Complétés</a>
             </div>
         </div>
 
-        <div class="card shadow">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Trajet</th>
-                                <th>Trajet (km)</th>
-                                <th>Tarif (TND)</th>
-                                <th>Statut</th>
-                                <th>Heure d'arrivée estimée</th>
-                                <th>Voiture</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for transport in transports %}
-                            {% if transport.voiture and transport.voiture.utilisateur and transport.voiture.utilisateur.cin == app.user.cin %}
-                            <tr>
-                                <td>{{ transport.id }}</td>
-                                <td>
-                                    {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
-                                        {{ transport.reservation.adresseDepart }} → {{ transport.reservation.adresseDestination }}
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ transport.trajetEnKm }} km</td>
-                                <td>{{ transport.tarif }}</td>
-                                <td>
-                                    <span class="badge" 
-                                          style="{% if transport.status.value == 'Complété' %}background-color: #6FE69B;
-                                          {% elseif transport.status.value == 'Actif' %}background-color: #ffc107;
-                                          {% else %}background-color: #6c757d;{% endif %}">
-                                        {{ transport.status.value }}
-                                    </span>
-                                </td>
-<td>
-    {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : '' }}
-</td>                                <td>
-                                    {% if transport.voiture %}
-                                        {{ transport.voiture.model }} ({{ transport.voiture.numSerie }})
-                                    {% else %}
-                                        <span class="text-muted">Non assignée</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="{{ path('app_transport_show', {'id': transport.id}) }}" 
-                                           class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ path('app_transport_edit', {'id': transport.id}) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form method="post" action="{{ path('app_transport_delete', {'id': transport.id}) }}" 
-                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce transport ?');">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ transport.id) }}">
-                                            <button type="submit" class="btn btn-link text-danger p-0 border-0" style="background: none;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endif %}
-                        {% else %}
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="fas fa-truck fa-3x mb-3"></i>
-                                        <p>Aucun transport enregistré</p>
-                                        <a href="{{ path('app_transport_new') }}" class="btn btn-primary mt-2">
-                                            Créer votre premier transport
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+        {# Transport List #}
+        <div class="bg-white p-3">
+            {# Table Headers #}
+            <div class="row border-bottom py-2 fw-medium text-dark d-none d-md-flex">
+                <div class="col-md-4">Transport</div>
+                <div class="col-md-2">Distance</div>
+                <div class="col-md-2">Tarif</div>
+                <div class="col-md-2">Statut</div>
+                <div class="col-md-2 text-end">Actions</div>
             </div>
+
+            {% for transport in transports %}
+                {% if transport.voiture and transport.voiture.utilisateur and transport.voiture.utilisateur.cin == app.user.cin %}
+                <div class="border-bottom py-3 transport-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-dark" style="width: 24px;">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div>
+                                    <div class="text-dark">#{{ transport.id }}</div>
+                                    <div class="text-muted small">
+                                        {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                            {{ transport.reservation.adresseDepart|u.truncate(15, '...') }} → {{ transport.reservation.adresseDestination|u.truncate(15, '...') }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-muted small">
+                            {{ transport.trajetEnKm }} km
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-dark">{{ transport.tarif|number_format(2) }} TND</div>
+                            {% if transport.extraCost > 0 %}
+                                <div class="text-muted small">+{{ transport.extraCost|default(0)|number_format(2) }} TND</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge bg-transparent 
+                                {% if transport.status.value == 'Complété' %} text-dark border border-dark
+                                {% elseif transport.status.value == 'Actif' %} text-orange border border-orange
+                                {% else %} text-muted border border-muted
+                                {% endif %} px-2 py-1 small">
+                                {{ transport.status.value }}
+                            </span>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                    <li><a class="dropdown-item small" href="{{ path('app_transport_show', {'id': transport.id}) }}">Détails</a></li>
+                                    <li><a class="dropdown-item small" href="{{ path('app_transport_edit', {'id': transport.id}) }}">Modifier</a></li>
+                                    {% if transport.status.value == 'En attente' %}
+                                    <li><a class="dropdown-item small" href="{{ path('app_transport_pickup', {'id': transport.id}) }}">Confirmer</a></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item small" href="{{ path('app_transport_invoice', {'id': transport.id}) }}">Télécharger PDF</a></li>
+                                    <li>
+                                        <form method="post" action="{{ path('app_transport_bill', {'id': transport.id}) }}">
+                                            <button type="submit" class="dropdown-item small">Envoyer facture</button>
+                                        </form>
+                                    </li>
+                                    <li class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="post" action="{{ path('app_transport_delete', {'id': transport.id}) }}">
+                                            <button type="submit" class="dropdown-item small text-danger">Supprimer</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-truck text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mt-3">Aucun transport enregistré</p>
+                    <a href="{{ path('app_transport_new') }}" class="btn btn-sm border text-dark mt-2 hover-orange">
+                        Créer un transport
+                    </a>
+                </div>
+            {% endfor %}
         </div>
-        <a href="{{ path('app_transport_home') }}" class="btn btn-link text-decoration-none ps-0">
-            <i class="fas fa-arrow-left"></i> Retour à l'accueil
-        </a>
+
+        <div class="mt-4">
+            <a href="{{ path('app_transport_home') }}" class="text-dark text-decoration-none small hover-orange">
+                ← Retour à l'accueil
+            </a>
+        </div>
     </div>
+
+    <style>
+        :root {
+            --orange: #FF6B00;
+            --orange-light: rgba(255, 107, 0, 0.1);
+        }
+        .text-orange {
+            color: var(--orange);
+        }
+        .border-orange {
+            border-color: var(--orange) !important;
+        }
+        body {
+            background-color: #f8f8f8;
+        }
+        
+        /* Interactive Elements */
+        .hover-orange:hover {
+            color: var(--orange) !important;
+            border-color: var(--orange) !important;
+        }
+        .transport-row:hover {
+            background-color: var(--orange-light);
+        }
+        .filter-link {
+            color: #000;
+            text-decoration: none;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .filter-link:hover, .filter-link.active {
+            color: var(--orange);
+            border-bottom-color: var(--orange);
+        }
+        
+        /* Table Styles */
+        .dropdown-menu {
+            border: 1px solid #eee;
+            border-radius: 0;
+        }
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s;
+        }
+        .dropdown-item:hover {
+            background-color: var(--orange-light);
+            color: #000;
+        }
+        .dropdown-item:active {
+            background-color: var(--orange-light);
+        }
+        .badge {
+            font-weight: 400;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+        .badge:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+    </style>
 {% endblock %}

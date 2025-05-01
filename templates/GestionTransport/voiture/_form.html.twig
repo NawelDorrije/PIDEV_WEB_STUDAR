@@ -1,61 +1,68 @@
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-body">
-                    <h2 class="card-title mb-4">
-                        {% if form.vars.data and form.vars.data.idVoiture %}
-                            Modifier le véhicule
-                        {% else %}
-                            Ajouter un nouveau véhicule
-                        {% endif %}
-                    </h2>
-
-                    {% if form.vars.data and form.vars.data.utilisateur %}
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Transporteur</label>
-                        <input type="text" class="form-control" readonly
-                               value="{{ form.vars.data.utilisateur.cin }} - {{ form.vars.data.utilisateur.nom }} {{ form.vars.data.utilisateur.prenom }}">
-                    </div>
-                    {% endif %}
-
-                    {{ form_start(form) }}
-                        {{ form_row(form.model) }}
-                        {{ form_row(form.numSerie) }}
-                        
-                        {# Image field #}
-                        <div class="mb-3">
-                            {{ form_label(form.imageFile) }}
-                            {% if form.vars.data and form.vars.data.idVoiture and form.vars.data.image %}
-                                <div class="mb-2">
-                                    <img src="{{ vich_uploader_asset(form.vars.data, 'imageFile') }}" 
-                                         alt="Current vehicle image"
-                                         class="img-thumbnail"
-                                         style="max-height: 100px;">
-                                    <p class="text-muted small mt-1">Image actuelle</p>
-                                </div>
-                            {% endif %}
-                            {{ form_widget(form.imageFile) }}
-                            {{ form_errors(form.imageFile) }}
-                        </div>
-
-                        {{ form_row(form.disponibilite) }}
-                        
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ path('app_voiture_index') }}" class="btn" style="background-color: #1976D2; color: white;">
-                                {{ form.vars.data and form.vars.data.idVoiture ? 'Annuler' : 'Retour à la liste' }}
-                            </a>
-                            <button type="submit" class="btn" style="background-color: #FF5722; color: white;">
-                                {{ button_label|default(form.vars.data and form.vars.data.idVoiture ? 'Mettre à jour' : 'Enregistrer') }}
-                            </button>
-                        </div>
-                    {{ form_end(form) }}
-                </div>
+{# _form.html.twig #}
+<div class="container py-4" style="max-width: 1200px;">
+    <div class="bg-white border mb-4">
+        <div class="p-3 border-bottom">
+            <h2 class="h5 fw-normal mb-0">
+                {% if form.vars.data and form.vars.data.idVoiture %}
+                    Modifier le véhicule
+                {% else %}
+                    Nouveau véhicule
+                {% endif %}
+            </h2>
+        </div>
+        <div class="p-3">
+            {% if form.vars.data and form.vars.data.utilisateur %}
+            <div class="mb-3">
+                <p class="small text-muted mb-1">Transporteur</p>
+                <p>{{ form.vars.data.utilisateur.cin }} - {{ form.vars.data.utilisateur.nom }} {{ form.vars.data.utilisateur.prenom }}</p>
             </div>
+            {% endif %}
+
+            {{ form_start(form) }}
+                {{ form_row(form.model, {
+                    'label': 'Modèle',
+                    'label_attr': {'class': 'small'},
+                    'attr': {'class': 'form-control rounded-0'}
+                }) }}
+                
+                {{ form_row(form.numSerie, {
+                    'label': 'Numéro de série',
+                    'label_attr': {'class': 'small'},
+                    'attr': {'class': 'form-control rounded-0'}
+                }) }}
+
+                <div class="mb-3">
+                    {{ form_label(form.imageFile, 'Image', {'label_attr': {'class': 'small'}}) }}
+                    {% if form.vars.data and form.vars.data.idVoiture and form.vars.data.image %}
+                        <div class="mb-2">
+                            <img src="{{ vich_uploader_asset(form.vars.data, 'imageFile') }}" 
+                                 class="img-fluid mb-1" style="max-height: 100px;">
+                            <p class="small text-muted">Image actuelle</p>
+                        </div>
+                    {% endif %}
+                    {{ form_widget(form.imageFile, {'attr': {'class': 'form-control rounded-0'}}) }}
+                    {{ form_errors(form.imageFile) }}
+                </div>
+
+                {{ form_row(form.disponibilite, {
+                    'label': 'Disponibilité',
+                    'label_attr': {'class': 'small'},
+                    'attr': {'class': 'form-select rounded-0'}
+                }) }}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ path('app_voiture_index') }}" class="btn btn-outline-dark rounded-0 px-4">
+                        Annuler
+                    </a>
+                    <button type="submit" class="btn bg-orange text-white rounded-0 px-4">
+                        {{ button_label|default('Enregistrer') }}
+                    </button>
+                </div>
+            {{ form_end(form) }}
         </div>
     </div>
-    <a href="{{ path('app_transport_home') }}" class="text-decoration-none" style="color: #1976D2;">
-        <i class="fas fa-arrow-left me-2"></i>
-        {{ form.vars.data and form.vars.data.idVoiture ? 'Annuler' : "Retour à l'accueil" }}
+
+    <a href="{{ path('app_transport_home') }}" class="text-dark text-decoration-none small">
+        ← Retour à l'accueil
     </a>
 </div>

@@ -1,11 +1,14 @@
+{# new.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}New Transport{% endblock %}
+{% block title %}Nouveau Transport{% endblock %}
 
 {% block body %}
-    
-
-    {{ include('GestionTransport/transport/_form.html.twig') }}
-
-   
+    <div class="container py-4" style="max-width: 1200px;">
+        <h1 class="h4 fw-normal mb-4">Nouveau Transport</h1>
+        {{ include('GestionTransport/transport/_form.html.twig', {
+            'form': form,
+            'transport': transport
+        }) }}
+    </div>
 {% endblock %}

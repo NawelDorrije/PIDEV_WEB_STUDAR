@@ -1,13 +1,11 @@
+{# edit.html.twig #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Edit Transport{% endblock %}
+{% block title %}Modifier Transport #{{ transport.id }}{% endblock %}
 
 {% block body %}
-    
-
-    {{ include('GestionTransport/transport/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
-
-   
-
-    
+    <div class="container py-4" style="max-width: 1200px;">
+        <h1 class="h4 fw-normal mb-4">Modifier Transport #{{ transport.id }}</h1>
+        {{ include('GestionTransport/transport/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+    </div>
 {% endblock %}

@@ -38,6 +38,27 @@ class Transport
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $timestamp = null;
 
+    #[ORM\Column(name: 'loadingTimeActual', type: Types::INTEGER, nullable: true)]
+    private ?int $loadingTimeActual = null;
+
+    #[ORM\Column(name:'unloadingTimeActual',type: Types::INTEGER, nullable: true)]
+    private ?int $unloadingTimeActual = null;
+
+    #[ORM\Column(name:'loadingTimeAllowed',type: Types::INTEGER, options: ['default' => 30])]
+    private int $loadingTimeAllowed = 30;
+
+    #[ORM\Column(name:'unloadingTimeAllowed',type: Types::INTEGER, options: ['default' => 30])]
+    private int $unloadingTimeAllowed = 30;
+
+    #[ORM\Column(name:'extraCost',type: Types::FLOAT, nullable: true)]
+    private ?float $extraCost = null;
+
+    #[ORM\Column(name:'stripe_invoice_id',length: 255, nullable: true)]
+    private ?string $stripeInvoiceId = null;
+
+// With getter and setter
+
+
     public function getId(): ?int
     {
         return $this->id;
@@ -103,6 +124,8 @@ class Transport
 
     public function __construct() {
         $this->timestamp = new \DateTime(); 
+        $this->loadingTimeAllowed = 30;
+        $this->unloadingTimeAllowed = 30;
     }
     
 
@@ -128,4 +151,68 @@ class Transport
     {
         return $this->reservation?->getAdresseDestination();
     }
+
+    public function getLoadingTimeActual():?int
+    {
+        return $this->loadingTimeActual;
+    }
+
+    public function setLoadingTimeActual(?int $loadingTimeActual): static
+    {
+        $this->loadingTimeActual = $loadingTimeActual;
+        return $this;
+    }
+
+    public function getUnloadingTimeActual():?int   
+    {
+        return $this->unloadingTimeActual;
+    }
+
+    public function setUnloadingTimeActual(?int $unloadingTimeActual): static
+    {
+        $this->unloadingTimeActual = $unloadingTimeActual;
+        return $this;
+    }
+
+    public function getLoadingTimeAllowed(): int
+    {
+        return $this->loadingTimeAllowed;
+    }
+
+    public function setLoadingTimeAllowed(int $loadingTimeAllowed): static  
+    {
+        $this->loadingTimeAllowed = $loadingTimeAllowed;
+        return $this; 
+    }
+    public function getUnloadingTimeAllowed(): int
+    {
+        return $this->unloadingTimeAllowed;
+    }
+
+    public function setUnloadingTimeAllowed(int $unloadingTimeAllowed): static
+    {
+        $this->unloadingTimeAllowed = $unloadingTimeAllowed;
+        return $this; 
+    }
+    public function getExtraCost(): ?float
+    {
+        return $this->extraCost;
+    }
+
+    public function setExtraCost(?float $extraCost): static
+    {
+        $this->extraCost = $extraCost;
+        return $this;
+    }
+
+public function getStripeInvoiceId(): ?string
+{
+    return $this->stripeInvoiceId;
+}
+
+public function setStripeInvoiceId(?string $stripeInvoiceId): self
+{
+    $this->stripeInvoiceId = $stripeInvoiceId;
+    return $this;
+}
 }
