@@ -1,14 +1,23 @@
 <?php
 namespace App\Controller;
+use App\Entity\LogementOptions;
+use App\Entity\Options;
+use App\Enums\RoleUtilisateur;
+use App\Repository\OptionsRepository;
 use App\Service\GeminiService;
+use CURLFile;
+use Dompdf\Dompdf;
+use LongitudeOne\Spatial\PHP\Types\Geography\Point;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use App\Entity\ImageLogement;
 use App\Entity\Logement;
+use Doctrine\Persistence\ManagerRegistry as PersistenceManagerRegistry;
 use App\Entity\Utilisateur;
 use App\Form\LogementType;
+use Doctrine\DBAL\Types\Types;
 
 use App\Repository\LogementRepository;
 use App\Repository\UtilisateurRepository;
@@ -24,6 +33,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[Route('/logement')]
 final class LogementController extends AbstractController
@@ -44,133 +54,8 @@ final class LogementController extends AbstractController
         $this->geminiService = $geminiService;
 
     }
-    private function addReactionData(array $logements): array
-    {
-        $logementsWithReactions = [];
-        foreach ($logements as $logement) {
-            $emojis = $logement->getEmojis() ?? [];
-            $reactionCounts = array_count_values($emojis);
-            $totalReactions = count($emojis);
-            $logementsWithReactions[] = [
-                'entity' => $logement,
-                'reactionCounts' => $reactionCounts,
-                'totalReactions' => $totalReactions,
-                'reactionScore' => ($reactionCounts['❤️'] ?? 0) * 3 + ($reactionCounts['👍'] ?? 0) * 2 + ($reactionCounts['👎'] ?? 0) * -1,
-            ];
-        }
-    
-        // Trier par reactionScore
-        usort($logementsWithReactions, function ($a, $b) {
-            return $b['reactionScore'] <=> $a['reactionScore'];
-        });
-    
-        return $logementsWithReactions;
-    }
 
-    #[Route('/dashboard', name: 'app_logement_dashboard', methods: ['GET'])]
-    public function dashboard(LogementRepository $logementRepository, UtilisateurRepository $utilisateurRepository): Response
-{
-    // Get all logements
-    $logements = $logementRepository->findAllSortedByIdDesc();
-    $logementsWithReactions = $this->addReactionData($logements);
-
-    // Initialize variables for the cards
-    $mostJadore = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
-    $mostLikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
-    $mostDislikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
-
-    // Find logements with the most J'adore, Likes, and Dislikes
-    foreach ($logementsWithReactions as $logementData) {
-        $logement = $logementData['entity'];
-        $reactionCounts = $logementData['reactionCounts'];
-        
-        // J'adore (❤️)
-        $jadoreCount = $reactionCounts['❤️'] ?? 0;
-        if ($jadoreCount > $mostJadore['count']) {
-            $mostJadore = [
-                'logement' => $logement,
-                'count' => $jadoreCount,
-                'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
-            ];
-        }
-
-        // Likes (👍)
-        $likeCount = $reactionCounts['👍'] ?? 0;
-        if ($likeCount > $mostLikes['count']) {
-            $mostLikes = [
-                'logement' => $logement,
-                'count' => $likeCount,
-                'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
-            ];
-        }
-
-        // Dislikes (👎)
-        $dislikeCount = $reactionCounts['👎'] ?? 0;
-        if ($dislikeCount > $mostDislikes['count']) {
-            $mostDislikes = [
-                'logement' => $logement,
-                'count' => $dislikeCount,
-                'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
-            ];
-        }
-    }
-
-    // Weekly interactions for the line chart (last 8 weeks)
-    $weeklyInteractions = [];
-    $currentDate = new \DateTime();
-    for ($i = 7; $i >= 0; $i--) {
-        $weekStart = (clone $currentDate)->modify("-{$i} weeks")->setTime(0, 0, 0);
-        $weekEnd = (clone $weekStart)->modify('+6 days')->setTime(23, 59, 59);
-        $weekLabel = $weekStart->format('M d');
-
-        $jadoreCount = 0;
-        $likeCount = 0;
-        $dislikeCount = 0;
-        $shareCount = 0;
-
-        foreach ($logements as $logement) {
-            $emojis = $logement->getEmojis() ?? [];
-            foreach ($emojis as $userCin => $emoji) {
-                if ($emoji === '❤️') $jadoreCount++;
-                if ($emoji === '👍') $likeCount++;
-                if ($emoji === '👎') $dislikeCount++;
-            }
-            $shareCount += $logement->getShareCount();
-        }
-
-        $weeklyInteractions[] = [
-            'week' => $weekLabel,
-            'jadore' => $jadoreCount,
-            'likes' => $likeCount,
-            'dislikes' => $dislikeCount,
-            'shares' => $shareCount,
-        ];
-    }
-
-    // Most active property owner for the donut chart
-    $owners = $utilisateurRepository->findAll();
-    $ownerPostCounts = [];
-    foreach ($owners as $owner) {
-        $postCount = count($owner->getLogements());
-        if ($postCount > 0) {
-            $ownerPostCounts[] = [
-                'owner' => $owner->getNom(),
-                'postCount' => $postCount,
-            ];
-        }
-    }
-    // Sort by post count descending
-    usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
-
-    return $this->render('statitique_logement/index.html.twig', [
-        'mostJadore' => $mostJadore,
-        'mostLikes' => $mostLikes,
-        'mostDislikes' => $mostDislikes,
-        'weeklyInteractions' => $weeklyInteractions,
-        'ownerPostCounts' => $ownerPostCounts,
-    ]);
-}
-    #[Route('/logement/', name: 'app_logement_index', methods: ['GET'])]
+    #[Route('/logement', name: 'app_logement_index', methods: ['GET'])]
     public function index(LogementRepository $logementRepository, Security $security): Response
     {
         try {
@@ -240,6 +125,155 @@ final class LogementController extends AbstractController
             ]);
         }
     }
+    private function addReactionData(array $logements): array
+    {
+        $logementsWithReactions = [];
+        foreach ($logements as $logement) {
+            $emojis = $logement->getEmojis() ?? [];
+            $reactionCounts = array_count_values($emojis);
+            $totalReactions = count($emojis);
+            $logementsWithReactions[] = [
+                'entity' => $logement,
+                'reactionCounts' => $reactionCounts,
+                'totalReactions' => $totalReactions,
+                'reactionScore' => ($reactionCounts['❤️'] ?? 0) * 3 + ($reactionCounts['👍'] ?? 0) * 2 + ($reactionCounts['👎'] ?? 0) * -1,
+            ];
+        }
+    
+        // Trier par reactionScore
+        usort($logementsWithReactions, function ($a, $b) {
+            return $b['reactionScore'] <=> $a['reactionScore'];
+        });
+    
+        return $logementsWithReactions;
+    }
+
+
+    // Weekly interactions for the line chart (last 8 weeks)
+    // $weeklyInteractions = [];
+    // $currentDate = new \DateTime();
+    // for ($i = 7; $i >= 0; $i--) {
+    //     $weekStart = (clone $currentDate)->modify("-{$i} weeks")->setTime(0, 0, 0);
+    //     $weekEnd = (clone $weekStart)->modify('+6 days')->setTime(23, 59, 59);
+    //     $weekLabel = $weekStart->format('M d');
+
+    //     $jadoreCount = 0;
+    //     $likeCount = 0;
+    //     $dislikeCount = 0;
+    //     $shareCount = 0;
+
+    //     foreach ($logements as $logement) {
+    //         $emojis = $logement->getEmojis() ?? [];
+    //         foreach ($emojis as $userCin => $emoji) {
+    //             if ($emoji === '❤️') $jadoreCount++;
+    //             if ($emoji === '👍') $likeCount++;
+    //             if ($emoji === '👎') $dislikeCount++;
+    //         }
+    //         $shareCount += $logement->getShareCount();
+    //     }
+
+    //     $weeklyInteractions[] = [
+    //         'week' => $weekLabel,
+    //         'jadore' => $jadoreCount,
+    //         'likes' => $likeCount,
+    //         'dislikes' => $dislikeCount,
+    //         'shares' => $shareCount,
+    //     ];
+    // }
+
+    // Most active property owner for the donut chart
+    // $owners = $utilisateurRepository->findAll();
+    // $ownerPostCounts = [];
+    // foreach ($owners as $owner) {
+    //     $postCount = count($owner->getLogements());
+    //     if ($postCount > 0) {
+    //         $ownerPostCounts[] = [
+    //             'owner' => $owner->getNom(),
+    //             'postCount' => $postCount,
+    //         ];
+    //     }
+    // }
+    // Sort by post count descending
+//     usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
+
+//     return $this->render('statitique_logement/index.html.twig', [
+//         'mostJadore' => $mostJadore,
+//         'mostLikes' => $mostLikes,
+//         'mostDislikes' => $mostDislikes,
+//         'weeklyInteractions' => $weeklyInteractions,
+//         'ownerPostCounts' => $ownerPostCounts,
+//     ]);
+// }
+    // #[Route('/logement', name: 'app_logement_index', methods: ['GET'])]
+    // public function index(LogementRepository $logementRepository, Security $security): Response
+    // {
+    //     try {
+    //         // Get the current user
+    //         $user = $security->getUser();
+    
+    //         // Initialize logements array
+    //         $logements = [];
+    
+    //         // Check roles and fetch logements accordingly
+    //         if ($security->isGranted('ROLE_ADMIN') && $user) {
+    //             // Admins get all logements
+    //             $logements = $logementRepository->findAll();
+    //         } elseif ($security->isGranted('ROLE_PROPRIETAIRE') && $user) {
+    //             // Proprietaires get only their own logements
+    //             $logements = $logementRepository->findBy(['utilisateur_cin' => $user]);
+    //         } else {
+    //             // Default: Other users (including anonymous) get all logements
+    //             $logements = $logementRepository->findAll();
+    //         }
+    
+    //         // Check if no logements are found
+    //         if (empty($logements)) {
+    //             $this->logger->info('No logements found for index', [
+    //                 'user' => $user ? $user->getUserIdentifier() : 'anonymous',
+    //                 'roles' => $user ? $user->getRoles() : []
+    //             ]);
+    
+    //             return $this->render('Client/logement/index.html.twig', [
+    //                 'logements' => [],
+    //                 'filter' => [
+    //                     'type' => null,
+    //                     'prix' => null,
+    //                     'nbrChambre' => null,
+    //                     'adresse' => null,
+    //                 ],
+    //                 'geocodeError' => false,
+    //                 'error' => 'No logements found.',
+    //             ]);
+    //         }
+    
+    //         // Add reaction data to logements
+    //         $logementsWithReactions = $this->addReactionData($logements);
+    
+    //         return $this->render('Client/logement/index.html.twig', [
+    //             'logements' => $logementsWithReactions,
+    //             'filter' => [
+    //                 'type' => null,
+    //                 'prix' => null,
+    //                 'nbrChambre' => null,
+    //                 'adresse' => null,
+    //             ],
+    //             'geocodeError' => false,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         $this->logger->error('Index error', ['error' => $e->getMessage()]);
+    //         return $this->render('Client/logement/index.html.twig', [
+    //             'logements' => [],
+    //             'filter' => [
+    //                 'type' => null,
+    //                 'prix' => null,
+    //                 'nbrChambre' => null,
+    //                 'adresse' => null,
+    //             ],
+    //             'geocodeError' => false,
+    //             'error' => 'An error occurred while loading the logements.',
+    //         ]);
+    //     }
+    // }
     // private function addReactionData(array $logements): array
     // {
     //     $logementsWithReactions = [];
@@ -302,8 +336,14 @@ final class LogementController extends AbstractController
     }
     // New method to handle sharing a logement
     #[Route('/{id}/share', name: 'app_logement_share', methods: ['POST'])]
-    public function share(Request $request, Logement $logement, UtilisateurRepository $utilisateurRepository, MailerInterface $mailer): JsonResponse
-    {
+    public function share(
+        Request $request,
+        Logement $logement,
+        UtilisateurRepository $utilisateurRepository,
+        MailerInterface $mailer,
+        PersistenceManagerRegistry $doctrine,
+        UrlGeneratorInterface $urlGenerator
+    ): JsonResponse {
         try {
             $this->logger->info('Starting share method', ['logement_id' => $logement->getId()]);
     
@@ -345,20 +385,121 @@ final class LogementController extends AbstractController
                 return $this->json(['error' => 'Sender email configuration is invalid'], 500);
             }
             $this->logger->info('Sender email validated', ['mailer_from' => $this->mailerFrom]);
+
+            // Generate the URL for the logement
+            $logementUrl = $urlGenerator->generate(
+                'app_logement_show',
+                ['id' => $logement->getId()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+
+            // Compute the recipient's name beforehand
+            $recipientName = $recipient->getNom() ?: 'Utilisateur';
+            $sharerName = $user->getNom() ?: $user->getUserIdentifier();
+
+            // Prepare the personalized HTML email content
+            $emailContent = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color:rgb(155, 176, 215);
+            text-align: center;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .logement-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .logement-details p {
+            margin: 5px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color:rgb(151, 166, 192);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background-color:rgb(146, 157, 179);
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Un logement qui pourrait vous intéresser !</h2>
+        <p>Bonjour {$recipientName},</p>
+        <p>L'utilisateur {$sharerName} a partagé un logement avec vous.</p>
+
+        <div class="logement-details">
+            <p><strong>Adresse :</strong> {$logement->getAdresse()}</p>
+            <p><strong>Prix :</strong> {$logement->getPrix()} €</p>
+            <p><strong>Nombre de chambres :</strong> {$logement->getNbrChambre()}</p>
+            <p><strong>Type :</strong> {$logement->getType()}</p>
+        </div>
+
+        <p>
+            <a href="{$logementUrl}" class="button">Voir le logement</a>
+        </p>
+
+        <p>Merci de votre intérêt !</p>
+
+        <div class="footer">
+            <p>Ceci est un email automatique, merci de ne pas répondre directement.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
     
             $this->logger->info('Preparing to send email', [
                 'from' => $this->mailerFrom,
-                'to' => $recipient->getEmai(),
+                'to' => $recipient->getEmail(),
             ]);
             $email = (new Email())
                 ->from(new Address($this->mailerFrom, $this->mailerFromName))
                 ->to($recipient->getEmail())
-                ->subject('Partage de logement')
-                ->html('<p>Bonjour, voici un logement qui pourrait vous intéresser : ' . $logement->getAdresse() . '</p>');
+                ->subject('Partage de logement - Découvrez ce bien !')
+                ->html($emailContent);
     
             $this->logger->info('Sending email');
             $mailer->send($email);
             $this->logger->info('Email sent successfully');
+
+            // Increment the share count
+            $logement->setShareCount($logement->getShareCount() + 1);
+            $doctrine->getManager()->flush();
     
             return $this->json(['success' => true, 'message' => 'Logement partagé avec succès !']);
         } catch (\Throwable $e) {
@@ -370,6 +511,250 @@ final class LogementController extends AbstractController
             ]);
             return $this->json(['error' => 'Failed to share logement: ' . $e->getMessage()], 500);
         }
+    }
+    #[Route('/new', name: 'app_logement_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager, Security $security, OptionsRepository $optionsRepository): Response
+    {
+        $logement = new Logement();
+        $form = $this->createForm(LogementType::class, $logement);
+        $form->handleRequest($request);
+    
+        if ($form->isSubmitted()) {
+            $this->logger->info('Form submitted', [
+                'is_valid' => $form->isValid(),
+                'photos_data' => $form->get('photos')->getData() ? count($form->get('photos')->getData()) : 0,
+            ]);
+    
+            if ($form->isValid()) {
+                // Set address
+                $address = $form->get('address')->getData();
+                if ($address) {
+                    $logement->setAdresse($address);
+                }
+    
+                // Set user and role check
+                $user = $security->getUser();
+                if (!$user) {
+                    $this->logger->warning('Unauthenticated user attempted to create logement');
+                    $this->addFlash('error', 'You must be logged in to create a logement.');
+                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+                }
+                if (!$this->isGranted('ROLE_PROPRIETAIRE')) {
+                    $this->logger->warning('User without ROLE_PROPRIETAIRE attempted to create logement', [
+                        'user' => $user->getUserIdentifier(),
+                    ]);
+                    $this->addFlash('error', 'Only proprietors can create logements.');
+                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+                }
+                $logement->setUtilisateurCin($user);
+    
+                // Set localisation before persisting logement
+                $lat = $form->get('lat')->getData();
+                $lng = $form->get('lng')->getData();
+                if ($lat !== null && $lng !== null && is_numeric($lat) && is_numeric($lng)) {
+                    $lat = (float) $lat;
+                    $lng = (float) $lng;
+                    if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
+                        try {
+                            // Note: Point constructor takes longitude, latitude (lng, lat)
+                            $localisation = new Point($lng, $lat);
+                            $logement->setLocalisation($localisation);
+                            $this->logger->info('Localisation set', ['lat' => $lat, 'lng' => $lng]);
+                        } catch (\Exception $e) {
+                            $this->logger->error('Failed to create Point', [
+                                'lat' => $lat,
+                                'lng' => $lng,
+                                'error' => $e->getMessage(),
+                            ]);
+                            $this->addFlash('error', 'Invalid coordinates: ' . $e->getMessage());
+                            return $this->render('Client/logement/new.html.twig', [
+                                'form' => $form->createView(),
+                                'logement' => $logement,
+                            ]);
+                        }
+                    } else {
+                        $this->logger->warning('Invalid coordinates', ['lat' => $lat, 'lng' => $lng]);
+                        $this->addFlash('warning', 'Coordinates out of valid range.');
+                    }
+                } else {
+                    $this->logger->info('No coordinates provided');
+                }
+    
+                // Persist Logement
+                try {
+                    $entityManager->persist($logement);
+                    $entityManager->flush();
+                    $this->logger->info('Logement persisted', ['id_logement' => $logement->getId()]);
+                } catch (\Exception $e) {
+                    $this->logger->error('Failed to persist logement', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
+                    return $this->render('Client/logement/new.html.twig', [
+                        'form' => $form->createView(),
+                        'logement' => $logement,
+                    ]);
+                }
+    
+                // Handle photos
+                $photos = $form->get('photos')->getData();
+                $photosDirectory = $this->getParameter('photos_directory');
+                if (!empty($photos)) {
+                    foreach ($photos as $file) {
+                        if ($file) {
+                            $this->logger->info('Processing photo', [
+                                'filename' => $file->getClientOriginalName(),
+                                'type' => $file->getMimeType(),
+                                'size' => $file->getSize(),
+                            ]);
+    
+                            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                            if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
+                                $this->logger->warning('Invalid photo type', [
+                                    'filename' => $file->getClientOriginalName(),
+                                    'mime_type' => $file->getMimeType(),
+                                ]);
+                                $this->addFlash('error', 'Invalid file type: ' . $file->getClientOriginalName());
+                                continue;
+                            }
+                            if ($file->getSize() > 5 * 1024 * 1024) {
+                                $this->logger->warning('Photo too large', [
+                                    'filename' => $file->getClientOriginalName(),
+                                    'size' => $file->getSize(),
+                                ]);
+                                $this->addFlash('error', 'File too large: ' . $file->getClientOriginalName());
+                                continue;
+                            }
+    
+                            try {
+                                $fileName = md5(uniqid()) . '.' . $file->guessExtension();
+                                $file->move($photosDirectory, $fileName);
+                                $photo = new ImageLogement();
+                                $photo->setUrl($fileName);
+                                $photo->setLogement($logement);
+                                $entityManager->persist($photo);
+                                $entityManager->flush(); // Flush per photo to reduce memory usage
+                                $this->logger->info('Photo uploaded', ['file' => $fileName]);
+                            } catch (FileException $e) {
+                                $this->logger->error('Photo upload failed', [
+                                    'file' => $file->getClientOriginalName(),
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                ]);
+                                $this->addFlash('error', 'Error uploading ' . $file->getClientOriginalName());
+                            }
+                        }
+                    }
+                } else {
+                    $this->logger->info('No photos uploaded');
+                }
+    
+                // Handle options
+                $optionsData = $request->request->get('options', '[]');
+                $this->logger->info('Options received', ['optionsData' => $optionsData]);
+                $options = json_decode($optionsData, true);
+                if (is_array($options) && !empty($options)) {
+                    foreach ($options as $optionName) {
+                        $optionName = trim($optionName);
+                        if (!empty($optionName) && strlen($optionName) <= 255) {
+                            $this->logger->info('Processing option', ['optionName' => $optionName]);
+                            $option = $optionsRepository->findOneBy(['nom_option' => $optionName]);
+                            if (!$option) {
+                                try {
+                                    $option = new Options();
+                                    $option->setNomOption($optionName);
+                                    $entityManager->persist($option);
+                                    $entityManager->flush();
+                                    $this->logger->info('New option created', ['id_option' => $option->getId()]);
+                                } catch (\Exception $e) {
+                                    $this->logger->error('Failed to create option', [
+                                        'optionName' => $optionName,
+                                        'error' => $e->getMessage(),
+                                        'trace' => $e->getTraceAsString(),
+                                    ]);
+                                    $this->addFlash('error', 'Failed to create option: ' . $optionName);
+                                    continue;
+                                }
+                            } else {
+                                $this->logger->info('Existing option found', ['id_option' => $option->getId()]);
+                            }
+    
+                            if ($option->getId() === null) {
+                                $this->logger->error('Option has no ID', ['optionName' => $optionName]);
+                                $this->addFlash('error', 'Invalid option ID for: ' . $optionName);
+                                continue;
+                            }
+    
+                            try {
+                                $logementOption = new LogementOptions($logement, $option);
+                                $logementOption->setValeur(true);
+                                $entityManager->persist($logementOption);
+                                $logement->addLogementOption($logementOption);
+                                $entityManager->flush(); // Flush per option to reduce memory usage
+                                $this->logger->info('LogementOption created', [
+                                    'id_logement' => $logement->getId(),
+                                    'id_option' => $option->getId(),
+                                ]);
+                            } catch (\Exception $e) {
+                                $this->logger->error('Failed to create LogementOption', [
+                                    'optionName' => $optionName,
+                                    'id_logement' => $logement->getId(),
+                                    'id_option' => $option->getId(),
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                ]);
+                                $this->addFlash('error', 'Failed to create LogementOption for: ' . $optionName);
+                                continue;
+                            }
+                        } else {
+                            $this->logger->warning('Skipping invalid option name', ['optionName' => $optionName]);
+                            if (empty($optionName)) {
+                                $this->addFlash('warning', 'Empty option name skipped.');
+                            } else {
+                                $this->addFlash('warning', 'Option name too long: ' . $optionName);
+                            }
+                        }
+                    }
+                } else {
+                    $this->logger->info('No valid options provided');
+                }
+    
+                // Final flush (if not already flushed)
+                try {
+                    $entityManager->flush();
+                    $this->logger->info('Logement saved successfully', ['id_logement' => $logement->getId()]);
+                    $this->addFlash('success', 'Logement created successfully!');
+                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+                } catch (\Exception $e) {
+                    $this->logger->error('Final flush failed', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
+                }
+            } else {
+                // Log form errors
+                $errors = $form->getErrors(true, true);
+                $errorMessages = [];
+                foreach ($errors as $error) {
+                    $errorMessages[] = sprintf(
+                        'Field: %s, Error: %s',
+                        $error->getOrigin() ? $error->getOrigin()->getName() : 'Global',
+                        $error->getMessage()
+                    );
+                }
+                $this->logger->warning('Form validation failed', ['errors' => $errorMessages]);
+                foreach ($errorMessages as $errorMessage) {
+                    $this->addFlash('error', 'Form error: ' . $errorMessage);
+                }
+            }
+        }
+    
+        return $this->render('Client/logement/new.html.twig', [
+            'form' => $form->createView(),
+            'logement' => $logement,
+        ]);
     }
     #[Route('/filtrage', name: 'app_logement_index_filtrage', methods: ['GET'])]
     public function indexFiltrage(Request $request, LogementRepository $logementRepository): Response
@@ -398,128 +783,410 @@ final class LogementController extends AbstractController
             'filter' => $filter,
             'geocodeError' => false,
         ]);
-    }
-    #[Route('/new', name: 'app_logement_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, Security $security): Response
-    {
-        $logement = new Logement();
-        $form = $this->createForm(LogementType::class, $logement);
-        $form->handleRequest($request);
+    }    #[Route('/dashboard', name: 'app_logement_dashboard')]
+    public function dashboard(
+        LogementRepository $logementRepository,
+        UtilisateurRepository $utilisateurRepository,
+        Security $security
+    ): Response {
+        // Get the current user
+        $user = $security->getUser();
 
-        if ($form->isSubmitted()) {
-            $this->logger->info('Form submitted', [
-                'is_valid' => $form->isValid(),
-                'photos_data' => $form->get('photos')->getData() ? count($form->get('photos')->getData()) : 0,
-            ]);
+        // Fetch logements based on user role
+        if ($security->isGranted('ROLE_ADMIN') && $user) {
+            $logements = $logementRepository->findAllSortedByIdDesc();
+        } elseif ($security->isGranted('ROLE_PROPRIETAIRE') && $user) {
+            $logements = $logementRepository->findAllSortedByIdDesc();
+        } else {
+            $logements = $logementRepository->findAllSortedByIdDesc();
+        }
 
-            if ($form->isValid()) {
-                // Set address
-                $address = $form->get('address')->getData();
-                if ($address) {
-                    $logement->setAdresse($address);
-                }
+        // Add reaction data to logements for the cards
+        $logementsWithReactions = $this->addReactionData($logements);
 
-                // Set user
-                $user = $security->getUser();
-                if (!$user) {
-                    $this->addFlash('error', 'You must be logged in to create a logement.');
-                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
-                }
-                $logement->setUtilisateurCin($user);
+        // Initialize variables for the cards
+        $mostJadore = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+        $mostLikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+        $mostDislikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
 
-                // Handle photos
-                $photos = $form->get('photos')->getData();
-                if (!empty($photos)) {
-                    $photosDirectory = $this->getParameter('photos_directory');
-                    foreach ($photos as $index => $file) {
-                        if ($file) {
-                            $this->logger->info('Processing photo', [
-                                'index' => $index,
-                                'name' => $file->getClientOriginalName(),
-                                'type' => $file->getMimeType(),
-                                'size' => $file->getSize(),
-                            ]);
+        // Find logements with the most J'adore, Likes, and Dislikes
+        foreach ($logementsWithReactions as $logementData) {
+            $logement = $logementData['entity'];
+            $reactionCounts = $logementData['reactionCounts'];
 
-                            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                            if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
-                                $this->addFlash('error', 'Invalid file type: ' . $file->getClientOriginalName());
-                                continue;
-                            }
-                            if ($file->getSize() > 5 * 1024 * 1024) {
-                                $this->addFlash('error', 'File too large: ' . $file->getClientOriginalName());
-                                continue;
-                            }
+            // J'adore (❤️)
+            $jadoreCount = $reactionCounts['❤️'] ?? 0;
+            if ($jadoreCount > $mostJadore['count']) {
+                $mostJadore = [
+                    'logement' => $logement,
+                    'count' => $jadoreCount,
+                    'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+                ];
+            }
 
-                            try {
-                                $fileName = md5(uniqid()) . '.' . $file->guessExtension();
-                                $file->move($photosDirectory, $fileName);
-                                $photo = new ImageLogement();
-                                $photo->setUrl($fileName);
-                                $logement->addImageLogement($photo);
-                                $entityManager->persist($photo);
-                                $this->logger->info('Photo uploaded', ['file' => $fileName]);
-                            } catch (FileException $e) {
-                                $this->logger->error('Photo upload failed', [
-                                    'file' => $file->getClientOriginalName(),
-                                    'error' => $e->getMessage(),
-                                ]);
-                                $this->addFlash('error', 'Error uploading ' . $file->getClientOriginalName());
-                            }
-                        }
-                    }
-                } else {
-                    $this->logger->info('No photos uploaded');
-                }
+            // Likes (👍)
+            $likeCount = $reactionCounts['👍'] ?? 0;
+            if ($likeCount > $mostLikes['count']) {
+                $mostLikes = [
+                    'logement' => $logement,
+                    'count' => $likeCount,
+                    'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+                ];
+            }
 
-                // Set localisation
-                $lat = $form->get('lat')->getData();
-                $lng = $form->get('lng')->getData();
-                if ($lat && $lng && is_numeric($lat) && is_numeric($lng)) {
-                    $lat = (float) $lat;
-                    $lng = (float) $lng;
-                    if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
-                        $localisation = new \LongitudeOne\Spatial\PHP\Types\Geography\Point($lat, $lng);
-                        $logement->setLocalisation($localisation);
-                    } else {
-                        $this->addFlash('warning', 'Invalid coordinates provided.');
-                    }
-                }
-
-                try {
-                    $entityManager->persist($logement);
-                    $entityManager->flush();
-                    $this->addFlash('success', 'Logement created successfully!');
-                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
-                } catch (\Exception $e) {
-                    $this->logger->error('Error saving logement', ['error' => $e->getMessage()]);
-                    $this->addFlash('error', 'Error saving logement.');
-                }
-            } else {
-                // Log form errors
-                $errors = $form->getErrors(true, true);
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[] = sprintf(
-                        'Field: %s, Error: %s',
-                        $error->getOrigin() ? $error->getOrigin()->getName() : 'Global',
-                        $error->getMessage()
-                    );
-                }
-                $this->logger->warning('Form validation failed', ['errors' => $errorMessages]);
-                foreach ($errorMessages as $errorMessage) {
-                    $this->addFlash('error', $errorMessage);
-                }
+            // Dislikes (👎)
+            $dislikeCount = $reactionCounts['👎'] ?? 0;
+            if ($dislikeCount > $mostDislikes['count']) {
+                $mostDislikes = [
+                    'logement' => $logement,
+                    'count' => $dislikeCount,
+                    'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+                ];
             }
         }
 
-        // Reset form view to ensure consistent rendering
-        $formView = $form->createView();
+        // Calculate interaction totals for the chart
+        $interactionData = $this->calculateInteractionData($logementRepository, $security->isGranted('ROLE_PROPRIETAIRE') && $user ? $user : null);
 
-        return $this->render('Client/logement/new.html.twig', [
-            'form' => $formView,
-            'logement' => $logement, // Pass logement for context
+        // Most active property owners for the donut chart
+        $owners = $utilisateurRepository->findAll();
+        $ownerPostCounts = [];
+        foreach ($owners as $owner) {
+            $postCount = count($owner->getLogements());
+            if ($postCount > 0) {
+                $ownerPostCounts[] = [
+                    'owner' => $owner->getNom(),
+                    'postCount' => $postCount,
+                ];
+            }
+        }
+        usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
+
+        return $this->render('statitique_logement/index.html.twig', [
+            'mostJadore' => $mostJadore,
+            'mostLikes' => $mostLikes,
+            'mostDislikes' => $mostDislikes,
+            'interactionData' => $interactionData,
+            'ownerPostCounts' => $ownerPostCounts,
         ]);
     }
+
+    #[Route('/dashboard/generate-report', name: 'app_dashboard_generate_report')]
+    public function generateReport(
+        LogementRepository $logementRepository,
+        UtilisateurRepository $utilisateurRepository,
+        Security $security
+    ): Response {
+        $user = $security->getUser();
+        if ($security->isGranted('ROLE_ADMIN') && $user) {
+            $logements = $logementRepository->findAllSortedByIdDesc();
+        } elseif ($security->isGranted('ROLE_PROPRIETAIRE') && $user) {
+            $logements = $logementRepository->findAllSortedByIdDesc();
+        } else {
+            $logements = $logementRepository->findAllSortedByIdDesc();
+        }
+
+        $logementsWithReactions = $this->addReactionData($logements);
+        $mostJadore = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+        $mostLikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+        $mostDislikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+
+        foreach ($logementsWithReactions as $logementData) {
+            $logement = $logementData['entity'];
+            $reactionCounts = $logementData['reactionCounts'];
+
+            $jadoreCount = $reactionCounts['❤️'] ?? 0;
+            if ($jadoreCount > $mostJadore['count']) {
+                $mostJadore = [
+                    'logement' => $logement,
+                    'count' => $jadoreCount,
+                    'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+                ];
+            }
+
+            $likeCount = $reactionCounts['👍'] ?? 0;
+            if ($likeCount > $mostLikes['count']) {
+                $mostLikes = [
+                    'logement' => $logement,
+                    'count' => $likeCount,
+                    'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+                ];
+            }
+
+            $dislikeCount = $reactionCounts['👎'] ?? 0;
+            if ($dislikeCount > $mostDislikes['count']) {
+                $mostDislikes = [
+                    'logement' => $logement,
+                    'count' => $dislikeCount,
+                    'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+                ];
+            }
+        }
+
+        // Calculate interaction totals for the report
+        $interactionData = $this->calculateInteractionData($logementRepository, $security->isGranted('ROLE_PROPRIETAIRE') && $user ? $user : null);
+
+        $owners = $utilisateurRepository->findAll();
+        $ownerPostCounts = [];
+        foreach ($owners as $owner) {
+            $postCount = count($owner->getLogements());
+            if ($postCount > 0) {
+                $ownerPostCounts[] = [
+                    'owner' => $owner->getNom(),
+                    'postCount' => $postCount,
+                ];
+            }
+        }
+        usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
+
+        // Render the HTML content for the PDF
+        $html = $this->renderView('statitique_logement/report.html.twig', [
+            'mostJadore' => $mostJadore,
+            'mostLikes' => $mostLikes,
+            'mostDislikes' => $mostDislikes,
+            'interactionData' => $interactionData,
+            'ownerPostCounts' => $ownerPostCounts,
+            'currentDate' => new \DateTime(),
+        ]);
+
+
+        $dompdf = new Dompdf();
+
+        // Load the HTML content
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        // Output the PDF as a response
+        $pdfOutput = $dompdf->output();
+        $response = new Response($pdfOutput);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="dashboard-report-' . date('Y-m-d') . '.pdf"');
+
+        return $response;
+    }
+
+    /**
+     * Calculate total interactions for the top 7 logements by total interactions.
+     *
+     * @param LogementRepository $logementRepository
+     * @param Utilisateur|null $user
+     * @return array
+     */
+    private function calculateInteractionData(LogementRepository $logementRepository, ?Utilisateur $user = null): array
+    {
+        // Fetch all logements (filtered by user if provided)
+        $logements = $logementRepository->findAll();
+
+        // If no logements, return empty data
+        if (empty($logements)) {
+            return [
+                'labels' => [],
+                'jadoreCounts' => [],
+                'likesCounts' => [],
+                'dislikesCounts' => [],
+                'sharesCounts' => [],
+                'logements' => [],
+            ];
+        }
+
+        // Calculate interactions for each logement and compute total interactions
+        $logementsWithInteractions = [];
+        foreach ($logements as $logement) {
+            $emojis = $logement->getEmojis() ?? [];
+            $jadoreCount = 0;
+            $likesCount = 0;
+            $dislikesCount = 0;
+
+            foreach ($emojis as $emoji) {
+                if ($emoji === '❤️') {
+                    $jadoreCount++;
+                } elseif ($emoji === '👍') {
+                    $likesCount++;
+                } elseif ($emoji === '👎') {
+                    $dislikesCount++;
+                }
+            }
+
+            $sharesCount = $logement->getShareCount();
+            $totalInteractions = $jadoreCount + $likesCount + $dislikesCount + $sharesCount;
+
+            $logementsWithInteractions[] = [
+                'logement' => $logement,
+                'id' => $logement->getId(),
+                'jadore' => $jadoreCount,
+                'likes' => $likesCount,
+                'dislikes' => $dislikesCount,
+                'shares' => $sharesCount,
+                'totalInteractions' => $totalInteractions,
+            ];
+        }
+
+        // Sort logements by total interactions in descending order
+        usort($logementsWithInteractions, fn($a, $b) => $b['totalInteractions'] <=> $a['totalInteractions']);
+
+        // Take the top 7 logements
+        $topLogements = array_slice($logementsWithInteractions, 0, 7);
+
+        // Prepare data for the chart and report
+        $labels = [];
+        $jadoreCounts = [];
+        $likesCounts = [];
+        $dislikesCounts = [];
+        $sharesCounts = [];
+
+        foreach ($topLogements as $item) {
+            $labels[] = "Logement {$item['id']}";
+            $jadoreCounts[] = $item['jadore'];
+            $likesCounts[] = $item['likes'];
+            $dislikesCounts[] = $item['dislikes'];
+            $sharesCounts[] = $item['shares'];
+        }
+
+        return [
+            'labels' => $labels,
+            'jadoreCounts' => $jadoreCounts,
+            'likesCounts' => $likesCounts,
+            'dislikesCounts' => $dislikesCounts,
+            'sharesCounts' => $sharesCounts,
+            'logements' => array_column($topLogements, 'logement'), // For PDF report details
+        ];
+    }
+
+
+
+   
+
+
+    // private function addReactionData(array $logements): array
+    // {
+    //     $logementsWithReactions = [];
+    //     foreach ($logements as $logement) {
+    //         $emojis = $logement->getEmojis() ?? [];
+    //         $reactionCounts = [
+    //             '❤️' => 0,
+    //             '👍' => 0,
+    //             '👎' => 0,
+    //         ];
+
+    //         foreach ($emojis as $emoji) {
+    //             if (isset($reactionCounts[$emoji])) {
+    //                 $reactionCounts[$emoji]++;
+    //             }
+    //         }
+
+    //         $logementsWithReactions[] = [
+    //             'entity' => $logement,
+    //             'reactionCounts' => $reactionCounts,
+    //         ];
+    //     }
+
+    //     return $logementsWithReactions;
+    // }
+
+//     #[Route('/dashboard', name: 'app_logement_dashboard', methods: ['GET'])]
+//     public function dashboard(LogementRepository $logementRepository, UtilisateurRepository $utilisateurRepository): Response
+// {
+//     // Get all logements
+//     $logements = $logementRepository->findAllSortedByIdDesc();
+//     $logementsWithReactions = $this->addReactionData($logements);
+
+//     // Initialize variables for the cards
+//     $mostJadore = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+//     $mostLikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+//     $mostDislikes = ['logement' => null, 'count' => 0, 'owner' => 'N/A'];
+
+//     // Find logements with the most J'adore, Likes, and Dislikes
+//     foreach ($logementsWithReactions as $logementData) {
+//         $logement = $logementData['entity'];
+//         $reactionCounts = $logementData['reactionCounts'];
+        
+//         // J'adore (❤️)
+//         $jadoreCount = $reactionCounts['❤️'] ?? 0;
+//         if ($jadoreCount > $mostJadore['count']) {
+//             $mostJadore = [
+//                 'logement' => $logement,
+//                 'count' => $jadoreCount,
+//                 'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+//             ];
+//         }
+
+//         // Likes (👍)
+//         $likeCount = $reactionCounts['👍'] ?? 0;
+//         if ($likeCount > $mostLikes['count']) {
+//             $mostLikes = [
+//                 'logement' => $logement,
+//                 'count' => $likeCount,
+//                 'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+//             ];
+//         }
+
+//         // Dislikes (👎)
+//         $dislikeCount = $reactionCounts['👎'] ?? 0;
+//         if ($dislikeCount > $mostDislikes['count']) {
+//             $mostDislikes = [
+//                 'logement' => $logement,
+//                 'count' => $dislikeCount,
+//                 'owner' => $logement->getUtilisateurCin() ? $logement->getUtilisateurCin()->getNom() : 'N/A'
+//             ];
+//         }
+//     }
+
+//     // Weekly interactions for the line chart (last 8 weeks)
+//     $weeklyInteractions = [];
+//     $currentDate = new \DateTime();
+//     for ($i = 7; $i >= 0; $i--) {
+//         $weekStart = (clone $currentDate)->modify("-{$i} weeks")->setTime(0, 0, 0);
+//         $weekEnd = (clone $weekStart)->modify('+6 days')->setTime(23, 59, 59);
+//         $weekLabel = $weekStart->format('M d');
+
+//         $jadoreCount = 0;
+//         $likeCount = 0;
+//         $dislikeCount = 0;
+//         $shareCount = 0;
+
+//         foreach ($logements as $logement) {
+//             $emojis = $logement->getEmojis() ?? [];
+//             foreach ($emojis as $userCin => $emoji) {
+//                 if ($emoji === '❤️') $jadoreCount++;
+//                 if ($emoji === '👍') $likeCount++;
+//                 if ($emoji === '👎') $dislikeCount++;
+//             }
+//             $shareCount += $logement->getShareCount();
+//         }
+
+//         $weeklyInteractions[] = [
+//             'week' => $weekLabel,
+//             'jadore' => $jadoreCount,
+//             'likes' => $likeCount,
+//             'dislikes' => $dislikeCount,
+//             'shares' => $shareCount,
+//         ];
+//     }
+
+//     // Most active property owner for the donut chart
+//     $owners = $utilisateurRepository->findAll();
+//     $ownerPostCounts = [];
+//     foreach ($owners as $owner) {
+//         $postCount = count($owner->getLogements());
+//         if ($postCount > 0) {
+//             $ownerPostCounts[] = [
+//                 'owner' => $owner->getNom(),
+//                 'postCount' => $postCount,
+//             ];
+//         }
+//     }
+//     // Sort by post count descending
+//     usort($ownerPostCounts, fn($a, $b) => $b['postCount'] <=> $a['postCount']);
+
+//     return $this->render('statitique_logement/index.html.twig', [
+//         'mostJadore' => $mostJadore,
+//         'mostLikes' => $mostLikes,
+//         'mostDislikes' => $mostDislikes,
+//         'weeklyInteractions' => $weeklyInteractions,
+//         'ownerPostCounts' => $ownerPostCounts,
+//     ]);
+// }
     #[Route('/{id}', name: 'app_logement_show', methods: ['GET'])]
     public function show(Logement $logement): Response
     {
@@ -530,7 +1197,7 @@ final class LogementController extends AbstractController
             'imageLogements' => $imageLogements,
         ]);
     }
-
+ 
     #[Route('/{id}/edit', name: 'app_logement_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Logement $logement, EntityManagerInterface $entityManager, Security $security): Response
     {
@@ -599,7 +1266,7 @@ final class LogementController extends AbstractController
 
                 // Update localisation
                 if ($lat && $lng) {
-                    $localisation = new \LongitudeOne\Spatial\PHP\Types\Geography\Point($lat, $lng);
+                    $localisation = new Point($lat, $lng);
                     $logement->setLocalisation($localisation);
                 }
 
@@ -679,6 +1346,8 @@ final class LogementController extends AbstractController
             return new Response('Failed to send email: ' . $e->getMessage(), 500);
         }
     }
+
+
     #[Route('/search/{query}', name: 'app_logement_search', methods: ['GET'])]
     public function search(string $query, LogementRepository $logementRepository): JsonResponse
     {
