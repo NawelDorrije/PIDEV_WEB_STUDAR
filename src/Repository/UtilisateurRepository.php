@@ -27,20 +27,11 @@ class UtilisateurRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    // public function getUserCountByRole(): array
-    // {
-    //     return $this->createQueryBuilder('u')
-    //         ->select('u.role, COUNT(u.id) as count')
-    //         ->groupBy('u.role')
-    //         ->getQuery()
-    //         ->getResult();
-    // }
-
-    public function findOneByUserHandle(string $userHandle)
+    public function findByCin(string $cin): ?Utilisateur
     {
-        $user = $this->createQueryBuilder('u')
-            ->where('u.userHandle = :userHandle')
-            ->setParameter('userHandle', $userHandle)
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.cin = :cin')
+            ->setParameter('cin', $cin)
             ->getQuery()
             ->getOneOrNullResult();
 

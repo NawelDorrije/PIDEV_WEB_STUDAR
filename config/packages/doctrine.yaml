@@ -19,8 +19,7 @@ doctrine:
             transport_status: App\Doctrine\DBAL\Types\TransportStatusType
             role_enum: App\Doctrine\DBAL\Types\RoleEnumType
             enum: App\Doctrine\DBAL\Types\EnumType
-            point: App\Doctrine\DBAL\Types\PointType
-
+            point: LongitudeOne\Spatial\DBAL\Types\Geography\PointType
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

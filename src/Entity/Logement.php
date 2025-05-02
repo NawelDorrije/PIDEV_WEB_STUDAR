@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
 use LongitudeOne\Spatial\PHP\Types\SpatialInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
+use LongitudeOne\Spatial\PHP\Types\Geography\Point; // Use specific Point class
 #[ORM\Entity(repositoryClass: LogementRepository::class)]
 #[ORM\Table(name: "logement")]
 class Logement
@@ -150,15 +151,14 @@ class Logement
         return $this;
     }
 
-    public function getLocalisation(): ?SpatialInterface
+    public function getLocalisation(): ?Point
     {
         return $this->localisation;
     }
 
-    public function setLocalisation(SpatialInterface $localisation): static
+    public function setLocalisation(?Point $localisation): static
     {
         $this->localisation = $localisation;
-
         return $this;
     }
 

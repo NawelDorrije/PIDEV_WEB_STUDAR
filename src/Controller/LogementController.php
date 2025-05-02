@@ -1,10 +1,13 @@
 <?php
 namespace App\Controller;
+use App\Entity\LogementOptions;
 use App\Entity\Options;
 use App\Enums\RoleUtilisateur;
+use App\Repository\OptionsRepository;
 use App\Service\GeminiService;
 use CURLFile;
 use Dompdf\Dompdf;
+use LongitudeOne\Spatial\PHP\Types\Geography\Point;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -14,6 +17,7 @@ use App\Entity\Logement;
 use Doctrine\Persistence\ManagerRegistry as PersistenceManagerRegistry;
 use App\Entity\Utilisateur;
 use App\Form\LogementType;
+use Doctrine\DBAL\Types\Types;
 
 use App\Repository\LogementRepository;
 use App\Repository\UtilisateurRepository;
@@ -50,29 +54,8 @@ final class LogementController extends AbstractController
         $this->geminiService = $geminiService;
 
     }
-    private function addReactionData(array $logements): array
-    {
-        $logementsWithReactions = [];
-        foreach ($logements as $logement) {
-            $emojis = $logement->getEmojis() ?? [];
-            $reactionCounts = array_count_values($emojis);
-            $totalReactions = count($emojis);
-            $logementsWithReactions[] = [
-                'entity' => $logement,
-                'reactionCounts' => $reactionCounts,
-                'totalReactions' => $totalReactions,
-                'reactionScore' => ($reactionCounts['❤️'] ?? 0) * 3 + ($reactionCounts['👍'] ?? 0) * 2 + ($reactionCounts['👎'] ?? 0) * -1,
-            ];
-        }
-    
-        // Trier par reactionScore
-        usort($logementsWithReactions, function ($a, $b) {
-            return $b['reactionScore'] <=> $a['reactionScore'];
-        });
-    
-        return $logementsWithReactions;
-    }
-    #[Route('/', name: 'app_logement_index', methods: ['GET'])]
+
+    #[Route('/logement', name: 'app_logement_index', methods: ['GET'])]
     public function index(LogementRepository $logementRepository, Security $security): Response
     {
         try {
@@ -142,6 +125,29 @@ final class LogementController extends AbstractController
             ]);
         }
     }
+    private function addReactionData(array $logements): array
+    {
+        $logementsWithReactions = [];
+        foreach ($logements as $logement) {
+            $emojis = $logement->getEmojis() ?? [];
+            $reactionCounts = array_count_values($emojis);
+            $totalReactions = count($emojis);
+            $logementsWithReactions[] = [
+                'entity' => $logement,
+                'reactionCounts' => $reactionCounts,
+                'totalReactions' => $totalReactions,
+                'reactionScore' => ($reactionCounts['❤️'] ?? 0) * 3 + ($reactionCounts['👍'] ?? 0) * 2 + ($reactionCounts['👎'] ?? 0) * -1,
+            ];
+        }
+    
+        // Trier par reactionScore
+        usort($logementsWithReactions, function ($a, $b) {
+            return $b['reactionScore'] <=> $a['reactionScore'];
+        });
+    
+        return $logementsWithReactions;
+    }
+
 
     // Weekly interactions for the line chart (last 8 weeks)
     // $weeklyInteractions = [];
@@ -479,7 +485,7 @@ HTML;
     
             $this->logger->info('Preparing to send email', [
                 'from' => $this->mailerFrom,
-                'to' => $recipient->getEmai(),
+                'to' => $recipient->getEmail(),
             ]);
             $email = (new Email())
                 ->from(new Address($this->mailerFrom, $this->mailerFromName))
@@ -505,6 +511,250 @@ HTML;
             ]);
             return $this->json(['error' => 'Failed to share logement: ' . $e->getMessage()], 500);
         }
+    }
+    #[Route('/new', name: 'app_logement_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, EntityManagerInterface $entityManager, Security $security, OptionsRepository $optionsRepository): Response
+    {
+        $logement = new Logement();
+        $form = $this->createForm(LogementType::class, $logement);
+        $form->handleRequest($request);
+    
+        if ($form->isSubmitted()) {
+            $this->logger->info('Form submitted', [
+                'is_valid' => $form->isValid(),
+                'photos_data' => $form->get('photos')->getData() ? count($form->get('photos')->getData()) : 0,
+            ]);
+    
+            if ($form->isValid()) {
+                // Set address
+                $address = $form->get('address')->getData();
+                if ($address) {
+                    $logement->setAdresse($address);
+                }
+    
+                // Set user and role check
+                $user = $security->getUser();
+                if (!$user) {
+                    $this->logger->warning('Unauthenticated user attempted to create logement');
+                    $this->addFlash('error', 'You must be logged in to create a logement.');
+                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+                }
+                if (!$this->isGranted('ROLE_PROPRIETAIRE')) {
+                    $this->logger->warning('User without ROLE_PROPRIETAIRE attempted to create logement', [
+                        'user' => $user->getUserIdentifier(),
+                    ]);
+                    $this->addFlash('error', 'Only proprietors can create logements.');
+                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+                }
+                $logement->setUtilisateurCin($user);
+    
+                // Set localisation before persisting logement
+                $lat = $form->get('lat')->getData();
+                $lng = $form->get('lng')->getData();
+                if ($lat !== null && $lng !== null && is_numeric($lat) && is_numeric($lng)) {
+                    $lat = (float) $lat;
+                    $lng = (float) $lng;
+                    if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
+                        try {
+                            // Note: Point constructor takes longitude, latitude (lng, lat)
+                            $localisation = new Point($lng, $lat);
+                            $logement->setLocalisation($localisation);
+                            $this->logger->info('Localisation set', ['lat' => $lat, 'lng' => $lng]);
+                        } catch (\Exception $e) {
+                            $this->logger->error('Failed to create Point', [
+                                'lat' => $lat,
+                                'lng' => $lng,
+                                'error' => $e->getMessage(),
+                            ]);
+                            $this->addFlash('error', 'Invalid coordinates: ' . $e->getMessage());
+                            return $this->render('Client/logement/new.html.twig', [
+                                'form' => $form->createView(),
+                                'logement' => $logement,
+                            ]);
+                        }
+                    } else {
+                        $this->logger->warning('Invalid coordinates', ['lat' => $lat, 'lng' => $lng]);
+                        $this->addFlash('warning', 'Coordinates out of valid range.');
+                    }
+                } else {
+                    $this->logger->info('No coordinates provided');
+                }
+    
+                // Persist Logement
+                try {
+                    $entityManager->persist($logement);
+                    $entityManager->flush();
+                    $this->logger->info('Logement persisted', ['id_logement' => $logement->getId()]);
+                } catch (\Exception $e) {
+                    $this->logger->error('Failed to persist logement', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
+                    return $this->render('Client/logement/new.html.twig', [
+                        'form' => $form->createView(),
+                        'logement' => $logement,
+                    ]);
+                }
+    
+                // Handle photos
+                $photos = $form->get('photos')->getData();
+                $photosDirectory = $this->getParameter('photos_directory');
+                if (!empty($photos)) {
+                    foreach ($photos as $file) {
+                        if ($file) {
+                            $this->logger->info('Processing photo', [
+                                'filename' => $file->getClientOriginalName(),
+                                'type' => $file->getMimeType(),
+                                'size' => $file->getSize(),
+                            ]);
+    
+                            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                            if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
+                                $this->logger->warning('Invalid photo type', [
+                                    'filename' => $file->getClientOriginalName(),
+                                    'mime_type' => $file->getMimeType(),
+                                ]);
+                                $this->addFlash('error', 'Invalid file type: ' . $file->getClientOriginalName());
+                                continue;
+                            }
+                            if ($file->getSize() > 5 * 1024 * 1024) {
+                                $this->logger->warning('Photo too large', [
+                                    'filename' => $file->getClientOriginalName(),
+                                    'size' => $file->getSize(),
+                                ]);
+                                $this->addFlash('error', 'File too large: ' . $file->getClientOriginalName());
+                                continue;
+                            }
+    
+                            try {
+                                $fileName = md5(uniqid()) . '.' . $file->guessExtension();
+                                $file->move($photosDirectory, $fileName);
+                                $photo = new ImageLogement();
+                                $photo->setUrl($fileName);
+                                $photo->setLogement($logement);
+                                $entityManager->persist($photo);
+                                $entityManager->flush(); // Flush per photo to reduce memory usage
+                                $this->logger->info('Photo uploaded', ['file' => $fileName]);
+                            } catch (FileException $e) {
+                                $this->logger->error('Photo upload failed', [
+                                    'file' => $file->getClientOriginalName(),
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                ]);
+                                $this->addFlash('error', 'Error uploading ' . $file->getClientOriginalName());
+                            }
+                        }
+                    }
+                } else {
+                    $this->logger->info('No photos uploaded');
+                }
+    
+                // Handle options
+                $optionsData = $request->request->get('options', '[]');
+                $this->logger->info('Options received', ['optionsData' => $optionsData]);
+                $options = json_decode($optionsData, true);
+                if (is_array($options) && !empty($options)) {
+                    foreach ($options as $optionName) {
+                        $optionName = trim($optionName);
+                        if (!empty($optionName) && strlen($optionName) <= 255) {
+                            $this->logger->info('Processing option', ['optionName' => $optionName]);
+                            $option = $optionsRepository->findOneBy(['nom_option' => $optionName]);
+                            if (!$option) {
+                                try {
+                                    $option = new Options();
+                                    $option->setNomOption($optionName);
+                                    $entityManager->persist($option);
+                                    $entityManager->flush();
+                                    $this->logger->info('New option created', ['id_option' => $option->getId()]);
+                                } catch (\Exception $e) {
+                                    $this->logger->error('Failed to create option', [
+                                        'optionName' => $optionName,
+                                        'error' => $e->getMessage(),
+                                        'trace' => $e->getTraceAsString(),
+                                    ]);
+                                    $this->addFlash('error', 'Failed to create option: ' . $optionName);
+                                    continue;
+                                }
+                            } else {
+                                $this->logger->info('Existing option found', ['id_option' => $option->getId()]);
+                            }
+    
+                            if ($option->getId() === null) {
+                                $this->logger->error('Option has no ID', ['optionName' => $optionName]);
+                                $this->addFlash('error', 'Invalid option ID for: ' . $optionName);
+                                continue;
+                            }
+    
+                            try {
+                                $logementOption = new LogementOptions($logement, $option);
+                                $logementOption->setValeur(true);
+                                $entityManager->persist($logementOption);
+                                $logement->addLogementOption($logementOption);
+                                $entityManager->flush(); // Flush per option to reduce memory usage
+                                $this->logger->info('LogementOption created', [
+                                    'id_logement' => $logement->getId(),
+                                    'id_option' => $option->getId(),
+                                ]);
+                            } catch (\Exception $e) {
+                                $this->logger->error('Failed to create LogementOption', [
+                                    'optionName' => $optionName,
+                                    'id_logement' => $logement->getId(),
+                                    'id_option' => $option->getId(),
+                                    'error' => $e->getMessage(),
+                                    'trace' => $e->getTraceAsString(),
+                                ]);
+                                $this->addFlash('error', 'Failed to create LogementOption for: ' . $optionName);
+                                continue;
+                            }
+                        } else {
+                            $this->logger->warning('Skipping invalid option name', ['optionName' => $optionName]);
+                            if (empty($optionName)) {
+                                $this->addFlash('warning', 'Empty option name skipped.');
+                            } else {
+                                $this->addFlash('warning', 'Option name too long: ' . $optionName);
+                            }
+                        }
+                    }
+                } else {
+                    $this->logger->info('No valid options provided');
+                }
+    
+                // Final flush (if not already flushed)
+                try {
+                    $entityManager->flush();
+                    $this->logger->info('Logement saved successfully', ['id_logement' => $logement->getId()]);
+                    $this->addFlash('success', 'Logement created successfully!');
+                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
+                } catch (\Exception $e) {
+                    $this->logger->error('Final flush failed', [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    $this->addFlash('error', 'Error saving logement: ' . $e->getMessage());
+                }
+            } else {
+                // Log form errors
+                $errors = $form->getErrors(true, true);
+                $errorMessages = [];
+                foreach ($errors as $error) {
+                    $errorMessages[] = sprintf(
+                        'Field: %s, Error: %s',
+                        $error->getOrigin() ? $error->getOrigin()->getName() : 'Global',
+                        $error->getMessage()
+                    );
+                }
+                $this->logger->warning('Form validation failed', ['errors' => $errorMessages]);
+                foreach ($errorMessages as $errorMessage) {
+                    $this->addFlash('error', 'Form error: ' . $errorMessage);
+                }
+            }
+        }
+    
+        return $this->render('Client/logement/new.html.twig', [
+            'form' => $form->createView(),
+            'logement' => $logement,
+        ]);
     }
     #[Route('/filtrage', name: 'app_logement_index_filtrage', methods: ['GET'])]
     public function indexFiltrage(Request $request, LogementRepository $logementRepository): Response
@@ -833,127 +1083,7 @@ HTML;
 
     //     return $logementsWithReactions;
     // }
-    #[Route('/new', name: 'app_logement_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, Security $security): Response
-    {
-        $logement = new Logement();
-        $form = $this->createForm(LogementType::class, $logement);
-        $form->handleRequest($request);
 
-        if ($form->isSubmitted()) {
-            $this->logger->info('Form submitted', [
-                'is_valid' => $form->isValid(),
-                'photos_data' => $form->get('photos')->getData() ? count($form->get('photos')->getData()) : 0,
-            ]);
-
-            if ($form->isValid()) {
-                // Set address
-                $address = $form->get('address')->getData();
-                if ($address) {
-                    $logement->setAdresse($address);
-                }
-
-                // Set user
-                $user = $security->getUser();
-                if (!$user) {
-                    $this->addFlash('error', 'You must be logged in to create a logement.');
-                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
-                }
-                $logement->setUtilisateurCin($user);
-
-                // Handle photos
-                $photos = $form->get('photos')->getData();
-                if (!empty($photos)) {
-                    $photosDirectory = $this->getParameter('photos_directory');
-                    foreach ($photos as $index => $file) {
-                        if ($file) {
-                            $this->logger->info('Processing photo', [
-                                'index' => $index,
-                                'name' => $file->getClientOriginalName(),
-                                'type' => $file->getMimeType(),
-                                'size' => $file->getSize(),
-                            ]);
-
-                            $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                            if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
-                                $this->addFlash('error', 'Invalid file type: ' . $file->getClientOriginalName());
-                                continue;
-                            }
-                            if ($file->getSize() > 5 * 1024 * 1024) {
-                                $this->addFlash('error', 'File too large: ' . $file->getClientOriginalName());
-                                continue;
-                            }
-
-                            try {
-                                $fileName = md5(uniqid()) . '.' . $file->guessExtension();
-                                $file->move($photosDirectory, $fileName);
-                                $photo = new ImageLogement();
-                                $photo->setUrl($fileName);
-                                $logement->addImageLogement($photo);
-                                $entityManager->persist($photo);
-                                $this->logger->info('Photo uploaded', ['file' => $fileName]);
-                            } catch (FileException $e) {
-                                $this->logger->error('Photo upload failed', [
-                                    'file' => $file->getClientOriginalName(),
-                                    'error' => $e->getMessage(),
-                                ]);
-                                $this->addFlash('error', 'Error uploading ' . $file->getClientOriginalName());
-                            }
-                        }
-                    }
-                } else {
-                    $this->logger->info('No photos uploaded');
-                }
-
-                // Set localisation
-                $lat = $form->get('lat')->getData();
-                $lng = $form->get('lng')->getData();
-                if ($lat && $lng && is_numeric($lat) && is_numeric($lng)) {
-                    $lat = (float) $lat;
-                    $lng = (float) $lng;
-                    if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
-                        $localisation = new \LongitudeOne\Spatial\PHP\Types\Geography\Point($lat, $lng);
-                        $logement->setLocalisation($localisation);
-                    } else {
-                        $this->addFlash('warning', 'Invalid coordinates provided.');
-                    }
-                }
-
-                try {
-                    $entityManager->persist($logement);
-                    $entityManager->flush();
-                    $this->addFlash('success', 'Logement created successfully!');
-                    return $this->redirectToRoute('app_logement_index', [], Response::HTTP_SEE_OTHER);
-                } catch (\Exception $e) {
-                    $this->logger->error('Error saving logement', ['error' => $e->getMessage()]);
-                    $this->addFlash('error', 'Error saving logement.');
-                }
-            } else {
-                // Log form errors
-                $errors = $form->getErrors(true, true);
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[] = sprintf(
-                        'Field: %s, Error: %s',
-                        $error->getOrigin() ? $error->getOrigin()->getName() : 'Global',
-                        $error->getMessage()
-                    );
-                }
-                $this->logger->warning('Form validation failed', ['errors' => $errorMessages]);
-                foreach ($errorMessages as $errorMessage) {
-                    $this->addFlash('error', $errorMessage);
-                }
-            }
-        }
-
-        // Reset form view to ensure consistent rendering
-        $formView = $form->createView();
-
-        return $this->render('Client/logement/new.html.twig', [
-            'form' => $formView,
-            'logement' => $logement, // Pass logement for context
-        ]);
-    }
 //     #[Route('/dashboard', name: 'app_logement_dashboard', methods: ['GET'])]
 //     public function dashboard(LogementRepository $logementRepository, UtilisateurRepository $utilisateurRepository): Response
 // {
@@ -1136,7 +1266,7 @@ HTML;
 
                 // Update localisation
                 if ($lat && $lng) {
-                    $localisation = new \LongitudeOne\Spatial\PHP\Types\Geography\Point($lat, $lng);
+                    $localisation = new Point($lat, $lng);
                     $logement->setLocalisation($localisation);
                 }
 
@@ -1216,6 +1346,8 @@ HTML;
             return new Response('Failed to send email: ' . $e->getMessage(), 500);
         }
     }
+
+
     #[Route('/search/{query}', name: 'app_logement_search', methods: ['GET'])]
     public function search(string $query, LogementRepository $logementRepository): JsonResponse
     {

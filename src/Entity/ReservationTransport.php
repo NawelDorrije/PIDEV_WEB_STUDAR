@@ -41,7 +41,7 @@ class ReservationTransport
     #[ORM\JoinColumn(name: 'cinTransporteur', referencedColumnName: 'cin')]
     private ?Utilisateur $transporteur = null;
 
-    #[ORM\Column(type: 'float', nullable: true)]
+    #[ORM\Column(name:'departure_lat' , type: 'float', nullable: true)]
     private ?float $departureLat = null;
 
     #[ORM\Column(type: 'float', nullable: true)]

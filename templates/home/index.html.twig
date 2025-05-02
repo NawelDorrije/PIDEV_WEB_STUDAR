@@ -668,34 +668,69 @@
 </div>
 
 <!-- Section Logement -->
-<div class="properties section">
+<!-- Section Logement -->
+<div class="properties section logements-a-louer">
     <div class="container">
-      <div class="row">
-        <div class="col-lg-4 offset-lg-4">
-          <div class="section-heading text-center">
-            <h6>| Logement</h6>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-lg-4 col-md-6">
-          <div class="item">
-            <a href="#"><img src="assets/images/property-01.jpg" alt=""></a>
-            <span class="category">Luxury Villa</span>
-            <h6>$2.264.000</h6>
-            <h4><a href="#">18 New Street Miami, OR 97219</a></h4>
-            <ul>
-              <li>Bedrooms: <span>8</span></li>
-              <li>Bathrooms: <span>8</span></li>
-              <li>Area: <span>545m2</span></li>
-              <li>Floor: <span>3</span></li>
-              <li>Parking: <span>6 spots</span></li>
-            </ul>
-            <div class="main-button">
-              <a href="{{ path('app_rendezvous_new') }}" >Schedule a visit</a>
+        <div class="row">
+            <div class="col-lg-4 offset-lg-4">
+                <div class="section-heading text-center">
+                    <h6>| Logement</h6>
+                </div>
             </div>
         </div>
-      
+        <div class="row g-4">
+            {% if logements|length > 0 %}
+                {% for logement in logements|slice(0, 3) %}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="furniture-card" data-id="{{ logement.id }}">
+                            <div class="furniture-image">
+                                {% set firstImage = logement.imageLogements|first %}
+                                <img src="{% if firstImage %}{{ asset('Uploads/photos/' ~ firstImage.url) }}{% else %}{{ asset('images/defaultLogementImage.png') }}{% endif %}" 
+                                     alt="{{ logement.type }}" 
+                                     class="img-fluid">
+                                <span class="status-badge {{ logement.statut.value == 'DISPONIBLE' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ logement.statut.value|capitalize }}
+                                </span>
+                            </div>
+                            <div class="furniture-body p-3">
+                                <h5 class="furniture-title">{{ logement.type }}</h5>
+                                <p class="furniture-price">{{ logement.prix }} TND</p>
+                                <ul class="furniture-details list-unstyled">
+                                    <li><strong>Adresse:</strong> {{ logement.adresse }}</li>
+                                    <li><strong>Chambres:</strong> {{ logement.nbrChambre }}</li>
+                                </ul>
+                            </div>
+                            <div class="furniture-actions p-3 border-top d-flex justify-content-between">
+                                {% if utilisateur %}
+                                    <a href="{{ path('app_rendezvous_new', {'id': logement.id}) }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-calendar-check me-1"></i> Planifier une visite
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-outline-primary btn-sm btn-detail" 
+                                            data-logement-id="{{ logement.id }}">
+                                        <i class="bi bi-eye me-1"></i> Détails
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('app_login') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-calendar-check me-1"></i> Connectez-vous pour visiter
+                                    </a>
+                                    <a href="{{ path('app_login') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i> Connectez-vous pour voir
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center" role="alert" style="font-size: 1.2rem; padding: 25px;">
+                        Aucun logement disponible pour le moment.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 

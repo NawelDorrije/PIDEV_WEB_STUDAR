@@ -18,6 +18,60 @@ class LogementRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Logement::class);
     }
+
+    /**
+ * Get the top 3 logements with the highest shares and emoji interactions.
+ *
+ * @return array Top 3 Logement objects sorted by total interactions (shares + emojis)
+ */
+public function getTopThreeLogementsByInteractions(): array
+{
+    // Récupérer tous les logements
+    $logements = $this->createQueryBuilder('l')
+        ->orderBy('l.id', 'DESC')
+        ->getQuery()
+        ->getResult();
+
+    // Tableau pour stocker les logements avec leurs scores
+    $logementsWithScores = [];
+
+    foreach ($logements as $logement) {
+        // Compter les emojis
+        $emojis = $logement->getEmojis() ?? [];
+        $emojiCount = 0;
+
+        foreach ($emojis as $emoji) {
+            if (in_array($emoji, ['❤️', '👍', '👎'])) {
+                $emojiCount++;
+            }
+        }
+
+        // Ajouter le nombre de partages
+        $shareCount = $logement->getShareCount() ?? 0;
+
+        // Calculer le score total (emojis + partages)
+        $totalScore = $emojiCount + $shareCount;
+
+        // Stocker le logement avec son score
+        $logementsWithScores[] = [
+            'logement' => $logement,
+            'score' => $totalScore,
+        ];
+    }
+
+    // Trier les logements par score (du plus grand au plus petit)
+    usort($logementsWithScores, function ($a, $b) {
+        return $b['score'] <=> $a['score'];
+    });
+
+    // Extraire les 3 premiers logements
+    $topThree = array_slice($logementsWithScores, 0, 3);
+
+    // Retourner uniquement les objets Logement
+    return array_map(function ($item) {
+        return $item['logement'];
+    }, $topThree);
+}
    /**
  * Get the top 7 logements by total interactions and calculate interaction differences.
  *
