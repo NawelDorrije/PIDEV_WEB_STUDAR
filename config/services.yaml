@@ -24,6 +24,8 @@ parameters:
     mailer_from_name: '%env(MAILER_FROM_NAME)%'
     app.gemini_api_key: '%env(GEMINI_API_KEY)%'
     audio_temp_dir: '%kernel.project_dir%/var/audio_temp'
+    app.timezone: 'Africa/Tunis'
+    
 
 
 # Services
@@ -45,9 +47,9 @@ services:
 
   
     # default configuration for services in *this* file
-    _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true
+    # _defaults:
+    #     autowire: true      # Automatically injects dependencies in your services.
+    #     autoconfigure: true
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
@@ -62,15 +64,15 @@ services:
     #     arguments:
     #         $logger: '@logger'
 
-    App\Security\GoogleAuthenticator:
-        arguments:
-            - '@knpu.oauth2.registry'
-            - '@doctrine.orm.entity_manager'
-            - '@router.default'
+    # App\Security\GoogleAuthenticator:
+    #     arguments:
+    #         - '@knpu.oauth2.registry'
+    #         - '@doctrine.orm.entity_manager'
+    #         - '@router.default'
 
-    App\Repository\GestionMeubles\CommandeRepository:
-        arguments:
-            $logger: '@monolog.logger'
+    # App\Repository\GestionMeubles\CommandeRepository:
+    #     arguments:
+    #         $logger: '@monolog.logger'
 
     App\Service\CartService:
         arguments:
@@ -111,3 +113,24 @@ services:
             $httpClient: '@http_client'
             $logger: '@monolog.logger'
             
+
+
+    App\Service\TwilioService:
+        arguments:
+            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(TWILIO_AUTH_TOKEN)%'
+            $whatsappNumber: '%env(TWILIO_WHATSAPP_NUMBER)%'
+    
+    App\Command\SendRendezvousRemindersCommand:
+        arguments:
+            $timezone: '%app.timezone%'
+    
+    App\Service\Geocoder:
+        arguments:
+            $client: '@Symfony\Contracts\HttpClient\HttpClientInterface'
+
+    App\Service\GeocodingService:
+        arguments:
+            $geocoder: '@App\Service\Geocoder'
+            $logger: '@logger'
+    

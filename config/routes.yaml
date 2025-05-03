@@ -26,4 +26,11 @@ connect_google_check:
 app_utilisateur_complete_registration:
     path: /utilisateur/complete_registration
     controller: App\Controller\RegistrationController::completeRegistration
-    
+
+student_guide:
+    path: /student-guide
+    controller: App\Controller\StudentGuideController::index
+app_reservation_transport_show_ADMIN:
+    path: /reservation/transport_ADMIN/{id}
+    controller: App\Controller\GestionReservation\ReservationTransportController_ADMIN::show
+    methods: [GET]
