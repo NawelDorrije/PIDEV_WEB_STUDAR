@@ -676,5 +676,3 @@ public function getReservationsAsTransporteur(): Collection
         );
     }
 }
-
-

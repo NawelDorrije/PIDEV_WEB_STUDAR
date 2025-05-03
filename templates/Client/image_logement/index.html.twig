@@ -1,0 +1,333 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ImageLogement index{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        #preview-slider {
+            display: none;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background-color: #f9f9f9;
+            max-width: 90%;
+            width: 800px;
+            margin: auto;
+            overflow-x: hidden;
+        }
+
+        #preview-slider.visible {
+            display: block;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 10;
+            padding: 0;
+        }
+
+        .delete-btn:hover {
+            background-color: #e63939;
+            transform: scale(1.1);
+        }
+
+        .slider-css-target {
+            overflow-x: hidden;
+            max-width: 100%;
+            margin: auto;
+        }
+
+        .slider-css-target ul {
+            margin: 0.5rem 0;
+            padding: 0;
+            list-style-type: none;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            justify-content: center;
+        }
+
+        .slider-css-target ul li {
+            position: relative;
+            flex: 0 0 auto;
+        }
+
+        .slider-css-target ul li a {
+            display: block;
+        }
+
+        .slider-css-target ul li img {
+            display: block;
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+        }
+
+        .slider-css-target-images {
+            display: flex;
+            flex-wrap: nowrap;
+            width: 400%;
+            will-change: transform;
+            transition: transform 0.4s ease-in-out;
+        }
+
+        .slider-css-target-images .description {
+            background-color: #dbdbdb;
+            flex: 0 0 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .slider-css-target-images img {
+            display: block;
+            border: 1px solid red; /* Ajoute une bordure pour voir si l'image est rendue */
+    min-height: 200px;
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+        }
+
+        #clear-photos {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+
+        #clear-photos:hover {
+            background-color: #c82333;
+        }
+
+        .container {
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let imageCount = 0;
+        let allPhotos = [
+            {% for image in image_logements %}
+                {
+                    src: "{{ asset('Uploads/photos/' ~ image.url) }}",
+                    id: {{ image.id }}
+                }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+        let deletedPhotoIds = [];
+
+        function renderPhotos() {
+            console.log('renderPhotos called with allPhotos:', allPhotos.length);
+            const sliderContainer = document.querySelector(".slider-css-target");
+            const thumbnailsList = sliderContainer.querySelector("ul");
+            const imagesContainer = document.querySelector(".slider-css-target-images");
+
+            if (!sliderContainer || !thumbnailsList || !imagesContainer) {
+                console.error('Slider elements not found:', {
+                    sliderContainer: !!sliderContainer,
+                    thumbnailsList: !!thumbnailsList,
+                    imagesContainer: !!imagesContainer
+                });
+                return;
+            }
+
+            thumbnailsList.innerHTML = '';
+            imagesContainer.innerHTML = '';
+            imageCount = 0;
+
+            allPhotos.forEach((photo, index) => {
+                imageCount++;
+                const imageId = `image_${imageCount}`;
+                console.log(`Adding image: ${photo.src}, ID: ${imageId}`);
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = `#${imageId}`;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.history.pushState({}, '', `#${imageId}`);
+                    updateSliderTransform(imageId);
+                });
+                const thumbImg = document.createElement("img");
+                thumbImg.src = photo.src;
+                thumbImg.alt = `Photo ${imageCount}`;
+                thumbImg.onerror = () => console.error(`Failed to load thumbnail for photo ${imageCount}: ${photo.src}`);
+                a.appendChild(thumbImg);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerHTML = "✖";
+                deleteBtn.className = "delete-btn";
+                deleteBtn.setAttribute("aria-label", "Remove photo");
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`Deleting photo at index ${index}`, photo);
+                    if (photo.id) {
+                        deletedPhotoIds.push(photo.id);
+                        console.log('Added to deletedPhotoIds:', deletedPhotoIds);
+                        document.getElementById('deleted_photos').value = deletedPhotoIds.join(',');
+                    }
+                    allPhotos.splice(index, 1);
+                    renderPhotos();
+                    updatePreviewVisibility();
+                });
+
+                li.appendChild(a);
+                li.appendChild(deleteBtn);
+                thumbnailsList.appendChild(li);
+
+                const descriptionDiv = document.createElement("div");
+                descriptionDiv.className = "description";
+                descriptionDiv.id = imageId;
+                const largeImg = document.createElement("img");
+                largeImg.src = photo.src;
+                largeImg.alt = `Photo ${imageCount}`;
+                largeImg.onerror = () => console.error(`Failed to load large image for photo ${imageCount}: ${photo.src}`);
+                descriptionDiv.appendChild(largeImg);
+                imagesContainer.appendChild(descriptionDiv);
+            });
+
+            updateSliderWidth();
+            // Ensure the first image is displayed if no hash is present
+            if (allPhotos.length > 0 && !window.location.hash) {
+                window.history.pushState({}, '', '#image_1');
+                updateSliderTransform('image_1');
+            }
+            updatePreviewVisibility();
+        }
+
+        function clearPhotos() {
+            console.log('Clearing all photos');
+            allPhotos.forEach(photo => {
+                if (photo.id) {
+                    deletedPhotoIds.push(photo.id);
+                }
+            });
+            console.log('Updated deletedPhotoIds:', deletedPhotoIds);
+            document.getElementById('deleted_photos').value = deletedPhotoIds.join(',');
+            allPhotos = [];
+            renderPhotos();
+            updatePreviewVisibility();
+        }
+
+        function updateSliderWidth() {
+            const imagesContainer = document.querySelector(".slider-css-target-images");
+            const imageItems = imagesContainer.querySelectorAll(".description");
+            const count = imageItems.length;
+
+            imagesContainer.style.width = `${count * 100}%`;
+            console.log(`Updated slider width to ${imagesContainer.style.width}, item count: ${count}`);
+
+            if (count === 1 && window.location.hash !== '#image_1') {
+                window.history.pushState({}, '', '#image_1');
+                updateSliderTransform('image_1');
+            } else if (count === 0) {
+                window.history.pushState({}, '', '#');
+            }
+        }
+
+        function updateSliderTransform(targetId) {
+            const imagesContainer = document.querySelector(".slider-css-target-images");
+            const imageItems = imagesContainer.querySelectorAll(".description");
+            const count = imageItems.length;
+
+            let targetIndex = 0;
+            imageItems.forEach((item, index) => {
+                if (item.id === targetId) {
+                    targetIndex = index;
+                }
+            });
+
+            const percentage = (targetIndex / (count || 1)) * 100;
+            imagesContainer.style.transform = `translate3d(-${percentage}%, 0, 0)`;
+        }
+        function updatePreviewVisibility() {
+            const previewContainer = document.getElementById("preview-slider");
+            const sliderContainer = document.querySelector(".slider-css-target");
+            const thumbnailsList = sliderContainer.querySelector("ul");
+            const clearButton = document.getElementById("clear-photos");
+
+            if (thumbnailsList.children.length > 0) {
+                previewContainer.classList.add("visible");
+                clearButton.style.display = 'block';
+                console.log("Slider made visible, children count:", thumbnailsList.children.length);
+            } else {
+                previewContainer.classList.remove("visible");
+                clearButton.style.display = 'none';
+                console.log("Slider hidden, no children");
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            renderPhotos();
+
+            const initialHash = window.location.hash.replace('#', '');
+            if (initialHash && initialHash.startsWith('image_')) {
+                updateSliderTransform(initialHash);
+            }
+
+            window.addEventListener('popstate', () => {
+                const hash = window.location.hash.replace('#', '');
+                if (hash && hash.startsWith('image_')) {
+                    updateSliderTransform(hash);
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>ImageLogement index</h1>
+
+        <div id="preview-slider">
+            <div class="slider-css-target">
+                <ul></ul>
+                <div class="slider-css-target-images"></div>
+            </div>
+            <button type="button" id="clear-photos" onclick="clearPhotos()">Clear All Photos</button>
+        </div>
+
+        <!-- Hidden input to store deleted photo IDs -->
+        <input type="hidden" id="deleted_photos" name="deleted_photos" value="">
+    </div>
+{% endblock %}

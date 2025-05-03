@@ -1,14 +1,16 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
+# config/services.yaml
 
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+# Imports
+# imports:
+#     - { resource: 'parameters.yaml' }
+
+# Parameters
 parameters:
     #images_directory: '%kernel.project_dir%/assets/images'
     images_directory: '%kernel.project_dir%/public/Uploads/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
-    public_images_directory: '%kernel.project_dir%/public/assets/images'
+    # public_images_directory: '%kernel.project_dir%/public/assets/images'
     stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
     stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
     app_url: '%env(APP_URL)%'
@@ -17,11 +19,14 @@ parameters:
     uclassify_username: '%env(UCLASSIFY_USERNAME)%'
     google_nl_api_key: '%env(GOOGLE_NL_API_KEY)%'
     exchange_rate_api_key: '%env(EXCHANGE_RATE_API_KEY)%'
-
     app.sender_email: 'studar21@gmail.com'
+    mailer_from: '%env(MAILER_FROM)%'
+    mailer_from_name: '%env(MAILER_FROM_NAME)%'
+    app.gemini_api_key: '%env(GEMINI_API_KEY)%'
+    audio_temp_dir: '%kernel.project_dir%/var/audio_temp'
 
-    
 
+# Services
 services:
     App\Security\TwoFactorListener:
         tags:
@@ -45,44 +50,71 @@ services:
         autoconfigure: true
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            $mailerFrom: '%mailer_from%'
+            $mailerFromName: '%mailer_from_name%'
+
     App\:
         resource: '../src/'
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/Form/'  # Add this line to exclude the Form directory
 
-    # Configuration explicite pour CommandeRepository
-    # App\Repository\GestionMeubles\CommandeRepository:
-    #     arguments:
-    #         $registry: '@doctrine'                  # ManagerRegistry
-    #         $entityManager: '@doctrine.orm.entity_manager'  # EntityManagerInterface
-    #         $mailer: '@mailer'                      # MailerInterface
+    App\Controller\Admin\DashboardController:
+        arguments:
+            $logger: '@logger'
 
-    # Configuration explicite pour CartService
+    App\Security\GoogleAuthenticator:
+        arguments:
+            - '@knpu.oauth2.registry'
+            - '@doctrine.orm.entity_manager'
+            - '@router.default'
+
+    App\Repository\GestionMeubles\CommandeRepository:
+        arguments:
+            $logger: '@monolog.logger'
+
     App\Service\CartService:
         arguments:
             $panierRepository: '@App\Repository\GestionMeubles\PanierRepository'
             $lignePanierRepository: '@App\Repository\GestionMeubles\LignePanierRepository'
             $security: '@security.helper'
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+
     App\Controller\GestionTransport\HomeController:
         public: true
         tags: ['controller.service_arguments']
-        autowire: true
-        autoconfigure: true
 
     App\Service\IAService:
         arguments:
             $client: '@http_client'
             $openaiApiKey: '%env(OPENAI_API_KEY)%'
+
     App\Service\PredictionService:
         arguments:
             $httpClient: '@http_client'
             $googleNlApiKey: '%google_nl_api_key%'
             $logger: '@monolog.logger'
-    # Explicitly configure CurrencyConverterService
+
     App\Service\CurrencyConverterService:
         arguments:
             $exchangeRateApiKey: '%exchange_rate_api_key%'
+
+    App\Service\GeminiService:
+        arguments:
+            $params: '@parameter_bag'
+
+    App\WebSocket\ChatServer:
+        public: true
+        autowire: true
+        autoconfigure: true
+        
+    App\Service\ChatbotService:
+        arguments:
+            $httpClient: '@http_client'
+            $logger: '@monolog.logger'
+            

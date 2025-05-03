@@ -1,0 +1,7 @@
+{{ form_start(form, {'id': 'reclamation_form'}) }}
+    {{ form_row(form.titre) }}
+    {{ form_row(form.description) }}
+    {{ form_row(form.utilisateur) }}
+    {{ form_row(form.logement, {'attr': {'value': form.logement.vars.data.id, 'readonly': true}}) }}
+    {{ form_row(form.timestamp, {'attr': {'value': 'now'|date('Y-m-d H:i:s'), 'readonly': true}}) }}
+{{ form_end(form) }}

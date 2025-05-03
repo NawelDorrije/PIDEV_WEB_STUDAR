@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div id="chat-container">
+    <h1>Chatbot</h1>
+    <div id="chat-messages">
+        <!-- Messages apparaîtront ici -->
+    </div>
+    <input type="text" id="user-input" placeholder="Tapez votre message...">
+    <button id="send-button">Envoyer</button>
+</div>
+
+<!-- Ajoutez le token CSRF (important pour Symfony) -->
+<meta name="csrf-token" content="{{ csrf_token('app_chat') }}">
+
+<style>
+    #chat-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    #chat-messages {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .message { margin: 10px 0; }
+    .user-message { color: blue; text-align: right; }
+    .bot-message { color: green; text-align: left; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    function addMessage(content, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = isUser ? 'message user-message' : 'message bot-message';
+        messageDiv.textContent = content;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        userInput.value = '';
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ message })
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(error);
+            }
+
+            const data = await response.json();
+            if (data.error) {
+                addMessage("Erreur: " + data.error, false);
+            } else {
+                addMessage(data.response, false);
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            addMessage("Désolé, une erreur s'est produite", false);
+        }
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+});
+</script>
+{% endblock %}

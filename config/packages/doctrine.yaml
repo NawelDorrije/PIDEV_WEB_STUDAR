@@ -12,15 +12,14 @@ doctrine:
         schema_filter: ~^(voiture|transport|utilisateur|reservation_transport)$~
 
         mapping_types:
-           enum: string
-           point: point
+            enum: string
+            point: point
         types:
-           voiture_disponibilite: App\Doctrine\DBAL\Types\VoitureDisponibiliteType
-           transport_status: App\Doctrine\DBAL\Types\TransportStatusType
-           role_enum: App\Doctrine\DBAL\Types\RoleEnumType
-           enum: App\Doctrine\DBAL\Types\EnumType
-           point: App\Doctrine\DBAL\Types\PointType
-
+            voiture_disponibilite: App\Doctrine\DBAL\Types\VoitureDisponibiliteType
+            transport_status: App\Doctrine\DBAL\Types\TransportStatusType
+            role_enum: App\Doctrine\DBAL\Types\RoleEnumType
+            enum: App\Doctrine\DBAL\Types\EnumType
+            point: LongitudeOne\Spatial\DBAL\Types\Geography\PointType
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
