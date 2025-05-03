@@ -1,0 +1,323 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Guide Étudiant{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* General container styling */
+        .student-guide-container {
+            padding: 30px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Heading styling with animation */
+        .student-guide-container h1 {
+            color: #4453A6;
+            font-weight: bold;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            animation: fadeInDown 1s ease-in-out;
+        }
+
+        /* Paragraph styling */
+        .student-guide-container p.lead {
+            color: #333;
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            animation: fadeIn 1.2s ease-in-out;
+        }
+
+        /* Centered search bar styling with animation */
+        .search-bar {
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            background: #fff;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            animation: slideInUp 1s ease-in-out;
+        }
+
+        .search-bar input {
+            width: 350px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: #f1f3f5;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            background: #e9ecef;
+            box-shadow: 0 0 10px rgba(68, 83, 166, 0.2);
+        }
+
+        .search-bar button {
+            padding: 12px 30px;
+            background: linear-gradient(90deg, #fd7e6d 0%, #ff6b5b 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .search-bar button:hover {
+            background: linear-gradient(90deg, #ff6b5b 0%, #fd7e6d 100%);
+            transform: scale(1.05);
+        }
+
+        /* Centered and wider map styling */
+        #map {
+            height: 400px;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto 40px;
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        /* Amenities list styling with creative design */
+        .amenities-list {
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 700px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 1.2s ease-in-out;
+        }
+
+        .amenities-list::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #4453A6, #fd7e6d);
+        }
+
+        .amenities-list h4 {
+            color: #4453A6;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .amenities-list h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #fd7e6d;
+        }
+
+        .amenities-list ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .amenities-list li {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease-in-out forwards;
+            animation-delay: calc(0.2s * var(--index));
+        }
+
+        .amenities-list li:last-child {
+            border-bottom: none;
+        }
+
+        .amenities-list li:hover {
+            background: #f8f9fa;
+            transform: translateX(10px);
+        }
+
+        .amenities-list li .icon {
+            width: 40px;
+            height: 40px;
+            background: #4453A6;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .amenities-list li:hover .icon {
+            transform: rotate(360deg);
+        }
+
+        .amenities-list li .text {
+            flex: 1;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .amenities-list li .text .name {
+            font-weight: bold;
+            color: #4453A6;
+        }
+
+        .amenities-list li .text .distance {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .amenities-list li .text .not-found {
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<section class="student-guide-container">
+    <div class="container">
+        <h1>Guide Étudiant</h1>
+        <p class="lead">Explorez les commodités essentielles autour de votre logement : pharmacies, postes de police, et bien plus encore !</p>
+        
+        <div class="search-bar">
+            <form action="{{ path('student_guide') }}" method="get">
+                <input type="text" name="address" value="{{ address }}" placeholder="ex. 123 Rue de Paris, Tunis" />
+                <button type="submit">Trouver des commodités</button>
+            </form>
+        </div>
+
+        {% if coordinates %}
+            <div id="map"></div>
+            <div class="amenities-list">
+                <h4>Commodités à proximité (dans un rayon de 2 km) :</h4>
+                <ul>
+                    {% for amenity in amenities %}
+                        {% if amenity is not null %}
+                            <li style="--index: {{ loop.index0 }}">
+                                <span class="icon">
+                                    {% if amenity.displayName == 'Pharmacie' %}
+                                        <i class="fas fa-prescription-bottle-alt"></i>
+                                    {% elseif amenity.displayName == 'Poste de police' %}
+                                        <i class="fas fa-shield-alt"></i>
+                                    {% elseif amenity.displayName == 'Bureau de poste' %}
+                                        <i class="fas fa-envelope"></i>
+                                    {% elseif amenity.displayName == 'Médecin' %}
+                                        <i class="fas fa-stethoscope"></i>
+                                    {% else %}
+                                        <i class="fas fa-store"></i>
+                                    {% endif %}
+                                </span>
+                                <span class="text">
+                                    <span class="name">{{ amenity.displayName }} :</span>
+                                    {% if amenity.name %}
+                                        {{ amenity.name }} <span class="distance">({{ amenity.distance|round(2) }} km)</span>
+                                    {% else %}
+                                        <span class="not-found">Aucune trouvée dans un rayon de 2 km</span>
+                                    {% endif %}
+                                </span>
+                            </li>
+                        {% else %}
+                            <li style="--index: {{ loop.index0 }}">
+                                <span class="icon">
+                                    <i class="fas fa-question"></i>
+                                </span>
+                                <span class="text">
+                                    <span class="name">{{ amenity.displayName }} :</span>
+                                    <span class="not-found">Aucune donnée disponible</span>
+                                </span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% elseif address %}
+            <div class="alert alert-danger">Erreur : Impossible de trouver l'adresse.</div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        {% if coordinates %}
+            var map = L.map('map').setView([{{ coordinates.lat }}, {{ coordinates.lon }}], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Ajouter un marqueur pour l'adresse recherchée
+            L.marker([{{ coordinates.lat }}, {{ coordinates.lon }}]).addTo(map)
+                .bindPopup('Votre adresse').openPopup();
+
+            // Ajouter des marqueurs pour les commodités
+            {% for amenity in amenities %}
+                {% if amenity is not null and amenity.name and amenity.lat and amenity.lon %}
+                    L.marker([{{ amenity.lat }}, {{ amenity.lon }}]).addTo(map)
+                        .bindPopup('{{ amenity.displayName }}: {{ amenity.name }}');
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </script>
+{% endblock %}

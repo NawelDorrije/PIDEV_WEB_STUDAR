@@ -24,6 +24,8 @@ parameters:
     mailer_from_name: '%env(MAILER_FROM_NAME)%'
     app.gemini_api_key: '%env(GEMINI_API_KEY)%'
     audio_temp_dir: '%kernel.project_dir%/var/audio_temp'
+    app.timezone: 'Africa/Tunis'
+    
 
 
 # Services
@@ -96,3 +98,24 @@ services:
             $httpClient: '@http_client'
             $logger: '@monolog.logger'
             
+
+
+    App\Service\TwilioService:
+        arguments:
+            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
+            $authToken: '%env(TWILIO_AUTH_TOKEN)%'
+            $whatsappNumber: '%env(TWILIO_WHATSAPP_NUMBER)%'
+    
+    App\Command\SendRendezvousRemindersCommand:
+        arguments:
+            $timezone: '%app.timezone%'
+    
+    App\Service\Geocoder:
+        arguments:
+            $client: '@Symfony\Contracts\HttpClient\HttpClientInterface'
+
+    App\Service\GeocodingService:
+        arguments:
+            $geocoder: '@App\Service\Geocoder'
+            $logger: '@logger'
+    
