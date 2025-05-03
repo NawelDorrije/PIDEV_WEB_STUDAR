@@ -6,6 +6,7 @@ use App\Entity\ActivityLog;
 use App\Entity\Utilisateur;
 use Endroid\QrCode\QrCode as EndroidQrCode; // Use the alias
 use Endroid\QrCode\Writer\PngWriter;
+use Symfony\Component\Process\Process;
 use App\Enums\RoleUtilisateur;
 use App\Form\UtilisateurEditType;
 use App\Form\UtilisateurType;
@@ -738,4 +739,149 @@ public function debug2FA(string $email, UtilisateurRepository $utilisateurReposi
             return new Response('Erreur lors de la génération du QR code', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    // #[Route('/parametre/rate', name: 'app_utilisateur_rate', methods: ['POST'])]
+    // public function rate(Request $request, LoggerInterface $logger): JsonResponse
+    // {
+    //     $this->logger->info('Received rate request');
+    //     $data = json_decode($request->getContent(), true);
+    //     $imageData = $data['image'] ?? null;
+    
+    //     if (!$imageData) {
+    //         $this->logger->error('No image data received');
+    //         return new JsonResponse(['error' => 'Aucune image reçue'], 400);
+    //     }
+    
+    //     $imagePath = sys_get_temp_dir() . '/temp_frame.jpg';
+    //     file_put_contents($imagePath, base64_decode(explode(',', $imageData)[1]));
+    //     $this->logger->info('Image saved to temp path', ['path' => $imagePath]);
+    
+    //     $pythonScript = __DIR__ . '/../../bin/emotion_detection.py';
+    //     $this->logger->info('Running Python script', ['script' => $pythonScript]);
+    //     $process = new Process(['C:\\Users\\NOUR\\AppData\\Local\\Programs\\Python\\Python311\\python.exe', $pythonScript, $imagePath]);
+    //     $process->run();
+    
+    //     if (!$process->isSuccessful()) {
+    //         $this->logger->error('Process failed', ['error' => $process->getErrorOutput()]);
+    //         throw new ProcessFailedException($process);
+    //     }
+    
+    //     $emotion = trim($process->getOutput());
+    //     $this->logger->info('Emotion detected', ['emotion' => $emotion]);
+    
+    //     $user = $this->getUser();
+    //     if ($user && in_array($emotion, ['happy', 'sad'])) {
+    //         error_log("User {$user->getId()} rated as $emotion");
+    //     }
+    
+    //     if (file_exists($imagePath)) {
+    //         unlink($imagePath);
+    //     }
+    
+    //     return new JsonResponse(['emotion' => $emotion]);
+    // }
+    #[Route('/parametre/rate', name: 'app_utilisateur_rate', methods: ['POST'])]
+    public function rate(Request $request, LoggerInterface $logger): JsonResponse
+    {
+        $logger->info('Rate request received', ['raw_content' => $request->getContent()]);
+        $data = json_decode($request->getContent(), true);
+        $logger->info('Decoded data', ['data' => $data]);
+        $imageData = $data['image'] ?? null;
+    
+        // Add new logging and updated validation here
+        $logger->info('Raw image data', ['imageData' => $imageData]);
+        if (!preg_match('/^data:image\/jpeg;base64,/i', $imageData)) { // Added 'i' for case-insensitive match
+            $logger->error('Invalid image data format', ['imageData' => $imageData]);
+            return new JsonResponse(['error' => 'Format de l\'image invalide'], 400);
+        }
+    
+        if (!$imageData) {
+            $logger->error('No image data received', ['data' => $data]);
+            return new JsonResponse(['error' => 'Aucune image reçue'], 400);
+        }
+    
+        // Validate Data URL format
+        // (The original preg_match is now replaced by the above)
+    
+        $imagePath = sys_get_temp_dir() . '/temp_frame.jpg';
+        try {
+            $base64Data = explode(',', $imageData)[1];
+            $decodedData = base64_decode($base64Data, true);
+            if ($decodedData === false) {
+                $logger->error('Base64 decoding failed', ['base64Data' => $base64Data]);
+                return new JsonResponse(['error' => 'Échec du décodage de l\'image'], 400);
+            }
+            $logger->info('Base64 decoded', ['decoded_length' => strlen($decodedData)]);
+    
+            // Verify if the decoded data looks like a JPEG (starts with JPEG magic bytes: FF D8 FF)
+            if (strlen($decodedData) < 3 || substr($decodedData, 0, 3) !== "\xFF\xD8\xFF") {
+                $logger->error('Decoded data is not a valid JPEG', ['first_bytes' => bin2hex(substr($decodedData, 0, 3))]);
+                return new JsonResponse(['error' => 'Données décodées non valides (pas un JPEG)'], 400);
+            }
+    
+            file_put_contents($imagePath, $decodedData);
+            $logger->info('Image saved to temp path', ['path' => $imagePath]);
+        } catch (\Exception $e) {
+            $logger->error('Failed to save image', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de l\'image'], 500);
+        }
+    
+        $pythonPath = 'C:\\Users\\NOUR\\anaconda3\\envs\\deepface_env\\python.exe';
+$pythonScript = __DIR__ . '/../../bin/emotion_detection.py';
+$process = new Process([$pythonPath, $pythonScript, $imagePath]);
+$process->setTimeout(30);
+        try {
+            $process->run();
+            if (!$process->isSuccessful()) {
+                $logger->error('Process failed', [
+                    'error' => $process->getErrorOutput(),
+                    'output' => $process->getOutput(),
+                    'exit_code' => $process->getExitCode()
+                ]);
+                return new JsonResponse(['error' => 'Erreur lors de l\'exécution du script Python'], 500);
+            }
+            $emotion = trim($process->getOutput());
+            $logger->info('Emotion detected', ['emotion' => $emotion]);
+        } catch (\Exception $e) {
+            $logger->error('Process execution failed', ['error' => $e->getMessage()]);
+            return new JsonResponse(['error' => 'Erreur lors de l\'exécution du script'], 500);
+        }
+    
+        // if (file_exists($imagePath)) {
+        //     unlink($imagePath);
+        // }
+    
+        return new JsonResponse(['emotion' => $emotion]);
+    }
+    #[Route('/parametre/save-emotion', name: 'app_utilisateur_save_emotion', methods: ['POST'])]
+    public function saveEmotion(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $this->logger->info('Save emotion request received', ['raw_content' => $request->getContent()]);
+        $data = json_decode($request->getContent(), true);
+        $emotion = $data['emotion'] ?? null;
+        $log = new ActivityLog();
+        $log->setUser($user);
+        $log->setAction('Vous avez ajouté votre avis');
+        $log->setDetails('Avis enregisté avec succèes. ');
+        $em->persist($log);
+        $em->flush();
+
+        if (!$emotion) {
+            $this->logger->error('No emotion provided', ['data' => $data]);
+            return new JsonResponse(['error' => 'Aucune émotion fournie'], 400);
+        }
+
+        $user = $this->getUser();
+        if (!$user instanceof Utilisateur) {
+            $this->logger->error('User not found or not authenticated');
+            return new JsonResponse(['error' => 'Utilisateur non authentifié'], 401);
+        }
+
+        $user->setSatisfactionEmotion($emotion);
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        $this->logger->info('Emotion saved for user', ['user_id' => $user->getId(), 'emotion' => $emotion]);
+        return new JsonResponse(['message' => 'Émotion enregistrée avec succès', 'emotion' => $emotion]);
+    }
+   
 }

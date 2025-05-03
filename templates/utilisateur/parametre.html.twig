@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Paramètres Admin{% endblock %}
+{% block title %}Paramètres{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -34,6 +34,22 @@
             transition: margin-left 0.3s;
             background-color: white;
         }
+        .rating-section video {
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid #ccc;
+    }
+    .btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    .btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
         
         .admin-sidebar:hover ~ .admin-content {
             margin-left: 250px;
@@ -523,6 +539,17 @@
                 </form>
             </div>
         </div>
+        <div class="parameters-list rating-section">
+            <h3>Évaluer l'application</h3>
+            <p>Scannez votre visage avec la caméra pour évaluer votre satisfaction (heureux ou triste).</p>
+            <button   id="startRating" class="btn">Démarrer l'évaluation</button>
+            <button   id="stopRating" class="btn" style="display: none;">Arrêter l'évaluation</button>
+            <div  style="margin-top:20px;width:  800px;height: 500px; margin-left: 370px;" id="videoContainer" style="display: none; ">
+                <video id="videoElement" autoplay></video>
+                <canvas id="canvasElement" style="display: none;"></canvas>
+                <p id="ratingResult"></p>
+            </div>
+        </div>
 
         <!-- Activity Log -->
         <div class="parameters-list activity-log">
@@ -550,16 +577,7 @@
                 <p>Aucune activité récente.</p>
             {% endif %}
         </div>
-        <div class="parameters-list rating-section">
-            <h3>Évaluer l'application</h3>
-            <p>Scannez votre visage avec la caméra pour évaluer votre satisfaction (heureux ou triste).</p>
-            <button id="startRating" class="btn">Démarrer l'évaluation</button>
-            <div id="videoContainer" style="display: none;">
-                <video id="videoElement" autoplay></video>
-                <canvas id="canvasElement" style="display: none;"></canvas>
-                <p id="ratingResult"></p>
-            </div>
-        </div>
+       
             
         </div> 
     </div>
@@ -568,6 +586,147 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script>
+        document.getElementById('startRating').addEventListener('click', function() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvasElement');
+            const result = document.getElementById('ratingResult');
+            const videoContainer = document.getElementById('videoContainer');
+            const startButton = this;
+            const stopButton = document.getElementById('stopRating');
+            let stream;
+            let intervalId;
+            let latestEmotion = null; // Track the latest detected emotion
+            let isEmotionConfirmed = false; // Track user confirmation
+    
+            console.log('Start button clicked');
+    
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(videoStream) {
+                        stream = videoStream;
+                        video.srcObject = stream;
+                        videoContainer.style.display = 'block';
+                        startButton.disabled = true;
+                        stopButton.style.display = 'inline-block';
+                        console.log('Webcam stream started');
+    
+                        video.onloadedmetadata = function() {
+                            console.log('Video metadata loaded', {
+                                width: video.videoWidth,
+                                height: video.videoHeight
+                            });
+                            video.play();
+                            intervalId = setInterval(sendFrame, 2000);
+                        };
+    
+                        function sendFrame() {
+                            if (!canvas || !video.videoWidth || !video.videoHeight) {
+                                console.error('Canvas or video not ready');
+                                return;
+                            }
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            canvas.getContext('2d').drawImage(video, 0, 0);
+                            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                            console.log('Captured frame data:', imageData.substring(0, 50) + '...');
+                            if (!imageData || !imageData.startsWith('data:image/jpeg;base64,')) {
+                                console.error('Invalid image data:', imageData);
+                                result.textContent = 'Erreur : Image non capturée.';
+                                result.style.display = 'block';
+                                return;
+                            }
+    
+                            console.log('Sending request body:', JSON.stringify({ image: imageData }));
+                            fetch('https://127.0.0.1:8000/utilisateur/parametre/rate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ image: imageData })
+                            })
+                            .then(response => {
+                                console.log('Server response status:', response.status);
+                                console.log('Response headers:', response.headers.get('content-type'));
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok: ' + response.statusText);
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Server response data:', data);
+                                if (data.emotion) {
+                                    latestEmotion = data.emotion; // Store the latest emotion
+                                    result.textContent = `Émotion détectée : ${data.emotion}. Confirmez avec "Arrêter" si correcte.`;
+                                    result.style.display = 'block';
+                                } else {
+                                    console.error('No emotion in response:', data);
+                                    result.textContent = 'Erreur : Réponse inattendue du serveur.';
+                                    result.style.display = 'block';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Fetch error:', error);
+                                result.textContent = 'Erreur : Échec de la détection.';
+                                result.style.display = 'block';
+                            });
+                        }
+    
+                        function stopStream() {
+                            if (intervalId) clearInterval(intervalId);
+                            if (stream) stream.getTracks().forEach(track => track.stop());
+                            videoContainer.style.display = 'none';
+                            startButton.disabled = false;
+                            stopButton.style.display = 'none';
+    
+                            // Save the emotion only if confirmed by the user
+                            if (isEmotionConfirmed && latestEmotion) {
+                                fetch('https://127.0.0.1:8000/utilisateur/parametre/save-emotion', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ emotion: latestEmotion })
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Failed to save emotion: ' + response.statusText);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    console.log('Emotion saved:', data);
+                                    result.textContent = `Émotion enregistrée : ${latestEmotion}`;
+                                })
+                                .catch(error => {
+                                    console.error('Error saving emotion:', error);
+                                    result.textContent = 'Erreur : Échec de l\'enregistrement de l\'émotion.';
+                                });
+                            } else if (latestEmotion) {
+                                result.textContent = 'Émotion non enregistrée : Confirmez l\'émotion avant d\'arrêter.';
+                            } else {
+                                result.textContent = 'Aucune émotion détectée à enregistrer.';
+                            }
+                        }
+    
+                        // Add confirmation logic when stopping
+                        stopButton.addEventListener('click', function() {
+                            if (latestEmotion) {
+                                if (confirm(`Voulez-vous enregistrer l'émotion "${latestEmotion}" ?`)) {
+                                    isEmotionConfirmed = true; // Set confirmation flag
+                                }
+                            }
+                            stopStream(); // Proceed to stop the stream
+                        });
+                    })
+                    .catch(function(err) {
+                        console.error('Webcam error:', err);
+                        result.textContent = 'Erreur : Accès à la caméra refusé ou non disponible.';
+                        result.style.display = 'block';
+                    });
+            } else {
+                console.error('getUserMedia not supported');
+                result.textContent = 'Erreur : Votre navigateur ne supporte pas l\'accès à la caméra.';
+                result.style.display = 'block';
+            }
+        });
+    </script>
     <script>
         console.log('START_PARAMETRE_JS');
 

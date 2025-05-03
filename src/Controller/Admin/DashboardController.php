@@ -251,7 +251,61 @@ public function debugUserStats(UtilisateurRepository $utilisateurRepository): Js
     $stats = $utilisateurRepository->getUserCountByRole();
     return $this->json($stats);
 }
+#[Route('/api/emotion-stats', name: 'app_admin_api_emotion_stats')]
+public function getEmotionStats(Request $request, UtilisateurRepository $utilisateurRepository, LoggerInterface $logger): JsonResponse
+{
+    $roleFilter = $request->query->get('role');
 
+    $queryBuilder = $utilisateurRepository->createQueryBuilder('u')
+        ->select('u.satisfactionEmotion AS emotion, COUNT(u.cin) AS count')
+        ->groupBy('u.satisfactionEmotion');
+
+    if ($roleFilter) {
+        $queryBuilder->andWhere('u.role = :role')
+            ->setParameter('role', $roleFilter);
+    }
+
+    $emotionStats = $queryBuilder->getQuery()->getResult();
+
+    $logger->info('Raw emotion stats', ['stats' => $emotionStats, 'roleFilter' => $roleFilter]);
+
+    $labels = [];
+    $data = [];
+    $colors = [];
+
+    $emotionColors = [
+        'happy' => '#f35525',
+        'sad' => '#4e73df',
+        'neutral' => '#1cc88a',
+        'angry' => '#e74a3b',
+        'surprised' => '#f6c23e',
+        'unknown' => '#6c757d',
+    ];
+
+    foreach ($emotionStats as $stat) {
+        $emotion = strtolower($stat['emotion'] ?? 'unknown');
+        $count = (int)$stat['count'];
+        if ($count > 0) {
+            $labels[] = ucfirst($emotion ?: 'Inconnu');
+            $data[] = $count;
+            $colors[] = $emotionColors[$emotion] ?? '#6c757d';
+            $logger->debug('Processing emotion', ['emotion' => $emotion, 'count' => $count]);
+        }
+    }
+
+    if (empty($data)) {
+        $labels = ['Aucune donnée'];
+        $data = [1];
+        $colors = ['#6c757d'];
+    }
+
+    $logger->info('Processed emotion stats', ['labels' => $labels, 'data' => $data]);
+    return $this->json([
+        'labels' => $labels,
+        'data' => $data,
+        'colors' => $colors,
+    ]);
+}
     #[Route('/parametre', name: 'app_admin_parametre')]
     public function parametre(ActivityLogRepository $activityLogRepository): Response
     {

@@ -9,8 +9,9 @@
             background-color: #1a1a1a !important;
             color: #ffffff !important;
         }
+       
         body.theme-dark .admin-sidebar {
-            background-color: #2c2c2c !important;
+            background-color: #1a1a1a !important;
         }
         body.theme-dark .admin-content {
             background-color: #1a1a1a !important;
@@ -35,6 +36,10 @@
             background-color: #2c2c2c !important;
             box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
         }
+
+        body.theme-dark .chart-title {
+            color: white;
+        }
         
         body.theme-dark .parameters-item {
             border-color: #555 !important;
@@ -54,6 +59,7 @@
             transition: width 0.3s;
             overflow: hidden;
             z-index: 1000;
+            
         }
         
         .admin-sidebar:hover {
@@ -156,9 +162,8 @@
             transition: background-color 0.3s;
         }
         body.theme-dark .title-dark{
-         
-         color: #f1f1f1;
-     }
+            color: #f1f1f1;
+        }
         
         .parameters-item:hover {
             background-color: #f8f9fa;
@@ -207,6 +212,30 @@
             font-size: 24px;
             font-weight: 600;
             color: #f35525;
+        }
+
+        .filter-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .filter-container select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-container select:focus {
+            outline: none;
+            border-color: #f35525;
+        }
+        body.theme-dark .filter-container select {
+            background-color: #2c2c2c;
+            color: #f1f1f1;
+            border-color: #555;
         }
     </style>
 {% endblock %}
@@ -257,7 +286,7 @@
         </div>
 
         <div class="chart-container">
-           
+            <h4 class="chart-title">Statistiques des avis</h4>
             <div class="loading-spinner">
                 <i class="fas fa-spinner fa-spin"></i> Chargement...
             </div>
@@ -266,6 +295,26 @@
             </div>
             <div class="chart-wrapper">
                 <canvas id="rolePieChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h4 class="chart-title">statistiques des avis</h4>
+            <div class="filter-container">
+                <select id="role-filter">
+                    <option value="">Tous les rôles</option>
+                    <option value="étudiant">Étudiant</option>
+                    <option value="transporteur">Transporteur</option>
+                    <option value="propriétaire">Propriétaire</option>
+                </select>
+            </div>
+            <div class="loading-spinner" id="emotion-loading">
+                <i class="fas fa-spinner fa-spin"></i> Chargement...
+            </div>
+            <div class="error-message" id="emotion-chart-error">
+                Erreur lors du chargement des données
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="emotionPieChart"></canvas>
             </div>
         </div>
     </div>
@@ -287,45 +336,37 @@
 
         // Apply theme on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
-            const container = document.querySelector('.admin-container');
-            if (!container) {
-                console.error('Error: .admin-container not found');
-                return;
-            }
-            const theme = container.dataset.theme || 'light';
-            console.log('Theme from data-theme:', theme);
-            applyTheme(theme);
+           
 
-            // Chart logic (unchanged)
-            const loadingSpinner = document.querySelector('.loading-spinner');
-            const errorMessage = document.getElementById('chart-error');
-            let chartInstance = null;
+            // Chart logic for role chart
+            const roleLoadingSpinner = document.querySelector('.chart-container .loading-spinner');
+            const roleErrorMessage = document.getElementById('chart-error');
+            let roleChartInstance = null;
 
-            function showLoading() {
-                loadingSpinner.style.display = 'block';
-                errorMessage.style.display = 'none';
+            function showRoleLoading() {
+                roleLoadingSpinner.style.display = 'block';
+                roleErrorMessage.style.display = 'none';
             }
 
-            function hideLoading() {
-                loadingSpinner.style.display = 'none';
+            function hideRoleLoading() {
+                roleLoadingSpinner.style.display = 'none';
             }
 
-            function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.style.display = 'block';
-                hideLoading();
+            function showRoleError(message) {
+                roleErrorMessage.textContent = message;
+                roleErrorMessage.style.display = 'block';
+                hideRoleLoading();
             }
 
-            function initChart() {
+            function initRoleChart() {
                 const ctx = document.getElementById('rolePieChart');
                 if (!ctx) {
                     console.error('Canvas #rolePieChart not found');
-                    showError('Erreur: Élément de graphique introuvable');
+                    showRoleError('Erreur: Élément de graphique introuvable');
                     return;
                 }
 
-                chartInstance = new Chart(ctx, {
+                roleChartInstance = new Chart(ctx, {
                     type: 'pie',
                     data: {
                         labels: [],
@@ -365,10 +406,10 @@
                 });
             }
 
-            function updateChart(chartData) {
-                if (!chartInstance) {
-                    console.error('Chart instance not initialized');
-                    showError('Erreur: Initialisation du graphique échouée');
+            function updateRoleChart(chartData) {
+                if (!roleChartInstance) {
+                    console.error('Role chart instance not initialized');
+                    showRoleError('Erreur: Initialisation du graphique échouée');
                     return;
                 }
 
@@ -385,16 +426,16 @@
                 if (transporteurCount) transporteurCount.textContent = data[1];
                 if (proprietaireCount) proprietaireCount.textContent = data[2];
 
-                chartInstance.data.labels = labels;
-                chartInstance.data.datasets[0].data = data;
-                chartInstance.data.datasets[0].backgroundColor = colors;
-                chartInstance.update();
+                roleChartInstance.data.labels = labels;
+                roleChartInstance.data.datasets[0].data = data;
+                roleChartInstance.data.datasets[0].backgroundColor = colors;
+                roleChartInstance.update();
 
-                hideLoading();
+                hideRoleLoading();
             }
 
-            showLoading();
-            initChart();
+            showRoleLoading();
+            initRoleChart();
 
             fetch('/admin/api/user-stats', {
                 credentials: 'include',
@@ -403,28 +444,181 @@
                 }
             })
                 .then(response => {
-                    console.log('Response status:', response.status);
+                    console.log('Response status (role):', response.status);
                     if (!response.ok) {
                         throw new Error(`Erreur HTTP: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Data received:', data);
+                    console.log('Data received (role):', data);
                     if (!data.labels || !data.data || !data.colors) {
                         throw new Error('Format de données invalide');
                     }
-                    updateChart(data);
+                    updateRoleChart(data);
                 })
                 .catch(error => {
-                    console.error('Fetch error:', error);
-                    showError(`Erreur: ${error.message}`);
-                    updateChart({
+                    console.error('Fetch error (role):', error);
+                    showRoleError(`Erreur: ${error.message}`);
+                    updateRoleChart({
                         labels: ['Étudiant', 'Transporteur', 'Propriétaire'],
                         data: [0, 0, 0],
                         colors: ['#f35525', '#4e73df', '#1cc88a']
                     });
                 });
+
+            // Chart logic for emotion chart
+            const emotionLoadingSpinner = document.getElementById('emotion-loading');
+            const emotionErrorMessage = document.getElementById('emotion-chart-error');
+            const roleFilter = document.getElementById('role-filter');
+            let emotionChartInstance = null;
+
+            function showEmotionLoading() {
+                emotionLoadingSpinner.style.display = 'block';
+                emotionErrorMessage.style.display = 'none';
+            }
+
+            function hideEmotionLoading() {
+                emotionLoadingSpinner.style.display = 'none';
+            }
+
+            function showEmotionError(message) {
+                emotionErrorMessage.textContent = message;
+                emotionErrorMessage.style.display = 'block';
+                hideEmotionLoading();
+            }
+
+            function initEmotionChart() {
+                const ctx = document.getElementById('emotionPieChart');
+                if (!ctx) {
+                    console.error('Canvas #emotionPieChart not found');
+                    showEmotionError('Erreur: Élément de graphique introuvable');
+                    return;
+                }
+
+                emotionChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Nombre d\'utilisateurs',
+                            data: [],
+                            backgroundColor: [],
+                            borderWidth: 1,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        if (Number.isInteger(value)) {
+                                            return value;
+                                        }
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Nombre d\'utilisateurs'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Émotions'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        return `${label}: ${value} utilisateur(s)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+            }
+
+            function updateEmotionChart(chartData) {
+                if (!emotionChartInstance) {
+                    console.error('Emotion chart instance not initialized');
+                    showEmotionError('Erreur: Initialisation du graphique échouée');
+                    return;
+                }
+
+                const labels = chartData.labels || ['Aucune donnée'];
+                const data = chartData.data || [1];
+                const colors = chartData.colors || ['#6c757d'];
+
+                emotionChartInstance.data.labels = labels;
+                emotionChartInstance.data.datasets[0].data = data;
+                emotionChartInstance.data.datasets[0].backgroundColor = colors;
+                emotionChartInstance.update();
+
+                hideEmotionLoading();
+            }
+
+            function fetchEmotionData(role = '') {
+                showEmotionLoading();
+                const url = role ? `/admin/api/emotion-stats?role=${encodeURIComponent(role)}` : '/admin/api/emotion-stats';
+                fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        console.log('Response status (emotion):', response.status);
+                        if (!response.ok) {
+                            throw new Error(`Erreur HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Data received (emotion):', data);
+                        if (!data.labels || !data.data || !data.colors) {
+                            throw new Error('Format de données invalide');
+                        }
+                        updateEmotionChart(data);
+                    })
+                    .catch(error => {
+                        console.error('Fetch error (emotion):', error);
+                        showEmotionError(`Erreur: ${error.message}`);
+                        updateEmotionChart({
+                            labels: ['Aucune donnée'],
+                            data: [1],
+                            colors: ['#6c757d']
+                        });
+                    });
+            }
+
+            showEmotionLoading();
+            initEmotionChart();
+            fetchEmotionData(); // Initial fetch with no role filter
+
+            // Add event listener for role filter
+            roleFilter.addEventListener('change', function() {
+                const selectedRole = this.value;
+                fetchEmotionData(selectedRole);
+            });
         });
     </script>
 {% endblock %}
