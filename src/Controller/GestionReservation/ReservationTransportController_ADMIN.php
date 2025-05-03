@@ -27,7 +27,7 @@ class ReservationTransportController_ADMIN extends AbstractController
         $this->entityManager = $entityManager;
     }
 
-    #[Route('/reservation/transport_ADMIN', name: 'app_reservation_transport_index_ADMIN', methods: ['GET'])]   
+    #[Route('/reservation/transport_ADMIN/', name: 'app_reservation_transport_index_ADMIN', methods: ['GET'])]   
     public function index(Request $request, ReservationTransportRepository $reservationTransportRepository, UtilisateurRepository $utilisateurRepository): Response
     {
         $status = $request->query->get('status');
