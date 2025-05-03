@@ -19,6 +19,7 @@ security:
             security: false
 
         main:
+            custom_authenticator: App\Security\AppAuthenticator
             user_checker: App\Security\BlockedUserChecker
             custom_authenticators:
                 - App\Security\GoogleAuthenticator

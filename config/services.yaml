@@ -6,8 +6,8 @@
 
 # Parameters
 parameters:
-    # images_directory: '%kernel.project_dir%/public/Uploads/images'
-    images_directory: '%kernel.project_dir%/assets/images'
+    #images_directory: '%kernel.project_dir%/assets/images'
+    images_directory: '%kernel.project_dir%/public/Uploads/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
     # public_images_directory: '%kernel.project_dir%/public/assets/images'
@@ -30,6 +30,28 @@ parameters:
 
 # Services
 services:
+    App\Security\TwoFactorListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, priority: 10 }
+    App\Controller\Admin\DashboardController:
+        arguments:
+            $logger: '@logger'
+    App\Security\GoogleAuthenticator:
+        arguments:
+            - '@knpu.oauth2.registry'
+            - '@doctrine.orm.entity_manager'
+            - '@router.default'
+    App\Repository\GestionMeubles\CommandeRepository:
+        arguments:
+            $logger: '@monolog.logger'
+
+  
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
     _defaults:
         autowire: true
         autoconfigure: true

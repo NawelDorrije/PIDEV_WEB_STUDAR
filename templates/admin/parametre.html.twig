@@ -505,7 +505,22 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Authentification à deux facteurs (2FA)</h3>
-                <!-- Add 2FA form here -->
+                <form action="{{ path('app_admin_parametre_twofa') }}" method="post">
+                    <div class="form-group">
+                        <label for="twofa-enabled">
+                            <input type="checkbox" id="twofa-enabled" name="twofa_enabled" {{ app.user.isTwoFactorEnabled ? 'checked' : '' }}>
+                            Activer l'authentification à deux facteurs
+                        </label>
+                    </div>
+                    {% if app.user.isTwoFactorEnabled %}
+                        <div class="form-group">
+                            <label>Configurer l'application d'authentification</label>
+                            <p>Scannez ce QR code avec votre application d'authentification (par exemple, Google Authenticator ou Authy).</p>
+                            <img style="height: 250px; width: 250px;margin-left: 105px;" src="{{ path('app_admin_twofa_qr_code', {'cin': app.user.cin}) }}" alt="QR Code pour 2FA">
+                        </div>
+                    {% endif %}
+                    <button style="margin-left: 165px;" type="submit" class="orange-button">Mettre à jour</button>
+                </form>
             </div>
         </div>
 

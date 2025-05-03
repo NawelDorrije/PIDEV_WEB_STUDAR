@@ -4,8 +4,8 @@ namespace App\Controller\Admin;
 
 use App\Entity\ActivityLog;
 use Symfony\Component\String\Slugger\SluggerInterface;
-use Endroid\QrCode\QrCode; // Add this
-use Endroid\QrCode\Writer\PngWriter; // Add this
+use Endroid\QrCode\QrCode as EndroidQrCode; // Use the alias
+use Endroid\QrCode\Writer\PngWriter;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Psr\Log\LoggerInterface;
@@ -19,71 +19,136 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use OTPHP\TOTP;
 #[Route('/admin')]
 class DashboardController extends AbstractController
 {
     private $entityManager;
     private $tokenStorage;
     private $logger;
+   
 
-    public function __construct(EntityManagerInterface $entityManager, TokenStorageInterface $tokenStorage,LoggerInterface $logger)
+    public function __construct(EntityManagerInterface $entityManager, TokenStorageInterface $tokenStorage, LoggerInterface $logger)
     {
         $this->entityManager = $entityManager;
         $this->tokenStorage = $tokenStorage;
         $this->logger = $logger;
     }
     #[Route('/user/{cin}/qr-code', name: 'app_admin_user_qr_code', methods: ['GET'])]
-    public function generateQrCode(string $cin, UtilisateurRepository $utilisateurRepository): StreamedResponse
+    public function generateQrCode(string $cin, UtilisateurRepository $utilisateurRepository, LoggerInterface $logger): Response
     {
+        $logger->debug('Generating QR code for CIN: ' . $cin);
+
+        // Find the user
         $user = $utilisateurRepository->findOneBy(['cin' => $cin]);
         if (!$user) {
+            $logger->error('User not found for CIN: ' . $cin);
             throw $this->createNotFoundException('Utilisateur non trouvé');
         }
 
+        // Get and clean the phone number
         $phoneNumber = $user->getNumTel();
         if (!$phoneNumber) {
-            throw $this->createNotFoundException('Numéro de téléphone non défini pour cet utilisateur');
+            $logger->warning('Phone number not defined for CIN: ' . $cin);
+            // Return a placeholder image or message
+            $placeholderPath = $this->getParameter('kernel.project_dir') . '/public/images/qr-placeholder.png';
+            if (!file_exists($placeholderPath)) {
+                $logger->error('Placeholder image not found at: ' . $placeholderPath);
+                return new Response('QR Code unavailable (no phone number)', Response::HTTP_OK);
+            }
+            return new Response(
+                file_get_contents($placeholderPath),
+                Response::HTTP_OK,
+                ['Content-Type' => 'image/png']
+            );
         }
 
-        // Clean and format phone number
+        // Clean the phone number (remove spaces, dashes, etc.)
         $phoneNumber = preg_replace('/[^0-9+]/', '', $phoneNumber);
-        if (!str_starts_with($phoneNumber, '+')) {
-            $phoneNumber = '+216' . $phoneNumber; // Default to Tunisia; adjust if needed
+        $logger->debug('Cleaned phone number for CIN ' . $cin . ': ' . $phoneNumber);
+
+        // Initialize libphonenumber
+        $phoneUtil = PhoneNumberUtil::getInstance();
+        try {
+            $parsedNumber = $phoneUtil->parse($phoneNumber, 'TN'); // Default to Tunisia
+            if (!$phoneUtil->isValidNumber($parsedNumber)) {
+                throw new \Exception('Numéro de téléphone invalide');
+            }
+            $formattedNumber = $phoneUtil->format($parsedNumber, PhoneNumberFormat::E164);
+            $logger->debug('Formatted phone number: ' . $formattedNumber);
+        } catch (\Exception $e) {
+            $logger->warning('Invalid phone number for QR code', [
+                'cin' => $cin,
+                'phone' => $phoneNumber,
+                'error' => $e->getMessage(),
+            ]);
+            $placeholderPath = $this->getParameter('kernel.project_dir') . '/public/images/qr-placeholder.png';
+            if (!file_exists($placeholderPath)) {
+                $logger->error('Placeholder image not found at: ' . $placeholderPath);
+                return new Response('QR Code unavailable (invalid phone number)', Response::HTTP_OK);
+            }
+            return new Response(
+                file_get_contents($placeholderPath),
+                Response::HTTP_OK,
+                ['Content-Type' => 'image/png']
+            );
         }
 
-        // Basic validation
-        if (strlen($phoneNumber) < 10) {
-            throw $this->createNotFoundException('Numéro de téléphone invalide');
+        // Generate WhatsApp link
+        $whatsAppLink = sprintf('https://wa.me/%s', ltrim($formattedNumber, '+'));
+        $logger->debug('WhatsApp link: ' . $whatsAppLink);
+
+        // Generate QR code
+        try {
+            $qrCode = new EndroidQrCode($whatsAppLink); // Use the alias EndroidQrCode
+
+            $writer = new PngWriter();
+            $result = $writer->write(
+                $qrCode,
+                null, // Logo path (optional, null if not used)
+                null, // Label (optional, null if not used)
+                [
+                    'size' => 200, // Set the size here
+                    'margin' => 10, // Set the margin here
+                ]
+            );
+
+            $logger->info('QR code generated successfully for CIN: ' . $cin);
+            return new StreamedResponse(
+                function () use ($result) {
+                    echo $result->getString();
+                },
+                Response::HTTP_OK,
+                [
+                    'Content-Type' => $result->getMimeType(),
+                    'Content-Disposition' => 'inline; filename="whatsapp-qr-' . $cin . '.png"',
+                ]
+            );
+        } catch (\Exception $e) {
+            $logger->error('Failed to generate QR code', [
+                'cin' => $cin,
+                'error' => $e->getMessage(),
+            ]);
+            $placeholderPath = $this->getParameter('kernel.project_dir') . '/public/images/qr-placeholder.png';
+            if (!file_exists($placeholderPath)) {
+                $logger->error('Placeholder image not found at: ' . $placeholderPath);
+                return new Response('QR Code unavailable (generation failed)', Response::HTTP_OK);
+            }
+            return new Response(
+                file_get_contents($placeholderPath),
+                Response::HTTP_OK,
+                ['Content-Type' => 'image/png']
+            );
         }
-
-        $whatsAppLink = sprintf('https://wa.me/%s', ltrim($phoneNumber, '+'));
-
-        // Generate QR code (version 4.x syntax)
-        $qrCode = new QrCode($whatsAppLink);
-        $qrCode->setSize(200);
-        $qrCode->setMargin(10);
-
-        $writer = new PngWriter();
-        $result = $writer->write($qrCode);
-
-        return new StreamedResponse(
-            function () use ($result) {
-                echo $result->getString();
-            },
-            Response::HTTP_OK,
-            [
-                'Content-Type' => $result->getMimeType(),
-                'Content-Disposition' => 'inline; filename="whatsapp-qr-' . $cin . '.png"',
-            ]
-        );
-    
-}
-
+    }
     #[Route('/dashboard', name: 'app_admin_dashboard')]
     public function dashboard(
         UtilisateurRepository $utilisateurRepository,
@@ -186,7 +251,61 @@ public function debugUserStats(UtilisateurRepository $utilisateurRepository): Js
     $stats = $utilisateurRepository->getUserCountByRole();
     return $this->json($stats);
 }
+#[Route('/api/emotion-stats', name: 'app_admin_api_emotion_stats')]
+public function getEmotionStats(Request $request, UtilisateurRepository $utilisateurRepository, LoggerInterface $logger): JsonResponse
+{
+    $roleFilter = $request->query->get('role');
 
+    $queryBuilder = $utilisateurRepository->createQueryBuilder('u')
+        ->select('u.satisfactionEmotion AS emotion, COUNT(u.cin) AS count')
+        ->groupBy('u.satisfactionEmotion');
+
+    if ($roleFilter) {
+        $queryBuilder->andWhere('u.role = :role')
+            ->setParameter('role', $roleFilter);
+    }
+
+    $emotionStats = $queryBuilder->getQuery()->getResult();
+
+    $logger->info('Raw emotion stats', ['stats' => $emotionStats, 'roleFilter' => $roleFilter]);
+
+    $labels = [];
+    $data = [];
+    $colors = [];
+
+    $emotionColors = [
+        'happy' => '#f35525',
+        'sad' => '#4e73df',
+        'neutral' => '#1cc88a',
+        'angry' => '#e74a3b',
+        'surprised' => '#f6c23e',
+        'unknown' => '#6c757d',
+    ];
+
+    foreach ($emotionStats as $stat) {
+        $emotion = strtolower($stat['emotion'] ?? 'unknown');
+        $count = (int)$stat['count'];
+        if ($count > 0) {
+            $labels[] = ucfirst($emotion ?: 'Inconnu');
+            $data[] = $count;
+            $colors[] = $emotionColors[$emotion] ?? '#6c757d';
+            $logger->debug('Processing emotion', ['emotion' => $emotion, 'count' => $count]);
+        }
+    }
+
+    if (empty($data)) {
+        $labels = ['Aucune donnée'];
+        $data = [1];
+        $colors = ['#6c757d'];
+    }
+
+    $logger->info('Processed emotion stats', ['labels' => $labels, 'data' => $data]);
+    return $this->json([
+        'labels' => $labels,
+        'data' => $data,
+        'colors' => $colors,
+    ]);
+}
     #[Route('/parametre', name: 'app_admin_parametre')]
     public function parametre(ActivityLogRepository $activityLogRepository): Response
     {
@@ -498,6 +617,97 @@ public function show(Utilisateur $utilisateur = null): Response
         $utilisateurRepository->getEntityManager()->flush();
     
         return new JsonResponse(['success' => true, 'blocked' => $user->isBlocked()]);
+    }
+    #[Route('/parametre/twofa', name: 'app_admin_parametre_twofa', methods: ['POST'])]
+    public function updateTwoFactor(
+        Request $request,
+        EntityManagerInterface $em,
+        ActivityLogRepository $activityLogRepository,
+        UtilisateurRepository $utilisateurRepository,
+        LoggerInterface $logger
+    ): Response {
+        $user = $this->getUser();
+        if (!$user) {
+            $this->addFlash('error', 'Utilisateur non connecté.');
+            return $this->redirectToRoute('app_admin_parametre');
+        }
+
+        $user = $utilisateurRepository->find($user->getCin());
+        $twoFactorEnabled = $request->request->get('twofa_enabled') === 'on';
+
+        if ($twoFactorEnabled && !$user->getTwoFactorSecret()) {
+            $totp = TOTP::create();
+            $user->setTwoFactorSecret($totp->getSecret());
+            $logger->info('Generated new 2FA secret for user', ['cin' => $user->getCin()]);
+        } elseif (!$twoFactorEnabled) {
+            $user->setTwoFactorSecret(null);
+            $logger->info('2FA disabled for user', ['cin' => $user->getCin()]);
+        }
+
+        $user->setIsTwoFactorEnabled($twoFactorEnabled);
+        $em->persist($user);
+        $em->flush();
+
+       		// Log the action
+        $log = new ActivityLog();
+        $log->setUser($user);
+        $log->setAction('2FA modifié');
+        $log->setDetails($twoFactorEnabled ? '2FA activé' : '2FA désactivé');
+        $em->persist($log);
+        $em->flush();
+
+        $this->addFlash('success', 'Paramètres 2FA mis à jour avec succès.');
+        return $this->redirectToRoute('app_admin_parametre');
+    }
+
+    #[Route('/twofa/qr-code/{cin}', name: 'app_admin_twofa_qr_code', methods: ['GET'])]
+    public function generateTwoFactorQrCode(
+        string $cin,
+        UtilisateurRepository $utilisateurRepository,
+        LoggerInterface $logger
+    ): Response {
+        $user = $utilisateurRepository->findOneBy(['cin' => $cin]);
+        if (!$user || !$user->getTwoFactorSecret()) {
+            $logger->error('User or 2FA secret not found for CIN: ' . $cin);
+            throw $this->createNotFoundException('Utilisateur ou secret 2FA non trouvé');
+        }
+
+        $totp = TOTP::create($user->getTwoFactorSecret());
+        $totp->setLabel($user->getEmail());
+        $totp->setIssuer('Studar');
+        $provisioningUri = $totp->getProvisioningUri();
+
+        try {
+            $qrCode = new EndroidQrCode($provisioningUri);
+            $writer = new PngWriter();
+            $result = $writer->write(
+                $qrCode,
+                null,
+                null,
+                [
+                    'size' => 200,
+                    'margin' => 10,
+                ]
+            );
+
+            $logger->info('2FA QR code generated for CIN: ' . $cin);
+            return new StreamedResponse(
+                function () use ($result) {
+                    echo $result->getString();
+                },
+                Response::HTTP_OK,
+                [
+                    'Content-Type' => $result->getMimeType(),
+                    'Content-Disposition' => 'inline; filename="2fa-qr-' . $cin . '.png"',
+                ]
+            );
+        } catch (\Exception $e) {
+            $logger->error('Failed to generate 2FA QR code', [
+                'cin' => $cin,
+                'error' => $e->getMessage(),
+            ]);
+            return new Response('Erreur lors de la génération du QR code', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
    
 }
