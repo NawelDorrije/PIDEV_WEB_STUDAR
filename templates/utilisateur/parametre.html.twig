@@ -596,11 +596,12 @@
             const stopButton = document.getElementById('stopRating');
             let stream;
             let intervalId;
-            let latestEmotion = null; // Track the latest detected emotion
-            let isEmotionConfirmed = false; // Track user confirmation
-    
+            let latestEmotion = null;
+            let evaluationStopped = false; // Flag to stop frame capture
+            let isEmotionConfirmed = false;
+        
             console.log('Start button clicked');
-    
+        
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 navigator.mediaDevices.getUserMedia({ video: true })
                     .then(function(videoStream) {
@@ -610,7 +611,7 @@
                         startButton.disabled = true;
                         stopButton.style.display = 'inline-block';
                         console.log('Webcam stream started');
-    
+        
                         video.onloadedmetadata = function() {
                             console.log('Video metadata loaded', {
                                 width: video.videoWidth,
@@ -619,10 +620,10 @@
                             video.play();
                             intervalId = setInterval(sendFrame, 2000);
                         };
-    
+        
                         function sendFrame() {
-                            if (!canvas || !video.videoWidth || !video.videoHeight) {
-                                console.error('Canvas or video not ready');
+                            if (evaluationStopped || !canvas || !video.videoWidth || !video.videoHeight) {
+                                console.log('Evaluation stopped or canvas not ready, skipping frame');
                                 return;
                             }
                             canvas.width = video.videoWidth;
@@ -636,7 +637,7 @@
                                 result.style.display = 'block';
                                 return;
                             }
-    
+        
                             console.log('Sending request body:', JSON.stringify({ image: imageData }));
                             fetch('https://127.0.0.1:8000/utilisateur/parametre/rate', {
                                 method: 'POST',
@@ -653,31 +654,44 @@
                             })
                             .then(data => {
                                 console.log('Server response data:', data);
-                                if (data.emotion) {
-                                    latestEmotion = data.emotion; // Store the latest emotion
+                                if (data.emotion && !evaluationStopped) {
+                                    latestEmotion = data.emotion;
                                     result.textContent = `Émotion détectée : ${data.emotion}. Confirmez avec "Arrêter" si correcte.`;
                                     result.style.display = 'block';
                                 } else {
                                     console.error('No emotion in response:', data);
-                                    result.textContent = 'Erreur : Réponse inattendue du serveur.';
-                                    result.style.display = 'block';
+                                    if (!evaluationStopped) {
+                                        result.textContent = 'Erreur : Réponse inattendue du serveur.';
+                                        result.style.display = 'block';
+                                    }
                                 }
                             })
                             .catch(error => {
                                 console.error('Fetch error:', error);
-                                result.textContent = 'Erreur : Échec de la détection.';
-                                result.style.display = 'block';
+                                if (!evaluationStopped) {
+                                    result.textContent = 'Erreur : Échec de la détection.';
+                                    result.style.display = 'block';
+                                }
                             });
                         }
-    
+        
                         function stopStream() {
-                            if (intervalId) clearInterval(intervalId);
-                            if (stream) stream.getTracks().forEach(track => track.stop());
+                            evaluationStopped = true; // Set flag to stop frame capture
+                            if (intervalId) {
+                                clearInterval(intervalId);
+                                intervalId = null;
+                                console.log('Interval cleared');
+                            }
+                            if (stream) {
+                                stream.getTracks().forEach(track => track.stop());
+                                stream = null;
+                                console.log('Video stream stopped');
+                            }
                             videoContainer.style.display = 'none';
                             startButton.disabled = false;
                             stopButton.style.display = 'none';
-    
-                            // Save the emotion only if confirmed by the user
+        
+                            console.log('Attempting to save emotion:', latestEmotion);
                             if (isEmotionConfirmed && latestEmotion) {
                                 fetch('https://127.0.0.1:8000/utilisateur/parametre/save-emotion', {
                                     method: 'POST',
@@ -685,6 +699,7 @@
                                     body: JSON.stringify({ emotion: latestEmotion })
                                 })
                                 .then(response => {
+                                    console.log('Save emotion response status:', response.status);
                                     if (!response.ok) {
                                         throw new Error('Failed to save emotion: ' + response.statusText);
                                     }
@@ -704,15 +719,14 @@
                                 result.textContent = 'Aucune émotion détectée à enregistrer.';
                             }
                         }
-    
-                        // Add confirmation logic when stopping
+        
                         stopButton.addEventListener('click', function() {
                             if (latestEmotion) {
                                 if (confirm(`Voulez-vous enregistrer l'émotion "${latestEmotion}" ?`)) {
-                                    isEmotionConfirmed = true; // Set confirmation flag
+                                    isEmotionConfirmed = true;
                                 }
                             }
-                            stopStream(); // Proceed to stop the stream
+                            stopStream();
                         });
                     })
                     .catch(function(err) {
@@ -726,7 +740,7 @@
                 result.style.display = 'block';
             }
         });
-    </script>
+        </script>
     <script>
         console.log('START_PARAMETRE_JS');
 

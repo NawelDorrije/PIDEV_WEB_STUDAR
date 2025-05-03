@@ -853,35 +853,53 @@ $process->setTimeout(30);
         return new JsonResponse(['emotion' => $emotion]);
     }
     #[Route('/parametre/save-emotion', name: 'app_utilisateur_save_emotion', methods: ['POST'])]
-    public function saveEmotion(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    public function saveEmotion(Request $request, EntityManagerInterface $entityManager, LoggerInterface $logger): JsonResponse
     {
-        $this->logger->info('Save emotion request received', ['raw_content' => $request->getContent()]);
-        $data = json_decode($request->getContent(), true);
-        $emotion = $data['emotion'] ?? null;
-        $log = new ActivityLog();
-        $log->setUser($user);
-        $log->setAction('Vous avez ajouté votre avis');
-        $log->setDetails('Avis enregisté avec succèes. ');
-        $em->persist($log);
-        $em->flush();
-
-        if (!$emotion) {
-            $this->logger->error('No emotion provided', ['data' => $data]);
-            return new JsonResponse(['error' => 'Aucune émotion fournie'], 400);
+        try {
+            $logger->info('Save emotion request received', ['raw_content' => $request->getContent()]);
+            $data = json_decode($request->getContent(), true);
+            $emotion = $data['emotion'] ?? null;
+    
+            if (!$emotion) {
+                $logger->error('No emotion provided', ['data' => $data]);
+                return new JsonResponse(['error' => 'Aucune émotion fournie'], 400);
+            }
+    
+            $validEmotions = ['happy', 'sad', 'fear', 'neutral', 'angry', 'disgust', 'surprise'];
+            if (!in_array($emotion, $validEmotions)) {
+                $logger->error('Invalid emotion provided', ['emotion' => $emotion]);
+                return new JsonResponse(['error' => 'Émotion non valide'], 400);
+            }
+    
+            $user = $this->getUser();
+            if (!$user instanceof Utilisateur) {
+                $logger->error('User not found or not authenticated');
+                return new JsonResponse(['error' => 'Utilisateur non authentifié'], 401);
+            }
+    
+            // Save the emotion to the user
+            $user->setSatisfactionEmotion($emotion);
+            $entityManager->persist($user);
+    
+            // Log the activity
+            $log = new ActivityLog();
+            $log->setUser($user);
+            $log->setAction('Vous avez ajouté votre avis');
+            $log->setDetails('Avis enregistré avec succès: ' . $emotion);
+            $log->setCreatedAt(new \DateTimeImmutable()); // Ensure createdAt is set
+            $entityManager->persist($log);
+    
+            // Commit changes to the database
+            $entityManager->flush();
+    
+            $logger->info('Emotion saved for user', ['user_id' => $user->getId(), 'emotion' => $emotion]);
+            return new JsonResponse(['message' => 'Émotion enregistrée avec succès', 'emotion' => $emotion]);
+        } catch (\Exception $e) {
+            $logger->error('Failed to save emotion', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de l\'émotion: ' . $e->getMessage()], 500);
         }
-
-        $user = $this->getUser();
-        if (!$user instanceof Utilisateur) {
-            $this->logger->error('User not found or not authenticated');
-            return new JsonResponse(['error' => 'Utilisateur non authentifié'], 401);
-        }
-
-        $user->setSatisfactionEmotion($emotion);
-        $entityManager->persist($user);
-        $entityManager->flush();
-
-        $this->logger->info('Emotion saved for user', ['user_id' => $user->getId(), 'emotion' => $emotion]);
-        return new JsonResponse(['message' => 'Émotion enregistrée avec succès', 'emotion' => $emotion]);
     }
-   
 }
