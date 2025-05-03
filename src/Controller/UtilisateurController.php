@@ -33,9 +33,6 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Form\FormError;
 use OTPHP\TOTP;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-
 #[Route('/utilisateur')]
 final class UtilisateurController extends AbstractController
 {
@@ -673,55 +670,56 @@ public function resetPassword(
 
         return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
     }
+}
 
-    #[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
-    public function resetPassword(
-        Request $request,
-        UtilisateurRepository $utilisateurRepository,
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
-    ): Response {
-        $email = $request->getSession()->get('reset_email');
-        if (!$email) {
-            $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
-            return $this->redirectToRoute('app_forgot_password');
-        }
+    // #[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
+    // public function resetPassword(
+    //     Request $request,
+    //     UtilisateurRepository $utilisateurRepository,
+    //     EntityManagerInterface $entityManager,
+    //     UserPasswordHasherInterface $passwordHasher
+    // ): Response {
+    //     $email = $request->getSession()->get('reset_email');
+    //     if (!$email) {
+    //         $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
+    //         return $this->redirectToRoute('app_forgot_password');
+    //     }
 
-        $user = $utilisateurRepository->findOneBy(['email' => $email]);
-        if (!$user) {
-            $this->addFlash('error', 'Utilisateur non trouvé');
-            return $this->redirectToRoute('app_forgot_password');
-        }
+    //     $user = $utilisateurRepository->findOneBy(['email' => $email]);
+    //     if (!$user) {
+    //         $this->addFlash('error', 'Utilisateur non trouvé');
+    //         return $this->redirectToRoute('app_forgot_password');
+    //     }
 
-        if ($request->isMethod('POST')) {
-            $newPassword = $request->request->get('new_password');
-            $confirmPassword = $request->request->get('confirm_password');
+    //     if ($request->isMethod('POST')) {
+    //         $newPassword = $request->request->get('new_password');
+    //         $confirmPassword = $request->request->get('confirm_password');
 
-            if ($newPassword !== $confirmPassword) {
-                $this->addFlash('error', 'Les mots de passe ne correspondent pas');
-                return $this->render('utilisateur/reset_password.html.twig');
-            }
+    //         if ($newPassword !== $confirmPassword) {
+    //             $this->addFlash('error', 'Les mots de passe ne correspondent pas');
+    //             return $this->render('utilisateur/reset_password.html.twig');
+    //         }
 
-            if (strlen($newPassword) < 6) {
-                $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
-                return $this->render('utilisateur/reset_password.html.twig');
-            }
+    //         if (strlen($newPassword) < 6) {
+    //             $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
+    //             return $this->render('utilisateur/reset_password.html.twig');
+    //         }
 
-            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-            $user->setMdp($hashedPassword);
-            $user->setResetCode(null);
-            $user->setResetCodeExpiresAt(null);
+    //         $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+    //         $user->setMdp($hashedPassword);
+    //         $user->setResetCode(null);
+    //         $user->setResetCodeExpiresAt(null);
 
-            $entityManager->flush();
+    //         $entityManager->flush();
 
-            $request->getSession()->remove('reset_email');
+    //         $request->getSession()->remove('reset_email');
 
-            $this->addFlash('success', 'Mot de passe mis à jour avec succès');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
+    //         $this->addFlash('success', 'Mot de passe mis à jour avec succès');
+    //         return $this->redirectToRoute('app_utilisateur_signin');
+    //     }
 
-        return $this->render('utilisateur/reset_password.html.twig');
-    }
+    //     return $this->render('utilisateur/reset_password.html.twig');
+    // }
     #[Route('/parametre/twofa', name: 'app_utilisateur_parametre_twofa', methods: ['POST'])]
     public function updateTwoFactor(
         Request $request,
@@ -976,5 +974,4 @@ $process->setTimeout(30);
             return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de l\'émotion: ' . $e->getMessage()], 500);
         }
     }
-}
 }

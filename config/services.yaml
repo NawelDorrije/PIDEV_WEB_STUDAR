@@ -34,14 +34,14 @@ services:
     App\Controller\Admin\DashboardController:
         arguments:
             $logger: '@logger'
-    App\Security\GoogleAuthenticator:
-        arguments:
-            - '@knpu.oauth2.registry'
-            - '@doctrine.orm.entity_manager'
-            - '@router.default'
-    App\Repository\GestionMeubles\CommandeRepository:
-        arguments:
-            $logger: '@monolog.logger'
+    # App\Security\GoogleAuthenticator:
+    #     arguments:
+    #         - '@knpu.oauth2.registry'
+    #         - '@doctrine.orm.entity_manager'
+    #         - '@router.default'
+    # App\Repository\GestionMeubles\CommandeRepository:
+    #     arguments:
+    #         $logger: '@monolog.logger'
 
   
     # default configuration for services in *this* file
@@ -50,13 +50,6 @@ services:
         autoconfigure: true
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    _defaults:
-        autowire: true
-        autoconfigure: true
-        bind:
-            $mailerFrom: '%mailer_from%'
-            $mailerFromName: '%mailer_from_name%'
-
     App\:
         resource: '../src/'
         exclude:
@@ -65,9 +58,9 @@ services:
             - '../src/Kernel.php'
             - '../src/Form/'  # Add this line to exclude the Form directory
 
-    App\Controller\Admin\DashboardController:
-        arguments:
-            $logger: '@logger'
+    # App\Controller\Admin\DashboardController:
+    #     arguments:
+    #         $logger: '@logger'
 
     App\Security\GoogleAuthenticator:
         arguments:
