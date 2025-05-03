@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\ActivityLog;
 use App\Entity\Utilisateur;
-use Endroid\QrCode\QrCode as EndroidQrCode; // Use the alias
+use Endroid\QrCode\QrCode as EndroidQrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Symfony\Component\Process\Process;
 use App\Enums\RoleUtilisateur;
@@ -33,8 +33,6 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Form\FormError;
 use OTPHP\TOTP;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 #[Route('/utilisateur')]
 final class UtilisateurController extends AbstractController
@@ -135,13 +133,13 @@ final class UtilisateurController extends AbstractController
                 'role' => $user->getRole(),
                 'isTwoFactorEnabled' => $user instanceof Utilisateur ? $user->isTwoFactorEnabled() : false,
             ]);
-    
+
             // Check if 2FA is enabled and not yet verified
             if ($user instanceof Utilisateur && $user->isTwoFactorEnabled() && !$session->get('two_factor_verified', false)) {
                 $this->logger->info('2FA required, redirecting to 2FA check');
                 return $this->redirectToRoute('app_utilisateur_two_factor_check');
             }
-    
+
             // If 2FA is not required or has been verified, redirect based on role
             $this->logger->info('Redirecting based on role', [
                 'user' => $user->getEmail(),
@@ -152,13 +150,13 @@ final class UtilisateurController extends AbstractController
                 default => $this->redirectToRoute('app_home')
             };
         }
-    
+
         $error = $authenticationUtils->getLastAuthenticationError();
         $this->logger->info('Rendering signin page', [
             'last_username' => $authenticationUtils->getLastUsername(),
             'error' => $error ? $error->getMessage() : null,
         ]);
-    
+
         return $this->render('utilisateur/signin.html.twig', [
             'last_username' => $authenticationUtils->getLastUsername(),
             'error' => $error,
@@ -175,12 +173,12 @@ final class UtilisateurController extends AbstractController
         if (!$user || !$user instanceof Utilisateur || !$user->isTwoFactorEnabled()) {
             return $this->redirectToRoute('app_utilisateur_signin');
         }
-    
+
         $error = null;
         if ($request->isMethod('POST')) {
             $code = $request->request->get('totp_code');
             $totp = TOTP::create($user->getTwoFactorSecret());
-    
+
             if ($totp->verify($code)) {
                 $session->set('two_factor_verified', true);
                 $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
@@ -193,10 +191,10 @@ final class UtilisateurController extends AbstractController
                         : 'app_home'
                 );
             }
-    
+
             $error = 'Code invalide. Veuillez réessayer.';
         }
-    
+
         return $this->render('utilisateur/two_factor.html.twig', [
             'error' => $error,
         ]);
@@ -215,7 +213,7 @@ final class UtilisateurController extends AbstractController
             return new JsonResponse(['success' => false, 'message' => 'Utilisateur ou image non trouvé'], 404);
         }
 
-        $imagePath = '/uploads/images/' . $user->getImage();
+        $imagePath = '/Uploads/images/' . $user->getImage();
         return new JsonResponse(['success' => true, 'imagePath' => $imagePath]);
     }
 
@@ -275,7 +273,6 @@ final class UtilisateurController extends AbstractController
             $this->entityManager->flush();
         }
         $activityLogs = $activityLogRepository->findRecentByUser($user->getCin());
-
 
         return $this->render('utilisateur/parametre.html.twig', [
             'activityLogs' => $activityLogs,
@@ -507,66 +504,16 @@ final class UtilisateurController extends AbstractController
     {
         return $this->render('dashboard.html.twig');
     }
-    
 
-    #[Route('/forgot-password', name: 'app_forgot_password', methods: ['GET', 'POST'])]
-    public function forgotPassword(
-        Request $request,
-        UtilisateurRepository $utilisateurRepository,
-        EntityManagerInterface $entityManager,
-        MailerInterface $mailer,
-        LoggerInterface $logger
-    ): Response {
-        if ($request->isMethod('POST')) {
-            $email = $request->request->get('email');
-            $user = $utilisateurRepository->findOneBy(['email' => $email]);
-
-//             if (!$user) {
-//                 $this->addFlash('error', 'Cet email n\'est pas inscrit.');
-//                 return $this->render('utilisateur/forgot_password.html.twig');
-//             }
-
-            $resetCode = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $user->setResetCode($resetCode);
-            $user->setResetCodeExpiresAt(new \DateTimeImmutable('+15 minutes'));
-            $entityManager->flush();
-
-//             try {
-//                 $email = (new Email())
-//                     ->from(new Address('studar21@gmail.com', 'Studar'))
-//                     ->to($user->getEmail())
-//                     ->subject('Réinitialisation de votre mot de passe')
-//                     ->text(sprintf(
-//                         "Votre code de réinitialisation est : %s\nCe code expirera dans 15 minutes.",
-//                         $resetCode
-//                     ));
-
-//                 $mailer->send($email);
-
-                $request->getSession()->set('reset_email', $user->getEmail());
-
-//                 return $this->redirectToRoute('app_verify_reset_code');
-//             } catch (\Exception $e) {
-//                 $logger->error('Email sending failed: ' . $e->getMessage());
-//                 $this->addFlash('error', 'Erreur lors de l\'envoi du code');
-//                 return $this->render('utilisateur/forgot_password.html.twig');
-//             }
-//         }
-
-        return $this->render('utilisateur/forgot_password.html.twig');
-    }
-}
-
-    
     #[Route('/debug-2fa/{email}', name: 'app_debug_2fa', methods: ['GET'])]
-public function debug2FA(string $email, UtilisateurRepository $utilisateurRepository): Response
-{
-    $user = $utilisateurRepository->findOneBy(['email' => $email]);
-    if (!$user) {
-        return new Response('User not found', 404);
+    public function debug2FA(string $email, UtilisateurRepository $utilisateurRepository): Response
+    {
+        $user = $utilisateurRepository->findOneBy(['email' => $email]);
+        if (!$user) {
+            return new Response('User not found', 404);
+        }
+        return new Response('2FA Enabled: ' . ($user->isTwoFactorEnabled() ? 'Yes' : 'No'));
     }
-    return new Response('2FA Enabled: ' . ($user->isTwoFactorEnabled() ? 'Yes' : 'No'));
-}
 
     #[Route('/verify-reset-code', name: 'app_verify_reset_code', methods: ['GET', 'POST'])]
     public function verifyResetCode(
@@ -586,142 +533,7 @@ public function debug2FA(string $email, UtilisateurRepository $utilisateurReposi
             return $this->redirectToRoute('app_forgot_password');
         }
     }
-//         return $this->render('utilisateur/forgot_password.html.twig');
-//     }
 
-
-//     #[Route('/verify-reset-code', name: 'app_verify_reset_code', methods: ['GET', 'POST'])]
-// public function verifyResetCode(
-//     Request $request,
-//     UtilisateurRepository $utilisateurRepository,
-//     EntityManagerInterface $entityManager
-// ): Response {
-//     $email = $request->getSession()->get('reset_email');
-//     if (!$email) {
-//         $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
-//         return $this->redirectToRoute('app_forgot_password');
-//     }
-
-//     $user = $utilisateurRepository->findOneBy(['email' => $email]);
-//     if (!$user) {
-//         $this->addFlash('error', 'Utilisateur non trouvé');
-//         return $this->redirectToRoute('app_forgot_password');
-//     }
-
-//     if ($request->isMethod('POST')) {
-//         $submittedCode = $request->request->get('reset_code');
-
-//         if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
-//             $this->addFlash('error', 'Code incorrect');
-//             return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
-//         }
-
-//         if ($user->getResetCodeExpiresAt() < new \DateTimeImmutable()) {
-//             $this->addFlash('error', 'Code expiré');
-//             return $this->redirectToRoute('app_forgot_password');
-//         }
-
-//         return $this->redirectToRoute('app_reset_password');
-//     }
-
-//     return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
-// }
-
-#[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
-public function resetPassword(
-    Request $request,
-    UtilisateurRepository $utilisateurRepository,
-    EntityManagerInterface $entityManager,
-    UserPasswordHasherInterface $passwordHasher
-): Response {
-    $email = $request->getSession()->get('reset_email');
-    if (!$email) {
-        $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
-        return $this->redirectToRoute('app_forgot_password');
-    }
-
-    $user = $utilisateurRepository->findOneBy(['email' => $email]);
-    if (!$user) {
-        $this->addFlash('error', 'Utilisateur non trouvé');
-        return $this->redirectToRoute('app_forgot_password');
-    }
-
-    if ($request->isMethod('POST')) {
-        $newPassword = $request->request->get('new_password');
-        $confirmPassword = $request->request->get('confirm_password');
-
-        if ($newPassword !== $confirmPassword) {
-            $this->addFlash('error', 'Les mots de passe ne correspondent pas');
-            return $this->render('utilisateur/reset_password.html.twig');
-        }
-
-        if ($request->isMethod('POST')) {
-            $submittedCode = $request->request->get('reset_code');
-
-            if (!$user->getResetCode() || $user->getResetCode() !== $submittedCode) {
-                $this->addFlash('error', 'Code incorrect');
-                return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
-            }
-
-            if ($user->getResetCodeExpiresAt() < new \DateTimeImmutable()) {
-                $this->addFlash('error', 'Code expiré');
-                return $this->redirectToRoute('app_forgot_password');
-            }
-
-            return $this->redirectToRoute('app_reset_password');
-        }
-
-        return $this->render('utilisateur/verify_reset_code.html.twig', ['email' => $email]);
-    }
-
-    #[Route('/reset-password', name: 'app_reset_password', methods: ['GET', 'POST'])]
-    public function resetPassword(
-        Request $request,
-        UtilisateurRepository $utilisateurRepository,
-        EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
-    ): Response {
-        $email = $request->getSession()->get('reset_email');
-        if (!$email) {
-            $this->addFlash('error', 'Session expirée. Veuillez réessayer.');
-            return $this->redirectToRoute('app_forgot_password');
-        }
-
-        $user = $utilisateurRepository->findOneBy(['email' => $email]);
-        if (!$user) {
-            $this->addFlash('error', 'Utilisateur non trouvé');
-            return $this->redirectToRoute('app_forgot_password');
-        }
-
-        if ($request->isMethod('POST')) {
-            $newPassword = $request->request->get('new_password');
-            $confirmPassword = $request->request->get('confirm_password');
-
-            if ($newPassword !== $confirmPassword) {
-                $this->addFlash('error', 'Les mots de passe ne correspondent pas');
-                return $this->render('utilisateur/reset_password.html.twig');
-            }
-
-            if (strlen($newPassword) < 6) {
-                $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
-                return $this->render('utilisateur/reset_password.html.twig');
-            }
-
-            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-            $user->setMdp($hashedPassword);
-            $user->setResetCode(null);
-            $user->setResetCodeExpiresAt(null);
-
-            $entityManager->flush();
-
-            $request->getSession()->remove('reset_email');
-
-            $this->addFlash('success', 'Mot de passe mis à jour avec succès');
-            return $this->redirectToRoute('app_utilisateur_signin');
-        }
-
-        return $this->render('utilisateur/reset_password.html.twig');
-    }
     #[Route('/parametre/twofa', name: 'app_utilisateur_parametre_twofa', methods: ['POST'])]
     public function updateTwoFactor(
         Request $request,
@@ -752,7 +564,7 @@ public function resetPassword(
         $em->persist($user);
         $em->flush();
 
-       		// Log the action
+        // Log the action
         $log = new ActivityLog();
         $log->setUser($user);
         $log->setAction('2FA modifié');
@@ -813,46 +625,7 @@ public function resetPassword(
             return new Response('Erreur lors de la génération du QR code', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    // #[Route('/parametre/rate', name: 'app_utilisateur_rate', methods: ['POST'])]
-    // public function rate(Request $request, LoggerInterface $logger): JsonResponse
-    // {
-    //     $this->logger->info('Received rate request');
-    //     $data = json_decode($request->getContent(), true);
-    //     $imageData = $data['image'] ?? null;
-    
-    //     if (!$imageData) {
-    //         $this->logger->error('No image data received');
-    //         return new JsonResponse(['error' => 'Aucune image reçue'], 400);
-    //     }
-    
-    //     $imagePath = sys_get_temp_dir() . '/temp_frame.jpg';
-    //     file_put_contents($imagePath, base64_decode(explode(',', $imageData)[1]));
-    //     $this->logger->info('Image saved to temp path', ['path' => $imagePath]);
-    
-    //     $pythonScript = __DIR__ . '/../../bin/emotion_detection.py';
-    //     $this->logger->info('Running Python script', ['script' => $pythonScript]);
-    //     $process = new Process(['C:\\Users\\NOUR\\AppData\\Local\\Programs\\Python\\Python311\\python.exe', $pythonScript, $imagePath]);
-    //     $process->run();
-    
-    //     if (!$process->isSuccessful()) {
-    //         $this->logger->error('Process failed', ['error' => $process->getErrorOutput()]);
-    //         throw new ProcessFailedException($process);
-    //     }
-    
-    //     $emotion = trim($process->getOutput());
-    //     $this->logger->info('Emotion detected', ['emotion' => $emotion]);
-    
-    //     $user = $this->getUser();
-    //     if ($user && in_array($emotion, ['happy', 'sad'])) {
-    //         error_log("User {$user->getId()} rated as $emotion");
-    //     }
-    
-    //     if (file_exists($imagePath)) {
-    //         unlink($imagePath);
-    //     }
-    
-    //     return new JsonResponse(['emotion' => $emotion]);
-    // }
+
     #[Route('/parametre/rate', name: 'app_utilisateur_rate', methods: ['POST'])]
     public function rate(Request $request, LoggerInterface $logger): JsonResponse
     {
@@ -860,22 +633,19 @@ public function resetPassword(
         $data = json_decode($request->getContent(), true);
         $logger->info('Decoded data', ['data' => $data]);
         $imageData = $data['image'] ?? null;
-    
+
         // Add new logging and updated validation here
         $logger->info('Raw image data', ['imageData' => $imageData]);
         if (!preg_match('/^data:image\/jpeg;base64,/i', $imageData)) { // Added 'i' for case-insensitive match
             $logger->error('Invalid image data format', ['imageData' => $imageData]);
             return new JsonResponse(['error' => 'Format de l\'image invalide'], 400);
         }
-    
+
         if (!$imageData) {
             $logger->error('No image data received', ['data' => $data]);
             return new JsonResponse(['error' => 'Aucune image reçue'], 400);
         }
-    
-        // Validate Data URL format
-        // (The original preg_match is now replaced by the above)
-    
+
         $imagePath = sys_get_temp_dir() . '/temp_frame.jpg';
         try {
             $base64Data = explode(',', $imageData)[1];
@@ -885,24 +655,24 @@ public function resetPassword(
                 return new JsonResponse(['error' => 'Échec du décodage de l\'image'], 400);
             }
             $logger->info('Base64 decoded', ['decoded_length' => strlen($decodedData)]);
-    
+
             // Verify if the decoded data looks like a JPEG (starts with JPEG magic bytes: FF D8 FF)
             if (strlen($decodedData) < 3 || substr($decodedData, 0, 3) !== "\xFF\xD8\xFF") {
                 $logger->error('Decoded data is not a valid JPEG', ['first_bytes' => bin2hex(substr($decodedData, 0, 3))]);
                 return new JsonResponse(['error' => 'Données décodées non valides (pas un JPEG)'], 400);
             }
-    
+
             file_put_contents($imagePath, $decodedData);
             $logger->info('Image saved to temp path', ['path' => $imagePath]);
         } catch (\Exception $e) {
             $logger->error('Failed to save image', ['error' => $e->getMessage()]);
             return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de l\'image'], 500);
         }
-    
-        $pythonPath = 'C:\\Users\\NOUR\\anaconda3\\envs\\deepface_env\\python.exe';
-$pythonScript = __DIR__ . '/../../bin/emotion_detection.py';
-$process = new Process([$pythonPath, $pythonScript, $imagePath]);
-$process->setTimeout(30);
+
+        $pythonPath = 'C:\\Users\\DorrijeNawel\\anaconda3\\envs\\deepface_env\\python.exe';
+        $pythonScript = __DIR__ . '/../../bin/emotion_detection.py';
+        $process = new Process([$pythonPath, $pythonScript, $imagePath]);
+        $process->setTimeout(30);
         try {
             $process->run();
             if (!$process->isSuccessful()) {
@@ -919,13 +689,14 @@ $process->setTimeout(30);
             $logger->error('Process execution failed', ['error' => $e->getMessage()]);
             return new JsonResponse(['error' => 'Erreur lors de l\'exécution du script'], 500);
         }
-    
+
         // if (file_exists($imagePath)) {
         //     unlink($imagePath);
         // }
-    
+
         return new JsonResponse(['emotion' => $emotion]);
     }
+
     #[Route('/parametre/save-emotion', name: 'app_utilisateur_save_emotion', methods: ['POST'])]
     public function saveEmotion(Request $request, EntityManagerInterface $entityManager, LoggerInterface $logger): JsonResponse
     {
@@ -933,28 +704,28 @@ $process->setTimeout(30);
             $logger->info('Save emotion request received', ['raw_content' => $request->getContent()]);
             $data = json_decode($request->getContent(), true);
             $emotion = $data['emotion'] ?? null;
-    
+
             if (!$emotion) {
                 $logger->error('No emotion provided', ['data' => $data]);
                 return new JsonResponse(['error' => 'Aucune émotion fournie'], 400);
             }
-    
+
             $validEmotions = ['happy', 'sad', 'fear', 'neutral', 'angry', 'disgust', 'surprise'];
             if (!in_array($emotion, $validEmotions)) {
                 $logger->error('Invalid emotion provided', ['emotion' => $emotion]);
                 return new JsonResponse(['error' => 'Émotion non valide'], 400);
             }
-    
+
             $user = $this->getUser();
             if (!$user instanceof Utilisateur) {
                 $logger->error('User not found or not authenticated');
                 return new JsonResponse(['error' => 'Utilisateur non authentifié'], 401);
             }
-    
+
             // Save the emotion to the user
             $user->setSatisfactionEmotion($emotion);
             $entityManager->persist($user);
-    
+
             // Log the activity
             $log = new ActivityLog();
             $log->setUser($user);
@@ -962,10 +733,10 @@ $process->setTimeout(30);
             $log->setDetails('Avis enregistré avec succès: ' . $emotion);
             $log->setCreatedAt(new \DateTimeImmutable()); // Ensure createdAt is set
             $entityManager->persist($log);
-    
+
             // Commit changes to the database
             $entityManager->flush();
-    
+
             $logger->info('Emotion saved for user', ['user_id' => $user->getId(), 'emotion' => $emotion]);
             return new JsonResponse(['message' => 'Émotion enregistrée avec succès', 'emotion' => $emotion]);
         } catch (\Exception $e) {
@@ -976,5 +747,4 @@ $process->setTimeout(30);
             return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de l\'émotion: ' . $e->getMessage()], 500);
         }
     }
-}
 }

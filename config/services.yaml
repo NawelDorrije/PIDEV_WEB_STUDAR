@@ -47,9 +47,9 @@ services:
 
   
     # default configuration for services in *this* file
-    _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true
+    # _defaults:
+    #     autowire: true      # Automatically injects dependencies in your services.
+    #     autoconfigure: true
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     _defaults:
@@ -67,19 +67,19 @@ services:
             - '../src/Kernel.php'
             - '../src/Form/'  # Add this line to exclude the Form directory
 
-    App\Controller\Admin\DashboardController:
-        arguments:
-            $logger: '@logger'
+    # App\Controller\Admin\DashboardController:
+    #     arguments:
+    #         $logger: '@logger'
 
-    App\Security\GoogleAuthenticator:
-        arguments:
-            - '@knpu.oauth2.registry'
-            - '@doctrine.orm.entity_manager'
-            - '@router.default'
+    # App\Security\GoogleAuthenticator:
+    #     arguments:
+    #         - '@knpu.oauth2.registry'
+    #         - '@doctrine.orm.entity_manager'
+    #         - '@router.default'
 
-    App\Repository\GestionMeubles\CommandeRepository:
-        arguments:
-            $logger: '@monolog.logger'
+    # App\Repository\GestionMeubles\CommandeRepository:
+    #     arguments:
+    #         $logger: '@monolog.logger'
 
     App\Service\CartService:
         arguments:
