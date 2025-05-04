@@ -96,12 +96,14 @@
                                     {% if transport.status.value == 'En attente' %}
                                     <li><a class="dropdown-item small" href="{{ path('app_transport_pickup', {'id': transport.id}) }}">Confirmer</a></li>
                                     {% endif %}
+                                    {% if transport.status.value == 'Complété' %}
                                     <li><a class="dropdown-item small" href="{{ path('app_transport_invoice', {'id': transport.id}) }}">Télécharger PDF</a></li>
                                     <li>
                                         <form method="post" action="{{ path('app_transport_bill', {'id': transport.id}) }}">
                                             <button type="submit" class="dropdown-item small">Envoyer facture</button>
                                         </form>
                                     </li>
+                                    {% endif %}
                                     <li class="dropdown-divider"></li>
                                     <li>
                                         <form method="post" action="{{ path('app_transport_delete', {'id': transport.id}) }}">

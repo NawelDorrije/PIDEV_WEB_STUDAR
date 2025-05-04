@@ -11,6 +11,7 @@ parameters:
     gcp_project_id: 'Studar-2025' # Replace with your actual GCP Project ID
     gcp_region: 'europe-west9'  
     app.sender_email: 'studar21@gmail.com'
+    
     mailer_from: '%env(MAILER_FROM)%'
     mailer_from_name: '%env(MAILER_FROM_NAME)%'
     STRIPE_SECRET_KEY: '%env(STRIPE_SECRET_KEY)%'
@@ -26,6 +27,11 @@ services:
 
     App\Controller\GestionTransport\TransportController:
         # autowire: true is inherited from _defaults
+        arguments:
+            $stripeApiKey: '%stripe_api_key%'
+            $mailerFrom: '%mailer_from%'
+            $mailerFromName: '%mailer_from_name%'
+            $logger: '@logger'
         bind:
             $gcpProjectId: '%gcp_project_id%'
             $gcpRegion: '%gcp_region%'
@@ -46,11 +52,8 @@ services:
     App\Twig\AppExtension:
         tags: ['twig.extension']
         
-    App\Service\StripeService:
-        arguments:
-            $secretKey: '%env(STRIPE_SECRET_KEY)%'
-            $publishableKey: '%env(STRIPE_PUBLISHABLE_KEY)%'
-            $webhookSecret: '%env(STRIPE_WEBHOOK_SECRET)%'
+    
+       
     # App\Service\EmailService:
     #     arguments:
     #         $httpClient: '@http_client'

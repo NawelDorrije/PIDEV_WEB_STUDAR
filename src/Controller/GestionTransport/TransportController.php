@@ -2,6 +2,7 @@
 
 namespace App\Controller\GestionTransport;
 
+use Psr\Log\LoggerInterface;
 use App\Entity\GestionTransport\Transport;
 use App\Entity\ReservationTransport;
 use App\Form\GestionTransport\TransportType;
@@ -21,22 +22,33 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Service\InfobipService;
+use Exception;
 use Knp\Snappy\Pdf;
-use Knp\Bundle\SnappyBundle\Snappy\Response\PdfResponse;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Stripe\Stripe;
+use Stripe\Customer;
+use Stripe\Invoice;
+use Stripe\InvoiceItem;
 
 #[IsGranted('ROLE_TRANSPORTEUR')]
 #[Route('/transport')]
 class TransportController extends AbstractController
 {
     private const OPENSTREETMAP_API_URL = 'https://router.project-osrm.org/route/v1/driving/';
+    private $logger;
+    private string $mailerFrom;
+    private string $mailerFromName;
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly DistanceService $distanceService,
+        LoggerInterface $logger,
         private readonly Geocoder $geocoder,
         private readonly RouteSimulator $routeSimulator,
         private readonly HttpClientInterface $httpClient,
@@ -44,8 +56,14 @@ class TransportController extends AbstractController
         private readonly StripeService $stripeService,
         private readonly Pdf $knpSnappyPdf,
         private readonly MailerInterface $mailer,
+        string $mailerFrom,
+        string $mailerFromName,
         private readonly UrlGeneratorInterface $urlGenerator
-    ) {}
+    ) {
+        $this->mailerFrom = $mailerFrom;
+        $this->mailerFromName = $mailerFromName;
+        $this->logger = $logger;
+    }
 
     #[Route(name: 'app_transport_index', methods: ['GET'])]
     public function index(TransportRepository $transportRepository, Request $request): Response
@@ -66,7 +84,6 @@ class TransportController extends AbstractController
     #[Route('/new', name: 'app_transport_new', methods: ['GET', 'POST'])]
     public function new(Request $request): Response
     {
-  
         $transport = new Transport();
         $form = $this->createForm(TransportType::class, $transport, ['form_type' => 'new']);
         $form->handleRequest($request);
@@ -391,137 +408,233 @@ class TransportController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/bill', name: 'app_transport_bill', methods: ['GET', 'POST'])]
-    public function bill(Request $request, Transport $transport, StripeService $stripeService): Response
+    #[Route('/{id}/invoice', name: 'app_transport_invoice', methods: ['GET'])]
+    public function invoice(Transport $transport): Response
     {
         if ($transport->getStatus() !== TransportStatus::COMPLETE) {
-            $this->addFlash('error', 'Le transport doit être complété avant de générer la facture');
+            $this->addFlash('erreur', 'Facture disponible uniquement pour les transports complétés');
             return $this->redirectToRoute('app_transport_index');
         }
-    
-        $form = $this->createFormBuilder()
-            ->add('confirm', SubmitType::class, [
-                'label' => 'Générer la facture',
-                'attr' => ['class' => 'btn btn-primary']
-            ])
-            ->getForm();
-    
-        $form->handleRequest($request);
-    
-        if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                $etudiant = $transport->getReservation()->getEtudiant();
-                $totalAmount = $transport->getTarif() + ($transport->getExtraCost() ?? 0);
-    
-                // Create invoice using CIN as reference
-                $invoice = $stripeService->createInvoice([
-                    'student_cin' => $etudiant->getCin(),
-                    'transport_id' => $transport->getId(),
-                    'description' => 'Transport #'.$transport->getId(),
-                    'amount' => $totalAmount,
-                    'currency' => 'TND'
-                ]);
-    
-                // Save invoice reference
-                $transport->setStripeInvoiceId($invoice['id']);
-                $this->entityManager->persist($transport);
-                $this->entityManager->flush();
-    
-                // Send billing email
-                $email = (new TemplatedEmail())
-                    ->from('studar21@gmail.com')
-                    ->to($transport->getReservation()->getEtudiant()->getEmail())
-                    ->subject('Facture Transport #' . $transport->getId())
-                    ->html($this->renderView('bill.html.twig', [
-                        'transport' => $transport,
-                        'invoice' => [
-                            'reference' => $invoice['id'],
-                            'amount' => $totalAmount,
-                            'pdf_url' => $invoice['pdf_url'],
-                            'date' => new \DateTime()
-                        ]
-                    ]));
-    
-                $this->mailer->send($email);
-    
-                $this->addFlash('success', 'Facture générée et envoyée avec succès');
-                return $this->redirectToRoute('app_transport_show', ['id' => $transport->getId()]);
-    
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la génération de la facture: '.$e->getMessage());
-            }
-        }
-    
-        $totalAmount = $transport->getTarif() + ($transport->getExtraCost() ?? 0);
-        return $this->render('GestionTransport/transport/bill.html.twig', [
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('chroot', $this->getParameter('kernel.project_dir'));
+        $dompdf = new Dompdf($options);
+
+        $html = $this->renderView('GestionTransport/transport/invoice_pdf.html.twig', [
             'transport' => $transport,
-            'form' => $form->createView(),
             'invoiceData' => [
-                'amount' => $totalAmount,
-                'reference' => $transport->getStripeInvoiceId() ?? 'INV-' . $transport->getId(),
                 'date' => new \DateTime(),
+                'reference' => 'INV-' . $transport->getId(),
+                'amount' => $transport->getTarif() + ($transport->getExtraCost() ?? 0)
             ],
             'company_info' => [
-                'name' => 'StuDar',
+                'name' => 'STUDAR',
                 'address' => '123 Rue Exemple',
                 'zip' => '1000',
                 'city' => 'Tunis',
                 'phone' => '+216 12 345 678',
-                'email' => 'contact@studar.com',
-                'siret' => '123 456 789 00012',
+                'email' => 'studar21@gmail.com',
+                'siret' => '12345678901234'
             ],
             'logo_enabled' => true,
+            'base_path' => $this->getParameter('kernel.project_dir') . '/public/'
         ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="facture-transport-' . $transport->getId() . '.pdf"'
+            ]
+        );
+    }
+
+    #[Route('/{id}/bill', name: 'app_transport_bill', methods: ['GET', 'POST'])]
+    public function bill(Request $request, Transport $transport, MailerInterface $mailer): Response
+    {
+        if ($transport->getStatus() !== TransportStatus::COMPLETE) {
+            $this->addFlash('erreur', 'Facture disponible uniquement pour les transports complétés');
+            return $this->redirectToRoute('app_transport_index');
+        }
     
-    }
-    #[Route('/{id}/invoice', name: 'app_transport_invoice', methods: ['GET'])]
-public function downloadInvoice(int $id, Pdf $pdf,Request $request): Response
-{
-    $transport = $this->entityManager->getRepository(Transport::class)->find($id);
-    if (!$transport || $transport->getStatus() !== TransportStatus::COMPLETE) {
-        throw $this->createNotFoundException('Transport non trouvé ou non complété.');
+        if ($request->isMethod('POST')) {
+            try {
+                $tndToUsdRate = 0.32;
+                $studentEmail = $transport->getReservation()->getEtudiant()->getEmail();
+                if (empty($studentEmail)) {
+                    throw new \Exception("L'adresse email de l'étudiant est vide");
+                }
+    
+                $this->logger->info('Starting bill generation', [
+                    'transport_id' => $transport->getId(),
+                    'student_email' => $studentEmail,
+                    'mailer_from' => $this->mailerFrom
+                ]);
+    
+                // Debug: Log mailer class
+                $this->logger->debug('Mailer class', [
+                    'class' => get_class($mailer),
+                    'transport_id' => $transport->getId()
+                ]);
+                
+    
+                // Stripe invoice creation
+                $customer = Customer::create([
+                    'email' => $studentEmail,
+                    'name' => $transport->getReservation()->getEtudiant()->getNom() . ' ' . $transport->getReservation()->getEtudiant()->getPrenom(),
+                    'metadata' => ['cin' => $transport->getReservation()->getEtudiant()->getCin()]
+                ]);
+    
+                $invoice = Invoice::create([
+                    'customer' => $customer->id,
+                    'collection_method' => 'send_invoice',
+                    'auto_advance' => true,
+                    'currency' => 'usd',
+                    'description' => 'Facture pour transport #' . $transport->getId(),
+                    'days_until_due' => 7,
+                    'metadata' => [
+                        'transport_id' => $transport->getId(),
+                        'tnd_amount' => $transport->getTarif() + ($transport->getExtraCost() ?? 0),
+                        'tnd_to_usd_rate' => $tndToUsdRate
+                    ]
+                ]);
+    
+                InvoiceItem::create([
+                    'customer' => $customer->id,
+                    'invoice' => $invoice->id,
+                    'amount' => (int) ($transport->getTarif() * $tndToUsdRate * 100),
+                    'currency' => 'usd',
+                    'description' => 'Transport de ' . $transport->getReservation()->getAdresseDepart() . ' à ' . $transport->getReservation()->getAdresseDestination()
+                ]);
+    
+                if ($transport->getExtraCost() && $transport->getExtraCost() > 0) {
+                    InvoiceItem::create([
+                        'customer' => $customer->id,
+                        'invoice' => $invoice->id,
+                        'amount' => (int) ($transport->getExtraCost() * $tndToUsdRate * 100),
+                        'currency' => 'usd',
+                        'description' => 'Frais supplémentaires'
+                    ]);
+                }
+    
+                $invoice->finalizeInvoice();
+                $this->logger->info('Stripe invoice created', ['invoice_id' => $invoice->id]);
+    
+                // Generate PDF
+                $options = new Options();
+                $options->set('isRemoteEnabled', true);
+                $options->set('isHtml5ParserEnabled', true);
+                $options->set('chroot', $this->getParameter('kernel.project_dir'));
+                $dompdf = new Dompdf($options);
+    
+                $html = $this->renderView('GestionTransport/transport/invoice_pdf.html.twig', [
+                    'transport' => $transport,
+                    'invoiceData' => [
+                        'date' => new \DateTime(),
+                        'reference' => 'INV-' . $transport->getId(),
+                        'amount' => $transport->getTarif() + ($transport->getExtraCost() ?? 0),
+                        'usd_amount' => ($transport->getTarif() + ($transport->getExtraCost() ?? 0)) * $tndToUsdRate
+                    ],
+                    'company_info' => [
+                        'name' => 'STUDAR',
+                        'address' => '123 Rue Exemple',
+                        'zip' => '1000',
+                        'city' => 'Tunis',
+                        'phone' => '+216 12 345 678',
+                        'email' => 'contact@studar.tn',
+                        'siret' => '12345678901234'
+                    ],
+                    'logo_enabled' => true,
+                    'base_path' => $this->getParameter('kernel.project_dir') . '/public/'
+                ]);
+    
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                $pdfContent = $dompdf->output();
+                $this->logger->info('PDF generated', ['size' => strlen($pdfContent)]);
+    
+                // Generate email content
+                $emailHtml = $this->renderView('GestionTransport/transport/bill.html.twig', [
+                    'transport' => $transport,
+                    'invoiceData' => [
+                        'date' => new \DateTime(),
+                        'reference' => 'INV-' . $transport->getId(),
+                        'usd_amount' => ($transport->getTarif() + ($transport->getExtraCost() ?? 0)) * $tndToUsdRate
+                    ]
+                ]);
+    
+                $emailText = 'Veuillez trouver ci-joint votre facture pour le transport #' . $transport->getId() . '. ' .
+                    'Montant en TND: ' . ($transport->getTarif() + ($transport->getExtraCost() ?? 0)) . ' TND, ' .
+                    'équivalent en USD: ' . number_format(($transport->getTarif() + ($transport->getExtraCost() ?? 0)) * $tndToUsdRate, 2) . ' USD.';
+    
+                $email = (new Email())
+                    ->from(new Address($this->mailerFrom, $this->mailerFromName))
+                    ->to($studentEmail)
+                    ->subject('Votre facture pour le transport #' . $transport->getId())
+                    ->text($emailText)
+                    ->html($emailHtml)
+                    ->attach($pdfContent, 'facture-transport-' . $transport->getId() . '.pdf', 'application/pdf');
+    
+                $this->logger->info('Attempting to send invoice email', [
+                    'recipient' => $studentEmail,
+                    'subject' => 'Votre facture pour le transport #' . $transport->getId(),
+                    'has_attachment' => true
+                ]);
+    
+                // Debug: Log before sending
+
+                try {
+                    $mailer->send($email);
+                    $this->logger->info('Email sent successfully');
+                } catch (\Exception $e) {
+                    $this->logger->error('Email sending failed', ['error' => $e->getMessage()]);
+                }
+    
+                // Debug: Log after sending
+                $this->logger->info('Invoice email sent successfully', ['recipient' => $studentEmail]);
+    
+                $this->addFlash('succès', 'Facture envoyée à ' . $studentEmail);
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to send invoice email', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'recipient' => $studentEmail ?? 'N/A'
+                ]);
+                file_put_contents('/tmp/bill-mailer.log', 'Error in mailer->send at ' . date('Y-m-d H:i:s') . ': ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
+                $this->addFlash('erreur', 'Erreur lors de l\'envoi de la facture: ' . $e->getMessage());
+            }
+    
+            return $this->redirectToRoute('app_transport_index');
+        }
+    
+        return $this->render('GestionTransport/transport/bill_preview.html.twig', [
+            'transport' => $transport,
+            'invoiceData' => [
+                'date' => new \DateTime(),
+                'reference' => 'INV-' . $transport->getId(),
+                'usd_amount' => ($transport->getTarif() + ($transport->getExtraCost() ?? 0)) * 0.32
+            ]
+        ]);
     }
 
-    $totalAmount = $transport->getTarif() + ($transport->getExtraCost() ?? 0);
-    $html = $this->renderView('GestionTransport/transport/invoice_pdf.html.twig', [
-        'transport' => $transport,
-        'invoiceData' => [
-            'amount' => $totalAmount,
-            'reference' => $transport->getStripeInvoiceId() ?? 'INV-' . $transport->getId(), // Fallback if no Stripe ID
-            'date' => new \DateTime(),
-        ],
-        'company_info' => [
-            'name' => 'StuDar',
-            'address' => '123 Rue Exemple',
-            'zip' => '1000',
-            'city' => 'Tunis',
-            'phone' => '+216 12 345 678',
-            'email' => 'contact@studar.com',
-            'siret' => '123 456 789 00012',
-        ],
-        'logo_enabled' => true,
-        'base_path' => $request->getSchemeAndHttpHost() 
-    ]);
-
-    return new Response(
-        $pdf->getOutputFromHtml($html),
-        Response::HTTP_OK,
-        [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="facture_transport_' . $transport->getId() . '.pdf"',
-        ]
-    );
-}
     #[Route('/api/reservation/{id}/arrival-time', name: 'api_reservation_arrival_time', methods: ['GET'])]
     public function getReservationArrivalTime(ReservationTransport $reservation): JsonResponse
     {
         try {
             $etudiant = $reservation->getEtudiant();
-            $tempsArrivage = $reservation->getTempsArrivage(); // VARCHAR, e.g., '2025-05-01 14:30:00'
+            $tempsArrivage = $reservation->getTempsArrivage();
 
             return new JsonResponse([
-                'arrivalTime' => $tempsArrivage ? date('c', strtotime($tempsArrivage)) : null, // ISO 8601
-                'formatted' => $tempsArrivage ? date('d/m/Y H:i', strtotime($tempsArrivage)) : null, // Formatted
+                'arrivalTime' => $tempsArrivage ? date('c', strtotime($tempsArrivage)) : null,
+                'formatted' => $tempsArrivage ? date('d/m/Y H:i', strtotime($tempsArrivage)) : null,
                 'etudiant' => $etudiant ? [
                     'nom' => $etudiant->getNom(),
                     'prenom' => $etudiant->getPrenom(),

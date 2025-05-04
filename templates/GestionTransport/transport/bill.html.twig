@@ -17,7 +17,7 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .header {
-            border-top: 6px solid #FF6200; /* Orange to match STUDAR logo */
+            border-top: 6px solid #FF6200;
             padding: 16px;
             display: flex;
             align-items: center;
@@ -128,7 +128,7 @@
         </div>
         <div class="content">
             <p class="message">
-                Voici un aperçu de la facture qui sera envoyée au client.
+                Voici un aperçu des détails de la facture. Le client recevra une facture officielle par email, envoyée par Stripe ou localement.
             </p>
             <div class="transport-id">
                 <strong>Transport #{{ transport.id }}</strong>
@@ -151,6 +151,30 @@
                         <th>Distance</th>
                         <td>{{ transport.trajetEnKm }} km</td>
                     </tr>
+                    {% if transport.loadingTimeActual is defined %}
+                    <tr>
+                        <th>Temps de chargement (mn)</th>
+                        <td>{{ transport.loadingTimeActual ?? 'N/A' }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if transport.loadingTimeAllowed is defined %}
+                    <tr>
+                        <th>Temps de chargement autorisé (mn)</th>
+                        <td>{{ transport.loadingTimeAllowed }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if transport.unloadingTimeActual is defined %}
+                    <tr>
+                        <th>Temps de déchargement (mn)</th>
+                        <td>{{ transport.unloadingTimeActual ?? 'N/A' }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if transport.unloadingTimeAllowed is defined %}
+                    <tr>
+                        <th>Temps de déchargement autorisé (mn)</th>
+                        <td>{{ transport.unloadingTimeAllowed }}</td>
+                    </tr>
+                    {% endif %}
                     <tr>
                         <th>Date</th>
                         <td>{{ invoiceData.date is defined ? invoiceData.date|date('d/m/Y') : "now"|date('d/m/Y') }}</td>
@@ -161,24 +185,28 @@
                 <div class="divider"></div>
                 <table>
                     <tr>
-                        <td style="width: 60%">Tarif de base</td>
+                        <td style="width: 60%">Tarif de base (TND)</td>
                         <td>{{ transport.tarif|number_format(2, ',', ' ') }} TND</td>
                     </tr>
                     {% if transport.extraCost is defined and transport.extraCost > 0 %}
                     <tr>
-                        <td>Frais supplémentaires</td>
+                        <td>Frais supplémentaires (TND)</td>
                         <td>{{ transport.extraCost|number_format(2, ',', ' ') }} TND</td>
                     </tr>
                     {% endif %}
+                    <tr>
+                        <td>Total (TND)</td>
+                        <td>{{ (transport.tarif + (transport.extraCost|default(0)))|number_format(2, ',', ' ') }} TND</td>
+                    </tr>
                     <tr class="total-row">
-                        <td><strong>Total TTC</strong></td>
-                        <td><strong>{{ (transport.tarif + (transport.extraCost|default(0)))|number_format(2, ',', ' ') }} TND</strong></td>
+                        <td><strong>Total (USD)</strong></td>
+                        <td><strong>{{ invoiceData.usd_amount|number_format(2, ',', ' ') }} USD</strong></td>
                     </tr>
                 </table>
             </div>
             
             <div class="preview-mode">
-                <p class="preview-notice">Ceci est un aperçu de la facture. Le client recevra un email avec ces informations.</p>
+                <p class="preview-notice">Ceci est un aperçu des détails. Le client recevra une facture officielle par email.</p>
                 <form action="{{ path('app_transport_bill', {'id': transport.id}) }}" method="POST">
                     <button type="submit" class="button">
                         Envoyer la facture au client
@@ -189,7 +217,7 @@
     </div>
     <div class="footer">
         <p>
-            Email sera envoyé à: {{ transport.reservation.etudiant.email }}<br>
+            Facture sera envoyée à: {{ transport.reservation.etudiant.email }}<br>
             Référence: {{ invoiceData.reference is defined ? invoiceData.reference : 'INV-' ~ transport.id ~ '-' ~ date('Ymd') }}
         </p>
     </div>

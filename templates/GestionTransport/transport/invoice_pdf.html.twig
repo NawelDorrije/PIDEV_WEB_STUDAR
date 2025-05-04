@@ -4,92 +4,245 @@
     <meta charset="UTF-8">
     <title>Facture Transport #{{ transport.id }}</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
-        .header { margin-bottom: 20px; overflow: hidden; }
-        .logo { float: left; margin-right: 20px; }
-        .invoice-details { float: right; text-align: right; }
-        .details { margin: 20px 0; clear: both; }
-        .company-details, .client-details { width: 48%; display: inline-block; vertical-align: top; }
-        .company-details { float: left; }
-        .client-details { float: right; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; clear: both; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .total { font-weight: bold; font-size: 1.2em; }
-        .footer { margin-top: 30px; text-align: center; font-size: 0.9em; }
+        *,
+        ::before,
+        ::after {
+          box-sizing: border-box;
+          border-width: 0;
+          border-style: solid;
+          border-color: #e5e7eb;
+        }
+
+        body {
+          font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          font-size: 14px;
+          line-height: 1.5;
+          color: #404040;
+          margin: 0;
+          padding: 0;
+        }
+
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          background-color: #fff;
+        }
+
+        .header {
+          padding: 2.5rem 3.5rem;
+        }
+
+        .header-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .logo {
+          height: 3rem;
+        }
+
+        .invoice-info {
+          text-align: right;
+        }
+
+        .invoice-info p {
+          margin: 0.25rem 0;
+        }
+
+        .invoice-number {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #FF6200;
+        }
+
+        .date {
+          color: #94a3b8;
+        }
+
+        .details-section {
+          background-color: #f1f5f9;
+          padding: 1.5rem 3.5rem;
+        }
+
+        .company-details, .client-details {
+          display: inline-block;
+          width: 48%;
+          vertical-align: top;
+        }
+
+        .client-details {
+          text-align: right;
+        }
+
+        .section-title {
+          font-weight: 700;
+          margin-bottom: 0.75rem;
+          color: #FF6200;
+        }
+
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 2.5rem 0;
+        }
+
+        .items-table th {
+          text-align: left;
+          padding: 0.75rem;
+          border-bottom: 2px solid #FF6200;
+          font-weight: 700;
+          color: #FF6200;
+        }
+
+        .items-table td {
+          padding: 0.75rem;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .item-amount {
+          text-align: right;
+        }
+
+        .total-row {
+          font-weight: 700;
+          background-color: #FF6200;
+          color: white;
+        }
+
+        .notes-section {
+          padding: 1.5rem 3.5rem;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .notes-title {
+          font-weight: 700;
+          color: #FF6200;
+          margin-bottom: 0.5rem;
+        }
+
+        .footer {
+          background-color: #f1f5f9;
+          text-align: center;
+          padding: 0.75rem;
+          font-size: 0.75rem;
+          color: #525252;
+        }
+
+        @page {
+          margin: 0;
+        }
+
+        @media print {
+          body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Facture Transport #{{ transport.id }}</h1>
-        <div class="invoice-details">
-            <p><strong>Date:</strong> {{ invoiceData is defined ? invoiceData.date|date('d/m/Y') : "now"|date('d/m/Y') }}</p>
-            <p><strong>Référence:</strong> {{ invoiceData is defined ? invoiceData.reference : 'INV-' ~ transport.id }}</p>
-        </div>
-        {% if logo_enabled is defined and logo_enabled %}
-        <div class="logo">
-           <img src="{{ base_path ~ asset('images/logo.png') }}" alt="Logo" width="150">
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="details">
-        <div class="client-details">
-            <h2>Détails du client</h2>
-            <p><strong>Nom:</strong> {{ transport.reservation.etudiant.nom }} {{ transport.reservation.etudiant.prenom }}</p>
-            <p><strong>CIN:</strong> {{ transport.reservation.etudiant.cin }}</p>
-            <p><strong>Email:</strong> {{ transport.reservation.etudiant.email }}</p>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                {% if logo_enabled is defined and logo_enabled %}
+                 <img class="logo" src="{{ base_path ~ 'asset/images/logo.png' }}" alt="StuDar">
+                {% else %}
+                <div class="logo-text">
+                    <span class="logo-part-orange">Stu</span><span class="logo-part-blue">Dar</span>
+                </div>
+                {% endif %}
+                <div class="invoice-info">
+                    <p class="date">Date: {{ invoiceData is defined ? invoiceData.date|date('d/m/Y') : "now"|date('d/m/Y') }}</p>
+                    <p class="invoice-number">Facture #{{ invoiceData is defined ? invoiceData.reference : 'INV-' ~ transport.id }}</p>
+                </div>
+            </div>
         </div>
         
-        {% if company_info is defined %}
-        <div class="company-details">
-            <h2>Informations de la société</h2>
-            <p><strong>{{ company_info.name }}</strong></p>
-            <p>{{ company_info.address }}</p>
-            <p>{{ company_info.zip }} {{ company_info.city }}</p>
-            <p>Tél: {{ company_info.phone }}</p>
-            <p>Email: {{ company_info.email }}</p>
-            <p>SIRET: {{ company_info.siret }}</p>
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="transport-details">
-        <h2>Détails du transport</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Montant (TND)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Transport de {{ transport.reservation.adresseDepart }} à {{ transport.reservation.adresseDestination }}</td>
-                    <td>{{ transport.tarif|number_format(2, ',', ' ') }}</td>
-                </tr>
-                {% if transport.extraCost is defined and transport.extraCost > 0 %}
-                <tr>
-                    <td>Frais supplémentaires</td>
-                    <td>{{ transport.extraCost|number_format(2, ',', ' ') }}</td>
-                </tr>
+        <div class="details-section">
+            <div class="company-details">
+                {% if company_info is defined %}
+                <div class="section-title">Informations de la société</div>
+                <p><strong>{{ company_info.name }}</strong></p>
+                <p>{{ company_info.address }}</p>
+                <p>{{ company_info.zip }} {{ company_info.city }}</p>
+                <p>Tél: {{ company_info.phone }}</p>
+                <p>Email: {{ company_info.email }}</p>
+                <p>SIRET: {{ company_info.siret }}</p>
                 {% endif %}
-                <tr class="total">
-                    <td><strong>Total</strong></td>
-                    <td><strong>{{ invoiceData is defined ? invoiceData.amount|number_format(2, ',', ' ') : (transport.tarif + (transport.extraCost ?? 0))|number_format(2, ',', ' ') }}</strong></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="footer">
-        <p>Merci pour votre confiance!</p>
-        <p>Cette facture a été générée automatiquement et ne nécessite pas de signature.</p>
-        {% if transport.stripeInvoiceId is defined and transport.stripeInvoiceId %}
-        <p>Status: Facturé via Stripe ({{ transport.stripeInvoiceId }})</p>
-        {% else %}
-        <p>Status: Facture générée</p>
-        {% endif %}
+            </div>
+            
+            <div class="client-details">
+                <div class="section-title">Détails du client</div>
+                <p><strong>{{ transport.reservation.etudiant.nom }} {{ transport.reservation.etudiant.prenom }}</strong></p>
+                <p>CIN: {{ transport.reservation.etudiant.cin }}</p>
+                <p>{{ transport.reservation.etudiant.email }}</p>
+            </div>
+        </div>
+        
+        <div style="padding: 0 3.5rem;">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th class="item-amount">Montant (TND)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Transport de {{ transport.reservation.adresseDepart }} à {{ transport.reservation.adresseDestination }}</td>
+                        <td class="item-amount">{{ transport.tarif|number_format(2, ',', ' ') }}</td>
+                    </tr>
+                    {% if transport.extraCost is defined and transport.extraCost > 0 %}
+                    <tr>
+                        <td>Frais supplémentaires</td>
+                        <td class="item-amount">{{ transport.extraCost|number_format(2, ',', ' ') }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if transport.loadingTimeActual is defined %}
+                    <tr>
+                        <td>Temps de chargement</td>
+                        <td>{{ transport.loadingTimeActual ?? 'N/A' }} mn</td>
+                    </tr>
+                    {% endif %}
+                   
+                    {% if transport.unloadingTimeActual is defined %}
+                    <tr>
+                        <td>Temps de déchargement</td>
+                        <td>{{ transport.unloadingTimeActual ?? 'N/A' }} mn</td>
+                    </tr>
+                    {% endif %}
+                    
+                    <tr class="total-row">
+                        <td><strong>Total</strong></td>
+                        <td class="item-amount"><strong>{{ invoiceData is defined ? invoiceData.amount|number_format(2, ',', ' ') : (transport.tarif + (transport.extraCost ?? 0))|number_format(2, ',', ' ') }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="notes-section">
+            <div class="notes-title">Notes</div>
+            <p>Le chargement ne doit pas dépasser 30 minutes.</p>
+            <p>Cette facture a été générée automatiquement et ne nécessite pas de signature.</p>
+        </div>
+        
+        <div class="footer">
+            <p>{{ company_info.name }} | {{ company_info.email }} | {{ company_info.phone }}</p>
+        </div>
     </div>
 </body>
 </html>
+
+<style>
+    .logo-text {
+        font-weight: bold;
+        font-size: 1.5rem;
+    }
+    .logo-part-orange {
+        color: #FF6200; /* Orange color */
+    }
+    .logo-part-blue {
+        color: #0000FF; /* Blue color */
+    }
+</style>

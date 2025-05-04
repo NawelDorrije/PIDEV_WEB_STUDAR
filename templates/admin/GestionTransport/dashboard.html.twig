@@ -8,83 +8,292 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        .bg-success {
-            background-color: #6FE69B !important;
+        :root {
+            --primary-orange: #FF6B00;
+            --orange-light: rgba(255, 107, 0, 0.1);
+            --dark-gray: #2D2D2D;
+            --white: #FFFFFF;
+            --light-gray: #F7F7F7;
+            --success-green: #28A745;
+            --warning-yellow: #FFC107;
+            --pending-gray: #6C757D;
+            --border-radius: 8px;
         }
-        .text-success {
-            color: #6FE69B !important;
+
+        body {
+            background-color: #f8f8f8;
+            color: var(--dark-gray);
+            font-family: 'Inter', sans-serif;
         }
+
+        .container {
+            max-width: 1400px;
+            padding: 20px;
+        }
+
+        .bg-primary {
+            background-color: var(--primary-orange) !important;
+        }
+
+        .text-primary, .text-orange {
+            color: var(--primary-orange) !important;
+        }
+
+        .border-orange {
+            border-color: var(--primary-orange) !important;
+        }
+
         .stat-card {
-            transition: all 0.3s ease;
+            background: var(--white);
+            border: none;
+            border-radius: var(--border-radius);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
             height: 100%;
+            overflow: hidden;
         }
+
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
+
         .chart-container {
             position: relative;
-            height: 300px;
+            height: 280px;
             width: 100%;
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 15px;
         }
+
         .stat-badge {
             font-size: 1rem;
-            padding: 0.5rem 1rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--primary-orange);
+            color: var(--white);
         }
+
         #map {
             height: 400px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            z-index: 1;
         }
+
         .custom-icon {
             background: transparent;
             border: none;
         }
+
+        .tab-button {
+            padding: 10px 20px;
+            margin-right: 8px;
+            border-radius: var(--border-radius);
+            background-color: var(--white);
+            color: var(--dark-gray);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-orange);
+            color: var(--white);
+            border-color: var(--primary-orange);
+        }
+
+        .tab-button:hover {
+            background-color: var(--light-gray);
+        }
+
+        .tab-button.active:hover {
+            background-color: #E6951A;
+        }
+
         .tab-content {
             display: none;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transform: translateX(50px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
+
         .tab-content.active {
             display: block;
             opacity: 1;
+            transform: translateX(0);
         }
-        .tab-button {
-            padding: 0.5rem 1rem;
-            margin-right: 0.5rem;
-            border-radius: 0.25rem;
-            background-color: #f1f1f1;
-            color: #333;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .tab-button.active {
-            background-color: #0d6efd;
-            color: white;
-        }
-        .tab-button:hover {
-            background-color: #e0e0e0;
-        }
-        .tab-button.active:hover {
-            background-color: #0b5ed7;
-        }
+
         .leaflet-routing-container {
             display: none !important;
+        }
+
+        .progress {
+            height: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            background-color: #E0E0E0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-orange);
+            transition: width 0.5s ease;
+        }
+
+        .transport-row, .vehicle-row, .invoice-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .transport-row:hover, .vehicle-row:hover, .invoice-row:hover {
+            background-color: var(--orange-light);
+        }
+
+        .vehicle-status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-available {
+            background-color: var(--success-green);
+        }
+
+        .status-unavailable {
+            background-color: var(--warning-yellow);
+        }
+
+        .status-pending {
+            background-color: var(--pending-gray);
+        }
+
+        .card {
+            background: var(--white);
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: none;
+            padding: 20px;
+        }
+
+        .table-container {
+            background: var(--white);
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+
+        .table-header {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+
+        .filter-link {
+            color: var(--dark-gray);
+            text-decoration: none;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            margin-right: 10px;
+        }
+
+        .filter-link:hover, .filter-link.active {
+            color: var(--primary-orange);
+            border-bottom-color: var(--primary-orange);
+        }
+
+        .badge {
+            font-weight: 400;
+            border-radius: 0;
+            padding: 4px 8px;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .badge:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        .dropdown-menu {
+            border: 1px solid #eee;
+            border-radius: 0;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--orange-light);
+            color: var(--dark-gray);
+        }
+
+        .dropdown-item:active {
+            background-color: var(--orange-light);
+        }
+
+        .hover-orange:hover {
+            color: var(--primary-orange) !important;
+            border-color: var(--primary-orange) !important;
+        }
+
+        .leaflet-top, .leaflet-bottom {
+            z-index: 1000 !important;
+        }
+
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+        }
+
+        .modal-header {
+            border-bottom: none;
+            padding: 20px;
+        }
+
+        .modal-footer {
+            border-top: none;
+            padding: 20px;
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <div class="container mt-4">
-        <h1 class="text-center mb-4">Gestion Transport Dashboard</h1>
+    <div class="container">
+        <h1 class="text-center mb-4" style="font-weight: 600;">Transport Dashboard</h1>
 
-        <!-- Pseudo-Navbar (Tab Buttons) -->
+    <div class="container py-4" style="max-width: 1200px;">
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} mb-4 p-3 rounded-0">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+        <!-- Statistics Section -->
+        
+        <!-- Tab Buttons -->
         <div class="mb-4 text-center">
             <button class="tab-button active" data-tab="statistics">Statistiques</button>
             <button class="tab-button" data-tab="voitures">Véhicules</button>
             <button class="tab-button" data-tab="transports">Transports</button>
+            <button class="tab-button" data-tab="invoices">Invoices</button>
         </div>
 
         <!-- Tab Contents -->
@@ -93,37 +302,50 @@
             <div class="row mb-5">
                 <!-- Vehicles Added Card -->
                 <div class="col-md-4 mb-4">
-                    <div class="card stat-card shadow-sm" data-bs-toggle="modal" data-bs-target="#vehiclesStatsModal">
+                    <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#vehiclesStatsModal">
                         <div class="card-body text-center">
                             <h5 class="card-title"><i class="fas fa-car me-2"></i>Véhicules</h5>
-                            <span class="stat-badge bg-primary rounded-pill">{{ voitures|length }} Total</span>
-                            <p class="mt-2 text-muted">Cliquez pour voir les statistiques mensuelles</p>
+                            <span class="stat-badge">{{ voitures|length }} Total</span>
+                            <p class="mt-2 text-muted">Voir les statistiques mensuelles</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Transport Stats Card -->
                 <div class="col-md-4 mb-4">
-                    <div class="card stat-card shadow-sm" data-bs-toggle="modal" data-bs-target="#transportStatsModal">
+                    <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#transportStatsModal">
                         <div class="card-body text-center">
                             <h5 class="card-title"><i class="fas fa-truck me-2"></i>Transports</h5>
-                            {% set completed = transports|filter(t => t.status.value == 'Complété')|length %}
+                            {% set complete = transports|filter(t => t.status.value == 'Complété')|length %}
                             {% set active = transports|filter(t => t.status.value == 'Actif')|length %}
-                            <span class="stat-badge bg-success rounded-pill me-2">{{ completed }} Complété</span>
-                            <span class="stat-badge bg-warning rounded-pill">{{ active }} Actif</span>
-                            <p class="mt-2 text-muted">Cliquez pour voir les statistiques mensuelles</p>
+                            {% set pending = transports|filter(t => t.status.value == 'En attente')|length %}
+                            <span class="stat-badge me-2">{{ complete }} Complété</span>
+                            <span class="stat-badge bg-warning">{{ active }} Actif</span>
+                            <span class="stat-badge bg-secondary">{{ pending }} En attente</span>
+                            <p class="mt-2 text-muted">Voir les statistiques mensuelles</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Revenue Card -->
                 <div class="col-md-4 mb-4">
-                    <div class="card stat-card shadow-sm" data-bs-toggle="modal" data-bs-target="#revenueModal">
+                    <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#revenueModal">
                         <div class="card-body text-center">
-                            <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Revenue</h5>
-                            {% set totalRevenue = transports|filter(t => t.status.value == 'Complété')|reduce((sum, t) => sum + t.tarif, 0) %}
-                            <span class="stat-badge bg-info rounded-pill">{{ totalRevenue|number_format(3, '.', ',') }} TND</span>
-                            <p class="mt-2 text-muted">Cliquez pour voir la répartition des revenus</p>
+                            <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Revenus</h5>
+                            <span class="stat-badge">
+                                {% if totalRevenue > 0 %}
+                                    {{ totalRevenue|number_format(2, '.', ',') }} TND
+                                {% else %}
+                                    0,00 TND
+                                {% endif %}
+                            </span>
+                            <p class="mt-2 text-muted">
+                                {% if completedTransportsCount > 0 %}
+                                    Basé sur {{ completedTransportsCount }} transport(s) complété(s)
+                                {% else %}
+                                    Aucun transport complété
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -132,231 +354,274 @@
 
         <!-- Voitures Section -->
         <div id="voitures" class="tab-content">
-            <div class="card shadow mb-5">
+            <div class="card mb-5">
                 <div class="card-header">
-                    <h2 class="mb-0">Véhicules</h2>
+                    <h2 class="mb-0" style="font-weight: 600;">Véhicules</h2>
                 </div>
                 <div class="mb-4 mt-3 px-3">
-                    <div class="btn-group" role="group">
-                        <a href="{{ path('app_gestion_transport_dashboard') }}" 
-                           class="btn btn-sm"
-                           style="{% if app.request.query.get('disponibilite') is null %}
-                               background-color: transparent;
-                               border-color: #0d6efd;
-                               color: #0d6efd;
-                               border: 1px solid;
-                           {% else %}
-                               color: #0d6efd;
-                               border-color: #0d6efd;
-                               background-color: transparent;
-                               border: 1px solid;
-                           {% endif %}">
-                            Tous
-                        </a>
-                        <a href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Disponible'}) }}" 
-                           class="btn btn-sm"
-                           style="{% if app.request.query.get('disponibilite') == 'Disponible' %}
-                               background-color: #6FE69B;
-                               border-color: #6FE69B;
-                               color: #000;
-                           {% else %}
-                               color: #6FE69B;
-                               border-color: #6FE69B;
-                               background-color: transparent;
-                               border: 1px solid;
-                           {% endif %}">
-                            Disponibles
-                        </a>
-                        <a href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Non disponible'}) }}" 
-                           class="btn btn-sm"
-                           style="{% if app.request.query.get('disponibilite') == 'Non disponible' %}
-                               background-color: #ffc107;
-                               border-color: #ffc107;
-                               color: #000;
-                           {% else %}
-                               color: #ffc107;
-                               border-color: #ffc107;
-                               background-color: transparent;
-                               border: 1px solid;
-                           {% endif %}">
-                            Non disponibles
-                        </a>
+                    <div class="d-flex gap-2">
+                        <a class="filter-link {% if app.request.query.get('disponibilite') is null %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard') }}">Tous</a>
+                        <a class="filter-link {% if app.request.query.get('disponibilite') == 'Disponible' %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Disponible'}) }}">Disponibles</a>
+                        <a class="filter-link {% if app.request.query.get('disponibilite') == 'Non disponible' %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Non disponible'}) }}">Non disponibles</a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Modèle</th>
-                                    <th>Numéro de série</th>
-                                    <th>Disponibilité</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for voiture in voitures %}
-                                    <tr>
-                                        <td>{{ voiture.idVoiture }}</td>
-                                        <td>{{ voiture.model }}</td>
-                                        <td>{{ voiture.numSerie }}</td>
-                                        <td>
-                                            <span class="badge 
-                                                {% if voiture.disponibilite.value == 'Disponible' %}bg-success
-                                                {% elseif voiture.disponibilite.value == 'Non disponible' %}bg-warning
-                                                {% else %}bg-secondary{% endif %}">
-                                                {{ voiture.disponibilite.value }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ path('admin_voiture_show', {'idVoiture': voiture.idVoiture}) }}" 
-                                               class="btn btn-sm btn-outline-info">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4 text-muted">No vehicles found.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                <div class="table-container">
+                    <div class="row table-header d-none d-md-flex">
+                        <div class="col-md-3">ID</div>
+                        <div class="col-md-3">Modèle</div>
+                        <div class="col-md-3">Numéro de série</div>
+                        <div class="col-md-2">Disponibilité</div>
+                        <div class="col-md-1 text-end">Actions</div>
                     </div>
-                </div>
+                    {% for voiture in voitures %}
+                        <div class="border-bottom py-3 vehicle-row">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3 text-dark" style="width: 24px;">
+                                            <i class="fas fa-car"></i>
+                                        </div>
+                                        <div class="text-dark">{{ voiture.idVoiture }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-muted small">{{ voiture.model|u.truncate(15, '...') }}</div>
+                                <div class="col-md-3 text-muted small">{{ voiture.numSerie|u.truncate(15, '...') }}</div>
+                                <div class="col-md-2">
+                                    <span class="badge 
+                                        {% if voiture.disponibilite.value == 'Disponible' %} text-success border border-success
+                                        {% elseif voiture.disponibilite.value == 'Non disponible' %} text-warning border border-warning
+                                        {% else %} text-muted border border-muted {% endif %}">
+                                        {{ voiture.disponibilite.value }}
+                                    </span>
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                            <li>
+                                                <a class="dropdown-item small" href="{{ path('admin_voiture_show', {'idVoiture': voiture.idVoiture}) }}">
+                                                    Détails
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-car text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-3">Aucun véhicule enregistré</p>
+                        </div>
+                    {% endfor %}
+                 <div class="d-flex justify-content-center mt-4">
+    {{ knp_pagination_render(voitures, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig') }}
+</div>
             </div>
+           
+        </div>
         </div>
 
         <!-- Transports Section -->
         <div id="transports" class="tab-content">
-            <div class="card shadow mb-5">
+            <div class="card mb-5">
                 <div class="card-header">
-                    <h2 class="mb-0">Suivi des Transports Actifs</h2>
+                    <h2 class="mb-0" style="font-weight: 600;">Suivi des Transports Actifs</h2>
                 </div>
                 <div class="card-body">
                     <div id="map"></div>
                     <div class="text-center mb-3">
-                        <button id="startTracking" class="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition transform hover:-translate-y-1 flex items-center justify-center mx-auto min-w-[180px]">
-                            <i class="fas fa-play mr-2"></i>
-                            Lancer le Suivi pour Tous
+                        <button id="startTracking" class="btn btn-primary px-4 py-2">
+                            <i class="fas fa-play me-2"></i>Lancer le Suivi pour Tous
                         </button>
                     </div>
-                    <p class="text-muted text-center">Affichage en temps réel de tous les transports actifs.</p>
+                    <p class="text-muted text-center">Suivi en temps réel des transports actifs.</p>
                 </div>
             </div>
-            <div class="card shadow">
+            <div class="card">
                 <div class="card-header">
-                    <h2 class="mb-0">Liste des Transports</h2>
+                    <h2 class="mb-0" style="font-weight: 600;">Liste des Transports</h2>
                 </div>
                 <div class="mb-4 mt-3 px-3">
-                    <div class="btn-group" role="group">
-                        <a href="{{ path('app_gestion_transport_dashboard') }}" 
-                           class="btn btn-sm"
-                           style="{% if app.request.query.get('status') is null %}
-                               background-color: transparent;
-                               border-color: #0d6efd;
-                               color: #0d6efd;
-                               border: 1px solid;
-                           {% else %}
-                               color: #0d6efd;
-                               border-color: #0d6efd;
-                               background-color: transparent;
-                               border: 1px solid;
-                           {% endif %}">
-                            Tous
-                        </a>
-                        <a href="{{ path('app_gestion_transport_dashboard', {'status': 'Actif'}) }}" 
-                           class="btn btn-sm"
-                           style="{% if app.request.query.get('status') == 'Actif' %}
-                               background-color: #ffc107;
-                               border-color: #ffc107;
-                               color: #000;
-                           {% else %}
-                               color: #ffc107;
-                               border-color: #ffc107;
-                               background-color: transparent;
-                               border: 1px solid;
-                           {% endif %}">
-                            Actifs
-                        </a>
-                        <a href="{{ path('app_gestion_transport_dashboard', {'status': 'Complété'}) }}" 
-                           class="btn btn-sm"
-                           style="{% if app.request.query.get('status') == 'Complété' %}
-                               background-color: #6FE69B;
-                               border-color: #6FE69B;
-                               color: #000;
-                           {% else %}
-                               color: #6FE69B;
-                               border-color: #6FE69B;
-                               background-color: transparent;
-                               border: 1px solid;
-                           {% endif %}">
-                            Complétés
-                        </a>
+                    <div class="d-flex gap-2">
+                        <a class="filter-link {% if app.request.query.get('status') is null %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard') }}">Tous</a>
+                        <a class="filter-link {% if app.request.query.get('status') == 'En attente' %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard', {'status': 'En attente'}) }}">En attente</a>
+                        <a class="filter-link {% if app.request.query.get('status') == 'Actif' %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard', {'status': 'Actif'}) }}">Actifs</a>
+                        <a class="filter-link {% if app.request.query.get('status') == 'Complété' %}active{% endif %}" 
+                           href="{{ path('app_gestion_transport_dashboard', {'status': 'Complété'}) }}">Complétés</a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Trajet</th>
-                                    <th>Trajet (km)</th>
-                                    <th>Tarif (TND)</th>
-                                    <th>Heure d'arrivée estimée</th>
-                                    <th>Status</th>
-                                    <th>Voiture ID</th>
-                                    <th>Progression</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for transport in transports %}
-                                    <tr data-transport-id="{{ transport.id }}">
-                                        <td>{{ transport.id }}</td>
-                                        <td>
-                                            {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
-                                                {{ transport.reservation.adresseDepart }} → {{ transport.reservation.adresseDestination }}
-                                            {% else %}
-                                                <span class="text-muted">N/A</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ transport.trajetEnKm }}</td>
-                                        <td>{{ transport.tarif }}</td>
-                                        <td>{{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : '' }}</td>
-                                        <td>
-                                            <span class="badge 
-                                                {% if transport.status.value == 'Complété' %}bg-success
-                                                {% elseif transport.status.value == 'Actif' %}bg-warning
-                                                {% else %}bg-secondary{% endif %}">
-                                                {{ transport.status.value }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% if transport.voiture %}
-                                                {{ transport.voiture.idVoiture }}
-                                            {% else %}
-                                                <span class="text-muted">None</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="transport-progress">0%</td>
-                                        <td>
-                                            <a href="{{ path('admin_transport_show', {'id': transport.id}) }}" 
-                                               class="btn btn-sm btn-outline-info">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% else %}
-                                    <tr>
-                                        <td colspan="9" class="text-center py-4 text-muted">No transports found.</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                <div class="table-container">
+                    <div class="row table-header d-none d-md-flex">
+                        <div class="col-md-2">ID</div>
+                        <div class="col-md-3">Trajet</div>
+                        <div class="col-md-1">Distance</div>
+                        <div class="col-md-1">Tarif</div>
+                        <div class="col-md-2">Heure d'arrivée</div>
+                        <div class="col-md-1">Statut</div>
+                        <div class="col-md-1">Voiture</div>
+                        <div class="col-md-1 text-end">Actions</div>
                     </div>
+                    {% for transport in transports %}
+                        <div class="border-bottom py-3 transport-row" data-transport-id="{{ transport.id }}">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3 text-dark" style="width: 24px;">
+                                            <i class="bi bi-truck"></i>
+                                        </div>
+                                        <div class="text-dark">{{ transport.id }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                        <div class="text-dark small">{{ transport.reservation.adresseDepart|u.truncate(15, '...') }}</div>
+                                        <div class="text-muted small">→ {{ transport.reservation.adresseDestination|u.truncate(15, '...') }}</div>
+                                    {% else %}
+                                        <div class="text-muted small">N/A</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-1 text-muted small">{{ transport.trajetEnKm }} km</div>
+                                <div class="col-md-1 text-dark small">{{ transport.tarif|number_format(2) }} TND</div>
+                                <div class="col-md-2 text-muted small">
+                                    {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : 'N/A' }}
+                                </div>
+                                <div class="col-md-1">
+                                    <span class="badge 
+                                        {% if transport.status.value == 'Complété' %} text-dark border border-dark
+                                        {% elseif transport.status.value == 'Actif' %} text-orange border border-orange
+                                        {% else %} text-muted border border-muted {% endif %}">
+                                        {{ transport.status.value }}
+                                    </span>
+                                </div>
+                                <div class="col-md-1 text-muted small">
+                                    {% if transport.voiture %}
+                                        {{ transport.voiture.idVoiture }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                            <li>
+                                                <a class="dropdown-item small" href="{{ path('admin_transport_show', {'id': transport.id}) }}">
+                                                    Détails
+                                                </a>
+                                            </li>
+                                            {% if transport.status.value == 'Actif' %}
+                                                <li>
+                                                    <a class="dropdown-item small" href="{{ path('admin_transport_simulate', {'id': transport.id}) }}">
+                                                        Simuler
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-truck text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-3">Aucun transport enregistré</p>
+                        </div>
+                    {% endfor %}
+                <div class="d-flex justify-content-center mt-4">
+    {{ knp_pagination_render(transports, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig',{'position': 'centered','rounded': true,'size': 'sm'
+                    }) }}
+</div>
+            </div>
+</div>
+            </div>
+           
+        </div>
+        </div>
+
+        <!-- Invoices Section -->
+        <div id="invoices" class="tab-content">
+            <div class="card mb-5">
+                <div class="card-header">
+                    <h2 class="mb-0" style="font-weight: 600;">Invoices</h2>
+                </div>
+                 <div class="mb-4 mt-3 px-3">
+        <form method="get" class="d-flex align-items-center gap-2">
+    <input type="text" name="search" class="form-control form-control-sm w-25" placeholder="Student name" value="{{ app.request.query.get('search') }}">
+    <input type="date" name="date_from" class="form-control form-control-sm w-auto" value="{{ app.request.query.get('date_from') }}">
+    <input type="date" name="date_to" class="form-control form-control-sm w-auto" value="{{ app.request.query.get('date_to') }}">
+    <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+    <a href="{{ path('app_gestion_transport_dashboard') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+</form>
+    </div>
+                <div class="table-container">
+                    <div class="row table-header d-none d-md-flex">
+                        <div class="col-md-2">Invoice #</div>
+                        <div class="col-md-2">Transport ID</div>
+                        <div class="col-md-3">Student</div>
+                        <div class="col-md-2">Amount (TND)</div>
+                        <div class="col-md-2">Date</div>
+                        <div class="col-md-1 text-end">Actions</div>
+                    </div>
+                    {% for invoice in invoices %}
+                        <div class="border-bottom py-3 invoice-row">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3 text-dark" style="width: 24px;">
+                                            <i class="fas fa-file-invoice"></i>
+                                        </div>
+                                        <div class="text-dark">{{ invoice.invoiceData.reference }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-muted small">{{ invoice.transport.id }}</div>
+                                <div class="col-md-3 text-muted small">
+                                    {{ invoice.transport.reservation.etudiant.nom }} {{ invoice.transport.reservation.etudiant.prenom }}
+                                </div>
+                                <div class="col-md-2 text-dark small">{{ invoice.invoiceData.amount|number_format(2) }} TND</div>
+                                <div class="col-md-2 text-muted small">{{ invoice.invoiceData.date|date('d/m/Y') }}</div>
+                                <div class="col-md-1 text-end">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                            <li>
+                                                <a class="dropdown-item small" href="{{ path('admin_transport_invoice', {'id': invoice.transport.id}) }}">
+                                                    Télécharger PDF
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <form method="post" action="{{ path('admin_transport_bill', {'id': invoice.transport.id}) }}">
+                                                    <button type="submit" class="dropdown-item small">Resend Invoice</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                 {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-invoice text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted mt-3">Aucune facture trouvée</p>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="d-flex justify-content-center mt-4">
+                    {{ knp_pagination_render(invoices, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig',{'position': 'centered','rounded': true,'size': 'sm'
+                    }) }}
+                </div>
                 </div>
             </div>
         </div>
@@ -374,218 +639,446 @@
     <script src="https://unpkg.com/@mercure/EventSourcePolyfill"></script>
     <script src="{{ asset('js/admin/transport_stats.js') }}"></script>
     <script>
-        // Tab Switching Logic
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab Switching Logic
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
 
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active class from all buttons and contents
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-
-                // Add active class to clicked button and corresponding content
-                button.classList.add('active');
-                const tabId = button.getAttribute('data-tab');
-                document.getElementById(tabId).classList.add('active');
-            });
-        });
-
-        // Initialize Map
-        const map = L.map('map').setView([36.8065, 10.1815], 8); // Default center (Tunisia)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-            attribution: '© OpenStreetMap contributors' 
-        }).addTo(map);
-
-        // Store markers and routing controls for each transport
-        const transportMarkers = {};
-        const routingControls = {};
-
-        // Active transports data from Twig
-        const activeTransports = [
-            {% for transportData in transportsWithCoords|filter(t => t.transport.status.value == 'Actif') %}
-                {
-                    id: {{ transportData.transport.id }},
-                    departLat: {{ transportData.departLat|default('null')|json_encode|raw }},
-                    departLon: {{ transportData.departLon|default('null')|json_encode|raw }},
-                    arriveeLat: {{ transportData.arriveeLat|default('null')|json_encode|raw }},
-                    arriveeLon: {{ transportData.arriveeLon|default('null')|json_encode|raw }},
-                    trajetEnKm: {{ transportData.transport.trajetEnKm|json_encode|raw }},
-                    trackSimulatePath: {{ path('app_transport_track_simulate', {'id': transportData.transport.id})|json_encode|raw }}
-                }{% if not loop.last %},{% endif %}
-            {% endfor %}
-        ];
-
-        // Initialize markers and routes for each active transport
-        const allBounds = [];
-        activeTransports.forEach(transport => {
-            if (transport.departLat && transport.arriveeLat) {
-                const from = L.latLng(transport.departLat, transport.departLon);
-                const to = L.latLng(transport.arriveeLat, transport.arriveeLon);
-
-                // Add departure and destination markers
-                L.marker(from, {
-                    icon: L.divIcon({
-                        html: '<i class="fas fa-map-marker-alt fa-2x" style="color:red"></i>',
-                        className: 'custom-icon'
-                    })
-                }).addTo(map).bindPopup(`Départ Transport #${transport.id}`);
-
-                L.marker(to, {
-                    icon: L.divIcon({
-                        html: '<i class="fas fa-map-marker-alt fa-2x" style="color:green"></i>',
-                        className: 'custom-icon'
-                    })
-                }).addTo(map).bindPopup(`Destination Transport #${transport.id}`);
-
-                // Add route
-                routingControls[transport.id] = L.Routing.control({
-                    waypoints: [from, to],
-                    router: L.Routing.osrmv1({
-                        serviceUrl: 'https://router.project-osrm.org/route/v1',
-                        profile: 'driving',
-                        routingOptions: { 
-                            alternatives: false,
-                            steps: true,
-                            geometries: 'polyline' 
-                        }
-                    }),
-                    showAlternatives: false,
-                    fitSelectedRoutes: true,
-                    createMarker: () => null,
-                    lineOptions: { 
-                        styles: [{ color: 'red', weight: 4, opacity: 0.7 }] 
-                    }
-                }).addTo(map);
-
-                // Add to bounds
-                allBounds.push([transport.departLat, transport.departLon]);
-                allBounds.push([transport.arriveeLat, transport.arriveeLon]);
-            }
-        });
-
-        // Fit map to include all markers
-        if (allBounds.length > 0) {
-            map.fitBounds(allBounds, { padding: [50, 50] });
-        }
-
-        // Start Tracking Button
-        let isSimulating = false;
-        const startButton = document.getElementById('startTracking');
-        startButton.addEventListener('click', async () => {
-            if (isSimulating) {
-                alert('Une simulation est déjà en cours.');
+            if (tabButtons.length === 0 || tabContents.length === 0) {
+                console.error('Tab buttons or contents not found in DOM');
                 return;
             }
 
-            isSimulating = true;
-            startButton.disabled = true;
-            startButton.classList.add('opacity-50', 'cursor-not-allowed');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    console.log(`Switching to tab: ${button.getAttribute('data-tab')}`);
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    button.classList.add('active');
+                    const tabId = button.getAttribute('data-tab');
+                    const targetContent = document.getElementById(tabId);
+                    if (targetContent) {
+                        targetContent.classList.add('active');
+                        console.log(`Activated tab content: ${tabId}`);
+                    } else {
+                        console.error(`Tab content with ID ${tabId} not found`);
+                    }
+                    
+                    if (tabId === 'transports' && window.map) {
+                        setTimeout(() => {
+                            console.log('Invalidating map size');
+                            window.map.invalidateSize();
+                        }, 100);
+                    }
+                });
+            });
 
+            // Initialize Map
+            let map;
             try {
-                // Start simulation for all active transports
-                const promises = activeTransports.map(transport => 
-                    fetch(transport.trackSimulatePath, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
-                    }).then(response => {
-                        if (!response.ok) throw new Error(`Erreur de simulation pour transport #${transport.id}`);
-                    })
-                );
+                map = L.map('map', {
+                    minZoom: 2,
+                    maxZoom: 18
+                }).setView([36.8065, 10.1815], 8);
+                window.map = map;
 
-                await Promise.all(promises);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+                    attribution: '© OpenStreetMap contributors',
+                    tileSize: 512,
+                    zoomOffset: -1
+                }).addTo(map);
+
+                setTimeout(() => {
+                    console.log('Initial map size invalidation');
+                    map.invalidateSize();
+                }, 500);
             } catch (error) {
-                console.error('Simulation error:', error);
-                alert('Erreur lors du lancement du suivi: ' + error.message);
+                console.error('Map initialization failed:', error);
+            }
+
+            // Store markers and routing controls
+            const transportMarkers = {};
+            const routingControls = {};
+            const transportRoutes = {};
+
+            // Configuration for active transports
+            const cfgs = [
+                {% for transportData in transportsWithCoords|filter(t => t.transport.status.value == 'Actif') %}
+                    {
+                        departLat: {{ transportData.departLat|default('null')|json_encode|raw }},
+                        departLon: {{ transportData.departLon|default('null')|json_encode|raw }},
+                        arriveeLat: {{ transportData.arriveeLat|default('null')|json_encode|raw }},
+                        arriveeLon: {{ transportData.arriveeLon|default('null')|json_encode|raw }},
+                        trackSimulatePath: {{ path('admin_transport_simulate', {'id': transportData.transport.id})|json_encode|raw }},
+                        transportId: {{ transportData.transport.id|json_encode|raw }},
+                        trajetEnKm: {{ transportData.transport.trajetEnKm|json_encode|raw }}
+                    }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+
+            // Initialize markers and routes
+            const allBounds = [];
+            cfgs.forEach(cfg => {
+                const hasValidDepart = cfg.departLat != null && cfg.departLon != null && 
+                                    !isNaN(cfg.departLat) && !isNaN(cfg.departLon) &&
+                                    cfg.departLat >= -90 && cfg.departLat <= 90 &&
+                                    cfg.departLon >= -180 && cfg.departLon <= 180;
+                const hasValidArrivee = cfg.arriveeLat != null && cfg.arriveeLon != null && 
+                                    !isNaN(cfg.arriveeLat) && !isNaN(cfg.arriveeLon) &&
+                                    cfg.arriveeLat >= -90 && cfg.arriveeLat <= 90 &&
+                                    cfg.arriveeLon >= -180 && cfg.arriveeLon <= 180;
+
+                if (hasValidDepart && hasValidArrivee) {
+                    const from = L.latLng(parseFloat(cfg.departLat), parseFloat(cfg.departLon));
+                    const to = L.latLng(parseFloat(cfg.arriveeLat), parseFloat(cfg.arriveeLon));
+
+                    L.marker(from, {
+                        icon: L.divIcon({
+                            html: '<i class="fas fa-map-marker-alt fa-2x" style="color:#FF0000"></i>',
+                            className: 'custom-icon',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 24]
+                        })
+                    }).addTo(map).bindPopup(`Départ Transport #${cfg.transportId}`);
+
+                    L.marker(to, {
+                        icon: L.divIcon({
+                            html: '<i class="fas fa-map-marker-alt fa-2x" style="color:#28A745"></i>',
+                            className: 'custom-icon',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 24]
+                        })
+                    }).addTo(map).bindPopup(`Destination Transport #${cfg.transportId}`);
+
+                    try {
+                        routingControls[cfg.transportId] = L.Routing.control({
+                            waypoints: [from, to],
+                            router: L.Routing.osrmv1({
+                                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                                profile: 'driving'
+                            }),
+                            showAlternatives: false,
+                            fitSelectedRoutes: false,
+                            createMarker: () => null,
+                            lineOptions: { 
+                                styles: [{ color: '#F5A623', weight: 4, opacity: 0.7 }] 
+                            },
+                            routeWhileDragging: false
+                        }).addTo(map);
+
+                        routingControls[cfg.transportId].on('routesfound', function(e) {
+                            transportRoutes[cfg.transportId] = e.routes;
+                        });
+
+                        allBounds.push(from);
+                        allBounds.push(to);
+                    } catch (error) {
+                        console.error(`Error adding route for transport #${cfg.transportId}:`, error);
+                    }
+                } else {
+                    console.warn(`Invalid coordinates for transport #${cfg.transportId}`);
+                }
+            });
+
+            if (allBounds.length > 0) {
+                try {
+                    const bounds = L.latLngBounds(allBounds);
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+                } catch (error) {
+                    console.error('Error fitting map bounds:', error);
+                    map.setView([36.8065, 10.1815], 8);
+                }
+            }
+
+            // Start Tracking Button
+            let isSimulating = false;
+            let eventSource = null;
+            let isMercureInitialized = false;
+            const startButton = document.getElementById('startTracking');
+            if (startButton) {
+                startButton.addEventListener('click', debounce(async () => {
+                    await startNavigation();
+                }, 1000));
+            } else {
+                console.error('Start tracking button not found');
+            }
+
+            async function startNavigation() {
+                if (isSimulating) {
+                    showModal('Une simulation est déjà en cours.');
+                    return;
+                }
+
+                if (cfgs.length === 0) {
+                    showModal('Aucun transport actif à suivre.');
+                    return;
+                }
+
+                try {
+                    isSimulating = true;
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    startButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Simulation en cours...';
+                    showLoading();
+
+                    // Initialiser les marqueurs pour tous les transports actifs
+                    cfgs.forEach(cfg => {
+                        const latlng = [parseFloat(cfg.departLat), parseFloat(cfg.departLon)];
+                        if (!isNaN(latlng[0]) && !isNaN(latlng[1])) {
+                            transportMarkers[cfg.transportId] = L.marker(latlng, {
+                                icon: L.divIcon({
+                                    html: '<i class="fas fa-truck fa-2x" style="color:#F5A623"></i>',
+                                    className: 'custom-icon',
+                                    iconSize: [24, 24],
+                                    iconAnchor: [12, 12]
+                                })
+                            }).addTo(map).bindPopup(`Transport #${cfg.transportId} en cours`);
+                        }
+                    });
+
+                    const response = await fetch('{{ path('admin_transport_simulate_all') }}', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || result.status === 'error') {
+                        throw new Error(result.message || 'Failed to start simulations');
+                    }
+
+                    if (!isMercureInitialized) {
+                        await initializeMercureConnection();
+                        isMercureInitialized = true;
+                    }
+
+                } catch (error) {
+                    console.error('Simulation error:', error);
+                    showModal('Erreur lors du lancement du suivi: ' + error.message);
+                    resetSimulationState();
+                } finally {
+                    const spinner = document.getElementById('loadingSpinner');
+                    if (spinner) spinner.classList.add('hidden');
+                }
+            }
+
+            function initializeMercureConnection() {
+                return new Promise((resolve, reject) => {
+                    try {
+                        if (eventSource) {
+                            console.log('Closing existing Mercure connection');
+                            eventSource.close();
+                            eventSource = null;
+                        }
+
+                        const mercureUrl = new URL('http://localhost:3000/.well-known/mercure');
+                        cfgs.forEach(cfg => {
+                            mercureUrl.searchParams.append('topic', `tracking/transport/${cfg.transportId}`);
+                        });
+
+                        eventSource = new EventSource(mercureUrl);
+
+                        eventSource.onopen = () => {
+                            console.log('Mercure connection established for multiple transports');
+                            const spinner = document.getElementById('loadingSpinner');
+                            if (spinner) spinner.classList.add('hidden');
+                            resolve();
+                        };
+
+                        eventSource.onmessage = function(event) {
+                            try {
+                                const data = JSON.parse(event.data);
+                                let transportId = data.transportId;
+                                if (!transportId && event.lastEventId) {
+                                    transportId = event.lastEventId;
+                                } else if (!transportId && event.topic) {
+                                    transportId = event.topic.split('/').pop();
+                                }
+
+                                if (!transportId) {
+                                    console.error('Could not determine transport ID:', event);
+                                    return;
+                                }
+
+                                const latlng = [parseFloat(data.latitude), parseFloat(data.longitude)];
+                                if (isNaN(latlng[0]) || isNaN(latlng[1])) {
+                                    console.error('Invalid coordinates:', data);
+                                    return;
+                                }
+
+                                updateTransportMarker(transportId, latlng);
+                                updateTransportProgress(transportId, data);
+
+                                if (data.isComplete) {
+                                    updateTransportStatus(transportId, 'Complété');
+                                    checkAllTransportsComplete();
+                                }
+                            } catch (error) {
+                                console.error('Error processing Mercure update:', error);
+                            }
+                        };
+
+                        eventSource.onerror = function(event) {
+                            console.error('Mercure connection error:', event);
+                            showModal('Erreur de connexion au serveur de suivi');
+                            resetSimulationState();
+                            reject(new Error('Mercure connection error'));
+                        };
+
+                        window.mercureEventSource = eventSource;
+                    } catch (error) {
+                        console.error('Error setting up Mercure:', error);
+                        resetSimulationState();
+                        reject(error);
+                    }
+                });
+            }
+
+            function updateTransportMarker(transportId, latlng) {
+                if (transportMarkers[transportId]) {
+                    transportMarkers[transportId].setLatLng(latlng);
+                } else {
+                    transportMarkers[transportId] = L.marker(latlng, {
+                        icon: L.divIcon({
+                            html: '<i class="fas fa-truck fa-2x" style="color:#F5A623"></i>',
+                            className: 'custom-icon',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(map).bindPopup(`Transport #${transportId} en cours`);
+                }
+
+                if (Object.keys(transportMarkers).length <= 3) {
+                    map.panTo(latlng, { animate: true, duration: 0.5 });
+                }
+            }
+
+            function updateTransportProgress(transportId, data) {
+                const row = document.querySelector(`tr[data-transport-id="${transportId}"]`);
+                if (row) {
+                    const progressCell = row.querySelector('.transport-progress');
+                    if (progressCell) {
+                        const cfg = cfgs.find(c => c.transportId == transportId);
+                        const totalDistance = cfg ? cfg.trajetEnKm : 1;
+                        const pct = ((data.distanceCovered / totalDistance) * 100).toFixed(1);
+                        progressCell.innerHTML = `${pct}%<div class="progress"><div class="progress-bar" role="progressbar" style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div></div>`;
+                        
+                        if (data.isComplete) {
+                            updateTransportStatus(transportId, 'Complété');
+                        } else if (pct > 0) {
+                            updateTransportStatus(transportId, 'Actif');
+                        }
+                    }
+                }
+            }
+
+            function updateTransportStatus(transportId, status) {
+                const row = document.querySelector(`tr[data-transport-id="${transportId}"]`);
+                if (row) {
+                    const statusCell = row.querySelector('td:nth-child(6) .badge');
+                    if (statusCell) {
+                        statusCell.textContent = status;
+                        statusCell.className = `badge ${
+                            status === 'Complété' ? 'text-dark border border-dark' :
+                            status === 'Actif' ? 'text-orange border border-orange' :
+                            status === 'En attente' ? 'text-muted border border-muted' : 'text-muted border border-muted'
+                        }`;
+                    }
+                }
+            }
+
+            function checkAllTransportsComplete() {
+                const allComplete = cfgs.every(cfg => {
+                    const row = document.querySelector(`tr[data-transport-id="${cfg.transportId}"]`);
+                    if (row) {
+                        const statusCell = row.querySelector('td:nth-child(6) .badge');
+                        return statusCell && statusCell.textContent === 'Complété';
+                    }
+                    return false;
+                });
+
+                if (allComplete) {
+                    resetSimulationState();
+                    showModal('Simulation terminée pour tous les transports.');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }
+            }
+
+            function resetSimulationState() {
                 isSimulating = false;
+                isMercureInitialized = false;
                 startButton.disabled = false;
                 startButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        });
-
-        // Subscribe to Mercure updates for all active transports
-        const mercureUrl = new URL('http://localhost:3000/.well-known/mercure');
-        activeTransports.forEach(transport => {
-            mercureUrl.searchParams.append('topic', `tracking/transport/${transport.id}`);
-        });
-
-        const eventSource = new EventSource(mercureUrl);
-        eventSource.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            const transportId = data.transportId || event.topic?.split('/').pop();
-            const latlng = [data.latitude, data.longitude];
-
-            if (transportMarkers[transportId]) {
-                transportMarkers[transportId].setLatLng(latlng);
-            } else {
-                transportMarkers[transportId] = L.marker(latlng, {
-                    icon: L.divIcon({
-                        html: '<i class="fas fa-truck fa-2x" style="color:blue"></i>',
-                        className: 'custom-icon'
-                    })
-                }).addTo(map).bindPopup(`Transport #${transportId} en cours`);
-            }
-
-            // Update transport progress in the table
-            const row = document.querySelector(`tr[data-transport-id="${transportId}"]`);
-            if (row) {
-                const progressCell = row.querySelector('.transport-progress');
-                if (progressCell) {
-                    const pct = ((data.distanceCovered / data.trajetEnKm) * 100).toFixed(1);
-                    progressCell.innerText = `${pct}%`;
+                startButton.innerHTML = '<i class="fas fa-play me-2"></i>Lancer le Suivi pour Tous';
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                    window.mercureEventSource = null;
                 }
             }
 
-            // Handle completion
-            if (data.isComplete) {
-                if (transportMarkers[transportId]) {
-                    map.removeLayer(transportMarkers[transportId]);
-                    delete transportMarkers[transportId];
-                }
-                if (routingControls[transportId]) {
-                    map.removeControl(routingControls[transportId]);
-                    delete routingControls[transportId];
-                }
-                if (row) {
-                    const statusCell = row.querySelector('.badge');
-                    if (statusCell) {
-                        statusCell.className = 'badge bg-success';
-                        statusCell.innerText = 'Complété';
-                    }
-                }
-                // Check if all simulations are complete
-                const allComplete = activeTransports.every(t => !transportMarkers[t.id]);
-                if (allComplete) {
-                    isSimulating = false;
-                    startButton.disabled = false;
-                    startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            function showModal(message) {
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Information</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">${message}</div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+                modal.addEventListener('hidden.bs.modal', () => modal.remove());
+            }
+
+            function showLoading() {
+                if (!document.getElementById('loadingSpinner')) {
+                    const spinner = document.createElement('div');
+                    spinner.id = 'loadingSpinner';
+                    spinner.className = 'position-fixed top-50 start-50 translate-middle bg-white p-3 rounded shadow-lg d-flex flex-column align-items-center';
+                    spinner.innerHTML = `
+                        <div class="spinner-border text-primary mb-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span>Initialisation du suivi...</span>
+                    `;
+                    document.body.appendChild(spinner);
+                } else {
+                    document.getElementById('loadingSpinner').className = document.getElementById('loadingSpinner').className.replace('hidden', '');
                 }
             }
-        };
 
-        eventSource.onerror = function(err) {
-            console.error('Mercure error:', err);
-            alert('Erreur de connexion au serveur de suivi.');
-            isSimulating = false;
-            startButton.disabled = false;
-            startButton.classList.remove('opacity-50', 'cursor-not-allowed');
-        };
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
 
-        // Highlight transport on row click
-        document.querySelectorAll('tr[data-transport-id]').forEach(row => {
-            row.addEventListener('click', () => {
-                const transportId = row.getAttribute('data-transport-id');
-                if (transportMarkers[transportId]) {
-                    map.panTo(transportMarkers[transportId].getLatLng());
-                    transportMarkers[transportId].openPopup();
-                    // Switch to transports tab if not already active
-                    if (!document.getElementById('transports').classList.contains('active')) {
-                        tabButtons.forEach(btn => btn.classList.remove('active'));
-                        tabContents.forEach(content => content.classList.remove('active'));
-                        document.querySelector('.tab-button[data-tab="transports"]').classList.add('active');
-                        document.getElementById('transports').classList.add('active');
-                    }
+            window.addEventListener('beforeunload', () => {
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                    window.mercureEventSource = null;
                 }
             });
         });

@@ -72,6 +72,22 @@
                 </div>
             {% endif %}
 
+            {% if form.loadingTime is defined and form.vars.data.status.value == 'Actif' %}
+                <div class="mb-3">
+                    {{ form_label(form.loadingTime, 'Temps de chargement', {'label_attr': {'class': 'form-label small'}}) }}
+                    {{ form_widget(form.loadingTime, {'attr': {'class': 'form-control rounded-0'}}) }}
+                    {{ form_errors(form.loadingTime) }}
+                </div>
+            {% endif %}
+
+            {% if form.unloadingTime is defined and form.vars.data.status.value == 'Actif' %}
+                <div class="mb-3">
+                    {{ form_label(form.unloadingTime, 'Temps de déchargement', {'label_attr': {'class': 'form-label small'}}) }}
+                    {{ form_widget(form.unloadingTime, {'attr': {'class': 'form-control rounded-0'}}) }}
+                    {{ form_errors(form.unloadingTime) }}
+                </div>
+            {% endif %}
+
             <div class="d-flex justify-content-between mt-4">
                 <a href="{{ path('app_transport_index') }}" class="btn btn-outline-dark rounded-0 px-4">
                     {{ form.vars.data and form.vars.data.id ? 'Annuler' : 'Retour' }}

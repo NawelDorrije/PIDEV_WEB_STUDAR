@@ -26,6 +26,15 @@ public function findByTransporteurAndStatus(Utilisateur $transporteur, ?string $
         ->getResult();
 }
 
+public function findByEtudiant(Utilisateur $etudiant): array
+{
+    return $this->createQueryBuilder('r')
+        ->where('r.etudiant = :etudiant')
+        ->setParameter('etudiant', $etudiant)
+        ->getQuery()
+        ->getResult();
+}
+
 public function findByEtudiantAndStatus(Utilisateur $etudiant, ?string $status = null): array
 {
     return $this->createEtudiantQueryBuilder($etudiant, $status)

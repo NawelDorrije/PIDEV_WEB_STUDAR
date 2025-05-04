@@ -38,6 +38,15 @@ class TransportRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findByStatus(string $status)
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.status = :status')
+            ->setParameter('status', $status)
+            ->getQuery()
+            ->getResult();
+    }
+    
     public function countByMonthAndStatus(int $year): array
     {
         // Initialize all months with 0 counts

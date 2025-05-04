@@ -34,6 +34,15 @@ class VoitureRepository extends ServiceEntityRepository
             ->getResult();
     }
     
+    public function findByAvailability(string $disponibilite)
+    {
+        return $this->createQueryBuilder('v')
+            ->where('v.disponibilite = :disponibilite')
+            ->setParameter('disponibilite', $disponibilite)
+            ->getQuery()
+            ->getResult();
+    }
+    
     public function findByUser($user)
     {
         return $this->createQueryBuilder('v')
