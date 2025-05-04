@@ -7,6 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Webauthn\PublicKeyCredentialUserEntity;
+use App\Entity\Message;
 
 /**
  * @extends ServiceEntityRepository<Utilisateur>
@@ -111,4 +112,39 @@ class UtilisateurRepository extends ServiceEntityRepository
         ];
     }, $results);
 }
+
+// alaaa focntion 
+    /**@param Utilisateur $currentUser
+     * @return array
+     */
+    public function findAllWithLastMessage(Utilisateur $currentUser): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->where('u != :currentUser')
+            ->setParameter('currentUser', $currentUser);
+
+        $users = $qb->getQuery()->getResult();
+
+        $entityManager = $this->getEntityManager();
+        $messageRepository = $entityManager->getRepository(Message::class);
+
+        $result = [];
+        foreach ($users as $user) {
+            $lastMessage = $messageRepository->createQueryBuilder('m')
+                ->where('(m.senderCin = :currentUser AND m.receiverCin = :user) OR (m.senderCin = :user AND m.receiverCin = :currentUser)')
+                ->setParameter('currentUser', $currentUser)
+                ->setParameter('user', $user)
+                ->orderBy('m.timestamp', 'DESC')
+                ->setMaxResults(1)
+                ->getQuery()
+                ->getOneOrNullResult();
+
+            $result[] = [
+                'user' => $user,
+                'lastMessage' => $lastMessage,
+            ];
+        }
+
+        return $result;
+    }
 }

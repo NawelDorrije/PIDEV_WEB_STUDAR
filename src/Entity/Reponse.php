@@ -26,6 +26,21 @@ class Reponse
 
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $timestamp = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $rating = null;
+
+
+    public function getRating(): ?int
+    {
+        return $this->rating;
+    }
+
+    public function setRating(?int $rating): static
+    {
+        $this->rating = $rating;
+        return $this;
+    }
     // Getters and setters
     public function getIdReponse(): ?int
     {

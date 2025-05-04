@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="modal fade show" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportModalLabel">Signaler un message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.location.href='{{ path('app_chat_conversation', {'receiverCin': receiverCin}) }}'"></button>
+            </div>
+            <div class="modal-body">
+                {{ form_start(form, {'action': path('app_chat_report', {'id': message.id})}) }}
+                {{ form_widget(form) }}
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -402,6 +402,29 @@
             box-shadow: none;
         }
 
+.name-meta {
+            font-size: 16px;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            color: #000;
+        }
+
+        .message-preview {
+            font-size: 14px;
+            color: #666;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 200px;
+        }
+
+        .time-meta {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.4);
+            text-align: right;
+        }
         @media screen and (max-width: 768px) {
             .chat-container {
                 height: calc(100vh - 126px); /* Adjust for mobile: header (56px) + footer (70px) */
@@ -452,8 +475,9 @@
             }
 
             .time-meta {
-                font-size: 14px;
+                font-size: 6px;
             }
+            
 
             .reply {
                 height: 70px;
@@ -476,7 +500,6 @@
         }
     </style>
 {% endblock %}
-
 {% block body %}
     <div class="chat-container" data-current-user-cin="{{ current_user.cin }}">
         <div class="app-one d-flex">
@@ -504,116 +527,60 @@
                     </div>
 
                     <div class="sideBar">
-                        {% for user in users %}
-                            {% if current_user and user.cin != current_user.cin %}
-                                <div class="sideBar-body">
-                                    <div class="sideBar-avatar">
-                                        <div class="avatar-icon">
-                                            <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
-                                        </div>
-                                    </div>
-                                    <div class="sideBar-main">
-                                        <div class="sideBar-name">
-                                            <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
-                                                <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
-                                            </a>
-                                        </div>
-                                        <div class="sideBar-time">
-                                            <span class="time-meta">18:18</span>
-                                        </div>
+                        {% for userData in users_with_last_message %}
+                            {% set user = userData.user %}
+                            {% set lastMessage = userData.lastMessage %}
+                            <div class="sideBar-body">
+                                <div class="sideBar-avatar">
+                                    <div class="avatar-icon">
+                                        <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
                                     </div>
                                 </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="side-two d-flex flex-column h-100">
-                    <div class="newMessage-heading">
-                        <div class="newMessage-main">
-                            <div class="newMessage-back">
-                                <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                            </div>
-                            <div class="newMessage-title">
-                                New Chat
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="composeBox">
-                        <div class="composeBox-inner position-relative">
-                            <input id="composeText" type="text" class="form-control" name="searchText" placeholder="Search People">
-                            <span class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></span>
-                        </div>
-                    </div>
-
-                    <div class="compose-sideBar">
-                        {% for user in users %}
-                            {% if current_user and user.cin != current_user.cin %}
-                                <div class="sideBar-body">
-                                    <div class="sideBar-avatar">
-                                        <div class="avatar-icon">
-                                            <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
+                                <div class="sideBar-main">
+                                    <div class="sideBar-name">
+                                        <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
+                                            <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
+                                        </a>
+                                        <div class="message-preview">
+                                            {% if lastMessage %}
+                                                {{ lastMessage.content|length > 20 ? lastMessage.content|slice(0, 10) ~ '...' : lastMessage.content }}
+                                            {% else %}
+                                            {% endif %}
                                         </div>
                                     </div>
-                                    <div class="sideBar-main">
-                                        <div class="sideBar-name">
-                                            <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
-                                                <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
-                                            </a>
-                                        </div>
-                                        <div class="sideBar-time">
-                                            <span class="time-meta">18:18</span>
-                                        </div>
+                                    <div class="sideBar-time">
+                                        <span class="time-meta">
+                                            {% if lastMessage %}
+                                                {{ lastMessage.timestamp|date('H:i') }}
+                                            {% endif %}
+                                        </span>
                                     </div>
                                 </div>
-                            {% endif %}
+                            </div>
                         {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="conversation flex-grow-1 d-flex flex-column">
-                <div class="heading d-flex align-items-center">
-                    <div class="heading-avatar">
-                        <div class="heading-avatar-icon">
-                            <img src="https://bootdey.com/img/Content/avatar/avatar6.png" alt="Avatar">
-                        </div>
-                    </div>
-                    <div class="heading-name">
-                        <a class="heading-name-meta">Select a conversation</a>
-                        <span class="heading-online">Online</span>
-                    </div>
-                    <div class="heading-dot ms-auto">
-                        <i class="fas fa-ellipsis-v fa-2x" aria-hidden="true"></i>
-                    </div>
-                </div>
-
-                <div class="message" id="conversation">
-                    <div class="message-previous" id="previous-messages"></div>
-                </div>
-
-                <div class="reply">
-                    <div class="reply-emojis">
-                        <i class="fas fa-smile fa-2x"></i>
-                    </div>
-                    <div class="reply-main">
-                        <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..." disabled></textarea>
-                    </div>
-                    <div class="reply-recording">
-                        <i class="fas fa-microphone fa-2x" aria-hidden="true"></i>
-                    </div>
-                    <div class="reply-send">
-                        <i class="fas fa-paper-plane fa-2x" aria-hidden="true"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 {% endblock %}
-
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('app') }}
     {{ encore_entry_script_tags('chat') }}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+            const searchText = document.getElementById('searchText');
+            if (searchText) {
+                searchText.addEventListener('input', function() {
+                    const filter = searchText.value.toLowerCase();
+                    const sideBarBodies = document.querySelectorAll('.sideBar-body');
+                    sideBarBodies.forEach(body => {
+                        const name = body.querySelector('.name-meta').textContent.toLowerCase();
+                        body.style.display = name.includes(filter) ? '' : 'none';
+                    });
+                });
+            }
+        });
+        </script>
 {% endblock %}

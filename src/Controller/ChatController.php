@@ -14,6 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Annotation\Route;
+use WebSocket\Client; // Ajoutez cette ligne
+use App\Entity\Report;
+use App\Form\ReportType;
 
 class ChatController extends AbstractController
 {
@@ -24,11 +27,12 @@ class ChatController extends AbstractController
         if (!$currentUser instanceof Utilisateur) {
             throw $this->createNotFoundException('Utilisateur non connecté.');
         }
+        $usersWithLastMessage = $utilisateurRepository->findAllWithLastMessage($currentUser);
 
         $users = $utilisateurRepository->findAll();
         return $this->render('chat/index.html.twig', [
             'current_user' => $currentUser,
-            'users' => $users,
+            'users_with_last_message' => $usersWithLastMessage,
         ]);
     }
 
@@ -53,6 +57,7 @@ class ChatController extends AbstractController
         $totalMessages = $messageRepository->countConversationMessages($currentUser->getCin(), $receiverCin);
         $offset = max(0, $totalMessages - $limit);
         $messages = $messageRepository->findConversationPaginated($currentUser->getCin(), $receiverCin, $limit, $offset);
+        $usersWithLastMessage = $utilisateurRepository->findAllWithLastMessage($currentUser);
 
         $users = $utilisateurRepository->findAll();
 
@@ -65,6 +70,8 @@ class ChatController extends AbstractController
             'loaded_messages' => count($messages),
             'limit' => $limit,
             'offset' => $offset,
+            'users_with_last_message' => $usersWithLastMessage,
+
         ]);
     }
 
@@ -132,13 +139,25 @@ class ChatController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Aucun fichier audio fourni.'], 400);
         }
 
-        // Log the MIME type for debugging
+        // Log the MIME type and size for debugging
         error_log('Uploaded audio MIME type: ' . $audioFile->getMimeType());
+        error_log('Uploaded audio size: ' . $audioFile->getSize() . ' bytes');
 
         // Validate file type and size (max 5MB)
-// In ChatController.php, update the $allowedMimeTypes array
-$allowedMimeTypes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/webm;codecs=opus', 'video/webm'];        if (!in_array($audioFile->getMimeType(), $allowedMimeTypes)) {
-            return new JsonResponse(['success' => false, 'error' => 'Type de fichier non supporté: ' . $audioFile->getMimeType()], 400);
+        $allowedMimeTypes = [
+            'audio/webm',
+            'audio/webm;codecs=opus',
+            'audio/mpeg',
+            'audio/mp3',
+            'audio/ogg',
+            'audio/wav',
+            'video/webm'
+        ];
+        if (!in_array($audioFile->getMimeType(), $allowedMimeTypes)) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Type de fichier non supporté: ' . $audioFile->getMimeType()
+            ], 400);
         }
         if ($audioFile->getSize() > 5 * 1024 * 1024) {
             return new JsonResponse(['success' => false, 'error' => 'Fichier trop volumineux (max 5MB).'], 400);
@@ -150,17 +169,29 @@ $allowedMimeTypes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'audi
 
         try {
             $audioFile->move($this->getParameter('audio_temp_dir'), $filename);
+            error_log('Audio file saved to: ' . $tempPath);
         } catch (\Exception $e) {
-            return new JsonResponse(['success' => false, 'error' => 'Erreur lors de l\'enregistrement du fichier.'], 500);
+            error_log('Error saving audio file: ' . $e->getMessage());
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Erreur lors de l\'enregistrement du fichier.',
+                'details' => $e->getMessage()
+            ], 500);
         }
 
         // Transcribe audio
         $transcription = '';
         try {
             $transcription = $chatbotService->transcribeAudio($tempPath);
+            error_log('Transcription result: ' . $transcription);
         } catch (\Exception $e) {
+            error_log('Transcription failed: ' . $e->getMessage());
             unlink($tempPath);
-            return new JsonResponse(['success' => false, 'error' => 'Transcription échouée: ' . $e->getMessage()], 500);
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Transcription échouée: ' . $e->getMessage(),
+                'details' => $e->getTraceAsString()
+            ], 500);
         }
 
         // Clean up
@@ -179,6 +210,7 @@ $allowedMimeTypes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'audi
 
         $entityManager->persist($message);
         $entityManager->flush();
+        error_log('Message saved to database: ' . $message->getContent());
 
         // Notify via WebSocket
         try {
@@ -199,18 +231,77 @@ $allowedMimeTypes = ['audio/webm', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'audi
     /**
      * Notify recipient via WebSocket
      */
-    private function notifyViaWebSocket(Utilisateur $sender, Utilisateur $receiver, Message $message): void
-    {
-        $messageData = [
-            'senderCin' => $sender->getCin(),
-            'receiverCin' => $receiver->getCin(),
-            'content' => $message->getContent(),
-            'timestamp' => $message->getTimestamp()->format('c'),
-        ];
-
-        // Replace with your Ratchet integration
-        $client = new \WebSocket\Client('ws://localhost:8080');
-        $client->send(json_encode($messageData));
-        $client->close();
-    }
+        private function notifyViaWebSocket(Utilisateur $sender, Utilisateur $receiver, Message $message): void
+        {
+            $messageData = [
+                'senderCin' => $sender->getCin(),
+                'receiverCin' => $receiver->getCin(),
+                'content' => $message->getContent(),
+                'timestamp' => $message->getTimestamp()->format('c'),
+            ];
+    
+            error_log('Sending WebSocket message: ' . json_encode($messageData));
+            try {
+                if (!class_exists(Client::class)) {
+                    error_log('WebSocket\Client class not found. Ensure textalk/websocket is installed.');
+                    return;
+                }
+                $client = new Client('ws://localhost:8080');
+                $client->send(json_encode($messageData));
+                $client->close();
+                error_log('WebSocket message sent successfully');
+            } catch (\Exception $e) {
+                error_log('WebSocket notification failed: ' . $e->getMessage());
+            }
+        }
+        #[Route('/chat/report/{id}', name: 'app_chat_report', methods: ['GET', 'POST'])]
+        public function report(Message $message, Request $request, EntityManagerInterface $entityManager): Response
+        {
+            $currentUser = $this->getUser();
+            if (!$currentUser instanceof Utilisateur) {
+                $this->addFlash('error', 'Vous devez être connecté pour signaler un message.');
+                return $this->redirectToRoute('app_chat');
+            }
+        
+            if (!$message || $message->getSenderCin()->getCin() === $currentUser->getCin()) {
+                $this->addFlash('error', 'Message non trouvé ou non signalable.');
+                return $this->redirectToRoute('app_chat_conversation', ['receiverCin' => $message->getSenderCin()->getCin()]);
+            }
+        
+            $report = new Report();
+            $report->setReportedBy($currentUser);
+            $report->setMessage($message);
+            $report->setCreatedAt(new \DateTime());
+        
+            $form = $this->createForm(ReportType::class, $report, [
+                'csrf_token_id' => 'report_message',
+            ]);
+            $form->handleRequest($request);
+        
+            if ($form->isSubmitted()) {
+                if ($form->isValid()) {
+                    try {
+                        $entityManager->persist($report);
+                        $entityManager->flush();
+                        $this->addFlash('success', 'Le message a été signalé avec succès.');
+                        return $this->redirectToRoute('app_chat_conversation', ['receiverCin' => $message->getSenderCin()->getCin()]);
+                    } catch (\Exception $e) {
+                        error_log('Flush error: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+                        $this->addFlash('error', 'Erreur lors de l\'enregistrement : ' . $e->getMessage());
+                    }
+                } else {
+                    $errors = $form->getErrors(true, true);
+                    foreach ($errors as $error) {
+                        error_log('Form error: ' . $error->getMessage() . ' | Field: ' . ($error->getOrigin() ? $error->getOrigin()->getName() : 'N/A'));
+                        $this->addFlash('error', 'Erreur : ' . $error->getMessage());
+                    }
+                }
+            }
+        
+            return $this->render('chat/report_form.html.twig', [
+                'form' => $form->createView(),
+                'message' => $message,
+                'receiverCin' => $message->getSenderCin()->getCin(),
+            ]);
+        }
 }

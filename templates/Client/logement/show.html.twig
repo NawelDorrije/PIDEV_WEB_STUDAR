@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     {# FontAwesome for icons #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-{# <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script> #}
 
     <script>
         let map;
@@ -218,63 +217,63 @@
             });
 
             // Handle reclamation form submission (Add Reclamation)
-           // Handle reclamation form submission (Add Reclamation)
-const submitButton = document.getElementById('submit-reclamation');
-const reclamationForm = document.getElementById('add-reclamation-form');
-const errorMessageDiv = document.getElementById('form-error');
-const addModal = document.getElementById('addReclamationModal');
+            const submitButton = document.getElementById('submit-reclamation');
+            const reclamationForm = document.getElementById('add-reclamation-form');
+            const errorMessageDiv = document.getElementById('form-error');
+            const addModal = document.getElementById('addReclamationModal');
 
-if (submitButton && reclamationForm) {
-    reclamationForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-    });
+            if (submitButton && reclamationForm) {
+                reclamationForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                });
 
-    submitButton.addEventListener('click', function() {
-        console.log('Submit reclamation button clicked'); // Debug
-        const title = document.getElementById('reclamation-title').value.trim();
-        const description = document.getElementById('reclamation-description').value.trim();
+                submitButton.addEventListener('click', function() {
+                    console.log('Submit reclamation button clicked'); // Debug
+                    const title = document.getElementById('reclamation-title').value.trim();
+                    const description = document.getElementById('reclamation-description').value.trim();
 
-        if (!title || !description) {
-            errorMessageDiv.textContent = 'Le titre et la description sont requis.';
-            errorMessageDiv.style.display = 'block';
-            return;
-        }
+                    if (!title || !description) {
+                        errorMessageDiv.textContent = 'Le titre et la description sont requis.';
+                        errorMessageDiv.style.display = 'block';
+                        return;
+                    }
 
-        errorMessageDiv.style.display = 'none';
-        const formData = new FormData(reclamationForm);
+                    errorMessageDiv.style.display = 'none';
+                    const formData = new FormData(reclamationForm);
 
-        fetch(reclamationForm.action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Reclamation submission response:', data); // Debug
-            if (data.success) {
-                const modalInstance = bootstrap.Modal.getInstance(addModal);
-                if (modalInstance) {
-                    modalInstance.hide();
-                } else {
-                    console.error('Modal instance not found');
-                }
-                reclamationForm.reset();
-                setTimeout(() => {
-                    window.location.reload(); // Reload to show new reclamation
-                }, 300);
+                    fetch(reclamationForm.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Reclamation submission response:', data); // Debug
+                        if (data.success) {
+                            const modalInstance = bootstrap.Modal.getInstance(addModal);
+                            if (modalInstance) {
+                                modalInstance.hide();
+                            } else {
+                                console.error('Modal instance not found');
+                            }
+                            reclamationForm.reset();
+                            setTimeout(() => {
+                                window.location.reload(); // Reload to show new reclamation
+                            }, 300);
+                        } else {
+                            errorMessageDiv.textContent = data.error || 'Une erreur est survenue.';
+                            errorMessageDiv.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting reclamation:', error);
+                        errorMessageDiv.textContent = 'Une erreur est survenue lors de l\'envoi.';
+                        errorMessageDiv.style.display = 'block';
+                    });
+                });
             } else {
-                errorMessageDiv.textContent = data.error || 'Une erreur est survenue.';
-                errorMessageDiv.style.display = 'block';
+                console.error('Reclamation form or submit button not found');
             }
-        })
-        .catch(error => {
-            console.error('Error submitting reclamation:', error);
-            errorMessageDiv.textContent = 'Une erreur est survenue lors de l\'envoi.';
-            errorMessageDiv.style.display = 'block';
-        });
-    });
-} else {
-    console.error('Reclamation form or submit button not found');
-}
+
             // Disable "Modifier" buttons for reclamations older than 24 hours
             const modifyButtons = document.querySelectorAll('.modify-reclamation-btn');
             modifyButtons.forEach(button => {
@@ -380,6 +379,82 @@ if (submitButton && reclamationForm) {
                     });
                 });
             });
+
+            // Handle star rating selection
+            const ratingStars = document.querySelectorAll('.star-rating input');
+            ratingStars.forEach(star => {
+                star.addEventListener('change', function() {
+                    const selectedRating = this.value;
+                    console.log('Selected rating:', selectedRating); // Debug
+                });
+            });
+
+            // Handle give rating button click
+            const giveRatingButtons = document.querySelectorAll('.give-rating-btn');
+            giveRatingButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const reclamationId = this.dataset.reclamationId;
+                    const reponseContent = this.dataset.reponseContent;
+                    const reponseTimestamp = this.dataset.reponseTimestamp;
+
+                    // Populate modal with the latest response
+                    const ratingForm = document.getElementById('rating-reclamation-form');
+                    const reponseContentDiv = document.getElementById('reponse-content');
+                    const reponseTimestampDiv = document.getElementById('reponse-timestamp');
+
+                    ratingForm.action = '{{ path('app_reclamation_rating', {'id': 'REPLACEMENT_ID'}) }}'.replace('REPLACEMENT_ID', reclamationId);
+                    reponseContentDiv.textContent = reponseContent || 'Aucun contenu disponible';
+                    reponseTimestampDiv.textContent = reponseTimestamp ? `Répondue le : ${reponseTimestamp}` : 'Date non disponible';
+                });
+            });
+
+            // Handle rating form submission
+            const ratingModal = document.getElementById('ratingReclamationModal');
+            const ratingForm = document.getElementById('rating-reclamation-form');
+            const ratingErrorMessageDiv = document.getElementById('rating-form-error');
+            const submitRatingButton = document.getElementById('submit-rating-reclamation');
+
+            if (submitRatingButton && ratingForm) {
+                ratingForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                });
+
+                submitRatingButton.addEventListener('click', function() {
+                    const selectedRating = document.querySelector('input[name="rating"]:checked');
+                    if (!selectedRating) {
+                        ratingErrorMessageDiv.textContent = 'Veuillez sélectionner une note.';
+                        ratingErrorMessageDiv.style.display = 'block';
+                        return;
+                    }
+
+                    ratingErrorMessageDiv.style.display = 'none';
+                    const formData = new FormData(ratingForm);
+
+                    fetch(ratingForm.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const modalInstance = bootstrap.Modal.getInstance(ratingModal);
+                            modalInstance.hide();
+                            ratingForm.reset();
+                            setTimeout(() => {
+                                window.location.reload(); // Reload to reflect changes
+                            }, 300);
+                        } else {
+                            ratingErrorMessageDiv.textContent = data.error || 'Une erreur est survenue.';
+                            ratingErrorMessageDiv.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting rating:', error);
+                        ratingErrorMessageDiv.textContent = 'Une erreur est survenue lors de l\'envoi.';
+                        ratingErrorMessageDiv.style.display = 'block';
+                    });
+                });
+            }
         });
     </script>
 {% endblock %}
@@ -394,12 +469,6 @@ if (submitButton && reclamationForm) {
             animation: none !important;
             transition: none !important;
         }
-                {# body.modal-open .modal{
-                    opacity: 0 !important;
-                                opacity: 1 !important;
-
-                } #}
-
 
         .modal.in {
             display: block !important;
@@ -592,6 +661,57 @@ if (submitButton && reclamationForm) {
             margin-top: 5px;
             display: none;
         }
+
+        .give-rating-btn {
+            margin-top: 10px;
+        }
+
+        /* Star rating styles */
+        .star-rating {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .star-rating input {
+            display: none;
+        }
+
+        .star-rating label {
+            font-size: 24px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star-rating label:before {
+            content: '\f005'; /* FontAwesome star icon */
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+        }
+
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #f5c518; /* Gold color for selected/hovered stars */
+        }
+
+        .star-display {
+            color: #f5c518; /* Gold for filled stars */
+        }
+
+        .star-display .fa-star {
+            margin-right: 2px;
+        }
+
+        /* Response display in modal */
+        .response-display {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
     </style>
 {% endblock %}
 
@@ -729,99 +849,171 @@ if (submitButton && reclamationForm) {
                     </div>
 
                     <!-- Reclamations Section -->
- <div class="reclamations-section">
-        <h4>Réclamations</h4>
-        {% if logement.reclamations is not empty %}
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                {% for reclamation in logement.reclamations %}
-                    {# Determine the card class based on statut #}
-                    {% set cardClass = reclamation.statut | replace({' ': '-'}) %}
-                    {% if reclamation.statut == 'en cours' %}
-                        {% set cardClass = 'en-cours' %}
-                    {% elseif reclamation.statut == 'traité' %}
-                        {% set cardClass = 'traite' %}
-                    {% elseif reclamation.statut == 'refusé' %}
-                        {% set cardClass = 'refuse' %}
-                    {% endif %}
+                    <div class="reclamations-section">
+                        <h4>Réclamations</h4>
+                        {% if logement.reclamations is not empty %}
+                            <div class="row row-cols-1 row-cols-md-3 g-4">
+                                {% for reclamation in logement.reclamations %}
+                                    {# Determine the card class based on statut #}
+                                    {% set cardClass = reclamation.statut | replace({' ': '-'}) %}
+                                    {% if reclamation.statut == 'en cours' %}
+                                        {% set cardClass = 'en-cours' %}
+                                    {% elseif reclamation.statut == 'traité' %}
+                                        {% set cardClass = 'traite' %}
+                                    {% elseif reclamation.statut == 'refusé' %}
+                                        {% set cardClass = '
 
-                    <div class="col">
-                        <div class="card card-{{ cardClass }} shadow-sm">
-                            <div class="card-header">
-                                {{ reclamation.titre }}
+refuse' %}
+                                    {% endif %}
+
+                                    <div class="col">
+                                        <div class="card card-{{ cardClass }} shadow-sm">
+                                            <div class="card-header">
+                                                {{ reclamation.titre }}
+                                            </div>
+                                            <div class="card-body">
+                                                <p><strong>{{ reclamation.statut|upper }}</strong></p>
+                                                <p>{{ reclamation.description }}</p>
+                                                <p>Créée le : {{ reclamation.timestamp|date('d/m/Y H:i') }}</p>
+                                                <p>Utilisateur : {{ reclamation.utilisateur.nom }} {{ reclamation.utilisateur.prenom }}</p>
+                                                {% if reclamation.statut == 'traité' and reclamation.reponses is not empty %}
+                                                    {% for reponse in reclamation.reponses %}
+                                                        <p>Répondue le : {{ reponse.timestamp|date('d/m/Y H:i') }}</p>
+                                                        {% if reponse.rating %}
+                                                            <p><strong>Note :</strong> 
+                                                                <span class="star-display">
+                                                                    {% for i in 1..5 %}
+                                                                        <i class="fa fa-star {{ i <= reponse.rating ? '' : 'far' }}"></i>
+                                                                    {% endfor %}
+                                                                </span>
+                                                            </p>
+                                                        {% else %}
+                                                            {# Pass the last response's data to the modal #}
+                                                            {% set last_reponse = reclamation.reponses|last %}
+                                                            <button 
+                                                                class="btn btn-info btn-sm give-rating-btn"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#ratingReclamationModal"
+                                                                data-reclamation-id="{{ reclamation.id }}"
+                                                                data-reponse-content="{{ last_reponse.contenueReponse|escape('html_attr') }}"
+                                                                data-reponse-timestamp="{{ last_reponse.timestamp|date('d/m/Y H:i') }}"
+                                                            >
+                                                                Noter la réponse
+                                                            </button>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-footer">
+                                                {% if app.user and app.user == reclamation.utilisateur %}
+                                                    <button 
+                                                        class="btn btn-primary btn-sm modify-reclamation-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#modifyReclamationModal"
+                                                        data-reclamation-id="{{ reclamation.id }}"
+                                                        data-title="{{ reclamation.titre }}"
+                                                        data-description="{{ reclamation.description }}"
+                                                        data-timestamp="{{ reclamation.timestamp|date('c') }}"
+                                                    >
+                                                        Modifier
+                                                    </button>
+                                                    <button 
+                                                        class="btn btn-danger btn-sm delete-reclamation-btn"
+                                                        data-reclamation-id="{{ reclamation.id }}"
+                                                    >
+                                                        Supprimer
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
                             </div>
-                            <div class="card-body">
-                                <p><strong>{{ reclamation.statut|upper }}</strong></p>
-                                <p>{{ reclamation.description }}</p>
-                                <p>Créée le : {{ reclamation.timestamp|date('d/m/Y H:i') }}</p>
-                                <p>Utilisateur : {{ reclamation.utilisateur.nom }} {{ reclamation.utilisateur.prenom }}</p>
-                            </div>
-                            <div class="card-footer">
-                                {% if app.user and app.user == reclamation.utilisateur %}
-                                    <button 
-                                        class="btn btn-primary btn-sm modify-reclamation-btn"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modifyReclamationModal"
-                                        data-reclamation-id="{{ reclamation.id }}"
-                                        data-title="{{ reclamation.titre }}"
-                                        data-description="{{ reclamation.description }}"
-                                        data-timestamp="{{ reclamation.timestamp|date('c') }}"
-                                    >
-                                        Modifier
-                                    </button>
-                                    <button 
-                                        class="btn btn-danger btn-sm delete-reclamation-btn"
-                                        data-reclamation-id="{{ reclamation.id }}"
-                                    >
-                                        Supprimer
-                                    </button>
-                                {% endif %}
-                            </div>
-                        </div>
+                        {% else %}
+                            <div class="alert alert-info">Aucune réclamation pour ce logement.</div>
+                        {% endif %}
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="alert alert-info">Aucune réclamation pour ce logement.</div>
-        {% endif %}
-    </div>
 
                 </div>
             </div>
         </div>
 
-               <button href="{{ path('app_logement_index') }}" ctype="button" class="btn btn-primary">Retour à la liste des logements</button>
+        <a href="{{ path('app_logement_index') }}" class="btn btn-primary">Retour à la liste des logements</a>
 
         <!-- Include the Add Reclamation Modal -->
-       <div class="modal fade" id="modifyReclamationModal" tabindex="-1" aria-labelledby="modifyReclamationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modifyReclamationModalLabel">Modifier une Réclamation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="modify-reclamation-form" action="" method="post">
-                    <div class="mb-3">
-                        <label for="modify-reclamation-title" class="form-label">Titre</label>
-                        <input type="text" class="form-control" id="modify-reclamation-title" name="title" placeholder="Entrez le titre de la réclamation" required>
+        <div class="modal fade" id="modifyReclamationModal" tabindex="-1" aria-labelledby="modifyReclamationModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modifyReclamationModalLabel">Modifier une Réclamation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="mb-3">
-                        <label for="modify-reclamation-description" class="form-label">Description</label>
-                        <textarea class="form-control" id="modify-reclamation-description" name="description" rows="3" placeholder="Décrivez votre réclamation" required></textarea>
+                    <div class="modal-body">
+                        <form id="modify-reclamation-form" action="" method="post">
+                            <div class="mb-3">
+                                <label for="modify-reclamation-title" class="form-label">Titre</label>
+                                <input type="text" class="form-control" id="modify-reclamation-title" name="title" placeholder="Entrez le titre de la réclamation" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="modify-reclamation-description" class="form-label">Description</label>
+                                <textarea class="form-control" id="modify-reclamation-description" name="description" rows="3" placeholder="Décrivez votre réclamation" required></textarea>
+                            </div>
+                            <input type="hidden" name="statut" value="en cours">
+                            <input type="hidden" name="_token" value="{{ csrf_token('modify_reclamation') }}">
+                        </form>
+                        <div id="modify-form-error" class="error-message"></div>
                     </div>
-                    <input type="hidden" name="statut" value="en cours">
-                    <input type="hidden" name="_token" value="{{ csrf_token('modify_reclamation') }}">
-                </form>
-                <div id="modify-form-error" class="error-message"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="submit-modify-reclamation">Enregistrer</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="submit-modify-reclamation">Enregistrer</button>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Modal pour donner une note -->
+        <div class="modal fade" id="ratingReclamationModal" tabindex="-1" aria-labelledby="ratingReclamationModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="ratingReclamationModalLabel">Noter la réponse</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="response-display">
+                            <p><strong>Réponse :</strong> <span id="reponse-content"></span></p>
+                            <p><strong>Date :</strong> <span id="reponse-timestamp"></span></p>
+                        </div>
+                        <form id="rating-reclamation-form" action="" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Votre note</label>
+                                <div class="star-rating">
+                                    <input type="radio" id="star5" name="rating" value="5" />
+                                    <label for="star5"></label>
+                                    <input type="radio" id="star4" name="rating" value="4" />
+                                    <label for="star4"></label>
+                                    <input type="radio" id="star3" name="rating" value="3" />
+                                    <label for="star3"></label>
+                                    <input type="radio" id="star2" name="rating" value="2" />
+                                    <label for="star2"></label>
+                                    <input type="radio" id="star1" name="rating" value="1" />
+                                    <label for="star1"></label>
+                                </div>
+                            </div>
+                            <input type="hidden" name="_token" value="{{ csrf_token('rating_reclamation') }}">
+                        </form>
+                        <div id="rating-form-error" class="error-message"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="submit-rating-reclamation">Envoyer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Include the Add Reclamation Modal -->
+        {% include 'reclamation/_add_reclamation_modal.html.twig' %}
     </div>
 </div>
-
-    <!-- Include the Add Reclamation Modal -->
-    {% include 'reclamation/_add_reclamation_modal.html.twig' %}
 {% endblock %}

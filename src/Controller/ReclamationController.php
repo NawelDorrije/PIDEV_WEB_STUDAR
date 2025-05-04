@@ -628,4 +628,47 @@ public function indexSimple(ReclamationRepository $reclamationRepository): Respo
     
         return $response;
     }
+    #[Route('/reclamation/{id}/rating', name: 'app_reclamation_rating', methods: ['POST'])]
+    public function addRating(Request $request, Reclamation $reclamation, EntityManagerInterface $entityManager): JsonResponse
+    {
+        // Vérifier le token CSRF
+        if (!$this->isCsrfTokenValid('rating_reclamation', $request->request->get('_token'))) {
+            return new JsonResponse(['success' => false, 'error' => 'Token CSRF invalide.'], 400);
+        }
+
+        // Vérifier que l'utilisateur est autorisé (doit être l'auteur de la réclamation)
+        if ($reclamation->getUtilisateur() !== $this->getUser()) {
+            return new JsonResponse(['success' => false, 'error' => 'Vous n\'êtes pas autorisé à donner une note sur cette réclamation.'], 403);
+        }
+
+        // Vérifier que la réclamation est traitée
+        if ($reclamation->getStatut() !== 'traité') {
+            return new JsonResponse(['success' => false, 'error' => 'Vous ne pouvez donner une note que sur une réclamation traitée.'], 400);
+        }
+
+        // Récupérer la réponse associée (prendre la dernière réponse pour simplifier)
+        $reponses = $reclamation->getReponses();
+        if ($reponses->isEmpty()) {
+            return new JsonResponse(['success' => false, 'error' => 'Aucune réponse associée à cette réclamation.'], 400);
+        }
+        $reponse = $reponses->last(); // Prendre la dernière réponse
+
+        // Vérifier si une note a déjà été donnée
+        if ($reponse->getRating()) {
+            return new JsonResponse(['success' => false, 'error' => 'Une note a déjà été donnée pour cette réponse.'], 400);
+        }
+
+        // Récupérer la note soumise
+        $rating = $request->request->get('rating');
+        if (!$rating || !is_numeric($rating) || $rating < 1 || $rating > 5) {
+            return new JsonResponse(['success' => false, 'error' => 'La note doit être un entier entre 1 et 5.'], 400);
+        }
+
+        // Enregistrer la note
+        $reponse->setRating((int) $rating);
+        $entityManager->persist($reponse);
+        $entityManager->flush();
+
+        return new JsonResponse(['success' => true]);
+    }
 }

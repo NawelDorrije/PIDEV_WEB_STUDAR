@@ -29,6 +29,7 @@
         "@fullcalendar/daygrid": "^6.1.17",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.5",
+        "emoji-picker-element": "^1.26.3",
         "flexslider": "^2.7.2",
         "font-awesome": "^4.7.0",
         "isotope-layout": "^3.0.6",
