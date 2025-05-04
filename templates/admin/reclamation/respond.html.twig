@@ -1,0 +1,22 @@
+{% extends 'admin/dashboard.html.twig' %}
+
+{% block title %}Répondre à la Réclamation{% endblock %}
+
+{% block body %}
+    <div class="container-fluid py-4">
+        <h1>Répondre à la Réclamation #{{ reclamation.id }}</h1>
+        <div class="card">
+            <div class="card-body">
+                <h3>Suggestion de réponse générée par l'IA</h3>
+                <p class="alert alert-info">
+                    {{ suggestedResponse|default('Aucune suggestion disponible.') }}
+                </p>
+                <h3>Votre réponse</h3>
+                {{ form_start(form) }}
+                {{ form_widget(form) }}
+                {{ form_end(form) }}
+            </div>
+        </div>
+        <a href="{{ path('admin_reclamation_show', {'id': reclamation.id}) }}" class="btn btn-secondary mt-3">Retour</a>
+    </div>
+{% endblock %}

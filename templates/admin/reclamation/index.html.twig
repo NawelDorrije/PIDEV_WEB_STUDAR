@@ -1,0 +1,425 @@
+{% extends 'admin/dashboard.html.twig' %}
+
+{% block title %}Réclamations Avancées{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Card Styling */
+        .reclamation-card {
+            max-width: 23rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+        /* Header with status-based background */
+        .card-header {
+            padding: 0.5rem 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: centerPrices;
+            text-transform: uppercase;
+            color: #fff;
+            border-bottom: none;
+        }
+        .card-header.status-en-cours {
+            background-color: #ffc107;
+        }
+        .card-header.status-traité {
+            background-color: #28a745;
+        }
+        .card-header.status-refusé {
+            background-color: #dc3545;
+        }
+        .card-header.status-non-défini {
+            background-color: #6c757d;
+        }
+        .card-body {
+            padding: 1rem;
+            font-size: 0.875rem;
+        }
+        .card-body p {
+            margin-bottom: 0.5rem;
+        }
+        .card-body .title-text {
+            font-weight: 600;
+        }
+        .card-footer {
+            padding: 0.5rem 1rem;
+            background-color: #fff;
+            border-top: none;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        .card-footer .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.2rem;
+            transition: all 0.2s ease;
+            border: 1px solid;
+            background-color: transparent;
+            line-height: 1.2;
+        }
+        .card-footer .btn-info {
+            border-color: #17a2b8;
+            color: #17a2b8;
+        }
+        .card-footer .btn-info:hover {
+            background-color: #17a2b8;
+            color: #fff;
+            border-color: #17a2b8;
+        }
+        .card-footer .btn-warning {
+            border-color: #007bff;
+            color: #007bff;
+        }
+        .card-footer .btn-warning:hover {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+        .card-footer .btn-danger {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .card-footer .btn-danger:hover {
+            background-color: #dc3545;
+            color: #fff;
+            border-color: #dc3545;
+        }
+        .card-footer .btn-success {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        .card-footer .btn-success:hover {
+            background-color: #28a745;
+            color: #fff;
+            border-color: #28a745;
+        }
+        /* Contenu principal */
+        .reclamation-content {
+            padding: 0 15px;
+            padding-left: 30px;
+        }
+        .row1 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .col-lg-4 {
+            flex: 1 1 calc(33.333% - 20px);
+            max-width: calc(33.333% - 20px);
+        }
+
+        /* Style pour la barre de navigation */
+        .navbar-filter {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            padding: 12px;
+            background-color: #f8f9fa;
+        }
+        .navbar-filter .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .navbar-filter .form-group {
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .navbar-filter .form-group label {
+            margin-right: 8px;
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+        .navbar-filter .form-control {
+            padding: 6px 6px 6px 30px;
+        }
+        .navbar-filter .btn {
+            margin-left: 8px;
+        }
+        .navbar-filter .form-group i {
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        .navbar-filter .search-group {
+            position: relative;
+        }
+        .navbar-filter .search-group i {
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .col-lg-4 {
+                flex: 1 1 calc(50% - 20px);
+                max-width: calc(50% - 20px);
+            }
+            .navbar-filter .form-control {
+                width: 130px;
+            }
+        }
+        @media (max-width: 576px) {
+            .col-lg-4 {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+            .reclamation-card {
+                max-width: 100%;
+            }
+            .card-body {
+                padding: 1rem;
+                font-size: 0.8rem;
+            }
+            .card-header {
+                font-size: 0.8rem;
+            }
+            .card-footer .btn {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.7rem;
+            }
+            .navbar-filter .filter-form {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .navbar-filter .form-control {
+                width: 100%;
+            }
+            .navbar-filter .form-group {
+                width: 100%;
+            }
+            .navbar-filter .btn {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <main class="main-content position-relative reclamation-container">
+        <!-- Navigation Buttons -->
+        <div class="nav-buttons">
+            <a href="{{ path('app_statistics') }}" class="nav-button {{ app.request.pathinfo == '/statistics/admin' ? 'active' : '' }}" title="Voir les statistiques">
+                <i class="bi bi-bar-chart"></i>
+                <span class="nav-text">Statistiques</span>
+            </a>
+            <a href="{{ path('admin_reclamation') }}" class="nav-button {{ app.request.pathinfo == '/reclamation/admin/reclamation' ? 'active' : '' }}" title="Consulter les réclamations">
+                <i class="bi bi-exclamation-circle"></i>
+                <span class="nav-text">Réclamations</span>
+            </a>
+        </div>
+
+        <!-- Barre de navigation pour la recherche et les filtres -->
+        <div class="navbar-filter">
+            <form class="filter-form" method="get" action="{{ path('admin_reclamation') }}">
+                <!-- Recherche -->
+                <div class="form-group search-group">
+                    <i class="fas fa-search"></i>
+                    <input class="form-control" type="search" placeholder="Rechercher..." aria-label="Search" id="searchReclamation">
+                </div>
+                <!-- Filtre par utilisateur -->
+                <div class="form-group">
+                    <label for="user_filter">Utilisateur :</label>
+                    <select class="form-control" id="user_filter" name="user_filter">
+                        <option value="">Tous les utilisateurs</option>
+                        {% for user in users %}
+                            <option value="{{ user.cin }}" {{ selected_user == user.cin ? 'selected' : '' }}>
+                                {{ user.nom }} {{ user.prenom }} (CIN: {{ user.cin }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Filtre par statut -->
+                <div class="form-group">
+                    <label for="statut_filter">Statut :</label>
+                    <select class="form-control" id="statut_filter" name="statut_filter">
+                        <option value="">Tous les statuts</option>
+                        <option value="en cours" {{ selected_statut == 'en cours' ? 'selected' : '' }}>En cours</option>
+                        <option value="traité" {{ selected_statut == 'traité' ? 'selected' : '' }}>Traité</option>
+                        <option value="refusé" {{ selected_statut == 'refusé' ? 'selected' : '' }}>Refusé</option>
+                    </select>
+                </div>
+                <!-- Filtre par date -->
+                <div class="form-group">
+                    <label for="date_filter">Date :</label>
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" class="form-control" id="date_filter" name="date_filter" value="{{ selected_date }}">
+                </div>
+                <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='{{ path('admin_reclamation') }}'">Réinitialiser</button>
+            </form>
+            <a href="{{ path('admin_reclamation_export_excel') }}" class="btn btn-success">
+                <i class="fas fa-download"></i> Exporter en Excel
+            </a>
+        </div>
+
+        <div class="container-fluid py-4 reclamation-details-container">
+            <!-- Contenu principal : Les cartes de réclamation -->
+            <div class="reclamation-content">
+                <!-- Liste des réclamations -->
+                <div class="row1" id="reclamationList">
+                    {% if reclamations|length > 0 %}
+                        {% for reclamation in reclamations %}
+                            <div class="col-lg-4 col-md-6 col-sm-12 reclamation-card-container">
+                                <div class="card reclamation-card">
+                                    <div class="card-header status-{{ reclamation.statut|default('non-défini')|replace({' ': '-'}) }}">
+                                        {{ reclamation.statut|default('non défini')|upper }}
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="title-text">{{ reclamation.titre }}</p>
+                                        <p>Créée le : {{ reclamation.timestamp ? reclamation.timestamp|date('d/m/Y H:i:s') : 'Non définie' }}</p>
+                                        <p>Utilisateur : {{ reclamation.utilisateur ? (reclamation.utilisateur.nom|default('') ~ ' ' ~ reclamation.utilisateur.prenom|default('')) : 'Anonyme' }}</p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <a href="{{ path('admin_reclamation_show', {'id': reclamation.id}) }}" class="btn btn-info"><i class="fas fa-eye"></i>Détails</a>
+                                        <a href="{{ path('admin_reclamation_edit_recommend', {'id': reclamation.id}) }}" class="btn btn-warning"><i class="fas fa-edit"></i>Modifier</a>
+                                        <form method="post" action="{{ path('admin_reclamation_delete', {'id': reclamation.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reclamation.id) }}">
+                                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i>Supprimer</button>
+                                        </form>
+                                        {% if reclamation.statut == 'en cours' %}
+                                            <a href="{{ path('admin_reclamation_respond', {'id': reclamation.id}) }}" class="btn btn-success"><i class="fas fa-reply"></i>Répondre</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info text-center" role="alert">
+                                Aucune réclamation trouvée.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {{ current_page == 1 ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page - 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'statut_filter': selected_statut, 'date_filter': selected_date}) }}" aria-label="Previous">
+                                    <span aria-hidden="true">«</span>
+                                </a>
+                            </li>
+                            {% for i in 1..total_pages %}
+                                <li class="page-item {{ current_page == i ? 'active' : '' }}">
+                                    <a class="page-link" href="{{ path('admin_reclamation', {'page': i, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'statut_filter': selected_statut, 'date_filter': selected_date}) }}">{{ i }}</a>
+                                </li>
+                            {% endfor %}
+                            <li class="page-item {{ current_page == total_pages ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ path('admin_reclamation', {'page': current_page + 1, 'sort_by': sort_by, 'sort_order': sort_order, 'user_filter': selected_user, 'statut_filter': selected_statut, 'date_filter': selected_date}) }}" aria-label="Next">
+                                    <span aria-hidden="true">»</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Ensure DOM is fully loaded before running the script
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchReclamation');
+            const userFilter = document.getElementById('user_filter');
+            const statutFilter = document.getElementById('statut_filter');
+
+            // Check if all required elements exist
+            if (!searchInput) {
+                console.error('Search input element not found!');
+                return;
+            }
+            if (!userFilter) {
+                console.error('User filter element not found!');
+                return;
+            }
+            if (!statutFilter) {
+                console.error('Statut filter element not found!');
+                return;
+            }
+
+            // Debounce function to limit the frequency of filter execution
+            function debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+
+            // Filter function that combines search, user, and status filters
+            const applyFilters = debounce(function() {
+                const searchText = searchInput.value.trim().toLowerCase();
+                const selectedUser = userFilter.value.trim();
+                const selectedStatut = statutFilter.value.trim();
+                const cards = document.querySelectorAll('.reclamation-card-container');
+
+                cards.forEach(card => {
+                    // Extract text from updated fields for search, with null checks
+                    const titleElement = card.querySelector('.card-body p:nth-child(1)');
+                    const dateElement = card.querySelector('.card-body p:nth-child(2)');
+                    const userElement = card.querySelector('.card-body p:nth-child(3)');
+                    const statusElement = card.querySelector('.card-header');
+
+                    // Use empty string if element is not found
+                    const title = titleElement ? titleElement.textContent.toLowerCase() : '';
+                    const date = dateElement ? dateElement.textContent.toLowerCase() : '';
+                    const user = userElement ? userElement.textContent.toLowerCase() : '';
+                    const status = statusElement ? statusElement.textContent.toLowerCase() : '';
+
+                    // Log for debugging
+                    if (!titleElement || !dateElement || !userElement || !statusElement) {
+                        console.warn('Incomplete card structure detected:', {
+                            title: !!titleElement,
+                            date: !!dateElement,
+                            user: !!userElement,
+                            status: !!statusElement
+                        });
+                    }
+
+                    // Check if the card matches the search text (if any)
+                    const matchesSearch = searchText === '' || (
+                        title.includes(searchText) ||
+                        date.includes(searchText) ||
+                        user.includes(searchText) ||
+                        status.includes(searchText)
+                    );
+
+                    // Check if the card matches the selected user (if any)
+                    const userText = userElement ? userElement.textContent : '';
+                    const matchesUser = selectedUser === '' || userText.includes(`cin: ${selectedUser}`);
+
+                    // Check if the card matches the selected status (if any)
+                    const matchesStatut = selectedStatut === '' || status.includes(selectedStatut);
+
+                    // Show the card only if it matches all active filters
+                    card.style.display = matchesSearch && matchesUser && matchesStatut ? '' : 'none';
+                });
+            }, 300); // 300ms debounce delay
+
+            // Add event listeners for all filter inputs
+            searchInput.addEventListener('input', applyFilters);
+            userFilter.addEventListener('change', applyFilters);
+            statutFilter.addEventListener('change', applyFilters);
+        });
+    </script>
+{% endblock %}

@@ -5,144 +5,223 @@
 {% block stylesheets %}
 {{ parent() }}
 <style>
-.section {
-    padding: 60px 0;
-    background-color: #f8f9fa;
-}
-.card {
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-.floating-details-btn {
-    position: absolute;
-    right: -15px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    background: #4453A6;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    z-index: 2;
-}
-.floating-details-btn:hover {
-    background: #3a4791;
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-}
-.floating-details-btn::after {
-    content: "Voir détails";
-    position: absolute;
-    right: 45px;
-    white-space: nowrap;
-    background: #4453A6;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    font-size: 14px;
-}
-.floating-details-btn:hover::after {
-    opacity: 1;
-}
-.transport-card {
-    position: relative;
-    padding-right: 30px;
-    overflow: visible;
-    margin-bottom: 20px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 4px solid #6c757d;
-    width: 1000px;
-    margin-left: 130px;
-}
-.transport-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-.transport-card.confirmée {
-    border-left-color: #28a745;
-}
-.transport-card.en_attente {
-    border-left-color: #ffc107;
-}
-.transport-card.refusée {
-    border-left-color: #dc3545;
-}
-.card-title {
-    color: #4453A6;
-    margin-bottom: 15px;
-}
-.card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: center;
-}
-.card-meta-div {
-    display: flex;
-    align-items: center;
-}
-.card-meta i {
-    margin-right: 8px;
-    color: #F2811D;
-}
-.badge {
-    font-size: 0.8rem;
-    padding: 5px 10px;
-    font-weight: 500;
-}
-.view-options {
-    margin-bottom: 30px;
-}
-.btn-group {
-    margin-right: 10px;
-}
-.btn-nouveau {
-    background-color: #B399D4;
-    color: white;
-    border: none;
-    animation: pop 2s infinite;
-    transition: all 0.3s ease;
-}
-.btn-nouveau:hover {
-    background-color: #9F7FDB;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(179,153,212,0.4);
-}
-@keyframes pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-.route-visualization {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    padding: 20px;
-    margin-bottom: 30px;
-}
-#routeMap {
-    height: 300px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-.route-info {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-}
-.custom-icon {
-    background: transparent;
-    border: none;
-}
+    /* Style général */
+
+    
+    .section {
+        padding: 60px 0;
+        background-color: #f8f9fa;
+    }
+    
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* Bouton flottant */
+    .floating-details-btn {
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: #4453A6;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+    
+    .floating-details-btn:hover {
+        background: #3a4791;
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+    
+    .floating-details-btn::after {
+        content: "Voir détails";
+        position: absolute;
+        right: 45px;
+        white-space: nowrap;
+        background: #4453A6;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .floating-details-btn:hover::after {
+        opacity: 1;
+    }
+    
+    /* Carte de réservation */
+    .transport-card {
+        position: relative;
+        padding-right: 30px;
+        overflow: visible;
+        margin-bottom: 20px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 4px solid #6c757d;
+          width: 1000px;
+          margin-left:130px;
+    }
+    
+    .transport-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .transport-card.confirmée {
+        border-left-color: #28a745;
+    }
+    
+    .transport-card.en_attente {
+        border-left-color: #ffc107;
+    }
+    
+    .transport-card.refusée {
+        border-left-color: #dc3545;
+    }
+    
+  .card-title {
+        color: #4453A6;
+        margin-bottom: 15px;
+    }
+    
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .card-meta-div {
+        display: flex;
+        align-items: center;
+    }
+    
+    .card-meta i {
+        margin-right: 8px;
+        color: #F2811D;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        font-weight: 500;
+    }
+    
+    /* Options de vue */
+    .view-options {
+        margin-bottom: 30px;
+    }
+    
+    .btn-group {
+        margin-right: 10px;
+    }
+    
+    /* Pastel purple animated button */
+    .btn-nouveau {
+        background-color: #B399D4;
+        color: white;
+        border: none;
+        animation: pop 2s infinite;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nouveau:hover {
+        background-color: #9F7FDB;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(179, 153, 212, 0.4);
+    }
+    
+    @keyframes pop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Map styles */
+    .route-visualization {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    
+    #routeMap {
+        height: 300px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .route-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        
+    }
+    
+    .custom-icon {
+        background: transparent;
+        border: none;
+    }
+     .reservation-slider {
+        position: relative;
+        min-height: 400px;
+    }
+    
+    .reservation-slide {
+        transition: all 0.5s ease;
+    }
+    
+    .hidden-slide {
+        display: none;
+    }
+    
+    .slider-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+    }
+    
+    .btn-prev, .btn-next {
+        background-color: #4453A6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin: 0 10px;
+    }
+    
+    .btn-prev:hover, .btn-next:hover {
+        background-color: #3a4878;
+    }
+    
+    .btn-prev:disabled, .btn-next:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .page-indicator {
+        font-weight: bold;
+        color: #4453A6;
+        min-width: 100px;
+        text-align: center;
+    }
 </style>
 {% endblock %}
 

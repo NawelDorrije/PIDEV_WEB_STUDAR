@@ -66,11 +66,8 @@
         overflow: visible;
         margin-bottom: 20px;
         border: none;
-          width: 1000px;
-          margin-left:130px;
-
-
-
+        width: 1000px;
+        margin-left:130px;
     }
     
     .card-title {
@@ -131,6 +128,55 @@
         50% { transform: scale(1.05); }
         100% { transform: scale(1); }
     }
+    
+    /* Slider styles */
+    .reservation-slider {
+        position: relative;
+        min-height: 400px;
+    }
+    
+    .reservation-slide {
+        transition: all 0.5s ease;
+    }
+    
+    .hidden-slide {
+        display: none;
+    }
+    
+    /* Controls styles */
+    .slider-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+}
+    
+    .btn-prev, .btn-next {
+    background-color: #4453A6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0 10px;
+}
+    
+    .btn-prev:hover, .btn-next:hover {
+        background-color: #3a4878;
+    }
+    
+    .btn-prev:disabled, .btn-next:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    .page-indicator {
+        font-weight: bold;
+        color: #4453A6;
+        min-width: 100px;
+        text-align: center;
+    }
 </style>
 {% endblock %}
 
@@ -152,12 +198,6 @@
                         <a href="#" class="btn btn-outline-primary active" data-view="list">
                             <i class="fas fa-list"></i> Liste
                         </a>
-                        
-                      {# <li class="{{ app.request.get('_route') == 'app_reservation_logement_statistics_owner' ? 'active' }}">
-    <a href="{{ path('app_reservation_logement_statistics_owner') }}">
-        <i class="fas fa-chart-pie mr-2"></i> Mes Statistiques
-    </a> #}
-</li>
                     </div>
                     
                     <!-- Filtres par statut -->
@@ -176,49 +216,157 @@
                 <div class="reservation-content">
                     <!-- Vue Liste -->
                     <div class="reservation-list">
-                        {% for reservation in reservation_logements %}
-                        <div class="card reservation-card">
-                            <div class="card-body">
-                                <a href="{{ path('app_reservation_logement_show', {'id': reservation.id}) }}" 
-                                   class="floating-details-btn" title="Voir détails">
-                                    <i class="fas fa-chevron-right"></i>
-                                </a>
-                                <h5 class="card-title" style="color:rgb(49, 69, 149);" >
-                                    <i class="fas fa-bed mr-2"></i>Réservation 
-                                    <span class="badge badge-{{ 
-                                        reservation.status == 'confirmée' ? 'success' : 
-                                        (reservation.status == 'en_attente' ? 'warning' : 'danger') 
-                                    }}">
-                                        {{ reservation.status }}
-                                    </span>
-                                </h5>
-                                <div class="card-meta">
-                                    <div class="card-meta-div">
-                                        <i class="far fa-calendar-alt"></i> Du {{ reservation.dateDebut|date('d/m/Y') }}
-                                    </div>
-                                    <div class="card-meta-div">
-                                        <i class="far fa-calendar-alt"></i> Au {{ reservation.dateFin|date('d/m/Y') }}
-                                    </div>
-                                    <div class="card-meta-div">
-                                        <i class="fas fa-home"></i> 
-                                        {% if reservation.idLogement is iterable %}
-                                            {{ reservation.idLogement.adresse ?? 'Logement #' ~ reservation.idLogement.id }}
-                                        {% else %}
-                                            {{ reservation.idLogement }}
-                                        {% endif %}
+                        <div class="reservation-slider">
+                            {% for reservation in reservation_logements %}
+                                <div class="reservation-slide {% if loop.index > 4 %}hidden-slide{% endif %}">
+                                    <div class="card reservation-card">
+                                        <div class="card-body">
+                                            <a href="{{ path('app_reservation_logement_show', {'id': reservation.id}) }}" 
+                                               class="floating-details-btn" title="Voir détails">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                            <h5 class="card-title" style="color:rgb(49, 69, 149);">
+                                                <i class="fas fa-bed mr-2"></i>Réservation 
+                                                <span class="badge badge-{{ 
+                                                    reservation.status == 'confirmée' ? 'success' : 
+                                                    (reservation.status == 'en_attente' ? 'warning' : 'danger') 
+                                                }}">
+                                                    {{ reservation.status }}
+                                                </span>
+                                            </h5>
+                                            <div class="card-meta">
+                                                <div class="card-meta-div">
+                                                    <i class="far fa-calendar-alt"></i> Du {{ reservation.dateDebut|date('d/m/Y') }}
+                                                </div>
+                                                <div class="card-meta-div">
+                                                    <i class="far fa-calendar-alt"></i> Au {{ reservation.dateFin|date('d/m/Y') }}
+                                                </div>
+                                                <div class="card-meta-div">
+                                                    <i class="fas fa-home"></i> 
+                                                    {% if reservation.idLogement is iterable %}
+                                                        {{ reservation.idLogement.adresse ?? 'Logement #' ~ reservation.idLogement.id }}
+                                                    {% else %}
+                                                        {{ reservation.idLogement }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle mr-2"></i>Aucune réservation trouvée.
+                                </div>
+                            {% endfor %}
                         </div>
-                        {% else %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle mr-2"></i>Aucune réservation trouvée.
-                        </div>
-                        {% endfor %}
+                        
+                        <!-- Contrôles de pagination -->
+                        <!-- Contrôles de pagination -->
+{% if reservation_logements|length > 4 %}
+<div class="slider-controls">
+    <button class="btn btn-prev" disabled>
+        <i class="fas fa-chevron-left"></i> Précédent
+    </button>
+    <span class="page-indicator mx-3">
+        Page <span class="current-page">1</span>/<span class="total-pages">{{ ((reservation_logements|length)/4)|round(0, 'ceil') }}</span>
+    </span>
+    <button class="btn btn-next {% if reservation_logements|length <= 4 %}disabled{% endif %}">
+        Suivant <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+{% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Slider pagination functionality
+            const slides = document.querySelectorAll('.reservation-slide');
+            const btnPrev = document.querySelector('.btn-prev');
+            const btnNext = document.querySelector('.btn-next');
+            const currentPageEl = document.querySelector('.current-page');
+            const totalPages = Math.ceil({{ reservation_logements|length }}/4);
+            
+            let currentPage = 1;
+            
+            // Initial setup
+            updateSlider();
+            
+            // Navigation handlers
+            if (btnNext) {
+                btnNext.addEventListener('click', function() {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        updateSlider();
+                    }
+                });
+            }
+            
+            if (btnPrev) {
+                btnPrev.addEventListener('click', function() {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        updateSlider();
+                    }
+                });
+            }
+            
+            // Swipe functionality (mobile)
+            const slider = document.querySelector('.reservation-slider');
+            if (slider) {
+                let touchStartX = 0;
+                let touchEndX = 0;
+                
+                slider.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, false);
+                
+                slider.addEventListener('touchend', function(e) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, false);
+                
+                function handleSwipe() {
+                    if (touchEndX < touchStartX && currentPage < totalPages) {
+                        // Swipe left - next
+                        currentPage++;
+                        updateSlider();
+                    }
+                    
+                    if (touchEndX > touchStartX && currentPage > 1) {
+                        // Swipe right - prev
+                        currentPage--;
+                        updateSlider();
+                    }
+                }
+            }
+            
+            function updateSlider() {
+                // Hide all slides
+                slides.forEach(slide => {
+                    slide.classList.add('hidden-slide');
+                });
+                
+                // Show current page slides
+                const startIndex = (currentPage - 1) * 4;
+                const endIndex = startIndex + 4;
+                
+                for (let i = startIndex; i < endIndex && i < slides.length; i++) {
+                    slides[i].classList.remove('hidden-slide');
+                }
+                
+                // Update controls
+                if (currentPageEl) currentPageEl.textContent = currentPage;
+                if (btnPrev) btnPrev.disabled = currentPage === 1;
+                if (btnNext) btnNext.disabled = currentPage === totalPages;
+            }
+        });
+    </script>
+{% endblock %}
 {% endblock %}

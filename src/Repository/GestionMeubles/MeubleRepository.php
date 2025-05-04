@@ -2,6 +2,7 @@
 
 namespace App\Repository\GestionMeubles;
 
+use App\Entity\GestionMeubles\Commande;
 use App\Entity\GestionMeubles\Meuble;
 use App\Entity\Utilisateur;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -31,18 +32,18 @@ class MeubleRepository extends ServiceEntityRepository
     /**
      * Modifie un meuble existant dans la base de données
      */
-    public function edit(Meuble $meuble, bool $flush = true): void
-    {
-        // Vérifier si l'entité est gérée par Doctrine
-        if (!$this->getEntityManager()->contains($meuble)) {
-            throw new \LogicException('Le meuble n\'est pas géré par Doctrine. Assurez-vous qu\'il a été récupéré via le repository.');
-        }
+    // public function edit(Meuble $meuble, bool $flush = true): void
+    // {
+    //     // Vérifier si l'entité est gérée par Doctrine
+    //     if (!$this->getEntityManager()->contains($meuble)) {
+    //         throw new \LogicException('Le meuble n\'est pas géré par Doctrine. Assurez-vous qu\'il a été récupéré via le repository.');
+    //     }
 
-        // Pas besoin de persist ici, car l'entité est déjà gérée
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+    //     // Pas besoin de persist ici, car l'entité est déjà gérée
+    //     if ($flush) {
+    //         $this->getEntityManager()->flush();
+    //     }
+    // }
 
     /**
      * Supprime un meuble de la base de données
@@ -62,8 +63,8 @@ class MeubleRepository extends ServiceEntityRepository
     public function findAllMeubles(): array
     {
         return $this->createQueryBuilder('m')
-            ->orderBy('m.id', 'ASC')
-            ->getQuery()
+        ->orderBy('m.id', 'DESC')
+        ->getQuery()
             ->getResult();
     }
 
@@ -118,4 +119,302 @@ class MeubleRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    public function edit(Meuble $meuble, bool $flush = true): void
+    {
+        if (!$this->getEntityManager()->contains($meuble)) {
+            throw new \LogicException('Le meuble n\'est pas géré par Doctrine.');
+        }
+        $this->getEntityManager()->persist($meuble); // Ajout pour garantir le suivi
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+     /**
+     * Compte le nombre de meubles vendus et indisponibles pour un vendeur.
+     */
+    public function countMeublesIndisponibles(string $cinVendeur): int
+    {
+        return $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('m.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', 'indisponible')
+            ->orderBy('m.id', 'DESC')
+
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Compte le nombre de meubles disponibles à vendre pour un vendeur.
+     */
+    public function countMeublesDisponibles(string $cinVendeur): int
+    {
+        return $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('m.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', 'disponible')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Compte le nombre total de meubles pour un vendeur.
+     */
+    public function countTotalMeubles(string $cinVendeur): int
+    {
+        return $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->where('m.vendeur = :cinVendeur')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Compte le nombre de commandes payées contenant des meubles du vendeur.
+     */
+    public function countCommandesPayees(string $cinVendeur): int
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT c.id)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('c.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', Commande::STATUT_PAYEE)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Compte le nombre de commandes en attente contenant des meubles du vendeur.
+     */
+    public function countCommandesEnAttente(string $cinVendeur): int
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT c.id)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('c.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', Commande::STATUT_EN_ATTENTE)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Compte le nombre de commandes livrées contenant des meubles du vendeur.
+     */
+    public function countCommandesLivrees(string $cinVendeur): int
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT c.id)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('c.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', Commande::STATUT_LIVREE)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Compte le nombre de commandes annulées contenant des meubles du vendeur.
+     */
+    public function countCommandesAnnulees(string $cinVendeur): int
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT c.id)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('c.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', Commande::STATUT_ANNULEE)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Calcule le taux de commandes annulées pour les meubles du vendeur.
+     */
+    public function getTauxCommandesAnnulees(string $cinVendeur): float
+    {
+        $totalCommandes = $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT c.id)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $commandesAnnulees = $this->countCommandesAnnulees($cinVendeur);
+
+        return $totalCommandes > 0 ? ($commandesAnnulees / $totalCommandes) * 100 : 0;
+    }
+
+    /**
+     * Calcule le revenu total généré par les commandes payées des meubles du vendeur.
+     */
+    public function getRevenuTotal(string $cinVendeur): float
+    {
+        return $this->getEntityManager()->createQueryBuilder()
+            ->select('SUM(c.montantTotal)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('c.statut = :statut')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('statut', Commande::STATUT_PAYEE)
+            ->getQuery()
+            ->getSingleScalarResult() ?? 0;
+    }
+
+    /**
+     * Calcule le taux de retour des clients pour les meubles du vendeur.
+     */
+    public function getTauxRetourClients(string $cinVendeur): float
+    {
+        // Count buyers who placed multiple orders
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $subQuery = $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(c2.id)')
+            ->from(Commande::class, 'c2')
+            ->join('c2.panier', 'p2')
+            ->join('p2.lignesPanier', 'lp2')
+            ->join('lp2.meuble', 'm2')
+            ->where('m2.vendeur = :cinVendeur')
+            ->andWhere('c2.acheteur = c.acheteur')
+            ->getDQL();
+    
+        $clientsRetours = $qb->select('COUNT(DISTINCT c.acheteur)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere("($subQuery) > 1")
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->getQuery()
+            ->getSingleScalarResult();
+    
+        // Count total distinct buyers
+        $totalClients = $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(DISTINCT c.acheteur)')
+            ->from(Commande::class, 'c')
+            ->join('c.panier', 'p')
+            ->join('p.lignesPanier', 'lp')
+            ->join('lp.meuble', 'm')
+            ->where('m.vendeur = :cinVendeur')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->getQuery()
+            ->getSingleScalarResult();
+    
+        return $totalClients > 0 ? ($clientsRetours / $totalClients) * 100 : 0;
+    }
+
+    /**
+     * Compte le nombre de meubles ajoutés récemment (derniers 30 jours) par le vendeur.
+     */
+    public function countMeublesAjoutesRecemment(string $cinVendeur): int
+    {
+        $dateLimite = new \DateTime('-30 days');
+        return $this->createQueryBuilder('m')
+            ->select('COUNT(m.id)')
+            ->where('m.vendeur = :cinVendeur')
+            ->andWhere('m.dateEnregistrement >= :dateLimite')
+            ->setParameter('cinVendeur', $cinVendeur)
+            ->setParameter('dateLimite', $dateLimite)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+/**
+ * Retrieves monthly revenue for a seller based on paid orders.
+ */
+public function getMonthlyRevenue(string $cinVendeur): array
+{
+    $qb = $this->getEntityManager()->createQueryBuilder()
+        ->select("DATE_FORMAT(c.dateCommande, '%Y-%m') as month, SUM(c.montantTotal) as revenue")
+        ->from(Commande::class, 'c')
+        ->join('c.panier', 'p')
+        ->join('p.lignesPanier', 'lp')
+        ->join('lp.meuble', 'm')
+        ->where('m.vendeur = :cinVendeur')
+        ->andWhere('c.statut = :statut')
+        ->setParameter('cinVendeur', $cinVendeur)
+        ->setParameter('statut', Commande::STATUT_PAYEE)
+        ->groupBy('month')
+        ->orderBy('month', 'ASC');
+
+    $result = $qb->getQuery()->getResult();
+    if (empty($result)) {
+        return ['labels' => [], 'data' => []];
+    }
+
+    $labels = [];
+    $data = [];
+    foreach ($result as $row) {
+        $date = \DateTime::createFromFormat('Y-m', $row['month']);
+        $labels[] = $date->format('M');
+        $data[] = (float)$row['revenue'];
+    }
+
+    return ['labels' => $labels, 'data' => $data];
+}
+
+/**
+ * Retrieves the number of furniture items added over time by the seller.
+ */
+public function getFurnitureAddedOverTime(string $cinVendeur): array
+{
+    $qb = $this->createQueryBuilder('m')
+        ->select("DATE_FORMAT(m.dateEnregistrement, '%Y-%m') as month, COUNT(m.id) as count")
+        ->where('m.vendeur = :cinVendeur')
+        ->setParameter('cinVendeur', $cinVendeur)
+        ->groupBy('month')
+        ->orderBy('month', 'ASC');
+
+    $result = $qb->getQuery()->getResult();
+    if (empty($result)) {
+        return ['labels' => [], 'data' => []];
+    }
+
+    $labels = [];
+    $data = [];
+    foreach ($result as $row) {
+        $date = \DateTime::createFromFormat('Y-m', $row['month']);
+        $labels[] = $date->format('M');
+        $data[] = (int)$row['count'];
+    }
+
+    return ['labels' => $labels, 'data' => $data];
+}
+
+/**
+ * Retrieves the number of furniture items added over time by the seller.
+ */
+
+
 }

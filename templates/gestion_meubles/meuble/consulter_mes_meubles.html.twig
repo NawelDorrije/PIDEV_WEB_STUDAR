@@ -3,6 +3,8 @@
 {% block title %}Mes meubles{% endblock %}
 
 {% block body %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <style>
 /* Pop-up Styles - Titre au-dessus de l'image, Image agrandie, Icônes et Couleurs */
 .popup-overlay {
@@ -300,15 +302,20 @@
                 <i class="bi bi-tag"></i>
                 <span class="nav-text">Offre des meubles</span>
             </a>
-            <a href="{{ path('app_gestion_meubles_mes_commandes') }}"  class="nav-button" title="Historique des transactions">
-                <i class="bi bi-clock-history"></i>
-                <span class="nav-text">Historique Commandes</span>
-            </a>
+         
             <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="nav-button" title="Voir mon panier">
                 <i class="bi bi-cart3"></i>
                 <span class="nav-text">Panier</span>
             </a>
-            <a  class="nav-button" title="Voir les statistiques">
+                <a href="{{ path('app_gestion_meubles_mes_ventes') }}" class="nav-button" title="Suivre mes ventes">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-text">Suivre mes ventes</span>
+        </a>
+           <a href="{{ path('app_gestion_meubles_mes_commandes') }}"  class="nav-button" title="Historique des transactions">
+                <i class="bi bi-clock-history"></i>
+                <span class="nav-text">Historique Commandes</span>
+            </a>
+            <a href="{{ path('app_gestion_meubles_statistiques_etudiant') }}" class="nav-button" title="Voir les statistiques">
                 <i class="bi bi-bar-chart"></i>
                 <span class="nav-text">Statistiques</span>
             </a>

@@ -1,0 +1,631 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres Admin{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Inherit existing styles */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            width: 80px;
+            background-color: white;
+            color: white;
+            padding: 20px 10px;
+            position: fixed;
+            height: 100vh;
+            transition: width 0.3s;
+            overflow: hidden;
+            z-index: 1000;
+        }
+        
+        .admin-sidebar:hover {
+            width: 250px;
+        }
+        
+        .admin-content {
+            margin-left: 80px;
+            padding: 30px;
+            flex: 1;
+            transition: margin-left 0.3s;
+            background-color: white;
+        }
+        
+        .admin-sidebar:hover ~ .admin-content {
+            margin-left: 250px;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin-top: 30px;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 15px;
+            white-space: nowrap;
+        }
+        
+        .sidebar-nav a {
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover, 
+        .sidebar-nav a.active {
+            background-color: #f35525;
+            color: white;
+        }
+        
+        .sidebar-nav i {
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(243, 85, 37, 0.1);
+            border-radius: 50%;
+            margin-right: 15px;
+            transition: all 0.3s;
+            color: #f35525;
+        }
+        
+        .sidebar-nav a:hover i,
+        .sidebar-nav a.active i {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+            color: white;
+        }
+        
+        .sidebar-nav .nav-text {
+            opacity: 0;
+            transition: opacity 0.2s;
+            transition-delay: 0.1s;
+            font-weight: 500;
+        }
+        
+        .admin-sidebar:hover .nav-text {
+            opacity: 1;
+        }
+        
+        /* Section list styles */
+        .parameters-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .parameters-list h3 {
+            color: #f35525;
+            margin-bottom: 20px;
+        }
+        
+        .parameters-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .parameters-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .parameters-item span {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .parameters-item i {
+            color: #f35525;
+            font-size: 18px;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .modal-content h3 {
+            color: #f35525;
+            margin-bottom: 20px;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .modal-close:hover {
+            color: #f35525;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group input[type="checkbox"],
+        .form-group input[type="file"] {
+            width: auto;
+            margin-right: 10px;
+        }
+        
+        .orange-button {
+            background-color: #f35525;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .orange-button:hover {
+            background-color: #d9441f;
+        }
+        
+        /* Activity log styles */
+        .activity-log table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .activity-log th,
+        .activity-log td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .activity-log th {
+            background-color: #f8f9fa;
+        }
+        
+        /* Flash messages */
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 15px;
+            border-radius: 5px;
+            animation: fadeIn 0.5s, fadeOut 0.5s 4.5s;
+        }
+        
+        .alert-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .alert-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Theme-specific styles */
+        body.theme-dark {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+        
+        body.theme-dark .admin-sidebar {
+            background-color: #2c2c2c !important;
+        }
+        
+        body.theme-dark .admin-content {
+            background-color: #1a1a1a !important;
+        }
+        body.theme-dark .title-dark {
+            color: #f1f1f1;
+        }
+        
+        body.theme-dark .parameters-list {
+            background-color: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+        }
+        
+        body.theme-dark .parameters-item {
+            border-color: #555 !important;
+        }
+        
+        body.theme-dark .parameters-item span {
+            color: #ffffff !important;
+        }
+        
+        body.theme-dark .parameters-item:hover {
+            background-color: #3a3a3a !important;
+        }
+        
+        body.theme-dark .modal-content {
+            background-color: #2c2c2c !important;
+            color: #ffffff !important;
+        }
+        
+        body.theme-dark .form-group input,
+        body.theme-dark .form-group select {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        
+        body.theme-dark .activity-log th {
+            background-color: #3a3a3a !important;
+        }
+        
+        body.theme-dark .modal-close {
+            color: #ffffff !important;
+        }
+        
+        body.theme-dark .modal-close:hover {
+            color: #f35525 !important;
+        }
+        
+        body.theme-custom {
+            background-color: #f0f0f0 !important;
+            color: #333 !important;
+        }
+        
+        body.theme-custom .admin-sidebar {
+            background-color: #e0e0e0 !important;
+        }
+        
+        body.theme-custom .admin-content {
+            background-color: #f0f0f0 !important;
+        }
+        
+        body.theme-custom .parameters-list {
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+        }
+        
+        /* Debug style */
+        body.theme-dark::after {
+            content: "Debug: Dark Theme Active";
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: red;
+            z-index: 9999;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="admin-container" data-theme="{{ app.user.theme ?? 'light' }}">
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_statistique') }}" class="{{ app.current_route starts with 'app_admin_statistique' ? 'active' : '' }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="nav-text">Statistiques</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_parametre') }}" class="{{ app.current_route == 'app_admin_parametre' ? 'active' : '' }}">
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-text">Paramètres</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+        <!-- Flash Messages -->
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+
+        <!-- Parameters List -->
+        <div class="parameters-list">
+            <h3>Options de configuration</h3>
+            <div class="parameters-item" data-modal="password-modal">
+                <span>Changer le mot de passe</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="parameters-item" data-modal="profile-modal">
+                <span>Mettre à jour le profil</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="parameters-item" data-modal="notifications-modal">
+                <span>Préférences de notification</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="parameters-item" data-modal="theme-modal">
+                <span>Thème de l'interface</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="parameters-item" data-modal="twofa-modal">
+                <span>Authentification à deux facteurs (2FA)</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <!-- Password Change Modal -->
+        <div class="modal" id="password-modal">
+            <div class="modal-content">
+                <i class="fas fa-times modal-close"></i>
+                <h3>Changer le mot de passe</h3>
+                <form action="{{ path('app_admin_parametre_password') }}" method="post">
+                    <div class="form-group">
+                        <label for="oldPassword">Ancien mot de passe</label>
+                        <input type="password" id="oldPassword" name="oldPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Nouveau mot de passe</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="orange-button">Mettre à jour le mot de passe</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Profile Update Modal -->
+        <div class="modal" id="profile-modal">
+            <div class="modal-content">
+                <i class="fas fa-times modal-close"></i>
+                <h3>Mettre à jour le profil</h3>
+                <form action="{{ path('app_admin_modifier_profile', {'cin': app.user.cin}) }}" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="nom">Nom</label>
+                        <input type="text" id="nom" name="nom" value="{{ app.user.nom }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prenom">Prénom</label>
+                        <input type="text" id="prenom" name="prenom" value="{{ app.user.prenom }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="{{ app.user.email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="numTel">Numéro de téléphone</label>
+                        <input type="text" id="numTel" name="numTel" value="{{ app.user.numTel }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageFile">Photo de profil</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                    </div>
+                    <button type="submit" class="orange-button">Mettre à jour le profil</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notification Preferences Modal -->
+        <div class="modal" id="notifications-modal">
+            <div class="modal-content">
+                <i class="fas fa-times modal-close"></i>
+                <h3>Préférences de notification</h3>
+                <!-- Add notification preferences form here -->
+            </div>
+        </div>
+
+        <!-- Theme Selection Modal -->
+        <div class="modal" id="theme-modal">
+            <div class="modal-content">
+                <i class="fas fa-times modal-close"></i>
+                <h3>Thème de l'interface</h3>
+                <form action="{{ path('app_admin_parametre_theme') }}" method="post" id="theme-form">
+                    <div class="form-group">
+                        <label for="theme">Choisir un thème</label>
+                        <select id="theme" name="theme">
+                            <option value="light" {{ app.user.theme == 'light' ? 'selected' : '' }}>Clair</option>
+                            <option value="dark" {{ app.user.theme == 'dark' ? 'selected' : '' }}>Sombre</option>
+                            <option value="custom" {{ app.user.theme == 'custom' ? 'selected' : '' }}>Personnalisé</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="orange-button">Appliquer le thème</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Two-Factor Authentication Modal -->
+        <div class="modal" id="twofa-modal">
+            <div class="modal-content">
+                <i class="fas fa-times modal-close"></i>
+                <h3>Authentification à deux facteurs (2FA)</h3>
+                <form action="{{ path('app_admin_parametre_twofa') }}" method="post">
+                    <div class="form-group">
+                        <label for="twofa-enabled">
+                            <input type="checkbox" id="twofa-enabled" name="twofa_enabled" {{ app.user.isTwoFactorEnabled ? 'checked' : '' }}>
+                            Activer l'authentification à deux facteurs
+                        </label>
+                    </div>
+                    {% if app.user.isTwoFactorEnabled %}
+                        <div class="form-group">
+                            <label>Configurer l'application d'authentification</label>
+                            <p>Scannez ce QR code avec votre application d'authentification (par exemple, Google Authenticator ou Authy).</p>
+                            <img style="height: 250px; width: 250px;margin-left: 105px;" src="{{ path('app_admin_twofa_qr_code', {'cin': app.user.cin}) }}" alt="QR Code pour 2FA">
+                        </div>
+                    {% endif %}
+                    <button style="margin-left: 165px;" type="submit" class="orange-button">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="parameters-list activity-log">
+            <h3>Journal d'activité</h3>
+            {% if activityLogs is defined and activityLogs|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in activityLogs %}
+                            <tr>
+                                <td>{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.details }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucune activité récente.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        console.log('START_PARAMETRE_JS');
+
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            // Force style recalculation
+            document.body.offsetHeight;
+        }
+
+        // Apply theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+            console.log('User CIN:', '{{ app.user.cin ?? 'unknown' }}');
+            const container = document.querySelector('.admin-container');
+            if (!container) {
+                console.error('Error: .admin-container not found');
+                return;
+            }
+            const theme = container.dataset.theme || 'light';
+            console.log('Theme from data-theme:', theme);
+            applyTheme(theme);
+
+            // Modal handling
+            const items = document.querySelectorAll('.parameters-item');
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.modal-close');
+
+            items.forEach(item => {
+                item.addEventListener('click', () => {
+                    const modalId = item.dataset.modal;
+                    const modal = document.getElementById(modalId);
+                    if (modal) {
+                        modal.style.display = 'flex';
+                    }
+                });
+            });
+
+            closeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const modal = button.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+
+            // Close modal when clicking outside
+            modals.forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Apply theme on form submission
+        document.addEventListener('submit', function(event) {
+            if (event.target.id === 'theme-form') {
+                event.preventDefault();
+                const select = event.target.querySelector('#theme');
+                const selectedTheme = select.value;
+                console.log('Form submitted, selected theme:', selectedTheme);
+                applyTheme(selectedTheme);
+                setTimeout(() => event.target.submit(), 100);
+            }
+        });
+
+        console.log('END_PARAMETRE_JS');
+    </script>
+{% endblock %}

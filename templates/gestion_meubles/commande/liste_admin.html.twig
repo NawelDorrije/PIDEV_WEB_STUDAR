@@ -9,23 +9,26 @@
         max-width: 1200px;
         margin: 2rem auto;
         padding: 0 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
     }
 
     h1 {
         font-size: 1.8rem;
         font-weight: 600;
         color: #1a1a1a;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0;
+        text-align: center;
     }
 
-    
-
-    /* Filtres */
+    /* Filtres et Export */
     .filters-container {
         display: flex;
         gap: 1rem;
-        margin-bottom: 1.5rem;
         flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
     }
     .filter-input,
     .filter-select {
@@ -42,6 +45,58 @@
         outline: none;
         border-color: #007bff;
         box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    .download-section {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .download-button {
+        padding: 0.5rem 1rem;
+        background: #2556A7;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .download-button:hover {
+        background: #1e4685;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4b5563;
+        font-size: 0.95rem;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .nav-button:hover {
+        background: #e5e7eb;
+        color: #1a1a1a;
+    }
+    .nav-button.active {
+        background: #2556A7;
+        color: #fff;
+        border-color: #007bff;
+    }
+    .nav-button i {
+        font-size: 1.1rem;
     }
 
     /* Tableau des commandes */
@@ -85,7 +140,7 @@
         color: #007bff;
     }
     .commandes-table .commande-acheteur,
-    .commandes-table .commandes-table .commande-methode,
+    .commandes-table .commande-methode,
     .commandes-table .commande-adresse,
     .commandes-table .commande-date-annulation {
         color: #4b5563;
@@ -99,9 +154,9 @@
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-size: 0.85rem;
-        margin-top: 1.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
     }
-
     .commandes-table .commande-statut.EN_ATTENTE {
         background: #fef2f2;
         color: #ef4444;
@@ -150,7 +205,7 @@
         color: #0056b3;
     }
     .pagination li.active span {
-        background: #007bff;
+        background: #2556A7;
         color: #fff;
         border-color: #007bff;
     }
@@ -231,8 +286,10 @@
 
     /* Responsive */
     @media (max-width: 768px) {
-        .filters-container {
+        .filters-container,
+        .download-section {
             flex-direction: column;
+            align-items: center;
         }
         .filter-input,
         .filter-select {
@@ -251,26 +308,47 @@
             padding: 0.4rem 0.8rem;
             font-size: 0.9rem;
         }
+        .nav-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
     }
 </style>
 
 <div class="admin-container">
+    <!-- Titre -->
     <h1>Liste des commandes</h1>
 
-    <!-- Navigation Buttons -->
-    <div class="nav-buttons">
-        <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button" title="Consulter les meubles">
-            <i class="bi bi-tag"></i>
-            <span class="nav-text">Consulter les meubles</span>
-        </a>
-        <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button active" title="Consulter les commandes">
-            <i class="bi bi-clock-history"></i>
-            <span class="nav-text">Consulter les commandes</span>
-        </a>
-        <a  href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button" title="Voir les statistiques">
-            <i class="bi bi-bar-chart"></i>
-            <span class="nav-text">Statistiques</span>
-        </a>
+    <!-- Section Téléchargement -->
+    <div class="filters-container">
+        <div class="download-section">
+            <select class="filter-select" id="download-month">
+                <option value="">Mois</option>
+                <option value="1">Janvier</option>
+                <option value="2">Février</option>
+                <option value="3">Mars</option>
+                <option value="4">Avril</option>
+                <option value="5">Mai</option>
+                <option value="6">Juin</option>
+                <option value="7">Juillet</option>
+                <option value="8">Août</option>
+                <option value="9">Septembre</option>
+                <option value="10">Octobre</option>
+                <option value="11">Novembre</option>
+                <option value="12">Décembre</option>
+            </select>
+            <select class="filter-select" id="download-year">
+                <option value="">Année</option>
+                {% for year in 2020..2025 %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="download-format">
+                <option value="csv">CSV</option>
+                <option value="excel">Excel</option>
+            </select>
+            <button class="download-button" onclick="downloadFile()">Télécharger</button>
+        </div>
     </div>
 
     <!-- Filtres -->
@@ -289,6 +367,22 @@
             <option value="Paiement_a_la_livraison">À la livraison</option>
             <option value="Stripe">Stripe</option>
         </select>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button" title="Consulter les meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Consulter les meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button active" title="Consulter les commandes">
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Consulter les commandes</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button" title="Voir les statistiques">
+            <i class="bi bi-bar-chart"></i>
+            <span class="nav-text">Statistiques</span>
+        </a>
     </div>
 
     <!-- Liste des commandes (Tableau) -->
@@ -311,7 +405,7 @@
                     <tr class="commande-row" data-id="{{ commande.id }}">
                         <td class="commande-id">#{{ commande.id }}</td>
                         <td class="commande-acheteur">
-                            {{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ({{ commande.cinAcheteur|default('N/A') }})
+                            {{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }}
                         </td>
                         <td class="commande-date">
                             {{ commande.dateCommande|date('d/m/Y H:i') }}
@@ -333,7 +427,7 @@
             {{ knp_pagination_render(pagination) }}
         </div>
     {% else %}
-        <p>Aucune commande trouvée.</p>
+        <p style="text-align: center;">Aucune commande trouvée.</p>
     {% endif %}
 
     <!-- Pop-up pour les détails -->
@@ -371,7 +465,7 @@
                 {% for commande in pagination %}
                     "{{ commande.id }}": {
                         id: "{{ commande.id }}",
-                        acheteur: "{{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ({{ commande.cinAcheteur|default('N/A') }})",
+                        acheteur: "{{ commande.acheteur.nom|default('Inconnu') }} {{ commande.acheteur.prenom|default('') }} ",
                         date: "{{ commande.dateCommande|date('d/m/Y H:i') }}",
                         statut: "{{ commande.statut }}",
                         montant: "{{ commande.montantTotal|number_format(2, ',', ' ') }} TND",
@@ -443,6 +537,24 @@
                     popup.classList.remove('active');
                 }
             });
+
+            // Fonction pour télécharger le fichier
+            window.downloadFile = function() {
+                const month = document.getElementById('download-month').value;
+                const year = document.getElementById('download-year').value;
+                const format = document.getElementById('download-format').value;
+
+                if (!month || !year) {
+                    alert('Veuillez sélectionner un mois et une année.');
+                    return;
+                }
+
+                let url = '{{ path('app_gestion_meubles_export_commandes') }}?month=' + encodeURIComponent(month) +
+                    '&year=' + encodeURIComponent(year) +
+                    '&format=' + encodeURIComponent(format);
+
+                window.location.href = url;
+            };
         });
     </script>
 {% endblock %}

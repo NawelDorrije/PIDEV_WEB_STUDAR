@@ -1,0 +1,624 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Statistics{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        body.theme-dark {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+       
+        body.theme-dark .admin-sidebar {
+            background-color: #1a1a1a !important;
+        }
+        body.theme-dark .admin-content {
+            background-color: #1a1a1a !important;
+        }
+        body.theme-dark .parameters-list {
+            background-color: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+        }
+        body.theme-dark .parameters-item {
+            border-color: #555 !important;
+        }
+        body.theme-dark .title-dark {
+            color: #f1f1f1 !important;
+        }
+        body.theme-dark .stat-card {
+            background-color: #2c2c2c !important;
+        }
+        body.theme-dark .chart-container {
+            background-color: #2c2c2c !important;
+        }
+        body.theme-dark .parameters-list {
+            background-color: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+        }
+
+        body.theme-dark .chart-title {
+            color: white;
+        }
+        
+        body.theme-dark .parameters-item {
+            border-color: #555 !important;
+        }
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            width: 80px;
+            background-color: white;
+            color: white;
+            padding: 20px 10px;
+            position: fixed;
+            height: 100vh;
+            transition: width 0.3s;
+            overflow: hidden;
+            z-index: 1000;
+            
+        }
+        
+        .admin-sidebar:hover {
+            width: 250px;
+        }
+        
+        .admin-content {
+            margin-left: 80px;
+            padding: 30px;
+            flex: 1;
+            transition: margin-left 0.3s;
+            background-color: #f8f9fa;
+        }
+        
+        .admin-sidebar:hover ~ .admin-content {
+            margin-left: 250px;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin-top: 30px;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 15px;
+            white-space: nowrap;
+        }
+        
+        .sidebar-nav a {
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover, 
+        .sidebar-nav a.active {
+            background-color: #f35525;
+            color: white;
+        }
+        
+        .sidebar-nav i {
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(243, 85, 37, 0.1);
+            border-radius: 50%;
+            margin-right: 15px;
+            transition: all 0.3s;
+            color: #f35525;
+        }
+        
+        .sidebar-nav a:hover i,
+        .sidebar-nav a.active i {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+            color: white;
+        }
+        
+        .sidebar-nav .nav-text {
+            opacity: 0;
+            transition: opacity 0.2s;
+            transition-delay: 0.1s;
+            font-weight: 500;
+        }
+        
+        .admin-sidebar:hover .nav-text {
+            opacity: 1;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .parameters-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        body.theme-dark .title-dark{
+            color: #f1f1f1;
+        }
+        
+        .parameters-item:hover {
+            background-color: #f8f9fa;
+        }
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-card h6 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #f35525;
+        }
+
+        .filter-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .filter-container select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-container select:focus {
+            outline: none;
+            border-color: #f35525;
+        }
+        body.theme-dark .filter-container select {
+            background-color: #2c2c2c;
+            color: #f1f1f1;
+            border-color: #555;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="admin-container theme-dark" data-theme="dark">
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_statistique') }}" class="{{ app.current_route starts with 'app_admin_statistique' ? 'active' : '' }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="nav-text">Statistiques</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_parametre') }}">
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-text">Parametres</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+        <h3 class="chart-title title-dark">Statistiques des Utilisateurs</h3>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h6>Étudiants</h6>
+                <div class="stat-value" id="etudiant-count">0</div>
+            </div>
+            <div class="stat-card">
+                <h6>Transporteurs</h6>
+                <div class="stat-value" id="transporteur-count">0</div>
+            </div>
+            <div class="stat-card">
+                <h6>Propriétaires</h6>
+                <div class="stat-value" id="proprietaire-count">0</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h4 class="chart-title">Statistiques des avis</h4>
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Chargement...
+            </div>
+            <div class="error-message" id="chart-error">
+                Erreur lors du chargement des données
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="rolePieChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h4 class="chart-title">statistiques des avis</h4>
+            <div class="filter-container">
+                <select id="role-filter">
+                    <option value="">Tous les rôles</option>
+                    <option value="étudiant">Étudiant</option>
+                    <option value="transporteur">Transporteur</option>
+                    <option value="propriétaire">Propriétaire</option>
+                </select>
+            </div>
+            <div class="loading-spinner" id="emotion-loading">
+                <i class="fas fa-spinner fa-spin"></i> Chargement...
+            </div>
+            <div class="error-message" id="emotion-chart-error">
+                Erreur lors du chargement des données
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="emotionPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Theme application
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            // Force style recalculation
+            document.body.offsetHeight;
+        }
+
+        // Apply theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+           
+
+            // Chart logic for role chart
+            const roleLoadingSpinner = document.querySelector('.chart-container .loading-spinner');
+            const roleErrorMessage = document.getElementById('chart-error');
+            let roleChartInstance = null;
+
+            function showRoleLoading() {
+                roleLoadingSpinner.style.display = 'block';
+                roleErrorMessage.style.display = 'none';
+            }
+
+            function hideRoleLoading() {
+                roleLoadingSpinner.style.display = 'none';
+            }
+
+            function showRoleError(message) {
+                roleErrorMessage.textContent = message;
+                roleErrorMessage.style.display = 'block';
+                hideRoleLoading();
+            }
+
+            function initRoleChart() {
+                const ctx = document.getElementById('rolePieChart');
+                if (!ctx) {
+                    console.error('Canvas #rolePieChart not found');
+                    showRoleError('Erreur: Élément de graphique introuvable');
+                    return;
+                }
+
+                roleChartInstance = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: [],
+                            borderWidth: 1,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    boxWidth: 20,
+                                    padding: 20,
+                                    font: { size: 14 }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateRoleChart(chartData) {
+                if (!roleChartInstance) {
+                    console.error('Role chart instance not initialized');
+                    showRoleError('Erreur: Initialisation du graphique échouée');
+                    return;
+                }
+
+                const labels = chartData.labels || ['Étudiant', 'Transporteur', 'Propriétaire'];
+                const data = chartData.data || [0, 0, 0];
+                const colors = chartData.colors || ['#f35525', '#4e73df', '#1cc88a'];
+
+                // Update stat cards with null checks
+                const etudiantCount = document.getElementById('etudiant-count');
+                const transporteurCount = document.getElementById('transporteur-count');
+                const proprietaireCount = document.getElementById('proprietaire-count');
+
+                if (etudiantCount) etudiantCount.textContent = data[0];
+                if (transporteurCount) transporteurCount.textContent = data[1];
+                if (proprietaireCount) proprietaireCount.textContent = data[2];
+
+                roleChartInstance.data.labels = labels;
+                roleChartInstance.data.datasets[0].data = data;
+                roleChartInstance.data.datasets[0].backgroundColor = colors;
+                roleChartInstance.update();
+
+                hideRoleLoading();
+            }
+
+            showRoleLoading();
+            initRoleChart();
+
+            fetch('/admin/api/user-stats', {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    console.log('Response status (role):', response.status);
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received (role):', data);
+                    if (!data.labels || !data.data || !data.colors) {
+                        throw new Error('Format de données invalide');
+                    }
+                    updateRoleChart(data);
+                })
+                .catch(error => {
+                    console.error('Fetch error (role):', error);
+                    showRoleError(`Erreur: ${error.message}`);
+                    updateRoleChart({
+                        labels: ['Étudiant', 'Transporteur', 'Propriétaire'],
+                        data: [0, 0, 0],
+                        colors: ['#f35525', '#4e73df', '#1cc88a']
+                    });
+                });
+
+            // Chart logic for emotion chart
+            const emotionLoadingSpinner = document.getElementById('emotion-loading');
+            const emotionErrorMessage = document.getElementById('emotion-chart-error');
+            const roleFilter = document.getElementById('role-filter');
+            let emotionChartInstance = null;
+
+            function showEmotionLoading() {
+                emotionLoadingSpinner.style.display = 'block';
+                emotionErrorMessage.style.display = 'none';
+            }
+
+            function hideEmotionLoading() {
+                emotionLoadingSpinner.style.display = 'none';
+            }
+
+            function showEmotionError(message) {
+                emotionErrorMessage.textContent = message;
+                emotionErrorMessage.style.display = 'block';
+                hideEmotionLoading();
+            }
+
+            function initEmotionChart() {
+                const ctx = document.getElementById('emotionPieChart');
+                if (!ctx) {
+                    console.error('Canvas #emotionPieChart not found');
+                    showEmotionError('Erreur: Élément de graphique introuvable');
+                    return;
+                }
+
+                emotionChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Nombre d\'utilisateurs',
+                            data: [],
+                            backgroundColor: [],
+                            borderWidth: 1,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        if (Number.isInteger(value)) {
+                                            return value;
+                                        }
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Nombre d\'utilisateurs'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Émotions'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        return `${label}: ${value} utilisateur(s)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+            }
+
+            function updateEmotionChart(chartData) {
+                if (!emotionChartInstance) {
+                    console.error('Emotion chart instance not initialized');
+                    showEmotionError('Erreur: Initialisation du graphique échouée');
+                    return;
+                }
+
+                const labels = chartData.labels || ['Aucune donnée'];
+                const data = chartData.data || [1];
+                const colors = chartData.colors || ['#6c757d'];
+
+                emotionChartInstance.data.labels = labels;
+                emotionChartInstance.data.datasets[0].data = data;
+                emotionChartInstance.data.datasets[0].backgroundColor = colors;
+                emotionChartInstance.update();
+
+                hideEmotionLoading();
+            }
+
+            function fetchEmotionData(role = '') {
+                showEmotionLoading();
+                const url = role ? `/admin/api/emotion-stats?role=${encodeURIComponent(role)}` : '/admin/api/emotion-stats';
+                fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        console.log('Response status (emotion):', response.status);
+                        if (!response.ok) {
+                            throw new Error(`Erreur HTTP: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Data received (emotion):', data);
+                        if (!data.labels || !data.data || !data.colors) {
+                            throw new Error('Format de données invalide');
+                        }
+                        updateEmotionChart(data);
+                    })
+                    .catch(error => {
+                        console.error('Fetch error (emotion):', error);
+                        showEmotionError(`Erreur: ${error.message}`);
+                        updateEmotionChart({
+                            labels: ['Aucune donnée'],
+                            data: [1],
+                            colors: ['#6c757d']
+                        });
+                    });
+            }
+
+            showEmotionLoading();
+            initEmotionChart();
+            fetchEmotionData(); // Initial fetch with no role filter
+
+            // Add event listener for role filter
+            roleFilter.addEventListener('change', function() {
+                const selectedRole = this.value;
+                fetchEmotionData(selectedRole);
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,31 +1,812 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Utilisateur index{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Main layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            width: 80px;
+            background-color: white;
+            color: white;
+            padding: 20px 10px;
+            position: fixed;
+            height: 100vh;
+            transition: width 0.3s;
+            overflow: hidden;
+            z-index: 1000;
+        }
+        
+        .admin-sidebar:hover {
+            width: 250px;
+            z-index: 1000;
+            position: fixed;
+        }
+        
+        .admin-content {
+            margin-left: 80px;
+            padding: 30px;
+            flex: 1;
+            transition: margin-left 0.3s;
+            background-color: white;
+        }
+        
+        .admin-sidebar:hover ~ .admin-content {
+            margin-left: 250px;
+        }
+        
+        /* Sidebar navigation with icons */
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin-top: 30px;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 15px;
+            white-space: nowrap;
+        }
+        
+        .sidebar-nav a {
+            color: #333;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover, 
+        .sidebar-nav a.active {
+            background-color: #f35525;
+            color: white;
+        }
+        
+        .sidebar-nav i {
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(243, 85, 37, 0.1);
+            border-radius: 50%;
+            margin-right: 15px;
+            transition: all 0.3s;
+            color: #f35525;
+        }
+        
+        .sidebar-nav a:hover i,
+        .sidebar-nav a.active i {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+            color: white;
+        }
+        
+        .sidebar-nav .nav-text {
+            opacity: 0;
+            transition: opacity 0.2s;
+            transition-delay: 0.1s;
+            font-weight: 500;
+        }
+        
+        .admin-sidebar:hover .nav-text {
+            opacity: 1;
+        }
+        
+        /* Table styling */
+        .user-table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .user-table th {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .user-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #495057;
+            vertical-align: middle;
+        }
+        
+        .user-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .user-table tr:hover td {
+            background-color: #f8f9fa;
+        }
+        
+        /* Center the Statut column */
+        .user-table th:nth-child(5),
+        .user-table td:nth-child(5) {
+            text-align: center;
+        }
+        
+        /* Action buttons */
+        .action-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+        }
+        
+        .action-btn:hover {
+            color: #f35525;
+            transform: scale(1.1);
+        }
+        
+        .block-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+        }
+        
+        .block-btn.unblocked {
+            color: #28a745;
+        }
+        
+        .block-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .report-btn {
+            background: none;
+            border: none;
+            color: #e63946;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+        }
+        .report-btn:hover {
+            color: #b32b34;
+            transform: scale(1.15);
+        }
+        
+        /* Status badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1;
+            min-width: 80px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        .status-active {
+            color: #2e7d32;
+          
+          
+        }
+        
+        .status-blocked {
+            color: #c62828;
+           
+        }
+        
+        /* Ensure status badge aligns properly in table */
+        .user-table td .status-badge {
+            display: inline-flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 100px; /* Limit width to prevent overflow */
+            margin: 0 auto;
+            vertical-align: middle;
+        }
+        
+        /* Filter Section Styles */
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .filter-title {
+            font-size: 1.1rem;
+            color: #495057;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            background-color: white;
+            color: #495057;
+            transition: border-color 0.3s;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #f35525;
+            box-shadow: 0 0 0 2px rgba(243, 85, 37, 0.2);
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-btn {
+            background-color: #f35525;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e04b20;
+        }
+        
+        .reset-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+        }
+        
+        .reset-btn:hover {
+            color: #f35525;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .pagination a {
+            color: #f35525;
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .pagination a.active {
+            background-color: #f35525;
+            color: white;
+            border-color: #f35525;
+        }
+        
+        .pagination a:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+        
+        /* Report modal */
+        .report-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .report-modal-content {
+            background-color: #1d3557;
+            color: #f1faee;
+            padding: 25px;
+            border-radius: 12px;
+            width: 350px;
+            max-width: 95%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .report-modal-content h3 {
+            margin: 0 0 15px;
+            font-size: 1.3rem;
+            color: #a8dadc;
+        }
+        
+        .report-modal-content textarea {
+            width: 100%;
+            height: 80px;
+            border: 1px solid #457b9d;
+            border-radius: 6px;
+            padding: 10px;
+            background-color: #f1faee;
+            color: #1d3557;
+            margin-bottom: 15px;
+            resize: none;
+        }
+        
+        .report-modal-content textarea:focus {
+            outline: none;
+            border-color: #a8dadc;
+            box-shadow: 0 0 0 2px rgba(168, 218, 220, 0.3);
+        }
+        
+        .report-modal-content .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .report-modal-content .modal-btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .report-modal-content .submit-btn {
+            background-color: #e63946;
+            color: #f1faee;
+        }
+        
+        .report-modal-content .submit-btn:hover {
+            background-color: #b32b34;
+        }
+        
+        .report-modal-content .cancel-btn {
+            background-color: #457b9d;
+            color: #f1faee;
+        }
+        
+        .report-modal-content .cancel-btn:hover {
+            background-color: #335f7a;
+        }
+        
+        /* Dark theme styles */
+        body.theme-dark {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
+        }
+        body.theme-dark .admin-sidebar {
+            background-color: #2c2c2c !important;
+        }
+        body.theme-dark .admin-content {
+            background-color: #1a1a1a !important;
+        }
+        body.theme-dark .user-table-container,
+        body.theme-dark .filter-section {
+            background-color: #2c2c2c !important;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.1) !important;
+        }
+        body.theme-dark .user-table th {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-bottom: 2px solid #555 !important;
+        }
+        body.theme-dark .user-table td {
+            color: #ffffff !important;
+            border-bottom: 1px solid #555 !important;
+        }
+        body.theme-dark .user-table tr:hover td {
+            background-color: #3a3a3a !important;
+        }
+        body.theme-dark .status-active {
+            background-color: #2e7d32 !important;
+            color: #ffffff !important;
+            border: 1px solid #4caf50 !important;
+        }
+        body.theme-dark .status-blocked {
+            background-color: #c62828 !important;
+            color: #ffffff !important;
+            border: 1px solid #d32f2f !important;
+        }
+        body.theme-dark .filter-select {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .title-dark {
+            color: #f1f1f1 !important;
+        }
+        body.theme-dark .sidebar-nav a {
+            color: #ffffff !important;
+        }
+        body.theme-dark .sidebar-nav .nav-text {
+            color: #ffffff !important;
+        }
+        body.theme-dark .report-modal-content {
+            background-color: #2c2c2c !important;
+            color: #ffffff !important;
+        }
+        body.theme-dark .report-modal-content h3 {
+            color: #f35525 !important;
+        }
+        body.theme-dark .report-modal-content textarea {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #555 !important;
+        }
+        body.theme-dark .report-modal-content .submit-btn {
+            background-color: #f35525 !important;
+        }
+        body.theme-dark .report-modal-content .submit-btn:hover {
+            background-color: #e04b20 !important;
+        }
+        body.theme-dark .report-modal-content .cancel-btn {
+            background-color: #6c757d !important;
+        }
+        body.theme-dark .report-modal-content .cancel-btn:hover {
+            background-color: #5a6268 !important;
+        }
+    </style>
+{% endblock %}
 
 {% block body %}
-    <h1>this is dashobard</h1>
+<div class="admin-container" data-theme="{{ app.user.theme ?? 'light' }}">
+    <!-- Sidebar -->
+    <div class="admin-sidebar">
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_statistique') }}" class="{{ app.current_route starts with 'app_admin_statistique' ? 'active' : '' }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span class="nav-text">Statistiques</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_parametre') }}" class="{{ app.current_route == 'app_admin_parametre' ? 'active' : '' }}">
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-text">Paramètres</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-               
-                <th>Cin</th>
-                <th>nom</th>
-                <th>Prenom</th>
-                <th>Email</th>
-                <th>Mdp</th>
-                <th>NumTel</th>
-                <th>Role</th>
-                <th>Reset_code</th>
-                <th>Blocked</th>
-                <th>Created_at</th>
-                <th>actions</th>
-            </tr>
-        </thead>
+    <!-- Main Content -->
+    <div class="admin-content">
+        <h3 style="margin-left: 400px;" class="center title-dark">Liste des Utilisateurs</h3>
+        <div class="filter-section parameters-item">
+            <form method="get" class="filter-form">
+                <div class="filter-group">
+                    <select name="role" id="role" class="filter-select">
+                        <option value="">Tous les rôles</option>
+                        <option value="admin" {{ roleFilter == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="propriétaire" {{ roleFilter == 'propriétaire' ? 'selected' : '' }}>Propriétaire</option>
+                        <option value="transporteur" {{ roleFilter == 'transporteur' ? 'selected' : '' }}>Transporteur</option>
+                        <option value="étudiant" {{ roleFilter == 'étudiant' ? 'selected' : '' }}>Étudiant</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select name="blocked" id="blocked" class="filter-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="0" {{ blockedFilter == '0' ? 'selected' : '' }}>Actifs seulement</option>
+                        <option value="1" {{ blockedFilter == '1' ? 'selected' : '' }}>Bloqués seulement</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="filter-btn">
+                        <i class="fas fa-filter"></i> Appliquer
+                    </button>
+                    {% if roleFilter or blockedFilter is not null %}
+                        <a href="{{ path('app_admin_dashboard') }}" class="reset-btn">
+                            <i class="fas fa-times"></i> Réinitialiser
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
         
-        
-        <h1>ASLEMA Admin </h1>
-    </table>
+        <div class="user-table-container">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in utilisateur %}
+                    <tr>
+                        <td> 
+                            {% if user.image %}
+                            <img src="{{ asset('Uploads/images/' ~ user.image) }}" 
+                                 alt="Profile Image" 
+                                 class="profile-avatar"
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            {% else %}
+                            <img src="{{ user.avatarUrl }}" 
+                                 alt="Profile Image" 
+                                 class="profile-avatar"
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            {% endif %} 
+                        </td>
+                        <td>{{ user.nom }}</td>
+                        <td>{{ user.prenom }}</td>
+                        <td>{{ user.role.value }}</td>
+                        <td>
+                            <span class="status-badgee {{ user.blocked ? 'status-blocked' : 'status-active' }}">
+                                {{ user.blocked ? 'Bloqué' : 'Actif' }}
+                            </span>
+                        </td>
+                        <td class="center">
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <!-- Report Button -->
+                                <button class="report-btn"
+                                        data-user-id="{{ user.cin }}"
+                                        data-user-email="{{ user.email }}"
+                                        onclick="showReportModal(this)"
+                                        title="Signaler cet utilisateur">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </button>
+                                <!-- Block Button -->
+                                <button class="block-btn {{ user.blocked ? 'blocked' : 'unblocked' }}"
+                                        data-user-id="{{ user.cin }}"
+                                        onclick="toggleBlockStatus(this)"
+                                        title="{{ user.blocked ? 'Débloquer' : 'Bloquer' }}">
+                                    <i class="fas {{ user.blocked ? 'fa-unlock' : 'fa-lock' }}"></i>
+                                </button>
+                                <a href="{{ path('app_dashboard_detailsUtilisateur', {'cin': user.cin}) }}" 
+                                   class="action-btn"
+                                   title="Voir détails">
+                                    <i style="margin-left:80px; margin-right: 40px;" class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Aucun utilisateur trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                {{ knp_pagination_render(utilisateur) }}
+            </div>
+        </div>
 
-    <!-- <a href="{{ path('app_utilisateur_new') }}">Create new</a> -->
+        <!-- Report Modal -->
+        <div id="reportModal" class="report-modal">
+            <div class="report-modal-content">
+                <h3>Signaler l'utilisateur</h3>
+                <form id="reportForm">
+                    <input type="hidden" id="reportUserId" name="userId">
+                    <input type="hidden" id="reportUserEmail" name="userEmail">
+                    <label for="reportReason" style="color: #a8dadc;">Raison du signalement</label>
+                    <textarea id="reportReason" name="reason" placeholder="Pourquoi signalez-vous cet utilisateur ?" required></textarea>
+                    <div class="modal-actions">
+                        <button type="button" class="modal-btn cancel-btn" onclick="hideReportModal()">Annuler</button>
+                        <button type="submit" class="modal-btn submit-btn">Envoyer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Theme application
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            document.body.offsetHeight; // Force style recalculation
+        }
+
+        // Toggle block status
+        window.toggleBlockStatus = function(button) {
+            const userId = button.getAttribute('data-user-id');
+            console.log('Toggling block status for userId:', userId);
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (!csrfToken) {
+                console.error('CSRF token not found');
+                alert('Erreur : jeton CSRF manquant.');
+                return;
+            }
+
+            fetch(`/admin/user/${userId}/toggle-block`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            })
+            .then(response => {
+                console.log('Toggle block response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Toggle block response data:', data);
+                if (data.success) {
+                    // Update button
+                    const isBlocked = data.blocked;
+                    button.classList.toggle('blocked', isBlocked);
+                    button.classList.toggle('unblocked', !isBlocked);
+                    button.title = isBlocked ? 'Débloquer' : 'Bloquer';
+                    const icon = button.querySelector('i');
+                    icon.className = `fas ${isBlocked ? 'fa-unlock' : 'fa-lock'}`;
+
+                    // Update status badge
+                    const row = button.closest('tr');
+                    const statusBadge = row.querySelector('.status-badgee');
+                    statusBadge.className = `status-badgee ${isBlocked ? 'status-blocked' : 'status-active'}`;
+                    statusBadge.textContent = isBlocked ? 'Bloqué' : 'Actif';
+
+                    alert(isBlocked ? 'Utilisateur bloqué avec succès.' : 'Utilisateur débloqué avec succès.');
+                } else {
+                    throw new Error(data.message || 'Erreur inconnue');
+                }
+            })
+            .catch(error => {
+                console.error('Toggle block error:', error);
+                alert('Une erreur est survenue : ' + error.message);
+            });
+        };
+
+        // Apply theme and handle report modal
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+            const container = document.querySelector('.admin-container');
+            if (!container) {
+                console.error('Error: .admin-container not found');
+                return;
+            }
+            const theme = container.dataset.theme || 'light';
+            console.log('Theme from data-theme:', theme);
+            applyTheme(theme);
+
+            // Report modal logic
+            const modal = document.getElementById('reportModal');
+            const reportForm = document.getElementById('reportForm');
+            const userIdInput = document.getElementById('reportUserId');
+            const userEmailInput = document.getElementById('reportUserEmail');
+            const reasonInput = document.getElementById('reportReason');
+
+            window.showReportModal = function(button) {
+                const userId = button.getAttribute('data-user-id');
+                const userEmail = button.getAttribute('data-user-email');
+                console.log('Opening report modal for userId:', userId, 'email:', userEmail);
+                userIdInput.value = userId;
+                userEmailInput.value = userEmail;
+                reasonInput.value = '';
+                modal.style.display = 'flex';
+            };
+
+            window.hideReportModal = function() {
+                modal.style.display = 'none';
+                reasonInput.value = '';
+            };
+
+            reportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const userId = userIdInput.value;
+                const userEmail = userEmailInput.value;
+                const reason = reasonInput.value.trim();
+
+                if (!reason) {
+                    alert('Veuillez entrer une raison pour le signalement.');
+                    return;
+                }
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    alert('Erreur : jeton CSRF manquant.');
+                    return;
+                }
+
+                fetch('{{ path('app_admin_user_report') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        userEmail: userEmail,
+                        reason: reason
+                    })
+                })
+                .then(response => {
+                    console.log('Report response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Report response data:', data);
+                    if (data.success) {
+                        alert('Signalement envoyé avec succès.');
+                        hideReportModal();
+                    } else {
+                        throw new Error(data.message || 'Erreur inconnue');
+                    }
+                })
+                .catch(error => {
+                    console.error('Report error:', error);
+                    alert('Une erreur est survenue : ' + error.message);
+                });
+            });
+        });
+    </script>
 {% endblock %}

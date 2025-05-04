@@ -1,207 +1,143 @@
-{# templates/gestion_meubles/commande/liste.html.twig #}
 {% extends 'base.html.twig' %}
 
 {% block title %}Mes Commandes{% endblock %}
 
 {% block body %}
 <style>
-/* Pop-up Styles - Ajout d'icônes et couleurs, sans image */
-.popup-overlay {
+/* Styles existants pour les autres éléments */
+.popup-actions .btn-download {
+    background: #1e40af; /* Bleu professionnel */
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-weight: 500;
+}
+
+.popup-actions .btn-download:hover {
+    background: #1e3a8a; /* Bleu plus foncé */
+    transform: translateY(-2px);
+}
+
+/* Nouvelle pop-up d'annulation */
+.cancel-popup {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
+    background: rgba(0, 0, 0, 0.6);
     justify-content: center;
     align-items: center;
-    z-index: 2000;
-    animation: fadeIn 0.3s ease-in-out;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
 }
 
-.popup-content {
-    background: #fff;
-    border-radius: 12px;
+.cancel-popup-content {
+    background: #ffffff;
     padding: 2rem;
-    max-width: 600px;
-    width: 90%;
-    max-height: 85vh;
-    overflow-y: auto;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    position: relative;
-    border-left: 4px solid #6366f1;
-    transition: transform 0.3s ease;
-    transform: scale(0.98);
-}
-
-.popup-overlay.active .popup-content {
-    transform: scale(1);
-}
-
-.popup-content h2 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1.5rem;
-    text-align: left;
-    position: relative;
-}
-
-.popup-content h2::after {
-    content: '';
-    position: absolute;
-    bottom: -0.5rem;
-    left: 0;
-    width: 40px;
-    height: 2px;
-    background: #10b981;
-}
-
-.popup-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #6b7280;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.3s ease, background 0.3s ease;
-}
-
-.popup-close:hover {
-    color: #1f2937;
-    background: #e5e7eb;
-}
-
-.popup-details {
-    font-size: 0.95rem;
-    color: #4b5563;
-}
-
-.popup-details p {
-    margin: 0.5rem 0;
-    padding: 0.5rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.popup-details p:last-child {
-    border-bottom: none;
-}
-
-.popup-details i {
-    font-size: 1.1rem;
-    color: #6b7280;
-}
-
-.popup-details .id i { color: #6366f1; } /* Indigo pour ID */
-.popup-details .date i { color: #3b82f6; } /* Bleu pour Date */
-.popup-details .statut i { color: #ef4444; } /* Rouge pour Statut */
-.popup-details .paiement i { color: #f59e0b; } /* Orange pour Paiement */
-.popup-details .montant i { color: #10b981; } /* Vert pour Montant */
-.popup-details .adresse i { color: #06b6d4; } /* Cyan pour Adresse */
-.popup-details .items i { color: #8b5cf6; } /* Violet pour Articles */
-
-.popup-details .montant span {
-    color: #10b981;
-    font-weight: 700;
-}
-
-.popup-details .statut span {
-    background: #fef2f2;
-    color: #ef4444;
-    padding: 0.25rem 0.75rem;
     border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    width: 450px;
+    max-width: 90%;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    position: relative;
+    animation: slideIn 0.3s ease;
+    border-top: 4px solid #ef4444; /* Bordure rouge pour indiquer une action critique */
 }
 
-.popup-details strong {
-    color: #1f2937;
-    font-weight: 600;
-    flex: 0 0 35%;
+.cancel-popup-content h2 {
+    font-size: 1.5rem;
+    color: #1f2937; /* Gris foncé */
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.popup-details .popup-items {
-    margin-top: 1rem;
+.cancel-popup-content h2 i {
+    color: #ef4444; /* Icône rouge */
 }
 
-.popup-details .popup-items h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
+.cancel-popup-content p {
+    color: #4b5563; /* Gris moyen */
+    margin-bottom: 1rem;
+    font-size: 1rem;
 }
 
-.popup-details .popup-items .popup-item {
-    margin: 0.5rem 0;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed #e5e7eb;
+.cancel-popup-content textarea {
+    width: 100%;
+    height: 120px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    resize: none;
+    transition: border-color 0.3s ease;
 }
 
-.popup-details .popup-items .popup-item:last-child {
-    border-bottom: none;
+.cancel-popup-content textarea:focus {
+    outline: none;
+    border-color: #1e40af; /* Bleu au focus */
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
-.popup-details .popup-items .popup-item p {
-    margin: 0.25rem 0;
-    padding: 0;
-    border: none;
+.cancel-popup-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
 }
 
-.popup-actions {
-    margin-top: 1rem;
-    text-align: right;
-}
-
-.popup-actions .btn-print {
-    background: #6366f1;
+.cancel-popup-actions .btn-confirm {
+    background: #ef4444; /* Rouge pour confirmer */
     color: #fff;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.2s ease;
+    
 }
 
-.popup-actions .btn-print:hover {
-    background: #4f46e5;
+.cancel-popup-actions .btn-confirm:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+.cancel-popup .cancel-popup-content i{
+    margin-left: 100px;
+}
+.cancel-popup .cancel-popup-content i:hover {
+    cursor: pointer;
+}
+.cancel-popup-actions .btn-close {
+    background: #6b7280; /* Gris pour fermer */
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.2s ease;
 }
 
+.cancel-popup-actions .btn-close:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+}
+
+/* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
-@media (max-width: 480px) {
-    .popup-content {
-        padding: 1.5rem;
-        max-height: 90vh;
-    }
-
-    .popup-content h2 {
-        font-size: 1.5rem;
-    }
-
-    .popup-details p {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .popup-details strong {
-        flex: none;
-    }
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 </style>
 
@@ -220,9 +156,9 @@
         <select class="filter-select" id="filter-statut">
             <option value="">Tous les statuts</option>
             <option value="En attente">En attente</option>
-            <option value="Payée">Payée</option>
-            <option value="Livrée">Livrée</option>
-            <option value="Annulée">Annulée</option>
+            <option value="PAYÉE">Payée</option>
+            <option value="LIVRÉE">Livrée</option>
+            <option value="ANNULEE">Annulée</option>
         </select>
         <select class="filter-select" id="filter-paiement">
             <option value="">Méthode de paiement</option>
@@ -248,7 +184,9 @@
                         Paiement : {{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}
                     </div>
                     <div class="commande-amount">
-                        {{ commande.montantTotal|number_format(2, ',', ' ') }} TND
+                        {{ commande.montantTotal|number_format(2, ',', ' ') }} 
+                            {% if commande.methodePaiement == "Stripe" %} EUR {% else %}  TND
+    {% endif %}
                     </div>
                     <div class="commande-address">
                         {{ commande.adresseLivraison|default('Non spécifiée') }}
@@ -257,6 +195,7 @@
                         {% if commande.statut != 'ANNULEE' %}
                             <button class="btn-cancel" data-id="{{ commande.id }}">Annuler</button>
                         {% endif %}
+                        <a href="{{ path('app_gestion_meubles_commande_pdf', {'id': commande.id}) }}" class="btn-download">Télécharger PDF</a>
                     </div>
                 </div>
             {% endfor %}
@@ -276,7 +215,19 @@
                 <!-- Les détails seront injectés via JavaScript -->
             </div>
             <div class="popup-actions">
-                <button class="btn-print" id="print-command">Imprimer</button>
+                <a href="#" class="btn-download" id="download-command">Télécharger PDF</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nouvelle pop-up pour l'annulation -->
+    <div class="cancel-popup" id="cancel-popup">
+        <div class="cancel-popup-content">
+            <h2>Annuler la commande<i class="bi bi-x-circle" id="close-cancel"></i> </h2>
+            <p>Veuillez indiquer la raison de l'annulation de votre commande. Cette information nous aidera à améliorer notre service.</p>
+            <textarea id="cancel-reason" placeholder="Entrez la raison de l'annulation..."></textarea>
+            <div class="cancel-popup-actions">
+                <button class="btn-confirm" id="confirm-cancel">Confirmer l'annulation</button>
             </div>
         </div>
     </div>
@@ -295,7 +246,12 @@
             <i class="bi bi-cart3"></i>
             <span class="nav-text">Panier</span>
         </a>
-        <a href="{{ path('app_gestion_meubles_mes_commandes') }}" class="nav-button" title="Voir les statistiques">
+               <a href="{{ path('app_gestion_meubles_mes_ventes') }}" class="nav-button" title="Suivre mes ventes">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-text">Suivre mes ventes</span>
+        </a>
+        
+        <a href="{{ path('app_gestion_meubles_statistiques_etudiant') }}" class="nav-button" title="Voir les statistiques">
             <i class="bi bi-bar-chart"></i>
             <span class="nav-text">Statistiques</span>
         </a>
@@ -321,7 +277,11 @@
             const popup = document.getElementById('commande-popup');
             const popupDetails = document.getElementById('popup-details');
             const popupClose = document.querySelector('.popup-close');
-            const printButton = document.getElementById('print-command');
+            const downloadButton = document.getElementById('download-command');
+            const cancelPopup = document.getElementById('cancel-popup');
+            const cancelReason = document.getElementById('cancel-reason');
+            const confirmCancel = document.getElementById('confirm-cancel');
+            const closeCancel = document.getElementById('close-cancel');
 
             // Données des commandes avec parcours des LignePanier
             const commandesData = {
@@ -333,12 +293,13 @@
                         paiement: "{{ commande.methodePaiement|lower|replace({'_': ' '})|capitalize }}",
                         montant: "{{ commande.montantTotal|number_format(2, ',', ' ') }} TND",
                         adresse: "{{ commande.adresseLivraison|default('Non spécifiée') }}",
+                        pdfUrl: "{{ path('app_gestion_meubles_commande_pdf', {'id': commande.id}) }}",
                         items: [
                             {% for ligne in commande.panier.lignesPanier %}
                                 {
                                     nom: "{{ ligne.meuble.nom|default('Meuble inconnu') }}",
                                     prix: "{{ ligne.meuble.prix|number_format(2, ',', ' ') }} TND",
-                                    vendeur: "{{ ligne.meuble.vendeur.nom|default('Inconnu') }} {{ ligne.meuble.vendeur.prenom|default('') }} ({{ ligne.meuble.vendeur.cin|default('N/A') }})"
+                                    vendeur: "{{ ligne.meuble.vendeur.nom|default('Inconnu') }} {{ ligne.meuble.vendeur.prenom|default('') }}"
                                 }{% if not loop.last %},{% endif %}
                             {% else %}
                                 { nom: "Aucun article", prix: "0,00 TND", vendeur: "N/A" }
@@ -379,7 +340,7 @@
             // Afficher la pop-up au clic sur une carte
             cards.forEach(card => {
                 card.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('btn-cancel')) return;
+                    if (e.target.classList.contains('btn-cancel') || e.target.classList.contains('btn-download')) return;
                     const commandeId = card.getAttribute('data-id');
                     const commande = commandesData[commandeId];
                     if (commande) {
@@ -388,7 +349,9 @@
                             <p class="date"><i class="bi bi-calendar"></i> <strong>Date:</strong> <span>${commande.date}</span></p>
                             <p class="statut"><i class="bi bi-check-circle"></i> <strong>Statut:</strong> <span>${commande.statut}</span></p>
                             <p class="paiement"><i class="bi bi-credit-card"></i> <strong>Méthode de paiement:</strong> <span>${commande.paiement}</span></p>
-                            <p class="montant"><i class="bi bi-currency-dollar"></i> <strong>Montant total:</strong> <span>${commande.montant}</span></p>
+                            <p class="montant"><i class="bi bi-currency-dollar"></i> <strong>Montant total:</strong> <span>${commande.montant} ${
+                                commande.paiement == "Stripe" ? 'EUR' : 'TND'
+                            }</span></p>
                             <p class="adresse"><i class="bi bi-geo-alt"></i> <strong>Adresse de livraison:</strong> <span>${commande.adresse}</span></p>
                             <p class="items"><i class="bi bi-box-seam"></i> <strong>Articles (${commande.items.length}):</strong></p>
                             <div class="popup-items">
@@ -401,48 +364,82 @@
                                 `).join('')}
                             </div>
                         `;
+                        downloadButton.href = commande.pdfUrl;
                         popup.style.display = 'flex';
                         popup.classList.add('active');
                     }
                 });
             });
 
-            // Fermer la pop-up
+            // Gestion du bouton Annuler
+            let currentCommandeId = null;
+            document.querySelectorAll('.btn-cancel').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    currentCommandeId = e.target.getAttribute('data-id');
+                    cancelPopup.style.display = 'flex';
+                    cancelReason.value = '';
+                });
+            });
+
+            // Confirmer l'annulation
+            confirmCancel.addEventListener('click', () => {
+                const raison = cancelReason.value.trim();
+                if (!raison) {
+                    alert('Veuillez indiquer une raison pour l\'annulation.');
+                    return;
+                }
+
+                fetch(`{{ path('app_gestion_meubles_commande_annuler', {'id': '__ID__'}) }}`.replace('__ID__', currentCommandeId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `raison=${encodeURIComponent(raison)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.success);
+                        const card = document.querySelector(`.commande-card[data-id="${currentCommandeId}"]`);
+                        if (card) {
+                            card.classList.add('annulee');
+                            card.querySelector('.commande-status').textContent = 'Annulée';
+                            card.querySelector('.commande-actions').innerHTML = `<a href="${commandesData[currentCommandeId].pdfUrl}" class="btn-download">Télécharger PDF</a>`;
+                        }
+                        cancelPopup.style.display = 'none';
+                    } else {
+                        alert(data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Erreur lors de l\'annulation : ' + error.message);
+                });
+            });
+
+            // Fermer la pop-up d'annulation
+            closeCancel.addEventListener('click', () => {
+                cancelPopup.style.display = 'none';
+            });
+
+            // Fermer la pop-up des détails
             popupClose.addEventListener('click', () => {
                 popup.style.display = 'none';
                 popup.classList.remove('active');
             });
 
-            // Imprimer la commande
-            printButton.addEventListener('click', () => {
-                const printContent = popupDetails.innerHTML;
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Commande #${popupDetails.querySelector('.id span').textContent}</title>
-                            <style>
-                                body { font-family: 'Inter', sans-serif; padding: 20px; }
-                                h3 { margin-top: 20px; color: #1a1a1a; font-weight: 600; }
-                                .popup-item { margin: 10px 0; padding: 10px; border-bottom: 1px dashed #e2e8f0; }
-                                strong { color: #1a1a1a; }
-                                i { display: none; } /* Masquer les icônes lors de l'impression */
-                            </style>
-                        </head>
-                        <body>
-                            ${printContent}
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            });
-
-            // Fermer la pop-up en cliquant à l'extérieur
+            // Fermer la pop-up des détails en cliquant à l'extérieur
             popup.addEventListener('click', (e) => {
                 if (e.target === popup) {
                     popup.style.display = 'none';
                     popup.classList.remove('active');
+                }
+            });
+
+            // Fermer la pop-up d'annulation en cliquant à l'extérieur
+            cancelPopup.addEventListener('click', (e) => {
+                if (e.target === cancelPopup) {
+                    cancelPopup.style.display = 'none';
                 }
             });
         });

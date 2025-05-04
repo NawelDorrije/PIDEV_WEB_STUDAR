@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <head>
+   <head>
         <meta charset="UTF-8">
+                <meta name="csrf-token" content="{{ csrf_token('toggle_block') }}">
+
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
         <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        <!-- Bootstrap CSS -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
             <style>
@@ -77,32 +80,221 @@
                 }
             </style>
         {% endblock %}
+
         {% block css %}
-            {# <link rel="stylesheet" href="{{ asset('css/rendezvous/rendezvous.css') }}"> #}
+            <!-- Tu peux ajouter des styles supplémentaires ici dans les templates enfants -->
         {% endblock %}
         <style>
             /* Général */
-            /* Cart Icon with Item Count */
-            .cart-icon {
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #fff;
+                color: #1a1a1a;
+            }
+            .sub-header {
+                background: #f8f9fa;
+                padding: 0.5rem 0;
+            }
+            .sub-header .info li {
+                display: inline-block;
+                margin-right: 1rem;
+                color: #4b5563;
+            }
+            .sub-header .social-links li {
+                display: inline-block;
+                margin-left: 0.5rem;
+            }
+            .sub-header .social-links a {
+                color: #4b5563;
+                font-size: 1.2rem;
+            }
+            /* New Navbar Styles */
+            .st-nav {
+                background: #fff;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+            }
+            .st-nav-logo img {
+                max-height: 50px;
+            }
+            .st-nav-item {
+                margin-left: 0.5rem;
+                margin-right: 0.5rem; /* Adds spacing between items */
+            }
+            .st-nav-item .st-nav-link {
+                color: #1a1a1a;
+                font-weight: 500;
+                text-decoration: none;
+                transition: color 0.2s ease;
+            }
+            .st-nav-item .st-nav-link:hover,
+            .st-nav-item .st-nav-link.active {
+                color: #e67e22;
+            }
+            .st-nav-dropdown .dropdown-menu {
+                border-radius: 6px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                background: #fff;
+            }
+            .st-nav-dropdown .dropdown-item {
+                font-size: 0.95rem;
+                padding: 0.5rem 1rem;
+                color: #1a1a1a;
+            }
+            .st-nav-dropdown .dropdown-item:hover {
+                background: #f1f5f9;
+                color: #e67e22;
+            }
+            /* Logout Icon */
+            .st-nav-logout .bi-box-arrow-right {
+                font-size: 1.2rem;
+                color: #6b7280;
+                transition: color 0.2s ease;
+            }
+            .st-nav-logout:hover .bi-box-arrow-right {
+                color: #e67e22;
+            }
+            /* Cart Icon */
+            .st-nav-cart {
                 position: relative;
                 display: inline-flex;
                 align-items: center;
             }
-            .cart-icon .bi-cart3 {
-                font-size: 20px;
+            .st-nav-cart .bi-cart3 {
+                font-size: 1.2rem;
                 color: #1a1a1a;
             }
-            .cart-icon .cart-count {
+            .st-nav-cart .st-cart-count {
                 position: absolute;
-                top: 0px;
-                right: 0px;
+                top: -5px;
+                right: -5px;
                 background-color: #007bff;
                 color: #fff;
-                font-size: 11px;
+                font-size: 0.7rem;
                 font-weight: 600;
                 padding: 2px 5px;
                 border-radius: 50%;
                 line-height: 1;
+            }
+            /* Dark Theme */
+            body.theme-dark {
+                background-color: #1a1a1a !important;
+                color: #ffffff !important;
+            }
+            body.theme-dark .sub-header {
+                background: #2c2c2c !important;
+            }
+            body.theme-dark .sub-header .info li,
+            body.theme-dark .sub-header .social-links a {
+                color: #cccccc !important;
+            }
+            body.theme-dark .st-nav {
+                background: #2c2c2c !important;
+                box-shadow: 0 2px 5px rgba(255,255,255,0.05) !important;
+            }
+            body.theme-dark .st-nav-item .st-nav-link {
+                color: #ffffff !important;
+            }
+            body.theme-dark .st-nav-item .st-nav-link:hover,
+            body.theme-dark .st-nav-item .st-nav-link.active {
+                color: #66b3ff !important;
+            }
+            body.theme-dark .st-nav-dropdown .dropdown-menu {
+                background: #3a3a3a !important;
+                box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+            }
+            body.theme-dark .st-nav-dropdown .dropdown-item {
+                color: #ffffff !important;
+            }
+            body.theme-dark .st-nav-dropdown .dropdown-item:hover {
+                background: #4a4a4a !important;
+                color: #66b3ff !important;
+            }
+            body.theme-dark .st-nav-logout .bi-box-arrow-right {
+                color: #cccccc !important;
+            }
+            body.theme-dark .st-nav-logout:hover .bi-box-arrow-right {
+                color: #66b3ff !important;
+            }
+            body.theme-dark .st-nav-cart .bi-cart3 {
+                color: #ffffff !important;
+            }
+            body.theme-dark .st-nav-cart .st-cart-count {
+                background-color: #66b3ff !important;
+                color: #1a1a1a !important;
+            }
+            /* Existing Styles (Unchanged) */
+            footer {
+                background: #235BAA;
+                padding: 1rem 0;
+            }
+            footer p {
+                color: #4b5563;
+                margin-left: 400px;
+            }
+            footer a {
+                color: #007bff;
+                text-decoration: none;
+            }
+            footer a:hover {
+                text-decoration: underline;
+            }
+            .js-preloader {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #fff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+            .preloader-inner {
+                text-align: center;
+            }
+            .dot {
+                display: inline-block;
+                width: 15px;
+                height: 15px;
+                background: #007bff;
+                border-radius: 50%;
+                animation: pulse 1.5s infinite ease-in-out;
+            }
+            .dots span {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background: #007bff;
+                border-radius: 50%;
+                margin: 0 4px;
+                animation: pulse 1.5s infinite ease-in-out;
+            }
+            .dots span:nth-child(2) { animation-delay: 0.2s; }
+            .dots span:nth-child(3) { animation-delay: 0.4s; }
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.5); }
+            }
+            body.theme-dark footer {
+                background: #235BAA !important;
+            }
+            body.theme-dark footer p {
+                color: #cccccc !important;
+                margin-left:500px;
+            }
+            body.theme-dark footer a {
+                color: #66b3ff !important;
+            }
+            body.theme-dark .js-preloader {
+                background: #1a1a1a !important;
+            }
+            body.theme-dark .dot,
+            body.theme-dark .dots span {
+                background: #66b3ff !important;
             }
         </style>
         <style>
@@ -139,21 +331,9 @@
             }
         </style>
     </head>
-    <body>
-        <!-- ***** Preloader Start ***** -->
-        <div id="js-preloader" class="js-preloader">
-            <div class="preloader-inner">
-                <span class="dot"></span>
-                <div class="dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
-        </div>
-        <!-- ***** Preloader End ***** -->
+    <body data-theme="{{ app.user.theme ?? 'light' }}">
+        <meta name="csrf-token" content="{{ csrf_token('toggle_block') }}">
 
-        {# Ne pas afficher l'en-tête et le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}
             <div class="sub-header">
                 <div class="container">
@@ -166,18 +346,185 @@
                         <div class="col-lg-4 col-md-4">
                             <ul class="social-links">
                                 <li><a><i class="fab fa-facebook"></i></a></li>
-                                <li><a  target="_blank"><i class="fab fa-twitter"></i></a></li>
+                                <li><a target="_blank"><i class="fab fa-twitter"></i></a></li>
                                 <li><a><i class="fab fa-linkedin"></i></a></li>
-                                <li><a ><i class="fab fa-instagram"></i></a></li>
+                                <li><a><i class="fab fa-instagram"></i></a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ***** Header Area Start ***** -->
-            <header class="header-area header-sticky">
+            <!-- *** Header Area Start *** -->
+            <header class="st-nav navbar navbar-expand-lg">
                 <div class="container">
+                    <!-- Logo -->
+                    <a class="st-nav-logo navbar-brand" href="{{ path('app_home') }}">
+                        <img src="{{ asset('images/logo.png') }}" alt="StuDar">
+                    </a>
+                    <!-- Toggler for Mobile -->
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#stNavCollapse" aria-controls="stNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <!-- Navigation Items -->
+                    <div class="collapse navbar-collapse" id="stNavCollapse">
+                        <ul class="navbar-nav ms-auto align-items-center">
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <!-- Admin Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}">Dashboard</a>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_admin_adminProfile' ? 'active' : '' }}" href="{{ path('app_admin_adminProfile', {'cin': app.user.cin}) }}">Profil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServicesAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServicesAdmin">
+                                        <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                        <li><a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}" href="{{ path('admin_reclamation') }}">Réclamations Avancées</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_ADMIN' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgendaAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgendaAdmin">
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_rendezvous_index_ADMIN' ? 'active' : '' }}" href="{{ path('app_rendezvous_index_ADMIN') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_logement_index_ADMIN' ? 'active' : '' }}" href="{{ path('app_reservation_logement_index_ADMIN') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_transport_index_ADMIN' ? 'active' : '' }}" href="{{ path('app_reservation_transport_index_ADMIN') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% elseif is_granted('ROLE_TRANSPORTEUR') %}
+                                <!-- Transporteur Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_home' ? 'active' : '' }}" href="{{ path('app_home') }}">Accueil</a>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}" href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}">Profil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServicesTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServicesTrans">
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_TRANS' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgendaTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgendaTrans">
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_transport_index_TRANS' ? 'active' : '' }}" href="{{ path('app_reservation_transport_index_TRANS') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                    </ul>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% elseif is_granted('ROLE_PROPRIETAIRE') %}
+                                <!-- Propriétaire Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_home' ? 'active' : '' }}" href="{{ path('app_home') }}">Accueil</a>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}" href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}">Profil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServicesProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServicesProp">
+                                        <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_PROP' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgendaProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgendaProp">
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_rendezvous_index_PROP' ? 'active' : '' }}" href="{{ path('app_rendezvous_index_PROP') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_logement_index_PROP' ? 'active' : '' }}" href="{{ path('app_reservation_logement_index_PROP') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                    </ul>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% else %}
+                                <!-- Etudiant/Guest Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_home' ? 'active' : '' }}" href="{{ path('app_home') }}">Accueil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServices" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServices">
+                                        <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_a_acheter') }}">Meubles</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_transport_home') }}">Transports</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('route') starts with 'app_rendezvous' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgenda" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgenda">
+                                        <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                    </ul>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_chat') }}">Chat</a>
+                                </li>
+                                {% if is_granted('ROLE_ETUDIANT') %}
+                                    <li class="st-nav-item st-nav-cart nav-item">
+                                        <a class="st-nav-link nav-link" href="{{ path('app_gestion_meubles_lignes_panier') }}">
+                                            <i class="bi bi-cart3"></i>
+                                            <span class="st-cart-count">{{ cart_service.cartCount }}</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li class="st-nav-item nav-item">
+                                    {% if app.user %}
+                                        <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a>
+                                    {% else %}
+                                        <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a>
+                                    {% endif %}
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% endif %}
+                        </ul>
                     <div class="row">
                         <div class="col-12">
                             <nav class="main-nav">
@@ -301,23 +648,25 @@
                     </div>
                 </div>
             </header>
-            <!-- ***** Header Area End ***** -->
+            <!-- *** Header Area End *** -->
         {% endif %}
 
-        {% block body %}
-            <!-- Le contenu principal sera inséré ici par les templates enfants -->
-        {% endblock %}
+        <main>
+            {% block body %}
+                <!-- Le contenu principal sera inséré ici par les templates enfants -->
+            {% endblock %}
+        </main>
 
         {# Ne pas afficher le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}
-            <footer>
-                <div class="container">
-                    <div class="col-lg-8">
-                        <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
-                        Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
-                    </div>
-                </div>
-            </footer>
+<footer>
+    <div class="container">
+        <div class="col-lg-8">
+            <p>&copy; 2025 StuDar - Tous droits réservés. </p>
+        </div>
+    </div>
+</footer>
+
         {% endif %}
 
         {% block javascripts %}
@@ -325,9 +674,24 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>            <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
             <script>
-                // View Toggle Functionality
+                // Theme application
+                function applyTheme(theme) {
+                    console.log('Applying theme:', theme);
+                    document.body.className = `theme-${theme}`;
+                    console.log('Body class set to:', document.body.className);
+                    // Force style recalculation
+                    document.body.offsetHeight;
+                }
+
+                // Apply theme on page load
                 document.addEventListener('DOMContentLoaded', function() {
-                    // View toggle buttons
+                    console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+                    const body = document.body;
+                    const theme = body.dataset.theme || 'light';
+                    console.log('Theme from data-theme:', theme);
+                    applyTheme(theme);
+
+                    // View Toggle Functionality
                     const viewButtons = document.querySelectorAll('[data-view]');
                     viewButtons.forEach(btn => {
                         btn.addEventListener('click', function(e) {
@@ -354,11 +718,6 @@
                             activeFilter.classList.add('active');
                         }
                     }
-
-                    // Toggle mobile menu
-                    document.querySelector('.menu-trigger').addEventListener('click', function() {
-                        document.querySelector('.main-nav .nav').classList.toggle('active');
-                    });
                 });
             </script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

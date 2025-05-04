@@ -1,0 +1,4 @@
+parameters:
+    images_directory: '%kernel.project_dir%/assets/images'
+    photos_directory: '%kernel.project_dir%/public/uploads/photos'
+    voiture_photos_directory: '%photos_directory%'

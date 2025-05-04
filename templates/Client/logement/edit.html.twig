@@ -1,0 +1,812 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Logement{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="{{ asset('assets/css/logement.css') }}" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        #wordInput {
+            padding: 8px;
+            font-size: 16px;
+        }
+        #addButton {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        #addButton:hover {
+            background-color: #45a049;
+        }
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .word-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 16px;
+            color: white;
+            border-radius: 4px;
+            background-color: #f28c38;
+        }
+        .word-item span {
+            margin-right: 8px;
+        }
+        .delete-icon {
+            cursor: pointer;
+            font-size: 14px;
+            color: #ffe4c4;
+        }
+        .delete-icon:hover {
+            color: #ff0000;
+        }
+        #preview-slider {
+            display: none;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background-color: #f9f9f9;
+            max-width: 600px;
+            margin: auto;
+            overflow-x: hidden;
+        }
+        #preview-slider.visible {
+            display: block;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 10;
+            padding: 0;
+        }
+        .delete-btn:hover {
+            background-color: #e63939;
+            transform: scale(1.1);
+        }
+        .drag-area {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 250px;
+            border: 2px dashed #bbb;
+            border-radius: 10px;
+            background-color: #f9f9fc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        .drag-area:hover,
+        .drag-area.dragover {
+            background-color: #f0f4ff;
+            border-color: #999;
+        }
+        .drag-area .fa-cloud-upload-alt,
+        .drag-area h5,
+        .drag-area p,
+        .drag-area .paperclip {
+            pointer-events: none;
+        }
+        .drag-area .fa-cloud-upload-alt {
+            color: #8ca0b3;
+            margin-bottom: 10px;
+        }
+        .drag-area h5 {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .drag-area p {
+            color: #6c757d;
+            font-size: 14px;
+            margin: 0;
+        }
+        .drag-area .paperclip {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: #555;
+        }
+        .slider-css-target {
+            overflow-x: hidden;
+            max-width: 600px;
+            margin: auto;
+        }
+        .slider-css-target ul {
+            margin: 1rem 0.5rem;
+            padding: 0;
+            list-style-type: none;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            white-space: nowrap;
+            justify-content: center;
+            scrollbar-width: thin;
+        }
+        .slider-css-target ul li {
+            position: relative;
+            flex: 0 0 auto;
+        }
+        .slider-css-target ul li a {
+            display: block;
+        }
+        .slider-css-target ul li img {
+            display: block;
+            max-width: 100%;
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+        .slider-css-target-images {
+            display: flex;
+            flex-wrap: nowrap;
+            width: 400%;
+            will-change: transform;
+            transition: transform 0.4s ease-in-out;
+        }
+        .slider-css-target-images .description {
+            background-color: #dbdbdb;
+            flex: 0 0 100%;
+            overflow: hidden;
+        }
+        .slider-css-target-images img {
+            display: block;
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        .error-message {
+            color: #ff4444;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        #clear-photos {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+        #clear-photos:hover {
+            background-color: #c82333;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let marker = null;
+        let imageCount = 0;
+        let allPhotos = [];
+        let deletedPhotoIds = [];
+        let Alloptions = [];
+        let existingOption=[];
+        let existingPhotos = []; // Store existing photos with IDs and URLs
+        {% for photo in logement.imageLogements %}
+        existingPhotos.push({
+            id: '{{ photo.id }}',
+            url: '{{ asset('Uploads/photos/' ~ photo.url) }}'
+        });
+    {% endfor %}
+    
+    allPhotos = existingPhotos.map(photo => photo.url);
+        function addWord() {
+            const wordInput = document.getElementById('wordInput');
+            const word = wordInput.value.trim();
+            if (word) {
+                Alloptions.push(word);
+                const wordList = document.getElementById('wordList');
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <span>${word}</span>
+                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
+                `;
+                wordList.appendChild(wordItem);
+                wordInput.value = '';
+                updateOptionsInput();
+            }
+        }
+
+        function updateOptionsInput() {
+            const optionsInput = document.getElementById('optionsInput');
+            optionsInput.value = JSON.stringify(Alloptions);
+            console.log('Options updated:', optionsInput.value);
+        }
+
+        function deleteWord(element, word) {
+            Alloptions = Alloptions.filter(item => item !== word);
+            element.parentElement.remove();
+            updateOptionsInput();
+        }
+
+        function renderOptions() {
+            const wordList = document.getElementById('wordList');
+            wordList.innerHTML = '';
+            Alloptions.forEach(word => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <span>${word}</span>
+                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
+                `;
+                wordList.appendChild(wordItem);
+            });
+            updateOptionsInput();
+        }
+
+        document.getElementById('addButton')?.addEventListener('click', addWord);
+
+        document.getElementById('wordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addWord();
+            }
+        });
+
+        function previewImages(event) {
+            console.log('previewImages called with files:', event.target.files);
+            const files = event.target.files;
+            if (!files || files.length === 0) {
+                console.warn('No files selected');
+                return;
+            }
+
+            Array.from(files).forEach((file, index) => {
+                console.log(`Processing file ${index}:`, file.name, file.type, file.size);
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log(`File ${file.name} read successfully`);
+                    allPhotos.push({ src: e.target.result, id: null });
+                    renderPhotos();
+                };
+                reader.onerror = function(e) {
+                    console.error(`Error reading file ${file.name}:`, e);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            updateFileInput();
+        }
+
+        function updateFileInput() {
+            const fileInput = document.getElementById("file-input");
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        }
+
+        function renderPhotos() {
+            console.log('renderPhotos called with allPhotos:', allPhotos.length);
+            const sliderContainer = document.querySelector(".slider-css-target");
+            const thumbnailsList = sliderContainer.querySelector("ul");
+            const imagesContainer = document.querySelector(".slider-css-target-images");
+
+            if (!sliderContainer || !thumbnailsList || !imagesContainer) {
+                console.error('Slider elements not found:', {
+                    sliderContainer: !!sliderContainer,
+                    thumbnailsList: !!thumbnailsList,
+                    imagesContainer: !!imagesContainer
+                });
+                return;
+            }
+
+            thumbnailsList.innerHTML = '';
+            imagesContainer.innerHTML = '';
+            imageCount = 0;
+
+            allPhotos.forEach((photo, index) => {
+                imageCount++;
+                const imageId = `image_${imageCount}`;
+                console.log(`Rendering photo ${imageCount}:`, photo.src, 'ID:', photo.id);
+
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = `#${imageId}`;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.history.pushState({}, '', `#${imageId}`);
+                    updateSliderTransform(imageId);
+                });
+                const thumbImg = document.createElement("img");
+                thumbImg.src = photo.src;
+                thumbImg.alt = `Photo ${imageCount}`;
+                a.appendChild(thumbImg);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.innerHTML = "✖";
+                deleteBtn.className = "delete-btn";
+                deleteBtn.setAttribute("aria-label", "Remove photo");
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`Deleting photo at index ${index}`, photo);
+                    if (photo.id) {
+                        deletedPhotoIds.push(photo.id);
+                        console.log('Added to deletedPhotoIds:', deletedPhotoIds);
+                        document.getElementById('deleted_photos').value = deletedPhotoIds.join(',');
+                    }
+                    allPhotos.splice(index, 1);
+                    renderPhotos();
+                    updateFileInput();
+                    updateDeletedPhotosInput();
+                    updatePreviewVisibility();
+                    if (allPhotos.length === 0) {
+                        const fileInput = document.getElementById("file-input");
+                        if (fileInput) fileInput.value = '';
+                    }
+                });
+
+                li.appendChild(a);
+                li.appendChild(deleteBtn);
+                thumbnailsList.appendChild(li);
+
+                const descriptionDiv = document.createElement("div");
+                descriptionDiv.className = "description";
+                descriptionDiv.id = imageId;
+                const largeImg = document.createElement("img");
+                largeImg.src = photo.src;
+                largeImg.alt = `Photo ${imageCount}`;
+                descriptionDiv.appendChild(largeImg);
+                imagesContainer.appendChild(descriptionDiv);
+            });
+
+            updateSliderWidth();
+            updatePreviewVisibility();
+        }
+
+        function updateDeletedPhotosInput() {
+            let input = document.getElementById('deleted-photos');
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.id = 'deleted-photos';
+                input.name = 'deleted_photos';
+                document.getElementById('contact-form').appendChild(input);
+            }
+            input.value = deletedPhotoIds.join(',');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log('handleDrop called with files:', event.dataTransfer.files);
+            const input = document.getElementById("file-input");
+            if (input) {
+                input.files = event.dataTransfer.files;
+                console.log('Files set on input:', input.files);
+                previewImages({ target: input });
+                event.target.classList.remove('dragover');
+            } else {
+                console.error("File input element with ID 'file-input' not found");
+            }
+        }
+
+        function openFileInput(event) {
+            console.log('openFileInput called');
+            const fileInput = document.getElementById("file-input");
+            if (fileInput) {
+                fileInput.click();
+                console.log('File input clicked');
+            } else {
+                console.error("File input element with ID 'file-input' not found");
+            }
+        }
+
+        function clearPhotos() {
+            console.log('Clearing all photos');
+            allPhotos.forEach(photo => {
+                if (photo.id) {
+                    deletedPhotoIds.push(photo.id);
+                }
+            });
+            console.log('Updated deletedPhotoIds:', deletedPhotoIds);
+            document.getElementById('deleted_photos').value = deletedPhotoIds.join(',');
+            allPhotos = [];
+            const fileInput = document.getElementById("file-input");
+            if (fileInput) fileInput.value = '';
+            renderPhotos();
+            updatePreviewVisibility();
+        }
+
+        function updateSliderWidth() {
+            const imagesContainer = document.querySelector(".slider-css-target-images");
+            const imageItems = imagesContainer.querySelectorAll(".description");
+            const count = imageItems.length;
+
+            imagesContainer.style.width = `${count * 100}%`;
+
+            if (count === 1 && window.location.hash !== '#image_1') {
+                window.history.pushState({}, '', '#image_1');
+                updateSliderTransform('image_1');
+            } else if (count === 0) {
+                window.history.pushState({}, '', '#');
+            }
+        }
+
+        function updateSliderTransform(targetId) {
+            const imagesContainer = document.querySelector(".slider-css-target-images");
+            const imageItems = imagesContainer.querySelectorAll(".description");
+            const count = imageItems.length;
+
+            let targetIndex = 0;
+            imageItems.forEach((item, index) => {
+                if (item.id === targetId) {
+                    targetIndex = index;
+                }
+            });
+
+            const percentage = (targetIndex / (count || 1)) * 100;
+            imagesContainer.style.transform = `translate3d(-${percentage}%, 0, 0)`;
+        }
+
+        function updatePreviewVisibility() {
+            const previewContainer = document.getElementById("preview-slider");
+            const sliderContainer = document.querySelector(".slider-css-target");
+            const thumbnailsList = sliderContainer.querySelector("ul");
+            const clearButton = document.getElementById("clear-photos");
+
+            if (thumbnailsList.children.length > 0) {
+                previewContainer.classList.add("visible");
+                clearButton.style.display = 'block';
+                console.log("Slider made visible, children count:", thumbnailsList.children.length);
+            } else {
+                previewContainer.classList.remove("visible");
+                clearButton.style.display = 'none';
+                console.log("Slider hidden, no children");
+            }
+        }
+
+        function initMap() {
+            // Initialize map with logement coordinates or default
+            const initialLat = {{ logement.localisation ? logement.localisation.y|default('36.8065') : '36.8065' }};
+            const initialLng = {{ logement.localisation ? logement.localisation.x|default('10.1815') : '10.1815' }};
+            console.log('Initializing map with lat:', initialLat, 'lng:', initialLng);
+            map = L.map('map').setView([initialLat, initialLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Place marker if coordinates exist
+            if (initialLat !== 36.8065 || initialLng !== 10.1815) {
+                marker = L.marker([initialLat, initialLng], {
+                    draggable: true
+                }).addTo(map);
+                marker.on('dragend', function(e) {
+                    updateFields(marker.getLatLng(), true);
+                });
+            }
+
+            map.on('click', function(e) {
+                if (!marker) {
+                    marker = L.marker(e.latlng, {
+                        draggable: true
+                    }).addTo(map);
+                    marker.on('dragend', function(e) {
+                        updateFields(marker.getLatLng(), true);
+                    });
+                } else {
+                    marker.setLatLng(e.latlng);
+                }
+                updateFields(e.latlng, true);
+            });
+        }
+
+        async function updateFields(latlng, fromMap = false) {
+            const latField = document.getElementById('logement_lat');
+            const lonField = document.getElementById('logement_lng');
+            const addressField = document.querySelector('input[name="logement[address]"]');
+            const errorMessage = document.getElementById('address-error');
+
+            if (!latField || !lonField || !addressField) {
+                console.error('One or more input fields not found in DOM:', {
+                    latField: !!latField,
+                    lonField: !!lonField,
+                    addressField: !!addressField
+                });
+                return;
+            }
+
+            latField.value = latlng.lat.toFixed(6);
+            lonField.value = latlng.lng.toFixed(6);
+
+            if (fromMap && !addressField.value.trim()) {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&addressdetails=1`, {
+                        headers: {
+                            'User-Agent': 'MySymfonyApp/1.0 (contact@myapp.com)'
+                        }
+                    });
+                    const data = await response.json();
+                    console.log('Nominatim API Response:', data);
+                    if (data && data.display_name) {
+                        addressField.value = data.display_name;
+                        errorMessage.style.display = 'none';
+                    } else {
+                        addressField.value = '';
+                        errorMessage.textContent = 'Address not found';
+                        errorMessage.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error fetching address:', error);
+                    addressField.value = '';
+                    errorMessage.textContent = 'Error retrieving address';
+                    errorMessage.style.display = 'block';
+                }
+            }
+        }
+
+        async function geocodeAddress(address) {
+            const errorMessage = document.getElementById('address-error');
+            if (!address) {
+                errorMessage.textContent = 'Please enter an address.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`, {
+                    headers: {
+                        'User-Agent': 'MySymfonyApp/1.0 (contact@myapp.com)'
+                    }
+                });
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    if (isNaN(lat) || isNaN(lon)) {
+                        throw new Error('Invalid latitude or longitude');
+                    }
+                    const latlng = { lat, lng: lon };
+
+                    if (!marker) {
+                        marker = L.marker(latlng, { draggable: false }).addTo(map);
+                    } else {
+                        marker.setLatLng(latlng);
+                        marker.options.draggable = false;
+                        marker.dragging.disable();
+                    }
+
+                    map.setView(latlng, 13);
+                    updateFields(latlng, false);
+                    errorMessage.style.display = 'none';
+                } else {
+                    errorMessage.textContent = 'Address not found. Please try a different address.';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error geocoding address:', error);
+                errorMessage.textContent = 'Error geocoding address. Please try again.';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            initMap();
+            renderPhotos();
+            renderOptions();
+
+            const initialHash = window.location.hash.replace('#', '');
+            if (initialHash && initialHash.startsWith('image_')) {
+                updateSliderTransform(initialHash);
+            }
+
+            const addressField = document.querySelector('input[name="logement[address]"]');
+            if (addressField) {
+                addressField.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const address = this.value.trim();
+                        if (address) {
+                            geocodeAddress(address);
+                        }
+                    }
+                });
+            }
+
+            const dragArea = document.querySelector('.drag-area');
+            if (dragArea) {
+                dragArea.addEventListener('click', openFileInput);
+                dragArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.target.classList.add('dragover');
+                });
+                dragArea.addEventListener('dragleave', (e) => {
+                    e.target.classList.remove('dragover');
+                });
+                dragArea.addEventListener('drop', handleDrop);
+                console.log('Drag area event listeners attached');
+            } else {
+                console.error('Drag area element not found');
+            }
+
+            const fileInput = document.getElementById('file-input');
+            if (!fileInput) {
+                console.error('File input with ID "file-input" not found in DOM');
+            } else {
+                console.log('File input found:', fileInput);
+            }
+
+            window.addEventListener('popstate', () => {
+                const hash = window.location.hash.replace('#', '');
+                if (hash && hash.startsWith('image_')) {
+                    updateSliderTransform(hash);
+                }
+            });
+
+            document.getElementById('contact-form').addEventListener('submit', function(e) {
+                const requiredFields = ['logement_nbrChambre', 'logement_prix', 'logement_type', 'logement_description', 'logement_address'];
+                let isValid = true;
+
+                requiredFields.forEach(id => {
+                    const field = document.getElementById(id);
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                        const errorDiv = field.parentElement.querySelector('.invalid-feedback') || document.createElement('div');
+                        errorDiv.className = 'invalid-feedback';
+                        errorDiv.textContent = 'This field is required.';
+                        field.parentElement.appendChild(errorDiv);
+                    } else {
+                        field.classList.remove('is-invalid');
+                        const errorDiv = field.parentElement.querySelector('.invalid-feedback');
+                        if (errorDiv) errorDiv.remove();
+                    }
+                });
+
+                const fileInput = document.getElementById('file-input');
+                console.log('Form submission - File input files:', fileInput ? fileInput.files : 'File input not found');
+                if (fileInput && fileInput.files.length > 0) {
+                    console.log('Photos ready for submission:', Array.from(fileInput.files).map(f => f.name));
+                } else {
+                    console.log('No photos selected for submission');
+                }
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill all required fields.');
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="contact-page section">
+        <div class="container">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label }}">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+            <div class="col-lg-4" style="margin:30px">
+                <h2>Créer une nouvelle offre</h2>
+            </div>
+            <div class="row row-page">
+                <div class="col-lg-12 right-column">
+                    {{ form_start(form, {'attr': {'id': 'contact-form'}}) }}
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="col-lg-12 mb-3">
+                                {{ form_row(form.nbrChambre) }}
+                                {{ form_errors(form.nbrChambre) }}
+                            </div>
+                            <div class="col-lg-12 mb-3">
+                                {{ form_row(form.prix) }}
+                                {{ form_errors(form.prix) }}
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="col-lg-12 mb-3">
+                                {{ form_row(form.description) }}
+                                {{ form_errors(form.description) }}
+                            </div>
+                            <div class="col-lg-12 mb-3">
+                                {{ form_row(form.type) }}
+                                {{ form_errors(form.type) }}
+                            </div>
+                        </div>
+                        <div style="width: 100%; max-width: 100%; padding: 15px;">
+                            <div class="drag-area">
+                                <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                                <h5>Parcourir les fichiers</h5>
+                                <p>Glissez et déposez les photos ici</p>
+                                <i class="fas fa-paperclip paperclip"></i>
+                                <input type="file" id="file-input" name="logement[photos][]" multiple accept="image/jpeg,image/png,image/gif" style="display: none;" onchange="previewImages(event)">
+                                {{ form_widget(form.photos, {
+                                    'attr': {
+                                        'id': 'file-input',
+                                        'style': 'display: none;',
+                                        'onchange': 'previewImages(event)',
+                                        'accept': 'image/jpeg,image/png,image/gif',
+                                        'multiple': true
+                                    }
+                                }) }}
+                            </div>
+                            {{ form_errors(form.photos) }}
+                        </div>
+                        <div id="preview-slider">
+                            <div class="slider-css-target">
+                                <ul></ul>
+                                <div class="slider-css-target-images"></div>
+                            </div>
+                            <button type="button" id="clear-photos" onclick="clearPhotos()">Clear All Photos</button>
+                        </div>
+                        <div class="col-lg-12 mb-3">
+                            {{ form_row(form.address) }}
+                            {{ form_errors(form.address) }}
+                            <div id="address-error" class="error-message"></div>
+                        </div>
+                        <!-- Hidden fields for coordinates and deleted photos -->
+                        {{ form_widget(form.lat, {'attr': {'id': 'logement_lat'}}) }}
+                        {{ form_widget(form.lng, {'attr': {'id': 'logement_lng'}}) }}
+                        <input type="hidden" id="deleted_photos" name="deleted_photos" value="">
+                        <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
+                        <div class="input-container">
+                            <input type="text" id="wordInput" placeholder="Add an option (e.g. WiFi, Parking)" class="form-control">
+                            <button type="button" id="addButton" onclick="addWord()">Add Option</button>
+                        </div>
+                        <div class="word-list" id="wordList"></div>
+                        <div id="options-error" class="error-message"></div>
+                        <input type="hidden" name="options" id="optionsInput" value="[]">
+                        <div class="col-lg-12" style="margin-top: 20px;">
+                            <button type="submit" class="orange-button">Créer</button>
+                        </div>
+                    </div>
+                    {{ form_end(form) }}
+                    <div class="center" style="margin-top: 20px;">
+                        <a href="{{ path('app_logement_index') }}" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"></i> Retour à la liste
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Studar - Tableau de Bord des Réclamations{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-[#E5F0FF] flex">
+    <!-- Sidebar -->
+    {# <aside class="w-16 bg-[#3B82F6] flex flex-col items-center py-6 space-y-6">
+        <div class="text-white">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-9h2v6h-2zm0-4h2v2h-2z"/></svg>
+        </div>
+        <div class="text-white">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7v5c0 5.5 4.5 10 10 10s10-4.5 10-10V7L12 2zm0 18c-4.4 0-8-3.6-8-8V8.5l8-3 8 3V12c0 4.4-3.6 8-8 8z"/></svg>
+        </div>
+        <div class="text-white">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+        </div>
+    </aside> #}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+       <!-- Analytics Section -->
+<div class="bg-white rounded-xl p-6 shadow-md mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-gray-700 cursor-pointer" onclick="toggleAnalytics()">Analyse des Données</h2>
+        <a href="{{ path('app_statistics_export', {'year': year, 'month': month}) }}" class="bg-[#3B82F6] text-white px-4 py-2 rounded-lg hover:bg-[#1E40AF]">
+            Télécharger le PDF
+        </a>
+    </div>
+    <div id="analyticsContent" class="space-y-4 hidden">
+        <div>
+            <h3 class="text-sm font-medium text-gray-500">Analyse des Tendances</h3>
+            <p class="text-gray-700">{{ stats.analytics.trend.summary }}</p>
+            {% if stats.analytics.trend.peakMonth %}
+                <p class="text-gray-700">Mois de pointe : {{ stats.analytics.trend.peakMonth }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <h3 class="text-sm font-medium text-gray-500">Efficacité des Réponses</h3>
+            <p class="text-gray-700">{{ stats.analytics.responseEfficiency.summary }}</p>
+        </div>
+        <div>
+            <h3 class="text-sm font-medium text-gray-500">Répartition par Statut</h3>
+            <p class="text-gray-700">{{ stats.analytics.statusDistribution.summary }}</p>
+        </div>
+        <div>
+            <h3 class="text-sm font-medium text-gray-500">Temps de Résolution</h3>
+            <p class="text-gray-700">{{ stats.analytics.resolutionTime.summary }}</p>
+        </div>
+        {% if stats.analytics.recommendations|length > 0 %}
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Recommandations</h3>
+                <ul class="list-disc pl-5 text-gray-700">
+                    {% for recommendation in stats.analytics.recommendations %}
+                        <li>{{ recommendation }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500">Total des Réclamations</h2>
+                <p class="text-3xl font-bold text-[#3B82F6]">{{ stats.totalReclamations }}</p>
+                <p class="text-xs text-gray-400">Pour tous les utilisateurs</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500">Taux de Réponse</h2>
+                <p class="text-3xl font-bold text-[#F59E0B]">{{ stats.responseRate|round(0) }}%</p>
+                <p class="text-xs text-gray-400">Réclamations avec réponses</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500">Aperçu du Mois</h2>
+                <div class="text-center text-gray-400">Espace Réservé au Calendrier</div>
+            </div>
+        </div>
+
+        <!-- Middle Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Line Chart: Monthly Reclamations -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Réclamations au Fil du Temps ({{ year }})</h2>
+                <canvas id="monthlyLineChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Pie Chart: Status Distribution -->
+            <div class="bg-white rounded-xl p-6 shadow-md flex flex-col items-center">
+                <h2 class="text-sm text-gray-500 mb-4">Répartition par Statut</h2>
+                <canvas id="statusPieChart" class="w-48 h-48"></canvas>
+            </div>
+
+            <!-- Area Chart: Daily Reclamations -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Réclamations Quotidiennes (Mois {{ month }})</h2>
+                <form method="get" action="{{ path('app_statistics') }}" class="mb-4">
+                    <select name="month" onchange="this.form.submit()" class="border rounded-lg px-2 py-1 text-gray-700">
+                        {% for m in 1..12 %}
+                            <option value="{{ m }}" {{ month == m ? 'selected' : '' }}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="year" value="{{ year }}">
+                </form>
+                <canvas id="dailyAreaChart" class="w-full h-64"></canvas>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Horizontal Bar Chart: Status Breakdown -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Répartition Détaillée par Statut</h2>
+                <canvas id="statusBarChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Vertical Bar Chart: Monthly Reclamations -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Réclamations par Mois ({{ year }})</h2>
+                <canvas id="monthlyBarChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Donut Chart: Resolution Time -->
+            <div class="bg-white rounded-xl p-6 shadow-md flex flex-col items-center">
+                <h2 class="text-sm text-gray-500 mb-4">Temps de Résolution</h2>
+                <canvas id="resolutionDonutChart" class="w-48 h-48"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Graphique Linéaire Mensuel
+const monthlyLineCtx = document.getElementById('monthlyLineChart').getContext('2d');
+new Chart(monthlyLineCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.byMonth.labels|default([])|json_encode|raw }},
+        datasets: [{
+            label: 'Réclamations',
+            data: {{ stats.byMonth.data|default([])|json_encode|raw }},
+            borderColor: '#3B82F6',
+            backgroundColor: '#A5BFFA',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            x: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Graphique en Secteurs : Répartition par Statut
+const statusPieCtx = document.getElementById('statusPieChart').getContext('2d');
+new Chart(statusPieCtx, {
+    type: 'pie',
+    data: {
+        labels: {{ stats.byStatus.labels|default([])|json_encode|raw }},
+        datasets: [{
+            data: {{ stats.byStatus.data|default([])|json_encode|raw }},
+            backgroundColor: ['#3B82F6', '#F59E0B', '#A5BFFA'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#6B7280' } }
+        }
+    }
+});
+
+// Graphique en Aire : Réclamations Quotidiennes
+const dailyAreaCtx = document.getElementById('dailyAreaChart').getContext('2d');
+new Chart(dailyAreaCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.dailyReclamations.labels|default([])|json_encode|raw }},
+        datasets: [
+            {
+                label: 'Réclamations',
+                data: {{ stats.dailyReclamations.data|default([])|json_encode|raw }},
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            x: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Graphique en Barres Horizontales : Répartition par Statut
+const statusBarCtx = document.getElementById('statusBarChart').getContext('2d');
+new Chart(statusBarCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ stats.byStatus.labels|default([])|json_encode|raw }},
+        datasets: [
+            {
+                label: 'En Cours',
+                data: {{ stats.statusBarData.en_cours|json_encode|raw }},
+                backgroundColor: '#3B82F6'
+            },
+            {
+                label: 'Traité',
+                data: {{ stats.statusBarData.traite|json_encode|raw }},
+                backgroundColor: '#F59E0B'
+            },
+            {
+                label: 'Refusé',
+                data: {{ stats.statusBarData.refuse|json_encode|raw }},
+                backgroundColor: '#A5BFFA'
+            }
+        ]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        scales: {
+            x: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            y: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { position: 'bottom', labels: { color: '#6B7280' } } }
+    }
+});
+
+// Graphique en Barres Verticales : Réclamations Mensuelles
+const monthlyBarCtx = document.getElementById('monthlyBarChart').getContext('2d');
+new Chart(monthlyBarCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ stats.byMonth.labels|default([])|json_encode|raw }},
+        datasets: [
+            {
+                label: 'Réclamations',
+                data: {{ stats.byMonth.data|default([])|json_encode|raw }},
+                backgroundColor: '#F59E0B'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            x: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Graphique en Anneau : Temps de Résolution
+const resolutionDonutCtx = document.getElementById('resolutionDonutChart').getContext('2d');
+new Chart(resolutionDonutCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ stats.resolutionTime.labels|default([])|json_encode|raw }},
+        datasets: [{
+            data: {{ stats.resolutionTime.data|default([])|json_encode|raw }},
+            backgroundColor: ['#F59E0B', '#3B82F6'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#6B7280' } }
+        }
+    }
+});
+function toggleAnalytics() {
+    const analyticsContent = document.getElementById('analyticsContent');
+    analyticsContent.classList.toggle('hidden');
+}
+
+</script>
+{% endblock %}

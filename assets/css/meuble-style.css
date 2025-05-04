@@ -277,7 +277,11 @@ body {
     width: 180px;
     border-radius: 25px;
 }
-
+.nav-button.active  {
+    background: #2556A7;
+    color: #fff;
+    border-color: #007bff;
+}
 .nav-button i {
     font-size: 1.2rem;
 }

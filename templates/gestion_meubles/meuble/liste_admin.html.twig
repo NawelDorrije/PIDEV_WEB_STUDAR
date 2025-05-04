@@ -9,22 +9,26 @@
         max-width: 1200px;
         margin: 2rem auto;
         padding: 0 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
     }
 
     h1 {
         font-size: 1.8rem;
         font-weight: 600;
         color: #1a1a1a;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0;
+        text-align: center;
     }
 
-
-    /* Filtres */
+    /* Filtres et Export */
     .filters-container {
         display: flex;
         gap: 1rem;
-        margin-bottom: 1.5rem;
         flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
     }
     .filter-input,
     .filter-select {
@@ -41,6 +45,58 @@
         outline: none;
         border-color: #007bff;
         box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    }
+    .download-section {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .download-button {
+        padding: 0.5rem 1rem;
+        background: #2556A7;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .download-button:hover {
+        background: #1e4685;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4b5563;
+        font-size: 0.95rem;
+        transition: background 0.2s ease, color 0.2s ease;
+    }
+    .nav-button:hover {
+        background: #e5e7eb;
+        color: #1a1a1a;
+    }
+    .nav-button.active {
+        background: #2556A7;
+        color: #fff;
+        border-color: #007bff;
+    }
+    .nav-button i {
+        font-size: 1.1rem;
     }
 
     /* Tableau des meubles */
@@ -137,7 +193,7 @@
         color: #0056b3;
     }
     .pagination li.active span {
-        background: #007bff;
+        background: #2556A7;
         color: #fff;
         border-color: #007bff;
     }
@@ -216,10 +272,124 @@
         color: #007bff;
     }
 
+    /* Dark Theme Styles */
+    body.theme-dark {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+    }
+    body.theme-dark .admin-container {
+        background: #1a1a1a !important;
+    }
+    body.theme-dark h1,
+    body.theme-dark .popup-content h2 {
+        color: #ffffff !important;
+    }
+    body.theme-dark .filters-container {
+        background: #3a3a3a !important;
+    }
+    body.theme-dark .filter-input,
+    body.theme-dark .filter-select,
+    body.theme-dark .download-button,
+    body.theme-dark .nav-button {
+        background: #3a3a3a !important;
+        color: #ffffff !important;
+        border-color: #555 !important;
+    }
+    body.theme-dark .nav-button.active {
+        background: #2556A7 !important;
+        color: #ffffff !important;
+        border-color: #007bff !important;
+    }
+    body.theme-dark .filter-input:focus,
+    body.theme-dark .filter-select:focus,
+    body.theme-dark .download-button:hover,
+    body.theme-dark .nav-button:hover {
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2) !important;
+    }
+    body.theme-dark .meubles-table {
+        background: #2c2c2c !important;
+        box-shadow: 0 4px 20px rgba(255,255,255,0.05) !important;
+    }
+    body.theme-dark .meubles-table th,
+    body.theme-dark .meubles-table td {
+        color: #ffffff !important;
+        border-bottom: 1px solid #555 !important;
+    }
+    body.theme-dark .meubles-table th {
+        background: #3a3a3a !important;
+        color: #cccccc !important;
+        border-bottom: 2px solid #555 !important;
+    }
+    body.theme-dark .meubles-table tr:hover {
+        background: #3a3a3a !important;
+    }
+    body.theme-dark .meubles-table .meuble-id {
+        color: #66b3ff !important;
+    }
+    body.theme-dark .meubles-table .meuble-prix {
+        color: #33cc99 !important;
+    }
+    body.theme-dark .meubles-table .meuble-statut {
+        background: #442222 !important;
+        color: #ff6666 !important;
+    }
+    body.theme-dark .meubles-table .meuble-categorie,
+    body.theme-dark .meubles-table .meuble-vendeur,
+    body.theme-dark .meubles-table .meuble-date {
+        color: #cccccc !important;
+    }
+    body.theme-dark .pagination li a,
+    body.theme-dark .pagination li span {
+        background: #3a3a3a !important;
+        color: #66b3ff !important;
+        border-color: #555 !important;
+    }
+    body.theme-dark .pagination li a:hover {
+        background: #4a4a4a !important;
+        color: #99ccff !important;
+    }
+    body.theme-dark .pagination li.active span {
+        background: #2556A7 !important;
+        color: #ffffff !important;
+        border-color: #007bff !important;
+    }
+    body.theme-dark .pagination li.disabled span {
+        color: #888888 !important;
+    }
+    body.theme-dark .popup-overlay {
+        background: rgba(0, 0, 0, 0.7) !important;
+    }
+    body.theme-dark .popup-content {
+        background: #2c2c2c !important;
+        box-shadow: 0 8px 25px rgba(255,255,255,0.1) !important;
+    }
+    body.theme-dark .popup-close {
+        color: #cccccc !important;
+    }
+    body.theme-dark .popup-close:hover {
+        color: #ffffff !important;
+    }
+    body.theme-dark .popup-details p {
+        color: #cccccc !important;
+        border-bottom: 1px solid #555 !important;
+    }
+    body.theme-dark .popup-details strong {
+        color: #ffffff !important;
+    }
+    body.theme-dark .popup-details i {
+        color: #66b3ff !important;
+    }
+    body.theme-dark p[style="text-align: center;"] {
+        color: #ffffff !important;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-        .filters-container {
+        .filters-container,
+        .download-section {
             flex-direction: column;
+            align-items: center;
         }
         .filter-input,
         .filter-select {
@@ -238,28 +408,53 @@
             padding: 0.4rem 0.8rem;
             font-size: 0.9rem;
         }
+        .nav-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
     }
 </style>
 
-<div class="admin-container">
+<div class="admin-container" data-theme="{{ app.user.theme ?? 'light' }}">
+    <!-- Titre -->
     <h1>Liste des meubles</h1>
-
-    <!-- Navigation Buttons -->
-    <div class="nav-buttons">
-        <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button active" title="Consulter les meubles">
-            <i class="bi bi-tag"></i>
-            <span class="nav-text">Consulter les meubles</span>
-        </a>
-        <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button" title="Consulter les commandes"> 
-            <i class="bi bi-clock-history"></i>
-            <span class="nav-text">Consulter les commandes</span>
-        </a>
-        <a href="{{ path('app_gestion_meubles_statistiques') }}"class="nav-button" title="Voir les statistiques">
-            <i class="bi bi-bar-chart"></i>
-            <span class="nav-text">Statistiques</span>
-        </a>
+    <!-- Section Téléchargement -->
+    <div class="filters-container">
+        <div class="download-section">
+            <select class="filter-select" id="download-month">
+                <option value="">Mois</option>
+                <option value="1">Janvier</option>
+                <option value="2">Février</option>
+                <option value="3">Mars</option>
+                <option value="4">Avril</option>
+                <option value="5">Mai</option>
+                <option value="6">Juin</option>
+                <option value="7">Juillet</option>
+                <option value="8">Août</option>
+                <option value="9">Septembre</option>
+                <option value="10">Octobre</option>
+                <option value="11">Novembre</option>
+                <option value="12">Décembre</option>
+            </select>
+            <select class="filter-select" id="download-year">
+                <option value="">Année</option>
+                {% for year in 2020..2025 %}
+                    <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="download-vendeur">
+                <option value="">Tous les vendeurs</option>
+                {% for vendeur in vendeurs %}
+                    <option value="{{ vendeur.cin }}">{{ vendeur.nom }} {{ vendeur.prenom }}</option>
+                {% endfor %}
+            </select>
+            <select class="filter-select" id="download-format">
+                <option value="csv">CSV</option>
+                <option value="excel">Excel</option>
+            </select>
+            <button class="download-button" onclick="downloadFile()">Télécharger</button>
+        </div>
     </div>
-
     <!-- Filtres -->
     <div class="filters-container">
         <input type="text" class="filter-input" id="filter-nom" placeholder="Nom du meuble">
@@ -277,6 +472,22 @@
             {% endfor %}
         </select>
         <input type="text" class="filter-input" id="filter-vendeur" placeholder="Nom du vendeur">
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_meuble_admin') }}" class="nav-button active" title="Consulter les meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Consulter les meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_commandes_admin') }}" class="nav-button" title="Consulter les commandes"> 
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Consulter les commandes</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_statistiques') }}" class="nav-button" title="Voir les statistiques">
+            <i class="bi bi-bar-chart"></i>
+            <span class="nav-text">Statistiques</span>
+        </a>
     </div>
 
     <!-- Liste des meubles (Tableau) -->
@@ -302,7 +513,7 @@
                         <td class="meuble-statut">{{ meuble.statut }}</td>
                         <td class="meuble-categorie">{{ meuble.categorie }}</td>
                         <td class="meuble-vendeur">
-                            {{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} ({{ meuble.vendeur.cin|default('N/A') }})
+                            {{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} 
                         </td>
                         <td class="meuble-date">
                             {{ meuble.dateEnregistrement ? meuble.dateEnregistrement|date('d/m/Y H:i') : 'N/A' }}
@@ -317,7 +528,7 @@
             {{ knp_pagination_render(pagination) }}
         </div>
     {% else %}
-        <p>Aucun meuble trouvé.</p>
+        <p style="text-align: center;">Aucun meuble trouvé.</p>
     {% endif %}
 
     <!-- Pop-up pour les détails -->
@@ -337,7 +548,27 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
+        // Theme application
+        function applyTheme(theme) {
+            console.log('Applying theme:', theme);
+            document.body.className = `theme-${theme}`;
+            console.log('Body class set to:', document.body.className);
+            // Force style recalculation
+            document.body.offsetHeight;
+        }
+
+        // Apply theme on page load
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('User theme from Twig:', '{{ app.user.theme ?? 'light' }}');
+            const container = document.querySelector('.admin-container');
+            if (!container) {
+                console.error('Error: .admin-container not found');
+                return;
+            }
+            const theme = container.dataset.theme || 'light';
+            console.log('Theme from data-theme:', theme);
+            applyTheme(theme);
+
             const filters = {
                 nom: document.getElementById('filter-nom'),
                 prix: document.getElementById('filter-prix'),
@@ -360,7 +591,7 @@
                         prix: "{{ meuble.prix|number_format(2, ',', ' ') }} TND",
                         statut: "{{ meuble.statut }}",
                         categorie: "{{ meuble.categorie }}",
-                        vendeur: "{{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} ({{ meuble.vendeur.cin|default('N/A') }})",
+                        vendeur: "{{ meuble.vendeur.nom|default('Inconnu') }} {{ meuble.vendeur.prenom|default('') }} ",
                         dateEnregistrement: "{{ meuble.dateEnregistrement ? meuble.dateEnregistrement|date('d/m/Y H:i') : 'N/A' }}"
                     }{% if not loop.last %},{% endif %}
                 {% endfor %}
@@ -427,6 +658,28 @@
                     popup.classList.remove('active');
                 }
             });
+
+            // Fonction pour télécharger le fichier
+            window.downloadFile = function() {
+                const month = document.getElementById('download-month').value;
+                const year = document.getElementById('download-year').value;
+                const vendeur = document.getElementById('download-vendeur').value;
+                const format = document.getElementById('download-format').value;
+
+                if (!month || !year) {
+                    alert('Veuillez sélectionner un mois et une année.');
+                    return;
+                }
+
+                let url = '{{ path('app_gestion_meubles_export') }}?month=' + encodeURIComponent(month) +
+                    '&year=' + encodeURIComponent(year) +
+                    '&format=' + encodeURIComponent(format);
+                if (vendeur) {
+                    url += '&vendeur=' + encodeURIComponent(vendeur);
+                }
+
+                window.location.href = url;
+            };
         });
     </script>
 {% endblock %}

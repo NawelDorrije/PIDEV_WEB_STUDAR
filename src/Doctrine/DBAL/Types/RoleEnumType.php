@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Doctrine\DBAL\Types;
 
 use App\Enums\RoleUtilisateur;
@@ -7,23 +8,40 @@ use Doctrine\DBAL\Types\Type;
 
 class RoleEnumType extends Type
 {
+    const NAME = 'role_enum';
+
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        return 'VARCHAR(20)';
+        return "ENUM('ETUDIANT', 'TRANSPORTEUR', 'ADMIN')";
     }
 
     public function convertToPHPValue($value, AbstractPlatform $platform): ?RoleUtilisateur
     {
-        return $value ? RoleUtilisateur::from($value) : null;
+        if ($value === null) {
+            return null;
+        }
+
+        // $value is a string (e.g., 'TRANSPORTEUR'), convert it to the enum
+        return RoleUtilisateur::from($value);
     }
 
     public function convertToDatabaseValue($value, AbstractPlatform $platform): ?string
     {
-        return $value?->value;
+        if ($value === null) {
+            return null;
+        }
+
+        // $value should be a RoleUtilisateur enum instance, get its string value
+        return $value instanceof RoleUtilisateur ? $value->value : (string) $value;
     }
 
     public function getName(): string
     {
-        return 'role_enum';
+        return self::NAME;
+    }
+
+    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
+    {
+        return true;
     }
 }

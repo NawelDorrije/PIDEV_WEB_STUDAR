@@ -197,7 +197,7 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="logement-select" class="form-label">Logement</label>
+                                <label for="logement-select" class="form-label"></label>
                                 <select id="logement-select" class="rendezvous-edit-input logement-select" disabled>
                                     <option value="{{ rendezvou.idLogement }}" selected>
                                         {{ logement_repo.find(rendezvou.idLogement).adresse ?? 'Logement #' ~ rendezvou.idLogement }}

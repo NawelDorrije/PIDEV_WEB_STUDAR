@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paiement Réussi{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Paiement Réussi !</h1>
+        <p>Un email de confirmation a été envoyé. Vous serez redirigé dans 5 secondes...</p>
+    </div>
+
+    <script>
+        setTimeout(function() {
+            window.location.href = "{{ redirect_url }}";
+        }, 5000); // Redirection après 5 secondes
+    </script>
+{% endblock %}

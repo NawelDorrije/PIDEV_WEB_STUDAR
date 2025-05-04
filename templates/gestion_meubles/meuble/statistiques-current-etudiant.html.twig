@@ -1,0 +1,532 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Statistiques - Étudiant{% endblock %}
+
+{% block body %}
+<style>
+    /* Existing styles remain unchanged */
+    .stats-container {
+        max-width: 1200px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        font-family: 'Inter', sans-serif;
+    }
+    .subtitle {
+        font-size: 1rem;
+        color: #64748b;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 2rem;
+        text-align: center;
+        background: linear-gradient(to right, #4f46e5, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Filtres */
+    .filters-container {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        align-items: center;
+    }
+
+    .filter-select {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        background: #fff;
+        width: 220px;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.2rem;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+
+    /* Download Button */
+    .download-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        background: #4f46e5;
+        color: #fff;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .download-btn:hover {
+        background: #3b82f6;
+    }
+
+    .download-btn i {
+        font-size: 1.2rem;
+    }
+
+    /* Cartes KPI */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .kpi-card {
+        background: linear-gradient(135deg, #ffffff, #f8fafc);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, #4f46e5, #3b82f6);
+        opacity: 0.8;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .kpi-card i {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .kpi-card.meubles-vendus i { color: #4f46e5; }
+    .kpi-card.ca i { color: #10b981; }
+    .kpi-card.commandes-placees i { color: #f97316; }
+    .kpi-card.commandes i { color: #3b82f6; }
+
+    .kpi-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+
+    .kpi-card .value.ca::after {
+        content: ' TND';
+        font-size: 1.2rem;
+        color: #10b981;
+    }
+
+    .kpi-card .value small {
+        font-size: 0.85rem;
+        color: #64748b;
+        display: block;
+        margin-top: 0.5rem;
+    }
+
+    /* Style spécifique pour la carte Commandes */
+    .kpi-card.commandes .value {
+        font-size: 1rem;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        text-align: left;
+    }
+
+    .kpi-card.commandes .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background: #f1f5f9;
+        font-size: 0.9rem;
+        color: #1e293b;
+        transition: background 0.3s ease;
+    }
+
+    .kpi-card.commandes .status-item:hover {
+        background: #e2e8f0;
+    }
+
+    .kpi-card.commandes .status-item.paye span { color: #10b981; }
+    .kpi-card.commandes .status-item.livree span { color: #3b82f6; }
+    .kpi-card.commandes .status-item.attente span { color: #f97316; }
+    .kpi-card.commandes .status-item.annulee span { color: #ef4444; }
+
+    /* Add new styles for charts */
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .chart-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .chart-container:hover {
+        transform: translateY(-5px);
+    }
+
+    .chart-container h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-container canvas {
+        max-width: 100%;
+        height: 300px !important;
+    }
+
+    /* Filter buttons for charts */
+    .chart-filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        justify-content: center;
+    }
+
+    .chart-filter-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        background: #e2e8f0;
+        color: #1e293b;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .chart-filter-btn.active,
+    .chart-filter-btn:hover {
+        background: #4f46e5;
+        color: #fff;
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: fixed;
+        left: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1000;
+    }
+
+    .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        background: #4f46e5;
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: background 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-button:hover {
+        background: #3b82f6;
+        transform: translateX(5px);
+    }
+
+    .nav-button i {
+        font-size: 1.2rem;
+    }
+
+    .nav-text {
+        display: inline;
+    }
+</style>
+
+<div class="stats-container">
+    <h1>Mes Statistiques</h1>
+    <p class="subtitle">Suivez vos ventes et achats de meubles</p>
+
+    <!-- Filters -->
+    <div class="filters-container">
+        <select class="filter-select" id="timePeriod">
+            <option value="30days" {% if timePeriod == '30days' %}selected{% endif %}>Derniers 30 jours</option>
+            <option value="6months" {% if timePeriod == '6months' %}selected{% endif %}>6 derniers mois</option>
+            <option value="year" {% if timePeriod == 'year' %}selected{% endif %}>Cette année</option>
+        </select>
+        <a href="{{ path('app_gestion_meubles_statistiques_export_pdf', {'timePeriod': timePeriod}) }}" class="download-btn">
+            <i class="bi bi-download"></i> Télécharger PDF
+        </a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card meubles-vendus">
+            <i class="bi bi-box-seam"></i>
+            <h3>Meubles Vendus</h3>
+            <div class="value">{{ meublesIndisponibles }}</div>
+        </div>
+        <div class="kpi-card ca">
+            <i class="bi bi-currency-dollar"></i>
+            <h3>Revenu Total</h3>
+            <div class="value ca">{{ revenuTotal|number_format(2, ',', ' ') }} TND</div>
+        </div>
+        <div class="kpi-card meubles-disponibles">
+            <i class="bi bi-box"></i>
+            <h3>Meubles Disponibles</h3>
+            <div class="value">{{ meublesDisponibles }}</div>
+        </div>
+        <div class="kpi-card total-meubles">
+            <i class="bi bi-boxes"></i>
+            <h3>Total Meubles</h3>
+            <div class="value">{{ totalMeubles }}</div>
+        </div>
+        <div class="kpi-card commandes">
+            <i class="bi bi-cart-check"></i>
+            <h3>Commandes</h3>
+            <div class="value">
+                <div class="status-item paye"><span>PAYÉE:</span> {{ commandesPayees }}</div>
+                <div class="status-item attente"><span>EN ATTENTE:</span> {{ commandesEnAttente }}</div>
+                <div class="status-item livree"><span>LIVRÉE:</span> {{ commandesLivrees }}</div>
+                <div class="status-item annulee"><span>ANNULÉE:</span> {{ commandesAnnulees }}</div>
+            </div>
+        </div>
+        <div class="kpi-card taux-annulation">
+            <i class="bi bi-x-circle"></i>
+            <h3>Taux Annulation</h3>
+            <div class="value">{{ tauxCommandesAnnulees|round(2) }}%</div>
+        </div>
+        <div class="kpi-card taux-retour">
+            <i class="bi bi-arrow-repeat"></i>
+            <h3>Taux Retour Clients</h3>
+            <div class="value">{{ tauxRetourClients|round(2) }}%</div>
+        </div>
+        <div class="kpi-card meubles-recents">
+            <i class="bi bi-clock"></i>
+            <h3>Meubles Récents (30j)</h3>
+            <div class="value">{{ meublesAjoutesRecemment }}</div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="chart-grid">
+        <!-- Area Chart: Revenue Over Time -->
+        <div class="chart-container">
+            <h2><i class="bi bi-graph-up"></i> Revenu Mensuel</h2>
+            <canvas id="revenueAreaChart"></canvas>
+        </div>
+
+        <!-- Donut Chart: Order Status Distribution -->
+        <div class="chart-container">
+            <h2><i class="bi bi-pie-chart"></i> Répartition des Commandes</h2>
+            <canvas id="orderDonutChart"></canvas>
+        </div>
+
+        <!-- Line Chart: Furniture Added Over Time -->
+        <div class="chart-container">
+            <h2><i class="bi bi-line"></i> Meubles Ajoutés</h2>
+            <canvas id="furnitureLineChart"></canvas>
+        </div>
+
+        <!-- Pie Chart: Available vs Sold Furniture -->
+        <div class="chart-container">
+            <h2><i class="bi bi-pie-chart-fill"></i> Meubles Disponibles vs Vendus</h2>
+            <canvas id="furniturePieChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Barre de navigation verticale à gauche -->
+    <div class="nav-buttons">
+        <a href="{{ path('app_gestion_meubles_mes_meubles') }}" class="nav-button " title="Consulter mes meubles">
+                <i class="bi bi-list-ul"></i>
+                <span class="nav-text">Mes meubles</span>
+            </a>
+        <a href="{{ path('app_gestion_meubles_a_acheter') }}" class="nav-button" title="Offres de meubles">
+            <i class="bi bi-tag"></i>
+            <span class="nav-text">Offre des meubles</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_mes_commandes') }}" class="nav-button" title="Historique des transactions">
+            <i class="bi bi-clock-history"></i>
+            <span class="nav-text">Historique Commandes</span>
+        </a>
+        <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="nav-button" title="Voir mon panier">
+            <i class="bi bi-cart3"></i>
+            <span class="nav-text">Panier</span>
+        </a>
+       
+        <a href="{{ path('app_gestion_meubles_mes_ventes') }}" class="nav-button" title="Suivre mes ventes">
+            <i class="bi bi-receipt"></i>
+            <span class="nav-text">Suivre mes ventes</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Dynamic data from controller
+        const revenueData = {
+            labels: {{ monthlyRevenue.labels|json_encode|raw }},
+            datasets: [{
+                label: 'Revenu (TND)',
+                data: {{ monthlyRevenue.data|json_encode|raw }},
+                fill: true,
+                backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                borderColor: '#4f46e5',
+                tension: 0.4
+            }]
+        };
+
+        const orderData = {
+            labels: ['Payée', 'En Attente', 'Livrée', 'Annulée'],
+            datasets: [{
+                data: [{{ commandesPayees }}, {{ commandesEnAttente }}, {{ commandesLivrees }}, {{ commandesAnnulees }}],
+                backgroundColor: ['#10b981', '#f97316', '#3b82f6', '#ef4444'],
+                hoverOffset: 20
+            }]
+        };
+
+        const furnitureAddedData = {
+            labels: {{ furnitureAdded.labels|json_encode|raw }},
+            datasets: [{
+                label: 'Meubles Ajoutés',
+                data: {{ furnitureAdded.data|json_encode|raw }},
+                fill: false,
+                borderColor: '#3b82f6',
+                tension: 0.4
+            }]
+        };
+
+        const furnitureStatusData = {
+            labels: ['Disponibles', 'Vendus'],
+            datasets: [{
+                data: [{{ meublesDisponibles }}, {{ meublesIndisponibles }}],
+                backgroundColor: ['#10b981', '#4f46e5'],
+                hoverOffset: 20
+            }]
+        };
+
+        // Chart Configurations
+        const revenueChart = new Chart(document.getElementById('revenueAreaChart'), {
+            type: 'line',
+            data: revenueData,
+            options: {
+                plugins: {
+                    legend: { display: true },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuad'
+                }
+            }
+        });
+
+        const orderChart = new Chart(document.getElementById('orderDonutChart'), {
+            type: 'doughnut',
+            data: orderData,
+            options: {
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                cutout: '60%',
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        });
+
+        const furnitureLineChart = new Chart(document.getElementById('furnitureLineChart'), {
+            type: 'line',
+            data: furnitureAddedData,
+            options: {
+                plugins: {
+                    legend: { display: true }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuad'
+                }
+            }
+        });
+
+        const furniturePieChart = new Chart(document.getElementById('furniturePieChart'), {
+            type: 'pie',
+            data: furnitureStatusData,
+            options: {
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true
+                }
+            }
+        });
+
+        // Filter Logic (Update URL with selected time period)
+        document.getElementById('timePeriod').addEventListener('change', function() {
+            const period = this.value;
+            window.location.href = '{{ path('app_gestion_meubles_statistiques_etudiant') }}?timePeriod=' + period;
+        });
+    </script>
+{% endblock %}
