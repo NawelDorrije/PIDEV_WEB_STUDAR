@@ -3,7 +3,18 @@
 {% block title %}Logement index{% endblock %}
 
 {% block stylesheets %}
+
+{{ parent() }}
     {{ encore_entry_link_tags('app') }}
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Additional CSS Files -->
+    <link rel="stylesheet" href="assets/css/fontawesome.css">
+    <link rel="stylesheet" href="assets/css/owl.css">
+    <link rel="stylesheet" href="assets/css/animate.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper@7/swiper-bundle.min.css" />
     <style>
         :root {
             --input-color: #99A3BA;
@@ -17,7 +28,6 @@
             --group-color-focus: #fff;
             --group-border-focus: var(--input-border-focus);
             --group-background-focus: #678EFE;
-
             /* Variables for user list design */
             --surface1: hsl(0 0% 90%);
             --surface2: hsl(0 0% 100%);
@@ -25,257 +35,346 @@
             --avatar-bg: linear-gradient(to top right, orange, deeppink); /* Gradient for avatar background */
         }
 
-        /* Existing styles (unchanged) */
+        /* Form field styles */
         .form-field {
-            display: block;
-            width: 100%;
-            line-height: 25px;
-            font-size: 14px;
-            font-weight: 500;
-            font-family: inherit;
-            border-radius: 6px;
-            -webkit-appearance: none;
-            color: var(--input-color);
-            border: 1px solid var(--input-border);
-            background: var(--input-background);
-            transition: border .3s ease;
-            padding-left: 40px;
-            height: 41px;
+            display: block !important;
+            width: 100% !important;
+            line-height: 25px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            font-family: inherit !important;
+            border-radius: 6px !important;
+            -webkit-appearance: none !important;
+            color: var(--input-color) !important;
+            border: 1px solid var(--input-border) !important;
+            background: var(--input-background) !important;
+            transition: border .3s ease !important;
+            padding-left: 40px !important;
+            height: 41px !important;
         }
         .form-field::placeholder {
-            color: var(--input-placeholder);
+            color: var(--input-placeholder) !important;
         }
         .form-field:focus {
-            outline: none;
-            border-color: var(--input-border-focus);
+            outline: none !important;
+            border-color: var(--input-border-focus) !important;
         }
         .form-group {
-            position: relative;
-            display: flex;
-            width: 300px;
-            margin-right: 10px;
-            margin-top: 20px;
+            position: relative !important;
+            display: flex !important;
+            width: 300px !important;
+            margin-right: 10px !important;
+            margin-top: 20px !important;
         }
         .form-group > span,
         .form-field {
-            white-space: nowrap;
-            display: block;
+            white-space: nowrap !important;
+            display: block !important;
         }
         .form-group > span:not(:first-child):not(:last-child),
         .form-field:not(:first-child):not(:last-child) {
-            border-radius: 0;
+            border-radius: 0 !important;
         }
         .form-group > span:first-child,
         .form-field:first-child {
-            border-radius: 6px 0 0 6px;
+            border-radius: 6px 0 0 6px !important;
         }
         .form-group > span:last-child,
         .form-field:last-child {
-            border-radius: 0 6px 6px 0;
+            border-radius: 0 6px 6px 0 !important;
         }
         .form-field {
-            position: relative;
-            z-index: 1;
-            flex: 1 1 auto;
-            width: 1%;
+            position: relative !important;
+            z-index: 1 !important;
+            flex: 1 1 auto !important;
+            width: 1% !important;
         }
         .form-group > span {
-            text-align: center;
-            padding: 8px 12px;
-            font-size: 14px;
-            line-height: 25px;
-            color: var(--group-color);
-            background: var(--group-background);
-            border: 1px solid var(--group-border);
-            transition: background .3s ease, border .3s ease, color .3s ease;
+            text-align: center !important;
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+            line-height: 25px !important;
+            color: var(--group-color) !important;
+            background: var(--group-background) !important;
+            border: 1px solid var(--group-border) !important;
+            transition: background .3s ease, border .3s ease, color .3s ease !important;
         }
         .form-group:focus-within > span {
-            color: var(--group-color-focus);
-            background: var(--group-background-focus);
-            border-color: var(--group-border-focus);
+            color: var(--group-color-focus) !important;
+            background: var(--group-background-focus) !important;
+            border-color: var(--group-border-focus) !important;
         }
         .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--input-color);
-            font-size: 14px;
-            z-index: 2;
-            cursor: pointer;
+            position: absolute !important;
+            left: 12px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            color: var(--input-color) !important;
+            font-size: 14px !important;
+            z-index: 2 !important;
+            cursor: pointer !important;
         }
         .button-group .btn {
-            height: 39px;
-            line-height: 25px;
+            height: 39px !important;
+            line-height: 25px !important;
         }
         * {
-            box-sizing: inherit;
+            box-sizing: inherit !important;
         }
         *:before,
         *:after {
-            box-sizing: inherit;
+            box-sizing: inherit !important;
         }
         .interaction-row {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            margin-top: 10px;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            margin-top: 10px !important;
         }
         .reaction-container {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            margin-right: 15px;
+            position: relative !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            margin-right: 15px !important;
         }
         .reaction-toggle {
-            display: flex;
-            align-items: center;
-            padding: 5px 10px;
-            border-radius: 15px;
-            cursor: pointer;
-            color: #606770;
-            font-size: 14px;
+            display: flex !important;
+            align-items: center !important;
+            padding: 5px 10px !important;
+            border-radius: 15px !important;
+            cursor: pointer !important;
+            color: #606770 !important;
+            font-size: 14px !important;
         }
         .reaction-toggle i {
-            margin-right: 5px;
-            color: #678EFE;
+            margin-right: 5px !important;
+            color: rgb(239, 112, 33) !important;
         }
         .reaction-count {
-            margin-left: 5px;
-            font-size: 14px;
-            color: #606770;
+            margin-left: 5px !important;
+            font-size: 14px !important;
+            color: #606770 !important;
         }
         .emoji-list {
-            display: none;
-            position: absolute;
-            top: -50px;
-            left: 0;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 10;
+            display: none !important;
+            position: absolute !important;
+            top: -50px !important;
+            left: 0 !important;
+            background-color: white !important;
+            border: 1px solid #ddd !important;
+            border-radius: 20px !important;
+            padding: 5px !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+            z-index: 10 !important;
         }
         .reaction-container:hover .emoji-list {
-            display: flex;
+            display: flex !important;
         }
         .emoji-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            padding: 5px;
-            cursor: pointer;
-            border-radius: 50%;
-            transition: transform 0.2s ease;
+            background: none !important;
+            border: none !important;
+            font-size: 24px !important;
+            padding: 5px !important;
+            cursor: pointer !important;
+            border-radius: 50% !important;
+            transition: transform 0.2s ease !important;
         }
         .emoji-btn:hover {
-            transform: scale(1.2);
+            transform: scale(1.2) !important;
         }
         .current-emoji {
-            font-size: 16px;
-            margin-right: 3px;
+            font-size: 16px !important;
+            margin-right: 3px !important;
         }
         .share-container {
-            display: inline-flex;
-            align-items: center;
-            margin-right: 15px;
+            display: inline-flex !important;
+            align-items: center !important;
+            margin-right: 15px !important;
         }
         .share-btn {
-            background: none;
-            border: none;
-            color: #606770;
-            font-size: 14px;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+            background: none !important;
+            border: none !important;
+            color: #606770 !important;
+            font-size: 14px !important;
+            padding: 5px 10px !important;
+            border-radius: 5px !important;
+            cursor: pointer !important;
+            transition: background-color 0.3s ease !important;
         }
         .share-btn:hover {
-            background-color: #f0f2f5;
+            background-color: #f0f2f5 !important;
         }
         .share-btn i {
-            margin-right: 5px;
+            margin-right: 5px !important;
         }
-        .main-button a {
-            padding: 5px 10px;
-            font-size: 14px;
-            color: #606770;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+        .properties .item .main-button a:hover {
+            background-color: #f35525;
+        }
+        .properties .item .main-button {
+            text-align: center;
+        }        
+ 
+        
+.main-button a {
+    display: inline-block;
+    background-color: #1e1e1e;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    height: 40px;
+    line-height: 40px;
+    padding: 0px 30px;
+    border-radius: 25px;
+    transition: all .3s;
+}
+        .properties .item .main-button {
+            text-align: center;
         }
         .main-button a:hover {
-            background-color: #f0f2f5;
+            background-color: #f35525;
+            color: #fff;
         }
+        
 
         /* Updated user-list styles for vertical layout with avatar to the left */
         .user-list {
-            overflow-y: auto; /* Enable vertical scrolling */
-            overscroll-behavior-y: contain;
-            border: 1px solid hsl(0 0% 80%);
-            border-radius: 1ex;
-            background-color: var(--surface2);
-            padding: 1rem;
-            display: flex;
-            flex-direction: column; /* Stack items vertically */
-            gap: 1rem;
-            max-height: 300px; /* Maintain max height for scrolling */
+            overflow-y: auto !important;
+            overscroll-behavior-y: contain !important;
+            border: 1px solid hsl(0 0% 80%) !important;
+            border-radius: 1ex !important;
+            background-color: var(--surface2) !important;
+            padding: 1rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+            max-height: 300px !important;
         }
 
         .user-item {
-            display: flex; /* Use flexbox to align avatar and text horizontally */
-            flex-direction: row;
-            align-items: center;
-            gap: 1rem; /* Space between avatar and text */
-            padding: 0.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            user-select: none;
-            transition: background-color 0.3s ease, transform 0.2s ease-in-out;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 1rem !important;
+            padding: 0.5rem !important;
+            border-radius: 5px !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            transition: background-color 0.3s ease, transform 0.2s ease-in-out !important;
         }
 
         .user-item:hover {
-            background-color: #f0f2f5;
-            transform: scale(1.02); /* Subtle scale on hover */
+            background-color: #f0f2f5 !important;
+            transform: scale(1.02) !important;
         }
 
         .user-item .avatar {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 40px; /* Smaller size for the avatar */
-            height: 40px;
-            border-radius: 50%;
-            background: var(--avatar-bg); /* Gradient background */
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            text-transform: uppercase;
-            flex-shrink: 0; /* Prevent avatar from shrinking */
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50% !important;
+            background: var(--avatar-bg) !important;
+            color: white !important;
+            font-size: 18px !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            flex-shrink: 0 !important;
         }
 
         .user-item .user-info {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            color: var(--text1);
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            text-overflow: ellipsis !important;
+            color: var(--text1) !important;
         }
 
         .user-item .user-info .nom {
-            font-weight: 500;
-            font-size: 14px;
+            font-weight: 500 !important;
+            font-size: 14px !important;
         }
 
         .user-item .user-info .email {
-            font-size: 12px;
-            color: #606770;
+            font-size: 12px !important;
+            color: #606770 !important;
+        }
+
+        /* Dropdown menu styles */
+        .deroulant {
+            position: relative !important;
+            display: inline-block !important;
+        }
+
+        .btn.dropdown-toggle {
+            padding: 5px 10px !important;
+            border: 1px solid #f5a623 !important;
+            color: #f5a623 !important;
+            background-color: transparent !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            border-radius: 4px !important;
+        }
+
+        .btn.dropdown-toggle:hover {
+            background-color: #f0f2f5 !important;
+            color: #f5a623 !important;
+            border-color: #f5a623 !important;
+        }
+
+        .btn.dropdown-toggle::after {
+            border-top: 0.3em solid #f5a623 !important;
+            border-right: 0.3em solid transparent !important;
+            border-left: 0.3em solid transparent !important;
+            margin-left: 5px !important;
+        }
+
+        .sous {
+            display: none !important;
+            position: absolute !important;
+            background-color: white !important;
+            border: 1px solid #ccc !important;
+            border-top: 3px solid #f5a623 !important;
+            min-width: 200px !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            z-index: 1 !important;
+        }
+
+        .deroulant:hover .sous {
+            display: block !important;
+        }
+
+        .sous li {
+            text-align: left !important;
+            width: 100% !important;
+        }
+
+        .sous li a {
+            display: block !important;
+            padding: 10px 15px !important;
+            text-decoration: none !important;
+            color: #333 !important;
+            font-size: 14px !important;
+            font-family: Arial, sans-serif !important;
+        }
+
+        .sous li a:hover {
+            background-color: #f1f1f1 !important;
+        }
+
+        .fas.fa-plus {
+            font-size: 12px !important;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 {% endblock %}
-
 
 {% block javascripts %}
     {{ parent() }}
@@ -419,7 +518,6 @@
 
                 shareButtons.forEach(button => {
                     button.removeEventListener('click', shareButtonHandler); // Prevent duplicate listeners
-
                     button.addEventListener('click', shareButtonHandler);
                 });
 
@@ -530,11 +628,15 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 {% if not (is_granted('ROLE_PROPRIETAIRE') or is_granted('ROLE_ADMIN')) %}
                                 <h2 class="mb-0 fs-5">Trouve ta meilleure offre dès maintenant!</h2>
-                            {% endif %}
-                            {% if (is_granted('ROLE_PROPRIETAIRE') or is_granted('ROLE_ADMIN')) %}
-                            <a href="" class="btn btn-outline-primary btn-sm">
-                                <i class="fas fa-plus"></i> Voir Les Statistique
-                            </a>                                {% endif %}
+                                {% endif %}
+                                {% if (is_granted('ROLE_PROPRIETAIRE') or is_granted('ROLE_ADMIN')) %}
+                                    <a href="{{ path('app_logement_dashboard') }}" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Les Statistiques
+                                    </a>
+                                    <a href="{{ path('app_image_logement_index') }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fa fa-photo"></i> Tous Les photos 
+                                    </a> 
+                                {% endif %}
                                 <div class="d-flex align-items-center">
                                     <form id="searchForm" class="form-group">
                                         <i class="fas fa-search search-icon"></i>
@@ -544,9 +646,9 @@
                                         <button type="button" class="btn btn-outline-danger btn-sm me-1" data-bs-toggle="modal" data-bs-target="#filterModal">
                                             <i class="fas fa-filter"></i> Filtrer
                                         </button>
-                                        {# Conditionally display the "Ajouter" button for users with ROLE_PROPRIETAIRE or ROLE_ADMIN #}
+                                      
                                         {% if is_granted('ROLE_PROPRIETAIRE') or is_granted('ROLE_ADMIN') %}
-                                            <a href="{{ path('app_logement_new') }}" class="btn btn-outline-primary btn-sm">
+                                            <a href="{{ path('app_logement_new') }}" class="btn btn-outline-primary btn-sm me-2">
                                                 <i class="fas fa-plus"></i> Ajouter
                                             </a>
                                         {% endif %}
@@ -670,11 +772,11 @@
                                         {{ options|join(', ') ?: 'Aucune option' }}
                                     </li>
                                     <li>
-                                            {% if logement.reactionCounts %}
-                                                {{ logement.reactionCounts|map((count, emoji) => "#{emoji} #{count}")|join(' ') }}
-                                            {% else %}
-                                                Aucune réaction
-                                            {% endif %}
+                                        {% if logement.reactionCounts %}
+                                            {{ logement.reactionCounts|map((count, emoji) => "#{emoji} #{count}")|join(' ') }}
+                                        {% else %}
+                                            Aucune réaction
+                                        {% endif %}
                                     </li>
                                 </ul>
                                 <div class="interaction-row">
@@ -689,8 +791,6 @@
                                                 <button type="submit" name="emoji" value="👍" class="emoji-btn">👍</button>
                                                 <button type="submit" name="emoji" value="👎" class="emoji-btn">👎</button>
                                                 <button type="submit" name="emoji" value="❤️" class="emoji-btn">❤️</button>
-                                                <button type="submit" name="emoji" value="😢" class="emoji-btn">😢</button>
-                                                <button type="submit" name="emoji" value="😡" class="emoji-btn">😡</button>
                                             </form>
                                         </div>
                                     </div>

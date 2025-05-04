@@ -758,7 +758,7 @@
     {{ encore_entry_script_tags('app') }}
     <script>
         let socket;
-        let reconnectAttempts = 0;
+        // let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         const reconnectInterval = 3000;
         let mediaRecorder;
@@ -830,7 +830,7 @@
             }
 
             try {
-                socket = new WebSocket('ws://localhost:8080');
+                socket = new WebSocket('ws://localhost:8000');
 
                 socket.onopen = function() {
                     console.log('WebSocket connected');

@@ -2,14 +2,16 @@
 <html lang="fr">
    <head>
         <meta charset="UTF-8">
+                <meta name="csrf-token" content="{{ csrf_token('toggle_block') }}">
+
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
         <title>{% block title %}StuDar{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-<!-- Bootstrap CSS -->   <!-- jQuery (required for Bootstrap 3 JavaScript plugins) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <!-- Bootstrap CSS -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
@@ -41,61 +43,131 @@
                 color: #4b5563;
                 font-size: 1.2rem;
             }
-            .header-area {
+            /* New Navbar Styles */
+            .st-nav {
                 background: #fff;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 position: sticky;
                 top: 0;
                 z-index: 1000;
             }
-            .main-nav .logo img {
+            .st-nav-logo img {
                 max-height: 50px;
             }
-            .main-nav .nav {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
+            .st-nav-item {
+                margin-left: 0.5rem;
+                margin-right: 0.5rem; /* Adds spacing between items */
             }
-            .main-nav .nav li {
-                padding: 0.5rem 0;
-            }
-            .main-nav .nav li a {
+            .st-nav-item .st-nav-link {
                 color: #1a1a1a;
                 font-weight: 500;
                 text-decoration: none;
                 transition: color 0.2s ease;
             }
-            .main-nav .nav li a:hover,
-            .main-nav .nav li a.active {
-                color: #007bff;
+            .st-nav-item .st-nav-link:hover,
+            .st-nav-item .st-nav-link.active {
+                color: #e67e22;
             }
-            .main-nav .nav .dropdown-menu {
+            .st-nav-dropdown .dropdown-menu {
                 border-radius: 6px;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                background: #fff;
             }
-            .main-nav .nav .dropdown-item {
+            .st-nav-dropdown .dropdown-item {
                 font-size: 0.95rem;
                 padding: 0.5rem 1rem;
                 color: #1a1a1a;
             }
-            .main-nav .nav .dropdown-item:hover {
+            .st-nav-dropdown .dropdown-item:hover {
                 background: #f1f5f9;
-                color: #007bff;
+                color: #e67e22;
             }
-            .menu-trigger {
-                display: none;
-                cursor: pointer;
+            /* Logout Icon */
+            .st-nav-logout .bi-box-arrow-right {
+                font-size: 1.2rem;
+                color: #6b7280;
+                transition: color 0.2s ease;
+            }
+            .st-nav-logout:hover .bi-box-arrow-right {
+                color: #e67e22;
+            }
+            /* Cart Icon */
+            .st-nav-cart {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+            }
+            .st-nav-cart .bi-cart3 {
                 font-size: 1.2rem;
                 color: #1a1a1a;
             }
+            .st-nav-cart .st-cart-count {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background-color: #007bff;
+                color: #fff;
+                font-size: 0.7rem;
+                font-weight: 600;
+                padding: 2px 5px;
+                border-radius: 50%;
+                line-height: 1;
+            }
+            /* Dark Theme */
+            body.theme-dark {
+                background-color: #1a1a1a !important;
+                color: #ffffff !important;
+            }
+            body.theme-dark .sub-header {
+                background: #2c2c2c !important;
+            }
+            body.theme-dark .sub-header .info li,
+            body.theme-dark .sub-header .social-links a {
+                color: #cccccc !important;
+            }
+            body.theme-dark .st-nav {
+                background: #2c2c2c !important;
+                box-shadow: 0 2px 5px rgba(255,255,255,0.05) !important;
+            }
+            body.theme-dark .st-nav-item .st-nav-link {
+                color: #ffffff !important;
+            }
+            body.theme-dark .st-nav-item .st-nav-link:hover,
+            body.theme-dark .st-nav-item .st-nav-link.active {
+                color: #66b3ff !important;
+            }
+            body.theme-dark .st-nav-dropdown .dropdown-menu {
+                background: #3a3a3a !important;
+                box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
+            }
+            body.theme-dark .st-nav-dropdown .dropdown-item {
+                color: #ffffff !important;
+            }
+            body.theme-dark .st-nav-dropdown .dropdown-item:hover {
+                background: #4a4a4a !important;
+                color: #66b3ff !important;
+            }
+            body.theme-dark .st-nav-logout .bi-box-arrow-right {
+                color: #cccccc !important;
+            }
+            body.theme-dark .st-nav-logout:hover .bi-box-arrow-right {
+                color: #66b3ff !important;
+            }
+            body.theme-dark .st-nav-cart .bi-cart3 {
+                color: #ffffff !important;
+            }
+            body.theme-dark .st-nav-cart .st-cart-count {
+                background-color: #66b3ff !important;
+                color: #1a1a1a !important;
+            }
+            /* Existing Styles (Unchanged) */
             footer {
-                background: #f8f9fa;
+                background: #235BAA;
                 padding: 1rem 0;
-                margin-top: 2rem;
             }
             footer p {
                 color: #4b5563;
-                font-size: 0.9rem;
+                margin-left: 400px;
             }
             footer a {
                 color: #007bff;
@@ -104,31 +176,6 @@
             footer a:hover {
                 text-decoration: underline;
             }
-
-            /* Cart Icon with Item Count */
-            .cart-icon {
-                position: relative;
-                display: inline-flex;
-                align-items: center;
-            }
-            .cart-icon .bi-cart3 {
-                font-size: 20px;
-                color: #1a1a1a;
-            }
-            .cart-icon .cart-count {
-                position: absolute;
-                top: 0px;
-                right: 0px;
-                background-color: #007bff;
-                color: #fff;
-                font-size: 11px;
-                font-weight: 600;
-                padding: 2px 5px;
-                border-radius: 50%;
-                line-height: 1;
-            }
-
-            /* Preloader */
             .js-preloader {
                 position: fixed;
                 top: 0;
@@ -167,78 +214,12 @@
                 0%, 100% { transform: scale(1); }
                 50% { transform: scale(1.5); }
             }
-
-            /* Responsive */
-            @media (max-width: 991px) {
-                .main-nav .nav {
-                    display: none;
-                    position: absolute;
-                    top: 100%;
-                    left: 0;
-                    right: 0;
-                    background: #fff;
-                    flex-direction: column;
-                    padding: 1rem;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-                }
-                .main-nav .nav.active {
-                    display: flex;
-                }
-                .menu-trigger {
-                    display: block;
-                }
-            }
-
-            /* Dark Theme Styles */
-            body.theme-dark {
-                background-color: #1a1a1a !important;
-                color: #ffffff !important;
-            }
-            body.theme-dark .sub-header {
-                background: #2c2c2c !important;
-            }
-            body.theme-dark .sub-header .info li,
-            body.theme-dark .sub-header .social-links a {
-                color: #cccccc !important;
-            }
-            body.theme-dark .header-area {
-                background: #2c2c2c !important;
-                box-shadow: 0 2px 5px rgba(255,255,255,0.05) !important;
-            }
-            body.theme-dark .main-nav .nav li a,
-            body.theme-dark .main-nav .nav .dropdown-item {
-                color: #ffffff !important;
-            }
-            body.theme-dark .main-nav .nav li a:hover,
-            body.theme-dark .main-nav .nav li a.active,
-            body.theme-dark .main-nav .nav .dropdown-item:hover {
-                color: #66b3ff !important;
-            }
-            body.theme-dark .main-nav .nav .dropdown-menu {
-                background: #3a3a3a !important;
-                box-shadow: 0 2px 10px rgba(255,255,255,0.05) !important;
-            }
-            body.theme-dark .main-nav .nav .dropdown-item:hover {
-                background: #4a4a4a !important;
-            }
-            body.theme-dark .menu-trigger {
-                color: #ffffff !important;
-            }
-            body.theme-dark .main-nav .nav.active {
-                background: #3a3a3a !important;
-            }
-            body.theme-dark .cart-icon .bi-cart3 {
-                color: #ffffff !important;
-            }
-            body.theme-dark .cart-icon .cart-count {
-                background-color: #66b3ff !important;
-                color: #1a1a1a !important;
-            }
             body.theme-dark footer {
-                background: #2c2c2c !important;
+                background: #235BAA !important;
             }
             body.theme-dark footer p {
                 color: #cccccc !important;
+                margin-left:500px;
             }
             body.theme-dark footer a {
                 color: #66b3ff !important;
@@ -253,22 +234,8 @@
         </style>
     </head>
     <body data-theme="{{ app.user.theme ?? 'light' }}">
-            <meta name="csrf-token" content="{{ csrf_token('toggle_block') }}">
+        <meta name="csrf-token" content="{{ csrf_token('toggle_block') }}">
 
-        <!-- *** Preloader Start *** -->
-        {# <div id="js-preloader" class="js-preloader">
-            <div class="preloader-inner">
-                <span class="dot"></span>
-                <div class="dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
-        </div> #}
-        <!-- *** Preloader End *** -->
-
-        {# Ne pas afficher l'en-tête et le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}
             <div class="sub-header">
                 <div class="container">
@@ -291,173 +258,175 @@
             </div>
 
             <!-- *** Header Area Start *** -->
-            <header class="header-area header-sticky">
+            <header class="st-nav navbar navbar-expand-lg">
                 <div class="container">
-                    <div class="row">
-                        <div class="col-12">
-                            <nav class="main-nav">
-                                <!-- *** Logo Start *** -->
-                                <a href="{{ path('app_home') }}" class="logo">
-                                    <img class="logo" src="{{ asset('images/logo.png') }}" alt="StuDar">
-                                </a>
-                                <!-- *** Logo End *** -->
-
-                                <!-- *** Menu Start *** -->
-                                <ul class="nav">
-                                    {% if is_granted('ROLE_ADMIN') %}
-                                        <!-- Navigation pour les admins -->
-                                        <li><a href="{{ path('app_admin_dashboard') }}" class="{{ app.request.get('_route') == 'app_admin_dashboard' ? 'active' : '' }}">Dashboard</a></li>
-                                        <li><a href="{{ path('app_admin_adminProfile', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_admin_adminProfile' ? 'active' : '' }}">Profil</a></li>
-
-                                        <!-- Services Dropdown pour Admin -->
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Services
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownAdmin">
-                                                <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
-                                                <li><a href="{{ path('app_logement_index') }}">Logements</a></li>
-<li><a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}" href="{{ path('admin_reclamation') }}">Réclamations Avancées</a></li>                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_ADMIN' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdownAdmin">
-                                                <li class="{{ app.request.get('_route') == 'app_rendezvous_index_ADMIN' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_rendezvous_index_ADMIN') }}">
-                                                        <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
-                                                    </a>
-                                                </li>
-                                                <li class="{{ app.request.get('_route') == 'app_reservation_logement_index_ADMIN' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_reservation_logement_index_ADMIN') }}">
-                                                        <i class="fas fa-bed mr-2"></i> Réservation des logements
-                                                    </a>
-                                                </li>
-                                                <li class="{{ app.request.get('_route') == 'app_reservation_transport_index_ADMIN' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_reservation_transport_index_ADMIN') }}">
-                                                        <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
-                                    {% elseif is_granted('ROLE_TRANSPORTEUR') %}
-                                        <!-- Navigation pour les TRANSPORTEUR -->
-                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
-                                        <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}">Profil</a></li>
-
-                                        <!-- Services Dropdown pour transporteurs -->
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Services
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownTrans">
-                                                <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_TRANS' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownTRANSPORTEUR" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdownTRANSPORTEUR">
-                                                <li class="{{ app.request.get('_route') == 'app_reservation_transport_index_TRANS' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_reservation_transport_index_TRANS') }}">
-                                                        <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a></li>
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
-                                    {% elseif is_granted('ROLE_PROPRIETAIRE') %}
-                                        <!-- Navigation pour les PROP -->
-                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
-                                        <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}">Profil</a></li>
-
-                                        <!-- Services Dropdown pour PROP -->
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Services
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownProp">
-<li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_PROP' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdownProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdownProp">
-                                                <li class="{{ app.request.get('_route') == 'app_rendezvous_index_PROP' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_rendezvous_index_PROP') }}">
-                                                        <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
-                                                    </a>
-                                                </li>
-                                                <li class="{{ app.request.get('_route') == 'app_reservation_logement_index_PROP' ? 'active' }}">
-                                                    <a class="dropdown-item" href="{{ path('app_reservation_logement_index_PROP') }}">
-                                                        <i class="fas fa-bed mr-2"></i> Réservation des logements
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                        <li><a href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a></li>
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
+                    <!-- Logo -->
+                    <a class="st-nav-logo navbar-brand" href="{{ path('app_home') }}">
+                        <img src="{{ asset('images/logo.png') }}" alt="StuDar">
+                    </a>
+                    <!-- Toggler for Mobile -->
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#stNavCollapse" aria-controls="stNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <!-- Navigation Items -->
+                    <div class="collapse navbar-collapse" id="stNavCollapse">
+                        <ul class="navbar-nav ms-auto align-items-center">
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <!-- Admin Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_admin_dashboard' ? 'active' : '' }}" href="{{ path('app_admin_dashboard') }}">Dashboard</a>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_admin_adminProfile' ? 'active' : '' }}" href="{{ path('app_admin_adminProfile', {'cin': app.user.cin}) }}">Profil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServicesAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServicesAdmin">
+                                        <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                        <li><a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}" href="{{ path('admin_reclamation') }}">Réclamations Avancées</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_ADMIN' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgendaAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgendaAdmin">
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_rendezvous_index_ADMIN' ? 'active' : '' }}" href="{{ path('app_rendezvous_index_ADMIN') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_logement_index_ADMIN' ? 'active' : '' }}" href="{{ path('app_reservation_logement_index_ADMIN') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_transport_index_ADMIN' ? 'active' : '' }}" href="{{ path('app_reservation_transport_index_ADMIN') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% elseif is_granted('ROLE_TRANSPORTEUR') %}
+                                <!-- Transporteur Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_home' ? 'active' : '' }}" href="{{ path('app_home') }}">Accueil</a>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}" href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}">Profil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServicesTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServicesTrans">
+                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_TRANS' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgendaTrans" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgendaTrans">
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_transport_index_TRANS' ? 'active' : '' }}" href="{{ path('app_reservation_transport_index_TRANS') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                    </ul>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% elseif is_granted('ROLE_PROPRIETAIRE') %}
+                                <!-- Propriétaire Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_home' ? 'active' : '' }}" href="{{ path('app_home') }}">Accueil</a>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}" href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}">Profil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServicesProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServicesProp">
+                                        <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_PROP' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgendaProp" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgendaProp">
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_rendezvous_index_PROP' ? 'active' : '' }}" href="{{ path('app_rendezvous_index_PROP') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                        <li><a class="dropdown-item {{ app.request.get('_route') == 'app_reservation_logement_index_PROP' ? 'active' : '' }}" href="{{ path('app_reservation_logement_index_PROP') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                    </ul>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% else %}
+                                <!-- Etudiant/Guest Navigation -->
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link {{ app.request.get('_route') == 'app_home' ? 'active' : '' }}" href="{{ path('app_home') }}">Accueil</a>
+                                </li>
+                                <!-- Services Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stServices" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Services
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stServices">
+                                        <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_a_acheter') }}">Meubles</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_transport_home') }}">Transports</a></li>
+                                    </ul>
+                                </li>
+                                <!-- Agenda Dropdown -->
+                                <li class="st-nav-dropdown nav-item dropdown {{ app.request.get('route') starts with 'app_rendezvous' ? 'active' : '' }}">
+                                    <a class="st-nav-link nav-link dropdown-toggle" href="#" id="stAgenda" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Agenda
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="stAgenda">
+                                        <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
+                                    </ul>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_chat') }}">Chat</a>
+                                </li>
+                                {% if is_granted('ROLE_ETUDIANT') %}
+                                    <li class="st-nav-item st-nav-cart nav-item">
+                                        <a class="st-nav-link nav-link" href="{{ path('app_gestion_meubles_lignes_panier') }}">
+                                            <i class="bi bi-cart3"></i>
+                                            <span class="st-cart-count">{{ cart_service.cartCount }}</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                <li class="st-nav-item nav-item">
+                                    {% if app.user %}
+                                        <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a>
                                     {% else %}
-                                        <!-- Navigation pour les non-admins (etudiant) -->
-                                        <li><a href="{{ path('app_home') }}" class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}">Accueil</a></li>
-
-                                        <!-- Services Dropdown -->
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Services
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
-<li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>                                                <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_a_acheter') }}">Meubles</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_transport_home') }}">Transports</a></li>
-                                            </ul>
-                                        </li>
-
-                                        <!-- Agenda Dropdown -->
-                                        <li class="nav-item dropdown {{ app.request.get('route') starts with 'app_rendezvous' ? 'active' }}">
-                                            <a class="nav-link dropdown-toggle" href="#" id="agendaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Agenda
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="agendaDropdown">
-                                                <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}"><i class="fas fa-bus me-2"></i> Réservation des transporteurs</a></li>
-                                            </ul>
-                                        </li>
-
-                                        <li><a href="{{ path('app_home') }}">Chat AI</a></li>
-
-                                        <!-- Cart Icon with Static Item Count -->
-                                        {% if is_granted('ROLE_ETUDIANT') %}
-                                            <li>
-                                                <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="cart-icon">
-                                                    <i class="bi bi-cart3"></i>
-                                                    <span class="cart-count">{{ cart_service.cartCount }}</span>
-                                                </a>
-                                            </li>
-                                        {% endif %}
-
-                                        {% if app.user %}
-                                            <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
-                                        {% else %}
-                                            <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
-                                        {% endif %}
-                                        <li><a href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a></li>
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
+                                        <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a>
                                     {% endif %}
-                                </ul>
-
-                                <a class="menu-trigger">
-                                    <span>Menu</span>
-                                </a>
-                                <!-- *** Menu End *** -->
-                            </nav>
-                        </div>
+                                </li>
+                                <li class="st-nav-item nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_utilisateur_parametre') }}" title="Paramètres"><i class="bi bi-gear"></i></a>
+                                </li>
+                                <!-- Logout -->
+                                <li class="st-nav-item st-nav-logout nav-item">
+                                    <a class="st-nav-link nav-link" href="{{ path('app_logout') }}" title="Déconnexion"><i class="bi bi-box-arrow-right"></i></a>
+                                </li>
+                            {% endif %}
+                        </ul>
                     </div>
                 </div>
             </header>
@@ -472,14 +441,14 @@
 
         {# Ne pas afficher le pied de page pour la page 404 #}
         {% if block('title') not in ['Page non trouvée - 404'] %}
-            <footer>
-                <div class="container">
-                    <div class="col-lg-8">
-                        <p>Copyright © 2048 Villa Agency Co., Ltd. All rights reserved. 
-                        Design: <a rel="nofollow" href="https://templatemo.com" target="_blank">TemplateMo</a></p>
-                    </div>
-                </div>
-            </footer>
+<footer>
+    <div class="container">
+        <div class="col-lg-8">
+            <p>&copy; 2025 StuDar - Tous droits réservés. </p>
+        </div>
+    </div>
+</footer>
+
         {% endif %}
 
         {% block javascripts %}
@@ -530,11 +499,6 @@
                             activeFilter.classList.add('active');
                         }
                     }
-
-                    // Toggle mobile menu
-                    document.querySelector('.menu-trigger').addEventListener('click', function() {
-                        document.querySelector('.main-nav .nav').classList.toggle('active');
-                    });
                 });
             </script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

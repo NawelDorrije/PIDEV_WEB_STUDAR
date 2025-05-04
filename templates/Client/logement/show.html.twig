@@ -779,18 +779,9 @@
                         <div class="col-lg-3">
                             <h4>Description</h4>
                             <p>{{ logement.description }}</p>
-                            <div class="icon-button mt-3">
-                                <a href="{{ path('app_logement_edit', {'id': logement.id}) }}">
-                                    <i class="fa fa-edit"></i> Modifier
-                                </a>
-                            </div>
+                         
                             <div class="icon-button mt-2">
-                                <a href="#" onclick="event.preventDefault(); document.getElementById('delete-form').submit();">
-                                    <i class="fa fa-trash"></i> Supprimer
-                                </a>
-                                <form id="delete-form" method="post" action="{{ path('app_logement_delete', {'id': logement.id}) }}" style="display: none;">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ logement.id) }}">
-                                </form>
+                          
                                 <a data-bs-toggle="modal" data-bs-target="#addReclamationModal" class="icon-button">
                                     <i class="fa fa-plus"></i> Ajouter Réclamation
                                 </a>

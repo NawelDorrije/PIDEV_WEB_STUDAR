@@ -9,6 +9,7 @@ use App\Repository\GestionMeubles\LignePanierRepository;
 use App\Repository\GestionMeubles\MeubleRepository;
 use App\Repository\GestionMeubles\PanierRepository;
 use App\Service\CurrencyConverterService;
+use App\Service\CancellationAnalysisService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +25,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\UX\Chartjs\Builder\ChartBuilderInterface;
-use Symfony\UX\Chartjs\Model\Chart;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -43,6 +43,7 @@ final class CommandeController extends AbstractController
     private LoggerInterface $logger;
     private MailerInterface $mailer;
     private CurrencyConverterService $currencyConverter;
+    private CancellationAnalysisService $cancellationAnalysisService;
 
     public function __construct(
         PanierRepository $panierRepository,
@@ -54,7 +55,8 @@ final class CommandeController extends AbstractController
         Pdf $pdf,
         LoggerInterface $logger,
         MailerInterface $mailer,
-        CurrencyConverterService $currencyConverter
+        CurrencyConverterService $currencyConverter,
+        CancellationAnalysisService $cancellationAnalysisService
     ) {
         $this->panierRepository = $panierRepository;
         $this->lignePanierRepository = $lignePanierRepository;
@@ -66,6 +68,82 @@ final class CommandeController extends AbstractController
         $this->logger = $logger;
         $this->mailer = $mailer;
         $this->currencyConverter = $currencyConverter;
+        $this->cancellationAnalysisService = $cancellationAnalysisService;
+    }
+
+    #[Route('/commande/{id}/annuler', name: 'app_gestion_meubles_commande_annuler', methods: ['POST'])]
+    public function annulerCommande(Request $request, int $id): JsonResponse
+    {
+        $this->logger->info('Tentative d\'annulation de la commande ID: ' . $id);
+
+        $utilisateur = $this->getUser();
+        if (!$utilisateur instanceof Utilisateur) {
+            $this->logger->warning('Utilisateur non connecté pour annulation de la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Vous devez être connecté pour annuler une commande.'], 403);
+        }
+
+        $commande = $this->commandeRepository->find($id);
+        if (!$commande) {
+            $this->logger->warning('Commande non trouvée: ID ' . $id);
+            return new JsonResponse(['error' => 'Commande non trouvée.'], 404);
+        }
+
+        if ($commande->getAcheteur() !== $utilisateur) {
+            $this->logger->warning('Utilisateur non autorisé pour la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Vous n\'êtes pas autorisé à annuler cette commande.'], 403);
+        }
+
+        if ($commande->getStatut() === Commande::STATUT_ANNULEE) {
+            $this->logger->warning('Commande déjà annulée: ID ' . $id);
+            return new JsonResponse(['error' => 'Cette commande est déjà annulée.'], 400);
+        }
+
+        $dateCommande = $commande->getDateCommande();
+        $now = new \DateTime();
+        $interval = $now->diff($dateCommande);
+        $heuresEcoulees = ($interval->days * 24) + $interval->h;
+        if ($heuresEcoulees > 24) {
+            $this->logger->warning('Délai d\'annulation dépassé pour la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Le délai de 24 heures pour annuler la commande est dépassé.'], 400);
+        }
+
+        $raisonAnnulation = trim($request->request->get('raison', ''));
+        if (empty($raisonAnnulation) || strlen($raisonAnnulation) < 5) {
+            $this->logger->warning('Raison d\'annulation invalide pour la commande ID: ' . $id);
+            return new JsonResponse(['error' => 'Veuillez fournir une raison d\'annulation valide (minimum 5 caractères).'], 400);
+        }
+
+        // Analyze cancellation reason using CancellationAnalysisService
+        $analysisResult = $this->cancellationAnalysisService->analyzeCancellationReason($raisonAnnulation);
+        $this->logger->info('Analyse de la raison d\'annulation pour commande ID: ' . $id . ' - Résultat: ' . ($analysisResult['isValid'] ? 'Valid' : 'Invalid') . ' - Explication: ' . $analysisResult['explanation']);
+
+        if (!$analysisResult['isValid']) {
+            $this->logger->warning('Raison d\'annulation rejetée pour commande ID: ' . $id . ' - Explication: ' . $analysisResult['explanation']);
+            return new JsonResponse(['error' => 'Raison d\'annulation invalide : ' . $analysisResult['explanation']], 400);
+        }
+
+        try {
+            $this->entityManager->beginTransaction();
+
+            $success = $this->commandeRepository->annulerCommande($id, $raisonAnnulation, $utilisateur);
+            if (!$success) {
+                $this->logger->warning('Échec de l\'annulation: commande ID ' . $id);
+                $this->entityManager->rollback();
+                return new JsonResponse(['error' => 'Impossible d\'annuler la commande.'], 400);
+            }
+
+            $this->sendCancellationEmailToBuyer($commande, $utilisateur, $raisonAnnulation);
+            $this->sendCancellationEmailsToSellers($commande, $raisonAnnulation);
+
+            $this->entityManager->commit();
+            $this->logger->info('Commande annulée avec succès: ID ' . $id);
+
+            return new JsonResponse(['success' => 'Commande annulée avec succès. Un email de confirmation a été envoyé.']);
+        } catch (\Exception $e) {
+            $this->entityManager->rollback();
+            $this->logger->error('Erreur lors de l\'annulation de la commande ID: ' . $id . ' - ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Erreur lors de l\'annulation : ' . $e->getMessage()], 500);
+        }
     }
 
     #[Route('/confirm-checkout', name: 'app_gestion_meubles_panier_confirm_checkout', methods: ['POST'])]
@@ -391,7 +469,7 @@ final class CommandeController extends AbstractController
         $headers = [
             'Code',
             'Acheteur',
-            'Date',
+            'Date Rosée',
             'Statut',
             'Montant (TND)',
             'Méthode',
@@ -885,72 +963,6 @@ final class CommandeController extends AbstractController
             } catch (\Exception $e) {
                 $this->logger->error('Erreur lors de l\'envoi de l\'email d\'annulation à ' . $vendeur->getEmail() . ' : ' . $e->getMessage());
             }
-        }
-    }
-
-    #[Route('/commande/{id}/annuler', name: 'app_gestion_meubles_commande_annuler', methods: ['POST'])]
-    public function annulerCommande(Request $request, int $id): JsonResponse
-    {
-        $this->logger->info('Tentative d\'annulation de la commande ID: ' . $id);
-
-        $utilisateur = $this->getUser();
-        if (!$utilisateur instanceof Utilisateur) {
-            $this->logger->warning('Utilisateur non connecté pour annulation de la commande ID: ' . $id);
-            return new JsonResponse(['error' => 'Vous devez être connecté pour annuler une commande.'], 403);
-        }
-
-        $commande = $this->commandeRepository->find($id);
-        if (!$commande) {
-            $this->logger->warning('Commande non trouvée: ID ' . $id);
-            return new JsonResponse(['error' => 'Commande non trouvée.'], 404);
-        }
-
-        if ($commande->getAcheteur() !== $utilisateur) {
-            $this->logger->warning('Utilisateur non autorisé pour la commande ID: ' . $id);
-            return new JsonResponse(['error' => 'Vous n\'êtes pas autorisé à annuler cette commande.'], 403);
-        }
-
-        if ($commande->getStatut() === Commande::STATUT_ANNULEE) {
-            $this->logger->warning('Commande déjà annulée: ID ' . $id);
-            return new JsonResponse(['error' => 'Cette commande est déjà annulée.'], 400);
-        }
-
-        $dateCommande = $commande->getDateCommande();
-        $now = new \DateTime();
-        $interval = $now->diff($dateCommande);
-        $heuresEcoulees = ($interval->days * 24) + $interval->h;
-        if ($heuresEcoulees > 24) {
-            $this->logger->warning('Délai d\'annulation dépassé pour la commande ID: ' . $id);
-            return new JsonResponse(['error' => 'Le délai de 24 heures pour annuler la commande est dépassé.'], 400);
-        }
-
-        $raisonAnnulation = trim($request->request->get('raison', ''));
-        if (empty($raisonAnnulation) || strlen($raisonAnnulation) < 5) {
-            $this->logger->warning('Raison d\'annulation invalide pour la commande ID: ' . $id);
-            return new JsonResponse(['error' => 'Veuillez fournir une raison d\'annulation valide (minimum 5 caractères).'], 400);
-        }
-
-        try {
-            $this->entityManager->beginTransaction();
-
-            $success = $this->commandeRepository->annulerCommande($id, $raisonAnnulation, $utilisateur);
-            if (!$success) {
-                $this->logger->warning('Échec de l\'annulation: commande ID ' . $id);
-                $this->entityManager->rollback();
-                return new JsonResponse(['error' => 'Impossible d\'annuler la commande.'], 400);
-            }
-
-            $this->sendCancellationEmailToBuyer($commande, $utilisateur, $raisonAnnulation);
-            $this->sendCancellationEmailsToSellers($commande, $raisonAnnulation);
-
-            $this->entityManager->commit();
-            $this->logger->info('Commande annulée avec succès: ID ' . $id);
-
-            return new JsonResponse(['success' => 'Commande annulée avec succès. Un email de confirmation a été envoyé.']);
-        } catch (\Exception $e) {
-            $this->entityManager->rollback();
-            $this->logger->error('Erreur lors de l\'annulation de la commande ID: ' . $id . ' - ' . $e->getMessage());
-            return new JsonResponse(['error' => 'Erreur lors de l\'annulation : ' . $e->getMessage()], 500);
         }
     }
 }

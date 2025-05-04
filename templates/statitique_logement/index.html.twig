@@ -1,0 +1,213 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .dashboard-container {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .dashboard-header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .generate-report-btn {
+            padding: 8px 16px;
+            background-color: #0059FF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: scale(1.02);
+        }
+        .card h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .card p {
+            margin: 5px 0;
+            color: #606770;
+        }
+        .charts-container {
+            display: flex;
+            gap: 20px;
+        }
+        .chart-box {
+            flex: 2;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        .chart-box.small {
+            flex: 1;
+        }
+        .chart-box h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block body %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Tableau de Bord</h1>
+        <a href="{{ path('app_dashboard_generate_report') }}" class="generate-report-btn">Générer un Rapport</a>
+    </div>
+
+    <div class="cards-container">
+        <div class="card" onclick="window.location.href='{% if mostJadore is defined and mostJadore.logement %}{{ path('app_logement_show', {'id': mostJadore.logement.id}) }}{% else %}#{% endif %}'">
+            <h3>Le plus J'adore (❤️)</h3>
+            <p>Logement : {% if mostJadore is defined and mostJadore.logement %}{{ mostJadore.logement.adresse }}{% else %}Aucun{% endif %}</p>
+            <p>Nombre : {% if mostJadore is defined %}{{ mostJadore.count }}{% else %}0{% endif %}</p>
+            <p>Propriétaire : {% if mostJadore is defined %}{{ mostJadore.owner }}{% else %}N/A{% endif %}</p>
+        </div>
+        <div class="card" onclick="window.location.href='{% if mostLikes is defined and mostLikes.logement %}{{ path('app_logement_show', {'id': mostLikes.logement.id}) }}{% else %}#{% endif %}'">
+            <h3>Le plus de Likes (👍)</h3>
+            <p>Logement : {% if mostLikes is defined and mostLikes.logement %}{{ mostLikes.logement.adresse }}{% else %}Aucun{% endif %}</p>
+            <p>Nombre : {% if mostLikes is defined %}{{ mostLikes.count }}{% else %}0{% endif %}</p>
+            <p>Propriétaire : {% if mostLikes is defined %}{{ mostLikes.owner }}{% else %}N/A{% endif %}</p>
+        </div>
+        <div class="card" onclick="window.location.href='{% if mostDislikes is defined and mostDislikes.logement %}{{ path('app_logement_show', {'id': mostDislikes.logement.id}) }}{% else %}#{% endif %}'">
+            <h3>Le plus de Dislikes (👎)</h3>
+            <p>Logement : {% if mostDislikes is defined and mostDislikes.logement %}{{ mostDislikes.logement.adresse }}{% else %}Aucun{% endif %}</p>
+            <p>Nombre : {% if mostDislikes is defined %}{{ mostDislikes.count }}{% else %}0{% endif %}</p>
+            <p>Propriétaire : {% if mostDislikes is defined %}{{ mostDislikes.owner }}{% else %}N/A{% endif %}</p>
+        </div>
+    </div>
+
+    <div class="charts-container">
+        <div class="chart-box">
+            <h3>Nombre d'Interactions (Top 7 Logements)</h3>
+            <canvas id="interactionChart" height="100"></canvas>
+        </div>
+        <div class="chart-box small">
+            <h3>Propriétaires les Plus Actifs</h3>
+            <canvas id="ownerActivityChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Interaction Totals Bar Chart (Histogram)
+        const interactionCtx = document.getElementById('interactionChart').getContext('2d');
+        new Chart(interactionCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% if interactionData.labels is defined %}{% for label in interactionData.labels %}'{{ label }}'{% if not loop.last %},{% endif %}{% endfor %}{% else %}'No Data'{% endif %}],
+                datasets: [
+                    {
+                        label: 'J\'adore',
+                        data: [{% if interactionData.jadoreCounts is defined %}{% for count in interactionData.jadoreCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(255, 111, 97, 0.6)',
+                        borderColor: '#FF6F61',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Likes',
+                        data: [{% if interactionData.likesCounts is defined %}{% for count in interactionData.likesCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(76, 175, 80, 0.6)',
+                        borderColor: '#4CAF50',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Dislikes',
+                        data: [{% if interactionData.dislikesCounts is defined %}{% for count in interactionData.dislikesCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(244, 67, 54, 0.6)',
+                        borderColor: '#F44336',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Shares',
+                        data: [{% if interactionData.sharesCounts is defined %}{% for count in interactionData.sharesCounts %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                        backgroundColor: 'rgba(33, 150, 243, 0.6)',
+                        borderColor: '#2196F3',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Nombre d\'Interactions'
+                        },
+                        beginAtZero: true,
+                        stacked: false
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Logement'
+                        },
+                        stacked: false
+                        }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // Owner Activity Donut Chart (unchanged)
+        const ownerCtx = document.getElementById('ownerActivityChart').getContext('2d');
+        new Chart(ownerCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% if ownerPostCounts is defined %}{% for owner in ownerPostCounts %}'{{ owner.owner }}'{% if not loop.last %},{% endif %}{% endfor %}{% else %}'No Data'{% endif %}],
+                datasets: [{
+                    label: 'Posts',
+                    data: [{% if ownerPostCounts is defined %}{% for owner in ownerPostCounts %}{{ owner.postCount }}{% if not loop.last %},{% endif %}{% endfor %}{% else %}0{% endif %}],
+                    backgroundColor: ['#2196F3', '#4CAF50', '#FF9800', '#F44336', '#9C27B0']
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

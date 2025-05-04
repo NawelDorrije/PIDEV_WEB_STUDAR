@@ -1,0 +1,6 @@
+framework:
+    scheduler:
+        schedules:
+            send_reminders:
+                task: App\Task\SendRendezvousRemindersTask
+                expression: '*/5 * * * *'

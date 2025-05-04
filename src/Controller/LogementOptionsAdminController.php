@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/Admin/logement/options')]
+#[Route('/options')]
 final class LogementOptionsAdminController extends AbstractController
 {
     #[Route('/GetAll', name: 'app_logement_options_index', methods: ['GET'])]

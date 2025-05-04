@@ -72,10 +72,52 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column]
     private ?bool $blocked = false;
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $satisfactionEmotion = null;
+    // Getter
+    public function getSatisfactionEmotion(): ?string
+    {
+        return $this->satisfactionEmotion;
+    }
+
+    // Setter
+    public function setSatisfactionEmotion(?string $satisfactionEmotion): self
+    {
+        $this->satisfactionEmotion = $satisfactionEmotion;
+        return $this;
+    }
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $created_at = null;
+   
+    #[ORM\Column(name: 'twoFactorSecret', type: 'string', nullable: true)]
+    private ?string $twoFactorSecret = null;
 
+    #[ORM\Column(name: 'isTwoFactorEnabled', type: 'boolean')]
+    private bool $isTwoFactorEnabled = false;
+
+    // Getters and setters
+    public function getTwoFactorSecret(): ?string
+    {
+        return $this->twoFactorSecret;
+    }
+
+    public function setTwoFactorSecret(?string $twoFactorSecret): self
+    {
+        $this->twoFactorSecret = $twoFactorSecret;
+        return $this;
+    }
+
+    public function isTwoFactorEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled;
+    }
+
+    public function setIsTwoFactorEnabled(bool $isTwoFactorEnabled): self
+    {
+        $this->isTwoFactorEnabled = $isTwoFactorEnabled;
+        return $this;
+    }
     #[ORM\OneToMany(mappedBy: 'vendeur', targetEntity: Meuble::class, cascade: ['persist', 'remove'])]
     private Collection $meubles;
     #[ORM\OneToMany(mappedBy: 'acheteur', targetEntity: Panier::class, cascade: ['persist', 'remove'])]

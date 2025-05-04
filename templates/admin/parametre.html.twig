@@ -199,7 +199,8 @@
             font-size: 14px;
         }
         
-        .form-group input[type="checkbox"] {
+        .form-group input[type="checkbox"],
+        .form-group input[type="file"] {
             width: auto;
             margin-right: 10px;
         }
@@ -280,8 +281,7 @@
         body.theme-dark .admin-content {
             background-color: #1a1a1a !important;
         }
-        body.theme-dark .title-dark{
-         
+        body.theme-dark .title-dark {
             color: #f1f1f1;
         }
         
@@ -384,8 +384,6 @@
 
     <!-- Main Content -->
     <div class="admin-content">
-
-
         <!-- Flash Messages -->
         {% for message in app.flashes('success') %}
             <div class="alert alert-success">{{ message }}</div>
@@ -448,7 +446,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Mettre à jour le profil</h3>
-                <form action="#" method="post">
+                <form action="{{ path('app_admin_modifier_profile', {'cin': app.user.cin}) }}" method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="nom">Nom</label>
                         <input type="text" id="nom" name="nom" value="{{ app.user.nom }}" required>
@@ -465,6 +463,10 @@
                         <label for="numTel">Numéro de téléphone</label>
                         <input type="text" id="numTel" name="numTel" value="{{ app.user.numTel }}">
                     </div>
+                    <div class="form-group">
+                        <label for="imageFile">Photo de profil</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                    </div>
                     <button type="submit" class="orange-button">Mettre à jour le profil</button>
                 </form>
             </div>
@@ -475,7 +477,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Préférences de notification</h3>
-                
+                <!-- Add notification preferences form here -->
             </div>
         </div>
 
@@ -503,7 +505,22 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Authentification à deux facteurs (2FA)</h3>
-                
+                <form action="{{ path('app_admin_parametre_twofa') }}" method="post">
+                    <div class="form-group">
+                        <label for="twofa-enabled">
+                            <input type="checkbox" id="twofa-enabled" name="twofa_enabled" {{ app.user.isTwoFactorEnabled ? 'checked' : '' }}>
+                            Activer l'authentification à deux facteurs
+                        </label>
+                    </div>
+                    {% if app.user.isTwoFactorEnabled %}
+                        <div class="form-group">
+                            <label>Configurer l'application d'authentification</label>
+                            <p>Scannez ce QR code avec votre application d'authentification (par exemple, Google Authenticator ou Authy).</p>
+                            <img style="height: 250px; width: 250px;margin-left: 105px;" src="{{ path('app_admin_twofa_qr_code', {'cin': app.user.cin}) }}" alt="QR Code pour 2FA">
+                        </div>
+                    {% endif %}
+                    <button style="margin-left: 165px;" type="submit" class="orange-button">Mettre à jour</button>
+                </form>
             </div>
         </div>
 

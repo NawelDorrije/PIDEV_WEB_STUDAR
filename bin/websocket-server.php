@@ -46,7 +46,7 @@ try {
         8080
     );
 
-    echo "Starting WebSocket server on ws://127.0.0.1:8080\n";
+    echo "Starting WebSocket server on ws://127.0.0.1:8000\n";
     $server->run();
 } catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";

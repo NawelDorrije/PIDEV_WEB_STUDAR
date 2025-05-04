@@ -11,6 +11,50 @@
         * {
             box-sizing: border-box;
         }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        #wordInput {
+            padding: 8px;
+            font-size: 16px;
+        }
+        #addButton {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        #addButton:hover {
+            background-color: #45a049;
+        }
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .word-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 16px;
+            color: white;
+            border-radius: 4px;
+            background-color: #f28c38;
+        }
+        .word-item span {
+            margin-right: 8px;
+        }
+        .delete-icon {
+            cursor: pointer;
+            font-size: 14px;
+            color: #ffe4c4;
+        }
+        .delete-icon:hover {
+            color: #ff0000;
+        }
         #preview-slider {
             display: none;
             padding: 15px;
@@ -177,15 +221,72 @@
         let map;
         let marker = null;
         let imageCount = 0;
-        let allPhotos = [
-            {% for image in logement.imageLogements %}
-                {
-                    src: "{{ asset('Uploads/photos/' ~ image.url) }}",
-                    id: {{ image.id }}
-                }{% if not loop.last %},{% endif %}
-            {% endfor %}
-        ];
+        let allPhotos = [];
         let deletedPhotoIds = [];
+        let Alloptions = [];
+        let existingOption=[];
+        let existingPhotos = []; // Store existing photos with IDs and URLs
+        {% for photo in logement.imageLogements %}
+        existingPhotos.push({
+            id: '{{ photo.id }}',
+            url: '{{ asset('Uploads/photos/' ~ photo.url) }}'
+        });
+    {% endfor %}
+    
+    allPhotos = existingPhotos.map(photo => photo.url);
+        function addWord() {
+            const wordInput = document.getElementById('wordInput');
+            const word = wordInput.value.trim();
+            if (word) {
+                Alloptions.push(word);
+                const wordList = document.getElementById('wordList');
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <span>${word}</span>
+                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
+                `;
+                wordList.appendChild(wordItem);
+                wordInput.value = '';
+                updateOptionsInput();
+            }
+        }
+
+        function updateOptionsInput() {
+            const optionsInput = document.getElementById('optionsInput');
+            optionsInput.value = JSON.stringify(Alloptions);
+            console.log('Options updated:', optionsInput.value);
+        }
+
+        function deleteWord(element, word) {
+            Alloptions = Alloptions.filter(item => item !== word);
+            element.parentElement.remove();
+            updateOptionsInput();
+        }
+
+        function renderOptions() {
+            const wordList = document.getElementById('wordList');
+            wordList.innerHTML = '';
+            Alloptions.forEach(word => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'word-item';
+                wordItem.innerHTML = `
+                    <span>${word}</span>
+                    <span class="delete-icon" onclick="deleteWord(this, '${word}')">✕</span>
+                `;
+                wordList.appendChild(wordItem);
+            });
+            updateOptionsInput();
+        }
+
+        document.getElementById('addButton')?.addEventListener('click', addWord);
+
+        document.getElementById('wordInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addWord();
+            }
+        });
 
         function previewImages(event) {
             console.log('previewImages called with files:', event.target.files);
@@ -208,6 +309,15 @@
                 };
                 reader.readAsDataURL(file);
             });
+
+            updateFileInput();
+        }
+
+        function updateFileInput() {
+            const fileInput = document.getElementById("file-input");
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
         }
 
         function renderPhotos() {
@@ -263,6 +373,8 @@
                     }
                     allPhotos.splice(index, 1);
                     renderPhotos();
+                    updateFileInput();
+                    updateDeletedPhotosInput();
                     updatePreviewVisibility();
                     if (allPhotos.length === 0) {
                         const fileInput = document.getElementById("file-input");
@@ -286,6 +398,18 @@
 
             updateSliderWidth();
             updatePreviewVisibility();
+        }
+
+        function updateDeletedPhotosInput() {
+            let input = document.getElementById('deleted-photos');
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.id = 'deleted-photos';
+                input.name = 'deleted_photos';
+                document.getElementById('contact-form').appendChild(input);
+            }
+            input.value = deletedPhotoIds.join(',');
         }
 
         function handleDrop(event) {
@@ -506,6 +630,7 @@
             console.log('DOM loaded');
             initMap();
             renderPhotos();
+            renderOptions();
 
             const initialHash = window.location.hash.replace('#', '');
             if (initialHash && initialHash.startsWith('image_')) {
@@ -578,9 +703,10 @@
                 const fileInput = document.getElementById('file-input');
                 console.log('Form submission - File input files:', fileInput ? fileInput.files : 'File input not found');
                 if (fileInput && fileInput.files.length > 0) {
-                    console.log('New photos ready for submission:', Array.from(fileInput.files).map(f => f.name));
+                    console.log('Photos ready for submission:', Array.from(fileInput.files).map(f => f.name));
+                } else {
+                    console.log('No photos selected for submission');
                 }
-                console.log('Deleted photo IDs:', deletedPhotoIds);
 
                 if (!isValid) {
                     e.preventDefault();
@@ -600,7 +726,7 @@
                 {% endfor %}
             {% endfor %}
             <div class="col-lg-4" style="margin:30px">
-                <h2>Modifier l'offre</h2>
+                <h2>Créer une nouvelle offre</h2>
             </div>
             <div class="row row-page">
                 <div class="col-lg-12 right-column">
@@ -632,6 +758,7 @@
                                 <h5>Parcourir les fichiers</h5>
                                 <p>Glissez et déposez les photos ici</p>
                                 <i class="fas fa-paperclip paperclip"></i>
+                                <input type="file" id="file-input" name="logement[photos][]" multiple accept="image/jpeg,image/png,image/gif" style="display: none;" onchange="previewImages(event)">
                                 {{ form_widget(form.photos, {
                                     'attr': {
                                         'id': 'file-input',
@@ -661,8 +788,15 @@
                         {{ form_widget(form.lng, {'attr': {'id': 'logement_lng'}}) }}
                         <input type="hidden" id="deleted_photos" name="deleted_photos" value="">
                         <div id="map" style="height: 400px; width: 100%; margin: 20px 0; border-radius: 8px;"></div>
+                        <div class="input-container">
+                            <input type="text" id="wordInput" placeholder="Add an option (e.g. WiFi, Parking)" class="form-control">
+                            <button type="button" id="addButton" onclick="addWord()">Add Option</button>
+                        </div>
+                        <div class="word-list" id="wordList"></div>
+                        <div id="options-error" class="error-message"></div>
+                        <input type="hidden" name="options" id="optionsInput" value="[]">
                         <div class="col-lg-12" style="margin-top: 20px;">
-                            <button type="submit" class="orange-button">{{ button_label|default('Enregistrer') }}</button>
+                            <button type="submit" class="orange-button">Créer</button>
                         </div>
                     </div>
                     {{ form_end(form) }}

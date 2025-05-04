@@ -3,7 +3,7 @@ let ws = null;
 
 window.initializeWebSocket = function(currentUserCin, receiverCin) {
     console.log('Initializing WebSocket for:', currentUserCin, receiverCin);
-    ws = new WebSocket('ws://127.0.0.1:8080');
+    ws = new WebSocket('ws://127.0.0.1:8000');
 
     ws.onopen = function() {
         console.log('WebSocket connection established');

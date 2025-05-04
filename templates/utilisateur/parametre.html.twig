@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Paramètres Admin{% endblock %}
+{% block title %}Paramètres{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -34,6 +34,22 @@
             transition: margin-left 0.3s;
             background-color: white;
         }
+        .rating-section video {
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid #ccc;
+    }
+    .btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    .btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
         
         .admin-sidebar:hover ~ .admin-content {
             margin-left: 250px;
@@ -199,7 +215,8 @@
             font-size: 14px;
         }
         
-        .form-group input[type="checkbox"] {
+        .form-group input[type="checkbox"],
+        .form-group input[type="file"] {
             width: auto;
             margin-right: 10px;
         }
@@ -280,8 +297,7 @@
         body.theme-dark .admin-content {
             background-color: #1a1a1a !important;
         }
-        body.theme-dark .title-dark{
-         
+        body.theme-dark .title-dark {
             color: #f1f1f1;
         }
         
@@ -359,7 +375,7 @@
 {% block body %}
 <div class="admin-container" data-theme="{{ app.user.theme ?? 'light' }}">
     <!-- Sidebar -->
-    <div class="admin-sidebar">
+    <!-- <div class="admin-sidebar">
         <ul class="sidebar-nav">
             <li>
                 <a href="{{ path('app_admin_dashboard') }}" class="{{ app.current_route starts with 'app_admin_dashboard' ? 'active' : '' }}">
@@ -380,12 +396,10 @@
                 </a>
             </li>
         </ul>
-    </div>
+    </div> -->
 
     <!-- Main Content -->
     <div class="admin-content">
-
-
         <!-- Flash Messages -->
         {% for message in app.flashes('success') %}
             <div class="alert alert-success">{{ message }}</div>
@@ -448,7 +462,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Mettre à jour le profil</h3>
-                <form action="#" method="post">
+                <form action="{{ path('app_utilisateur_modifier_profile', {'cin': app.user.cin}) }}" method="post" enctype="multipart/form-data">
                     <div class="form-group">
                         <label for="nom">Nom</label>
                         <input type="text" id="nom" name="nom" value="{{ app.user.nom }}" required>
@@ -465,6 +479,10 @@
                         <label for="numTel">Numéro de téléphone</label>
                         <input type="text" id="numTel" name="numTel" value="{{ app.user.numTel }}">
                     </div>
+                    <div class="form-group">
+                        <label for="imageFile">Photo de profil</label>
+                        <input type="file" id="imageFile" name="imageFile" accept="image/*">
+                    </div>
                     <button type="submit" class="orange-button">Mettre à jour le profil</button>
                 </form>
             </div>
@@ -475,7 +493,7 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Préférences de notification</h3>
-                
+                <!-- Add notification preferences form here -->
             </div>
         </div>
 
@@ -503,18 +521,226 @@
             <div class="modal-content">
                 <i class="fas fa-times modal-close"></i>
                 <h3>Authentification à deux facteurs (2FA)</h3>
-                
+                <form action="{{ path('app_utilisateur_parametre_twofa') }}" method="post">
+                    <div class="form-group">
+                        <label for="twofa-enabled">
+                            <input type="checkbox" id="twofa-enabled" name="twofa_enabled" {{ app.user.isTwoFactorEnabled ? 'checked' : '' }}>
+                            Activer l'authentification à deux facteurs
+                        </label>
+                    </div>
+                    {% if app.user.isTwoFactorEnabled %}
+                        <div class="form-group">
+                            <label>Configurer l'application d'authentification</label>
+                            <p>Scannez ce QR code avec votre application d'authentification (par exemple, Google Authenticator ou Authy).</p>
+                            <img style="height: 250px; width: 250px;margin-left: 105px;" src="{{ path('app_utilisateur_twofa_qr_code', {'cin': app.user.cin}) }}" alt="QR Code pour 2FA">
+                        </div>
+                    {% endif %}
+                    <button style="margin-left: 165px;" type="submit" class="orange-button">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+        <div class="parameters-list rating-section">
+            <h3>Évaluer l'application</h3>
+            <p>Scannez votre visage avec la caméra pour évaluer votre satisfaction (heureux ou triste).</p>
+            <button   id="startRating" class="btn">Démarrer l'évaluation</button>
+            <button   id="stopRating" class="btn" style="display: none;">Arrêter l'évaluation</button>
+            <div  style="margin-top:20px;width:  800px;height: 500px; margin-left: 370px;" id="videoContainer" style="display: none; ">
+                <video id="videoElement" autoplay></video>
+                <canvas id="canvasElement" style="display: none;"></canvas>
+                <p id="ratingResult"></p>
             </div>
         </div>
 
+        <!-- Activity Log -->
+        <div class="parameters-list activity-log">
+            <h3>Journal d'activité</h3>
+            {% if activityLogs is defined and activityLogs|length > 0 %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in activityLogs %}
+                            <tr>
+                                <td>{{ log.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.details }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Aucune activité récente.</p>
+            {% endif %}
+        </div>
        
-       
+            
+        </div> 
     </div>
 </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    <script>
+        document.getElementById('startRating').addEventListener('click', function() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvasElement');
+            const result = document.getElementById('ratingResult');
+            const videoContainer = document.getElementById('videoContainer');
+            const startButton = this;
+            const stopButton = document.getElementById('stopRating');
+            let stream;
+            let intervalId;
+            let latestEmotion = null;
+            let evaluationStopped = false; // Flag to stop frame capture
+            let isEmotionConfirmed = false;
+        
+            console.log('Start button clicked');
+        
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(videoStream) {
+                        stream = videoStream;
+                        video.srcObject = stream;
+                        videoContainer.style.display = 'block';
+                        startButton.disabled = true;
+                        stopButton.style.display = 'inline-block';
+                        console.log('Webcam stream started');
+        
+                        video.onloadedmetadata = function() {
+                            console.log('Video metadata loaded', {
+                                width: video.videoWidth,
+                                height: video.videoHeight
+                            });
+                            video.play();
+                            intervalId = setInterval(sendFrame, 2000);
+                        };
+        
+                        function sendFrame() {
+                            if (evaluationStopped || !canvas || !video.videoWidth || !video.videoHeight) {
+                                console.log('Evaluation stopped or canvas not ready, skipping frame');
+                                return;
+                            }
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            canvas.getContext('2d').drawImage(video, 0, 0);
+                            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                            console.log('Captured frame data:', imageData.substring(0, 50) + '...');
+                            if (!imageData || !imageData.startsWith('data:image/jpeg;base64,')) {
+                                console.error('Invalid image data:', imageData);
+                                result.textContent = 'Erreur : Image non capturée.';
+                                result.style.display = 'block';
+                                return;
+                            }
+        
+                            console.log('Sending request body:', JSON.stringify({ image: imageData }));
+                            fetch('https://127.0.0.1:8000/utilisateur/parametre/rate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ image: imageData })
+                            })
+                            .then(response => {
+                                console.log('Server response status:', response.status);
+                                console.log('Response headers:', response.headers.get('content-type'));
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok: ' + response.statusText);
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Server response data:', data);
+                                if (data.emotion && !evaluationStopped) {
+                                    latestEmotion = data.emotion;
+                                    result.textContent = `Émotion détectée : ${data.emotion}. Confirmez avec "Arrêter" si correcte.`;
+                                    result.style.display = 'block';
+                                } else {
+                                    console.error('No emotion in response:', data);
+                                    if (!evaluationStopped) {
+                                        result.textContent = 'Erreur : Réponse inattendue du serveur.';
+                                        result.style.display = 'block';
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Fetch error:', error);
+                                if (!evaluationStopped) {
+                                    result.textContent = 'Erreur : Échec de la détection.';
+                                    result.style.display = 'block';
+                                }
+                            });
+                        }
+        
+                        function stopStream() {
+                            evaluationStopped = true; // Set flag to stop frame capture
+                            if (intervalId) {
+                                clearInterval(intervalId);
+                                intervalId = null;
+                                console.log('Interval cleared');
+                            }
+                            if (stream) {
+                                stream.getTracks().forEach(track => track.stop());
+                                stream = null;
+                                console.log('Video stream stopped');
+                            }
+                            videoContainer.style.display = 'none';
+                            startButton.disabled = false;
+                            stopButton.style.display = 'none';
+        
+                            console.log('Attempting to save emotion:', latestEmotion);
+                            if (isEmotionConfirmed && latestEmotion) {
+                                fetch('https://127.0.0.1:8000/utilisateur/parametre/save-emotion', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ emotion: latestEmotion })
+                                })
+                                .then(response => {
+                                    console.log('Save emotion response status:', response.status);
+                                    if (!response.ok) {
+                                        throw new Error('Failed to save emotion: ' + response.statusText);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    console.log('Emotion saved:', data);
+                                    result.textContent = `Émotion enregistrée : ${latestEmotion}`;
+                                })
+                                .catch(error => {
+                                    console.error('Error saving emotion:', error);
+                                    result.textContent = 'Erreur : Échec de l\'enregistrement de l\'émotion.';
+                                });
+                            } else if (latestEmotion) {
+                                result.textContent = 'Émotion non enregistrée : Confirmez l\'émotion avant d\'arrêter.';
+                            } else {
+                                result.textContent = 'Aucune émotion détectée à enregistrer.';
+                            }
+                        }
+        
+                        stopButton.addEventListener('click', function() {
+                            if (latestEmotion) {
+                                if (confirm(`Voulez-vous enregistrer l'émotion "${latestEmotion}" ?`)) {
+                                    isEmotionConfirmed = true;
+                                }
+                            }
+                            stopStream();
+                        });
+                    })
+                    .catch(function(err) {
+                        console.error('Webcam error:', err);
+                        result.textContent = 'Erreur : Accès à la caméra refusé ou non disponible.';
+                        result.style.display = 'block';
+                    });
+            } else {
+                console.error('getUserMedia not supported');
+                result.textContent = 'Erreur : Votre navigateur ne supporte pas l\'accès à la caméra.';
+                result.style.display = 'block';
+            }
+        });
+        </script>
     <script>
         console.log('START_PARAMETRE_JS');
 
