@@ -436,23 +436,18 @@
                         document.getElementById('modalReason').textContent = data.reason;
 
                         // Update buttons
-                        const blockBtn = document.querySelector('.block-btn');
                         const deleteBtn = document.querySelector('.delete-btn');
-                        blockBtn.style.display = 'none';
-                        deleteBtn.style.display = 'none';
+                        if (deleteBtn) {
+                            deleteBtn.style.display = 'none';
 
-                        // Set data for block button (sender's CIN)
-                        if (data.senderCin) {
-                            blockBtn.setAttribute('data-cin', data.senderCin);
-                            blockBtn.setAttribute('data-csrf-token', '{{ csrf_token('block') }}');
-                            blockBtn.style.display = 'inline-block';
-                        }
-
-                        // Set data for delete button (message ID)
-                        if (data.messageId) {
-                            deleteBtn.setAttribute('data-message-id', data.messageId);
-                            deleteBtn.setAttribute('data-csrf-token', '{{ csrf_token('delete_message') }}');
-                            deleteBtn.style.display = 'inline-block';
+                            // Set data for delete button (message ID)
+                            if (data.messageId) {
+                                deleteBtn.setAttribute('data-message-id', data.messageId);
+                                deleteBtn.setAttribute('data-csrf-token', '{{ csrf_token('delete_message') }}' + data.messageId);
+                                deleteBtn.style.display = 'inline-block';
+                            }
+                        } else {
+                            console.error('Delete button not found in modal!');
                         }
 
                         analysisModal.show();
@@ -464,81 +459,48 @@
                 });
             });
 
-            // Handle block button click
-            document.querySelector('.block-btn').addEventListener('click', function() {
-                const cin = this.getAttribute('data-cin');
-                const csrfToken = this.getAttribute('data-csrf-token');
-
-                if (!confirm('Voulez-vous vraiment bloquer cet utilisateur ?')) {
-                    return;
-                }
-
-                fetch(`{{ path('admin_user_block', {'cin': 'CIN'}) }}`.replace('CIN', cin), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: new URLSearchParams({
-                        '_token': csrfToken
-                    }).toString()
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.error || 'Erreur réseau ou serveur');
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    alert(data.message);
-                    analysisModal.hide();
-                    window.location.reload(); // Refresh to update UI
-                })
-                .catch(error => {
-                    console.error('Erreur lors du blocage:', error);
-                    alert('Une erreur est survenue lors du blocage : ' + error.message);
-                });
-            });
-
             // Handle delete button click
-            document.querySelector('.delete-btn').addEventListener('click', function() {
-                const messageId = this.getAttribute('data-message-id');
-                const csrfToken = this.getAttribute('data-csrf-token');
+            const deleteBtn = document.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    const messageId = this.getAttribute('data-message-id');
+                    const csrfToken = this.getAttribute('data-csrf-token');
 
-                if (!confirm('Voulez-vous vraiment supprimer ce message ?')) {
-                    return;
-                }
-
-                fetch(`{{ path('admin_message_delete', {'id': 'MESSAGE_ID'}) }}`.replace('MESSAGE_ID', messageId), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: new URLSearchParams({
-                        '_token': csrfToken
-                    }).toString()
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(data => {
-                            throw new Error(data.error || 'Erreur réseau ou serveur');
-                        });
+                    if (!confirm('Voulez-vous vraiment supprimer ce message ?')) {
+                        return;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    alert(data.message);
-                    analysisModal.hide();
-                    window.location.reload(); // Refresh to update UI
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la suppression:', error);
-                    alert('Une erreur est survenue lors de la suppression : ' + error.message);
+
+                    fetch(`{{ path('admin_message_delete', {'id': 'MESSAGE_ID'}) }}`.replace('MESSAGE_ID', messageId), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            '_token': csrfToken
+                        }).toString()
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Erreur réseau ou serveur');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        alert(data.message);
+                        analysisModal.hide();
+                        window.location.reload(); // Refresh to update UI
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors de la suppression:', error);
+                        alert('Une erreur est survenue lors de la suppression : ' + error.message);
+                    });
                 });
-            });
+            } else {
+                console.error('Delete button not found for event listener!');
+            }
         });
     </script>
 {% endblock %}
