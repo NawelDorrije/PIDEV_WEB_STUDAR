@@ -11,11 +11,10 @@
 {% block stylesheets %}
     {{ parent() }}
     {{ encore_entry_link_tags('app') }}
-    {# {{ encore_entry_link_tags('chat_css') }} #}
     <style>
-     /* Styles CSS intégrés */
+        /* Styles CSS intégrés */
         @import '~bootstrap/dist/css/bootstrap.min.css';
-.record-btn.active {
+        .record-btn.active {
             color: red;
         }
         .chat-container {
@@ -372,7 +371,6 @@
             flex: 0 0 40px;
             text-align: center;
         }
-
         .reply-emojis i,
         .reply-recording i,
         .reply-send i {
@@ -409,7 +407,49 @@
             border: none;
             box-shadow: none;
         }
+        .name-meta {
+            font-size: 16px;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            color: #000;
+        }
 
+        .message-preview {
+            font-size: 14px;
+            color: #666;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 200px;
+        }
+
+        .time-meta {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.4);
+            text-align: right;
+        }
+
+.emoji {
+    font-size: 24px;
+    cursor: pointer;
+    margin: 5px;
+    display: inline-block;
+}
+.emoji:hover {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+}
+        .report-btn {
+            font-size: 12px;
+            color: #ff4d4f;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .report-btn:hover {
+            text-decoration: underline;
+        }
         @media screen and (max-width: 768px) {
             .chat-container {
                 height: calc(100vh - 126px); /* Adjust for mobile: header (56px) + footer (70px) */
@@ -513,25 +553,37 @@
                     </div>
 
                     <div class="sideBar">
-                        {% for user in users %}
-                            {% if current_user and user.cin != current_user.cin %}
+{% for userData in users_with_last_message %}
+                            {% set user = userData.user %}
+                            {% set lastMessage = userData.lastMessage %}
+                                {% if current_user and user.cin != current_user.cin %}
                                 <div class="sideBar-body">
-                                    <div class="sideBar-avatar">
-                                        <div class="avatar-icon">
-                                            <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
-                                        </div>
-                                    </div>
-                                    <div class="sideBar-main">
-                                        <div class="sideBar-name">
-                                            <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
-                                                <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
-                                            </a>
-                                        </div>
-                                        <div class="sideBar-time">
-                                            <span class="time-meta">18:18</span>
-                                        </div>
+                                <div class="sideBar-avatar">
+                                    <div class="avatar-icon">
+                                        <img src="https://bootdey.com/img/Content/avatar/avatar{{ random(1, 6) }}.png" alt="Avatar">
                                     </div>
                                 </div>
+                                <div class="sideBar-main">
+                                    <div class="sideBar-name">
+                                        <a href="{{ path('app_chat_conversation', {'receiverCin': user.cin}) }}">
+                                            <span class="name-meta">{{ user.nom }} {{ user.prenom }}</span>
+                                        </a>
+                                        <div class="message-preview">
+                                            {% if lastMessage %}
+                                                {{ lastMessage.content|length > 20 ? lastMessage.content|slice(0, 10) ~ '...' : lastMessage.content }}
+                                            {% else %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="sideBar-time">
+                                        <span class="time-meta">
+                                            {% if lastMessage %}
+                                                {{ lastMessage.timestamp|date('H:i') }}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                             {% endif %}
                         {% endfor %}
                     </div>
@@ -577,7 +629,7 @@
                                     </div>
                                 </div>
                             {% endif %}
-                            {% endfor %}
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -629,7 +681,7 @@
                                         </div>
                                         <span class="message-time">
                                             {{ message.timestamp|date('d/m/Y H:i') }}
-                                        </span>
+<a href="{{ path('app_chat_report', {'id': message.id}) }}" class="report-btn" data-bs-toggle="modal" data-bs-target="#reportModal">Signaler</a>                                        </span>
                                     </div>
                                 </div>
                             {% endif %}
@@ -640,8 +692,14 @@
 
                 <div class="reply">
                     <div class="reply-emojis">
-                        <i class="fas fa-smile fa-2x" aria-hidden="true"></i>
-                    </div>
+<div id="emoji-picker">
+    <span class="emoji" data-emoji="😊">😊</span>
+    <span class="emoji" data-emoji="😂">😂</span>
+    <span class="emoji" data-emoji="😍">😍</span>
+    <span class="emoji" data-emoji="👍">👍</span>
+    <span class="emoji" data-emoji="🚀">🚀</span>
+    <!-- Add more emojis as needed -->
+</div>                    </div>
                     <div class="reply-main">
                         <textarea class="form-control" rows="1" id="comment" placeholder="Type a message..."></textarea>
                     </div>
@@ -659,6 +717,40 @@
             </div>
         </div>
     </div>
+   {# {% for message in app.flashes('success') %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+{% for message in app.flashes('error') %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportModalLabel">Signaler un message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm" method="post" action="">
+                    <div class="mb-3">
+                        <label for="reportReason" class="form-label">Raison du signalement</label>
+                        <textarea class="form-control" id="reportReason" name="report[reason]" required minlength="10" placeholder="Expliquez pourquoi ce message est inapproprié"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('report_message') }}">
+                    <button type="submit" class="btn btn-primary">Envoyer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> #}
 {% endblock %}
 
 {% block javascripts %}
@@ -666,7 +758,7 @@
     {{ encore_entry_script_tags('app') }}
     <script>
         let socket;
-        // let reconnectAttempts = 0;
+        let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         const reconnectInterval = 3000;
         let mediaRecorder;
@@ -738,7 +830,7 @@
             }
 
             try {
-                socket = new WebSocket('ws://localhost:8000');
+                socket = new WebSocket('ws://localhost:8080');
 
                 socket.onopen = function() {
                     console.log('WebSocket connected');
@@ -748,9 +840,10 @@
                 };
 
                 socket.onmessage = function(event) {
+                    console.log('Raw WebSocket message:', event.data);
                     try {
                         const message = JSON.parse(event.data);
-                        console.log('Received:', message);
+                        console.log('Parsed message:', message);
 
                         if (!message.senderCin || !message.receiverCin || !message.content) {
                             console.log('Invalid message format:', message);
@@ -791,8 +884,8 @@
                             initializeWebSocket(userCin);
                         }, reconnectInterval);
                     } else {
-                        console.error('Max reconnect attempts reached. Please refresh the page.');
-                        alert('Unable to connect to the chat server. Please try again later.');
+                        console.error('Max reconnect attempts reached. Starting polling as fallback.');
+                        pollMessages();
                     }
                 };
 
@@ -919,6 +1012,31 @@
             }
         }
 
+        // Polling as a fallback mechanism
+        function pollMessages() {
+            const chatContainer = document.querySelector('.chat-container');
+            const currentUserCin = chatContainer.dataset.currentUserCin;
+            const receiverCin = chatContainer.dataset.receiverCin;
+
+            fetch(`/chat/${receiverCin}/load-previous?offset=0&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(msg => {
+                            appendMessage({
+                                senderCin: msg.isSender ? currentUserCin : receiverCin,
+                                receiverCin: msg.isSender ? receiverCin : currentUserCin,
+                                content: msg.content,
+                                timestamp: msg.timestamp
+                            });
+                        });
+                    }
+                })
+                .catch(error => console.error('Polling error:', error));
+
+            setTimeout(pollMessages, 5000); // Check every 5 seconds
+        }
+
         // Voice recording
         function startRecording() {
             navigator.mediaDevices.getUserMedia({ audio: true })
@@ -956,34 +1074,46 @@
             }
         }
 
-      // In conversation.html.twig, update the sendVoiceMessage function
-function sendVoiceMessage(audioBlob) {
-    console.log('Audio Blob MIME type:', audioBlob.type); // Log MIME type
-    const chatContainer = document.querySelector('.chat-container');
-    const receiverCin = chatContainer.dataset.receiverCin;
-    const formData = new FormData();
-    // Force the MIME type to audio/webm
-    const audioBlobWithCorrectMime = new Blob([audioBlob], { type: 'audio/webm' });
-    formData.append('audio', audioBlobWithCorrectMime, 'recording.webm');
+        function sendVoiceMessage(audioBlob) {
+            console.log('Audio Blob MIME type:', audioBlob.type);
+            console.log('Audio Blob size:', audioBlob.size);
+            if (audioBlob.size > 5 * 1024 * 1024) {
+                alert('Audio file is too large (max 5MB).');
+                return;
+            }
 
-    fetch(`/chat/send-voice/${receiverCin}`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            console.log('Voice message sent:', data.message);
-        } else {
-            console.error('Voice message error:', data.error);
-            alert('Error sending voice message: ' + data.error);
+            const chatContainer = document.querySelector('.chat-container');
+            const receiverCin = chatContainer.dataset.receiverCin;
+            const currentUserCin = chatContainer.dataset.currentUserCin;
+            const formData = new FormData();
+            const audioBlobWithCorrectMime = new Blob([audioBlob], { type: 'audio/webm' });
+            formData.append('audio', audioBlobWithCorrectMime, 'recording.webm');
+
+            fetch(`/chat/send-voice/${receiverCin}`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Voice message sent:', data.message);
+                        // Append the message locally
+                        appendMessage({
+                            senderCin: currentUserCin,
+                            receiverCin: receiverCin,
+                            content: data.message.content,
+                            timestamp: data.message.timestamp
+                        });
+                    } else {
+                        console.error('Voice message error:', data.error, data.details);
+                        alert('Error sending voice message: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading voice message:', error);
+                    alert('An error occurred while sending the voice message.');
+                });
         }
-    })
-    .catch(error => {
-        console.error('Error uploading voice message:', error);
-        alert('An error occurred while sending the voice message.');
-    });
-}
 
         // Initialize chat
         document.addEventListener('DOMContentLoaded', function() {
@@ -1024,5 +1154,62 @@ function sendVoiceMessage(audioBlob) {
                 console.error('Record button not found');
             }
         });
+        document.addEventListener('DOMContentLoaded', function() {
+    const emojiToggle = document.querySelector('.emoji-toggle');
+    const emojiPicker = document.getElementById('emoji-picker');
+    const textarea = document.getElementById('comment');
+
+    if (emojiToggle && emojiPicker && textarea) {
+        emojiToggle.addEventListener('click', function() {
+            const isVisible = emojiPicker.style.display === 'block';
+            emojiPicker.style.display = isVisible ? 'none' : 'block';
+        });
+
+        // Handle emoji selection
+        emojiPicker.addEventListener('click', function(event) {
+            if (event.target.classList.contains('emoji')) {
+                const emoji = event.target.dataset.emoji;
+                const currentValue = textarea.value;
+                const cursorPos = textarea.selectionStart;
+                const newValue = currentValue.slice(0, cursorPos) + emoji + currentValue.slice(cursorPos);
+                textarea.value = newValue;
+                textarea.focus();
+                textarea.selectionStart = textarea.selectionEnd = cursorPos + emoji.length;
+                emojiPicker.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!emojiPicker.contains(event.target) && !emojiToggle.contains(event.target)) {
+                emojiPicker.style.display = 'none';
+            }
+        });
+    }
+});
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchText = document.getElementById('searchText');
+            if (searchText) {
+                searchText.addEventListener('input', function() {
+                    const filter = searchText.value.toLowerCase();
+                    const sideBarBodies = document.querySelectorAll('.sideBar-body');
+                    sideBarBodies.forEach(body => {
+                        const name = body.querySelector('.name-meta').textContent.toLowerCase();
+                        body.style.display = name.includes(filter) ? '' : 'none';
+                    });
+                });
+            }
+        });
+     document.addEventListener('DOMContentLoaded', function() {
+    const reportButtons = document.querySelectorAll('.report-btn');
+    reportButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const href = this.getAttribute('href');
+            // Charger la modale dynamiquement via AJAX (optionnel)
+            // Ou laisser le lien ouvrir la page directement
+            window.location.href = href;
+        });
+    });
+});
     </script>
 {% endblock %}

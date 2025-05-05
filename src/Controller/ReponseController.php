@@ -53,7 +53,7 @@ class ReponseController extends AbstractController
 
         // Générer une suggestion de réponse via l'IA
         $prompt = sprintf(
-            "Vous êtes un assistant qui aide un administrateur d'une plateforme de logement à répondre à une réclamation. Voici la réclamation : \nTitre : %s\nDescription : %s\nProposez une réponse professionnelle courte et adaptée. ne reecri pas la reclamation juste donne moi la reponse direct ne me laisse pas la places des noms  ",
+            "Vous êtes un assistant qui aide un administrateur d'une plateforme de logement à répondre à une réclamation. Voici la réclamation : \nTitre : %s\nDescription : %s\nProposez une réponse professionnelle courte et adaptée. ne reecri pas la reclamation juste donne moi la reponse direct ne me laisse pas la places des noms et donne moi briefement la reponse.",
             $reclamation->getTitre(),
             $reclamation->getDescription()
         );

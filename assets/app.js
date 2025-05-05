@@ -3,7 +3,7 @@
 import 'owl.carousel';
 
 //window.jQuery = window.$ = $; // Rend jQuery global pour les plugins
-
+import 'emoji-picker-element';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 import './js/custom.js';

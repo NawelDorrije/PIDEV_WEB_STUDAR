@@ -1,0 +1,291 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Studar - Tableau de Bord des Messages et Signalements{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-[#E5F0FF] flex">
+    <!-- Sidebar -->
+    {# <aside class="w-16 bg-[#3B82F6] flex flex-col items-center py-6 space-y-6">
+        <div class="text-white">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-9h2v6h-2zm0-4h2v2h-2z"/></svg>
+        </div>
+        <div class="text-white">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7v5c0 5.5 4.5 10 10 10s10-4.5 10-10V7L12 2zm0 18c-4.4 0-8-3.6-8-8V8.5l8-3 8 3V12c0 4.4-3.6 8-8 8z"/></svg>
+        </div>
+        <div class="text-white">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+        </div>
+    </aside> #}
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+        <!-- Analytics Section -->
+        <div class="bg-white rounded-xl p-6 shadow-md mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-700 cursor-pointer" onclick="toggleAnalytics()">Analyse des Données</h2>
+                {# <a href="{{ path('app_statistics_export', {'year': year, 'month': month}) }}" class="bg-[#3B82F6] text-white px-4 py-2 rounded-lg hover:bg-[#1E40AF]">
+                    Télécharger le PDF
+                </a> #}
+            </div>
+            <div id="analyticsContent" class="space-y-4 hidden">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Analyse des Tendances</h3>
+                    <p class="text-gray-700">{{ analytics.trend.summary }}</p>
+                    {% if analytics.trend.peakMonth %}
+                        <p class="text-gray-700">Mois de pointe : {{ analytics.trend.peakMonth }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Efficacité des Réponses</h3>
+                    <p class="text-gray-700">{{ analytics.responseEfficiency.summary }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Répartition par Statut</h3>
+                    <p class="text-gray-700">{{ analytics.statusDistribution.summary }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Temps de Résolution</h3>
+                    <p class="text-gray-700">{{ analytics.resolutionTime.summary }}</p>
+                </div>
+                {% if analytics.recommendations|length > 0 %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Recommandations</h3>
+                        <ul class="list-disc pl-5 text-gray-700">
+                            {% for recommendation in analytics.recommendations %}
+                                <li>{{ recommendation }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500">Total des Messages</h2>
+                <p class="text-3xl font-bold text-[#3B82F6]">{{ messageStats.totalMessages }}</p>
+                <p class="text-xs text-gray-400">Messages envoyés</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500">Total des Signalements</h2>
+                <p class="text-3xl font-bold text-[#F59E0B]">{{ reportStats.totalReports }}</p>
+                <p class="text-xs text-gray-400">Signalements déposés</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500">Moyenne Signalements/Utilisateur</h2>
+                <p class="text-3xl font-bold text-[#A5BFFA]">{{ reportStats.avgReportsPerUser }}</p>
+                <p class="text-xs text-gray-400">Par utilisateur signalant</p>
+            </div>
+        </div>
+
+        <!-- Middle Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Line Chart: Messages per Month -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Messages au Fil du Temps ({{ year }})</h2>
+                <canvas id="messagesLineChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Pie Chart: Report Status Distribution -->
+            <div class="bg-white rounded-xl p-6 shadow-md flex flex-col items-center">
+                <h2 class="text-sm text-gray-500 mb-4">Répartition des Signalements par Statut</h2>
+                <canvas id="reportStatusPieChart" class="w-48 h-48"></canvas>
+            </div>
+
+            <!-- Area Chart: Daily Messages -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Messages Quotidiens (Mois {{ month }})</h2>
+                <form method="get" action="{{ path('app_statistics') }}" class="mb-4">
+                    <select name="month" onchange="this.form.submit()" class="border rounded-lg px-2 py-1 text-gray-700">
+                        {% for m in 1..12 %}
+                            <option value="{{ m }}" {{ month == m ? 'selected' : '' }}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="hidden" name="year" value="{{ year }}">
+                </form>
+                <canvas id="dailyMessagesChart" class="w-full h-64"></canvas>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Horizontal Bar Chart: Report Status Breakdown -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Répartition Détaillée des Signalements par Statut</h2>
+                <canvas id="reportStatusBarChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Vertical Bar Chart: Reports per Month -->
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <h2 class="text-sm text-gray-500 mb-4">Signalements par Mois ({{ year }})</h2>
+                <canvas id="reportsBarChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Donut Chart: Report Analysis Results -->
+            <div class="bg-white rounded-xl p-6 shadow-md flex flex-col items-center">
+                <h2 class="text-sm text-gray-500 mb-4">Résultats d'Analyse des Signalements</h2>
+                <canvas id="reportAnalysisDonutChart" class="w-48 h-48"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Line Chart: Messages per Month
+const messagesLineCtx = document.getElementById('messagesLineChart').getContext('2d');
+new Chart(messagesLineCtx, {
+    type: 'line',
+    data: {
+        labels: {{ messageStats.byMonth.labels|default([])|json_encode|raw }},
+        datasets: [{
+            label: 'Messages',
+            data: {{ messageStats.byMonth.data|default([])|json_encode|raw }},
+            borderColor: '#3B82F6',
+            backgroundColor: '#A5BFFA',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            x: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Pie Chart: Report Status Distribution
+const reportStatusPieCtx = document.getElementById('reportStatusPieChart').getContext('2d');
+new Chart(reportStatusPieCtx, {
+    type: 'pie',
+    data: {
+        labels: {{ reportStats.byStatus.labels|default([])|json_encode|raw }},
+        datasets: [{
+            data: {{ reportStats.byStatus.data|default([])|json_encode|raw }},
+            backgroundColor: ['#3B82F6', '#F59E0B'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#6B7280' } }
+        }
+    }
+});
+
+// Area Chart: Daily Messages
+const dailyMessagesCtx = document.getElementById('dailyMessagesChart').getContext('2d');
+new Chart(dailyMessagesCtx, {
+    type: 'line',
+    data: {
+        labels: {{ messageStats.dailyMessages.labels|default([])|json_encode|raw }},
+        datasets: [
+            {
+                label: 'Messages',
+                data: {{ messageStats.dailyMessages.data|default([])|json_encode|raw }},
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            x: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Horizontal Bar Chart: Report Status Breakdown
+const reportStatusBarCtx = document.getElementById('reportStatusBarChart').getContext('2d');
+new Chart(reportStatusBarCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ reportStats.byStatus.labels|default([])|json_encode|raw }},
+        datasets: [
+            {
+                label: 'Résolu',
+                data: {{ reportStats.statusBarData.resolved|json_encode|raw }},
+                backgroundColor: '#3B82F6'
+            },
+            {
+                label: 'Non Résolu',
+                data: {{ reportStats.statusBarData.unresolved|json_encode|raw }},
+                backgroundColor: '#F59E0B'
+            }
+        ]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        scales: {
+            x: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            y: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { position: 'bottom', labels: { color: '#6B7280' } } }
+    }
+});
+
+// Vertical Bar Chart: Reports per Month
+const reportsBarCtx = document.getElementById('reportsBarChart').getContext('2d');
+new Chart(reportsBarCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ reportStats.byMonth.labels|default([])|json_encode|raw }},
+        datasets: [
+            {
+                label: 'Signalements',
+                data: {{ reportStats.byMonth.data|default([])|json_encode|raw }},
+                backgroundColor: '#F59E0B'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, ticks: { color: '#6B7280' } },
+            x: { ticks: { color: '#6B7280' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Donut Chart: Report Analysis Results
+const reportAnalysisDonutCtx = document.getElementById('reportAnalysisDonutChart').getContext('2d');
+new Chart(reportAnalysisDonutCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ reportStats.analysisResults.labels|default([])|json_encode|raw }},
+        datasets: [{
+            data: {{ reportStats.analysisResults.data|default([])|json_encode|raw }},
+            backgroundColor: ['#3B82F6', '#F59E0B'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#6B7280' } }
+        }
+    }
+});
+
+function toggleAnalytics() {
+    const analyticsContent = document.getElementById('analyticsContent');
+    analyticsContent.classList.toggle('hidden');
+}
+</script>
+{% endblock %}

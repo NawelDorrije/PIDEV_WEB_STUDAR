@@ -175,4 +175,5 @@ class GeminiService
             return 'Erreur lors du résumé.';
         }
     }
+   
 }
