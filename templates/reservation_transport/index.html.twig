@@ -176,52 +176,6 @@
         background: transparent;
         border: none;
     }
-     .reservation-slider {
-        position: relative;
-        min-height: 400px;
-    }
-    
-    .reservation-slide {
-        transition: all 0.5s ease;
-    }
-    
-    .hidden-slide {
-        display: none;
-    }
-    
-    .slider-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 20px 0;
-    }
-    
-    .btn-prev, .btn-next {
-        background-color: #4453A6;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 20px;
-        cursor: pointer;
-        transition: all 0.3s;
-        margin: 0 10px;
-    }
-    
-    .btn-prev:hover, .btn-next:hover {
-        background-color: #3a4878;
-    }
-    
-    .btn-prev:disabled, .btn-next:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-    }
-    
-    .page-indicator {
-        font-weight: bold;
-        color: #4453A6;
-        min-width: 100px;
-        text-align: center;
-    }
 </style>
 {% endblock %}
 
@@ -230,27 +184,35 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-<div class="section-heading d-flex justify-content-between align-items-center mb-4">
+                <div class="section-heading d-flex justify-content-between align-items-center mb-4">
                     <h2 style="color:rgb(94, 68, 166);"><i class="fas fa-bus mr-2"></i>Vos Réservations de Transport</h2>
-                    
+                    <a href="{{ path('app_reservation_transport_new') }}" class="btn btn-nouveau float-right">
+                        <i class="fas fa-plus"></i> Nouvelle Réservation
+                    </a>
                 </div>
-
+                
+                <!-- Status Filter -->
                 <div class="status-filter btn-group mb-4" role="group">
-                    <a href="{{ path('app_reservation_transport_index_TRANS') }}"
-                     class="btn btn-outline-secondary {{ not current_status ? 'active' }}">Tous</a>
-                    <a href="{{ path('app_reservation_transport_index_TRANS', {'status': 'confirmée'}) }}" 
-                    class="btn btn-outline-success {{ current_status == 'confirmée' ? 'active' }}">Confirmées</a>
-                    <a href="{{ path('app_reservation_transport_index_TRANS', {'status': 'en_attente'}) }}" 
-                    class="btn btn-outline-warning {{ current_status == 'en_attente' ? 'active' }}">En attente</a>
-                    <a href="{{ path('app_reservation_transport_index_TRANS', {'status': 'refusée'}) }}" 
-                    class="btn btn-outline-danger {{ current_status == 'refusée' ? 'active' }}">Refusées</a>
+                    <a href="{{ path('app_reservation_transport_index') }}" class="btn btn-outline-secondary {{ not current_status ? 'active' }}">Tous</a>
+                    <a href="{{ path('app_reservation_transport_index', {'status': 'confirmée'}) }}" 
+                       class="btn btn-outline-success {{ current_status == 'confirmée' ? 'active' }}">Confirmées</a>
+                    <a href="{{ path('app_reservation_transport_index', {'status': 'en_attente'}) }}" 
+                       class="btn btn-outline-warning {{ current_status == 'en_attente' ? 'active' }}">En attente</a>
+                    <a href="{{ path('app_reservation_transport_index', {'status': 'refusée'}) }}" 
+                       class="btn btn-outline-danger {{ current_status == 'refusée' ? 'active' }}">Refusées</a>
                 </div>
+                
+                <!-- Route Visualization -->
                 <div class="route-visualization">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0"><i class="fas fa-route mr-2"></i>Visualisation des Trajets</h5>
                         <div class="map-controls">
-                            <button class="btn btn-sm btn-outline-primary" onclick="zoomIn()"><i class="fas fa-search-plus"></i></button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="zoomOut()"><i class="fas fa-search-minus"></i></button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="zoomIn()">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="zoomOut()">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
                         </div>
                     </div>
                     <div id="routeMap">
@@ -270,16 +232,32 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Reservations List -->
                 <div class="reservation-list">
                     {% for reservation in reservations %}
-                    <div class="card transport-card mb-3 {{ reservation.status }}" onclick="showRoute({{ reservation.id }}, {{ reservation.departureLat|default('null') }}, {{ reservation.departureLng|default('null') }}, {{ reservation.destinationLat|default('null') }}, {{ reservation.destinationLng|default('null') }}, '{{ reservation.adresseDepart }}', '{{ reservation.adresseDestination }}')">
+                    
+                    <div class="card transport-card mb-3 {{ reservation.status }}"
+                         onclick="showRoute({{ reservation.id }}, 
+                                  {{ reservation.departureLat|default('null') }}, 
+                                  {{ reservation.departureLng|default('null') }}, 
+                                  {{ reservation.destinationLat|default('null') }}, 
+                                  {{ reservation.destinationLng|default('null') }},
+                                  '{{ reservation.adresseDepart }}',
+                                  '{{ reservation.adresseDestination }}')">
                         <div class="card-body">
-                            <a href="{{ path('app_reservation_transport_show_TRANS', {'id': reservation.id}) }}" class="floating-details-btn" title="Voir détails">
+                            <a href="{{ path('app_reservation_transport_show', {'id': reservation.id}) }}" 
+                               class="floating-details-btn" title="Voir détails">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
-                            <h5 class="card-title" style="color:rgb(68,71,166);">
+                            <h5 class="card-title" style="color:rgb(68, 71, 166);">
                                 <i class="fas fa-bus mr-2"></i>Trajet 
-                                <span class="badge badge-{{ reservation.status == 'confirmée' ? 'success' : (reservation.status == 'en_attente' ? 'warning' : 'danger') }}">{{ reservation.status }}</span>
+                                <span class="badge badge-{{ 
+                                    reservation.status == 'confirmée' ? 'success' : 
+                                    (reservation.status == 'en_attente' ? 'warning' : 'danger') 
+                                }}">
+                                    {{ reservation.status }}
+                                </span>
                             </h5>
                             <div class="card-meta">
                                 <div class="card-meta-div">
@@ -314,88 +292,111 @@
 {% endblock %}
 
 {% block javascripts %}
-{{ parent() }}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-<script>
-let map;
-let routeControl;
-const defaultCoords = [34.0, -6.0];
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-function initMap() {
-    map = L.map('routeMap').setView(defaultCoords, 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
-}
+    <script>
+        let map;
+        let routeControl;
+        const defaultCoords = [34.0, -6.0]; // Coordonnées par défaut (Maroc)
 
-function showRoute(id, depLat, depLng, destLat, destLng, depAdresse, destAdresse) {
-    if (!map) initMap();
-    if (!depLat || !depLng || !destLat || !destLng) {
-        alert("Les coordonnées de ce trajet ne sont pas disponibles");
-        return;
-    }
-    if (routeControl) {
-        map.removeControl(routeControl);
-    }
-    map.eachLayer(layer => {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
+        function initMap() {
+            map = L.map('routeMap').setView(defaultCoords, 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
         }
-    });
-    const departureMarker = L.marker([depLat, depLng], {
-        icon: L.divIcon({
-            html: '<i class="fas fa-map-marker-alt fa-2x" style="color:red"></i>',
-            className: 'custom-icon'
-        })
-    }).addTo(map).bindPopup(`<b>Départ:</b> ${depAdresse}`);
-    const destinationMarker = L.marker([destLat, destLng], {
-        icon: L.divIcon({
-            html: '<i class="fas fa-map-marker-alt fa-2x" style="color:green"></i>',
-            className: 'custom-icon'
-        })
-    }).addTo(map).bindPopup(`<b>Destination:</b> ${destAdresse}`);
-    routeControl = L.Routing.control({
-        waypoints: [
-            L.latLng(depLat, depLng),
-            L.latLng(destLat, destLng)
-        ],
-        routeWhileDragging: false,
-        show: false,
-        addWaypoints: false,
-        lineOptions: {
-            styles: [{color: '#4285F4', opacity: 0.7, weight: 5}]
-        },
-        createMarker: function() { return null; },
-        itinerary: {
-            template: '<div class="hidden-instructions"></div>'
-        }
-    }).addTo(map);
-    routeControl.on('routesfound', function(e) {
-        const routes = e.routes;
-        if (routes && routes[0]) {
-            const distance = (routes[0].summary.totalDistance / 1000).toFixed(1);
-            const duration = Math.round(routes[0].summary.totalTime / 60);
-            document.getElementById('distanceInfo').textContent = `${distance} km`;
-            document.getElementById('durationInfo').textContent = `${duration} min`;
-            document.querySelectorAll('.leaflet-routing-container').forEach(el => {
-                el.style.display = 'none';
+
+        function showRoute(id, depLat, depLng, destLat, destLng, depAdresse, destAdresse) {
+            if (!map) initMap();
+            
+            // Vérifie si les coordonnées sont valides
+            if (!depLat || !depLng || !destLat || !destLng) {
+                alert("Les coordonnées de ce trajet ne sont pas disponibles");
+                return;
+            }
+
+            // Nettoie la carte avant d'ajouter un nouveau trajet
+            if (routeControl) {
+                map.removeControl(routeControl);
+            }
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
             });
+
+            // Ajoute les marqueurs
+            const departureMarker = L.marker([depLat, depLng], {
+                icon: L.divIcon({
+                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:red"></i>',
+                    className: 'custom-icon'
+                })
+            }).addTo(map).bindPopup(`<b>Départ:</b> ${depAdresse}`);
+
+            const destinationMarker = L.marker([destLat, destLng], {
+                icon: L.divIcon({
+                    html: '<i class="fas fa-map-marker-alt fa-2x" style="color:green"></i>',
+                    className: 'custom-icon'
+                })
+            }).addTo(map).bindPopup(`<b>Destination:</b> ${destAdresse}`);
+
+            // Trace l'itinéraire (version simplifiée sans instructions)
+            routeControl = L.Routing.control({
+    waypoints: [
+        L.latLng(depLat, depLng),
+        L.latLng(destLat, destLng)
+    ],
+    routeWhileDragging: false,
+    show: false,                     // Hides instructions panel
+    addWaypoints: false,
+    lineOptions: {
+        styles: [{color: '#4285F4', opacity: 0.7, weight: 5}]
+    },
+    createMarker: function() { return null; }, // Disables intermediate markers
+    // Keep itinerary enabled but empty
+    itinerary: {
+        template: '<div class="hidden-instructions"></div>' // Empty container
+    }
+}).addTo(map);
+
+// Manually handle route calculation
+routeControl.on('routesfound', function(e) {
+    const routes = e.routes;
+    if (routes && routes[0]) {
+        // Update your distance and time display
+        const distance = (routes[0].summary.totalDistance / 1000).toFixed(1);
+        const duration = Math.round(routes[0].summary.totalTime / 60);
+        
+        document.getElementById('distanceInfo').textContent = `${distance} km`;
+        document.getElementById('durationInfo').textContent = `${duration} min`;
+        
+        // Force hide any residual elements
+        document.querySelectorAll('.leaflet-routing-container').forEach(el => {
+            el.style.display = 'none';
+        });
+    }
+});
+
+            // Ajuste la vue de la carte
+            const bounds = L.latLngBounds(
+                [depLat, depLng],
+                [destLat, destLng]
+            );
+            map.fitBounds(bounds, {padding: [50, 50]});
         }
-    });
-    const bounds = L.latLngBounds([depLat, depLng], [destLat, destLng]);
-    map.fitBounds(bounds, {padding: [50, 50]});
-}
 
-function zoomIn() {
-    if (map) map.zoomIn();
-}
+        function zoomIn() {
+            if (map) map.zoomIn();
+        }
 
-function zoomOut() {
-    if (map) map.zoomOut();
-}
+        function zoomOut() {
+            if (map) map.zoomOut();
+        }
 
-document.addEventListener('DOMContentLoaded', initMap);
-</script>
+        // Initialise la carte au chargement
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
 {% endblock %}

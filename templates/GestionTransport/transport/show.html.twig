@@ -267,7 +267,12 @@
             function updateRouteDisplay(route) {
                 const sum = route.summary;
                 document.getElementById('distanceInfo').innerText = (sum.totalDistance/1000).toFixed(2) + ' km';
-                document.getElementById('durationInfo').innerText = (sum.totalTime/60).toFixed(0) + ' min';
+                const hours = Math.floor(sum.totalTime / 3600);
+                const minutes = Math.floor((sum.totalTime % 3600) / 60);
+                const durationText = hours > 0 ? 
+                    `${hours}h ${minutes}min` : 
+                    `${minutes}min`;
+                document.getElementById('durationInfo').innerText = durationText;
                 
                 const html = route.instructions.map(i => 
                     `<li>${i.text} (${(i.distance/1000).toFixed(2)} km)</li>`

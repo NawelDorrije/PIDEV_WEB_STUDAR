@@ -162,6 +162,22 @@ class TransportController extends AbstractController
                 $transport->setTrajetEnKm($distanceKm);
     
                 $tarif = $distanceKm * 0.5;
+                
+                // Calculate extra costs for exceeding loading/unloading times
+                $extraCost = 0;
+                $costPerMinute = 0.5; // 0.5 TND per minute of delay
+                
+                if ($transport->getLoadingTimeActual() > $transport->getLoadingTimeAllowed()) {
+                    $extraMinutes = $transport->getLoadingTimeActual() - $transport->getLoadingTimeAllowed();
+                    $extraCost += $extraMinutes * $costPerMinute;
+                }
+                
+                if ($transport->getUnloadingTimeActual() > $transport->getUnloadingTimeAllowed()) {
+                    $extraMinutes = $transport->getUnloadingTimeActual() - $transport->getUnloadingTimeAllowed();
+                    $extraCost += $extraMinutes * $costPerMinute;
+                }
+                
+                $transport->setExtraCost($extraCost);
                 $transport->setTarif($tarif);
     
                 $this->entityManager->flush();

@@ -25,6 +25,9 @@ parameters:
     app.gemini_api_key: '%env(GEMINI_API_KEY)%'
     audio_temp_dir: '%kernel.project_dir%/var/audio_temp'
     app.timezone: 'Africa/Tunis'
+    STRIPE_SECRET_KEY: '%env(STRIPE_SECRET_KEY)%'
+    STRIPE_PUBLIC_KEY: '%env(STRIPE_PUBLIC_KEY)%'
+   
     
 
 
@@ -32,7 +35,7 @@ parameters:
     gemini_api_key: '%env(GEMINI_API_KEY)%'
     gcp_project_id: 'Studar-2025' # Replace with your actual GCP Project ID
     gcp_region: 'europe-west9'  
-    app.sender_email: 'studar21@gmail.com'
+  
     
  
   
@@ -117,12 +120,7 @@ services:
             $mailerFromName: '%mailer_from_name%'
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
-    _defaults:
-        autowire: true
-        autoconfigure: true
-        bind:
-            $mailerFrom: '%mailer_from%'
-            $mailerFromName: '%mailer_from_name%'
+   
 
     App\:
         resource: '../src/'
@@ -208,4 +206,9 @@ services:
     
 
     # Configure StripeService explicitly
+   
+    # Configure TransportType form with Security service
+    App\Form\GestionTransport\TransportType:
+        arguments:
+            $security: '@security.helper'
    

@@ -87,7 +87,6 @@ public function adminTransport(
         $voitures,
         $page,
         $limit,
-        ['pageParameterName' => 'v_page', 'limitParameterName' => 'v_limit']
     );
     
     // Transports query using findByStatus
@@ -102,7 +101,6 @@ public function adminTransport(
             $transports,
             $page,
             $limit,
-            ['pageParameterName' => 't_page', 'limitParameterName' => 't_limit']
         );
     } catch (\Exception $e) {
         $this->logger->error('Error loading transports: ' . $e->getMessage(), ['exception' => $e]);
@@ -151,9 +149,7 @@ public function adminTransport(
     $invoices = $this->paginator->paginate(
         $invoiceData,
         $request->query->getInt('i_page', 1),
-        $limit,
-        ['pageParameterName' => 'i_page']
-    );
+        $limit,    );
 
     // Calculate completed transports and total revenue
     $allTransports = $transportRepository->findAll();
@@ -631,7 +627,7 @@ public function invoices(TransportRepository $transportRepository, VoitureReposi
         $voitureRepository->findAll(),
         $request->query->getInt('v_page', 1),
         10,
-        ['pageParameterName' => 'v_page']
+        
     );
 
     // Get transports for the main list
@@ -642,7 +638,6 @@ public function invoices(TransportRepository $transportRepository, VoitureReposi
         $transportsQb->getQuery(),
         $request->query->getInt('t_page', 1),
         10,
-        ['pageParameterName' => 't_page']
     );
 
     // Calculate statistics

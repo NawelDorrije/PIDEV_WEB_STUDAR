@@ -384,7 +384,7 @@
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="stServicesAdmin">
                                         <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
-                                        <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Transports</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_gestion_transport_dashboard') }}">Transports</a></li>
                                         <li><a class="dropdown-item" href="{{ path('app_logement_index') }}">Logements</a></li>
                                         <li><a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation' ? 'active' : '' }}" href="{{ path('admin_reclamation') }}">Réclamations Avancées</a></li>
                                     </ul>
@@ -418,7 +418,9 @@
                                         Services
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="stServicesTrans">
-                                        <li><a class="dropdown-item" href="{{ path('app_home') }}">Transports</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_transport_home') }}">Transports</a></li>
+                                         <li><a class="dropdown-item" href="{{ path('app_transport_index') }}">Mes Transports</a></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_voiture_index') }}">Mes Véhicules</a></li>
                                     </ul>
                                 </li>
                                 <!-- Agenda Dropdown -->
@@ -529,74 +531,10 @@
                         <div class="col-12">
                             <nav class="main-nav">
                                 <!-- ***** Logo Start ***** -->
-                                <a href="{{ path('app_admin_dashboard') }}" class="logo">
+                                {# <a href="{{ path('app_admin_dashboard') }}" class="logo">
                                     <img class="logo" src="{{ asset('images/logo.png') }}" alt="StuDar">
-                                </a>
+                                </a> #}
                                 <!-- ***** Logo End ***** -->
-
-                                <!-- ***** Menu Start ***** -->
-                                <ul class="nav">
-                                    {% if is_granted('ROLE_ADMIN') %}
-                                        <!-- Navigation pour les admins -->
-                                        <li><a href="{{ path('app_admin_dashboard') }}" class="{{ app.request.get('_route') == 'app_admin_dashboard' ? 'active' : '' }}">Dashboard</a></li>
-                                        <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}" class="{{ app.request.get('_route') == 'app_utilisateur_show' ? 'active' : '' }}">Profil</a></li>
-
-                                        <!-- Services Dropdown pour Admin -->
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Services
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdownAdmin">
-                                                <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_gestion_transport_dashboard') }}">Transports</a></li>
-                                                <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Logements</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
-    <a href="#">Agenda <i class="fa fa-caret-down"></i></a>
-    <ul class="dropdown-menu">
-        <li class="{{ app.request.get('_route') == 'app_rendezvous_index' ? 'active' }}">
-            <a href="{{ path('app_rendezvous_index_ADMIN') }}">
-                <i class="fas fa-calendar-day mr-2"></i> Rendez-vous
-            </a>
-        </li>
-         <li class="{{ app.request.get('_route') == 'app_reservation_logement_index' ? 'active' }}">
-            <a href="{{ path('app_rendezvous_index_ADMIN') }}">
-                <i class="fas fa-bed mr-2"></i> Réservation des logements
-            </a>
-        </li>
-<li class="{{ app.request.get('_route') == 'app_reservation_transport_index' ? 'active' }}">
-    <a href="{{ path('app_rendezvous_index_ADMIN') }}">
-        <i class="fas fa-bus mr-2"></i> Réservation des transporteurs
-    </a>
-</li>        
-    </ul>
-
-</li>
-
-
-                                        <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i> Déconnexion</a></li>
-                                    {% else %}
-                                        <!-- Navigation pour les non-admins -->
-                                        <li><a href="{{ path('app_home') }}"><i class="{{ app.request.get('_route') == 'app_home' ? 'active' : '' }}"></i>Accueil</a></li>
-                                        <li><a href="{% if is_granted('ROLE_TRANSPORTEUR') %}{{ path('app_transport_home') }}{% endif %}" class="{{ app.request.get('_route') == 'app_transport_home' ? 'active' : '' }}">Transport Overview</a></li>
-
-                                        <!-- Services Dropdown -->
-                                       <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Services
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="servicesDropdown">
-                                                {% if is_granted('ROLE_TRANSPORTEUR') %}
-                                                    <li><a class="dropdown-item" href="{{ path('app_transport_index') }}">Mes Transports</a></li>
-                                                    <li><a class="dropdown-item" href="{{ path('app_voiture_index') }}">Mes Véhicules</a></li>
-                                                {% else %}
-                                                    <li><a class="dropdown-item" href="{{ path('app_gestion_meubles_statistiques') }}">Meubles</a></li>
-                                                    <li><a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">Réservations</a></li>
-                                                    <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">Logements</a></li>
-                                                {% endif %}
-                                            </ul>
-                                        </li>
                                         <!-- Agenda Dropdown -->
                                         <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
                                             <a class="nav-link dropdown-toggle" href="#" id="agendaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -606,29 +544,29 @@
                                                 <li><a class="dropdown-item" href="{{ path('app_rendezvous_index') }}"><i class="fas fa-calendar-day me-2"></i> Rendez-vous</a></li>
                                                 <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
                                                 <li>
-            {% if is_granted('ROLE_TRANSPORTEUR') %}
-                <a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">
-                    <i class="fas fa-bus me-2"></i> Mes Réservations Transport
-                </a>
-            {% elseif is_granted('ROLE_ETUDIANT') %}
-                <a class="dropdown-item" href="{{ path('app_reservation_transport_etudiant') }}">
-                    <i class="fas fa-bus me-2"></i> Mes Réservations Transport
-                </a>
-            {% endif %}
-        </li>
+                                                    {% if is_granted('ROLE_TRANSPORTEUR') %}
+                                                        <a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">
+                                                            <i class="fas fa-bus me-2"></i> Mes Réservations Transport
+                                                        </a>
+                                                    {% elseif is_granted('ROLE_ETUDIANT') %}
+                                                        <a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">
+                                                            <i class="fas fa-bus me-2"></i> Mes Réservations Transport
+                                                        </a>
+                                                    {% endif %}
+                                                </li>
+                                            </ul>
+                                        </li>
 
                                         <li><a href="{{ path('app_home') }}">Chat AI</a></li>
 
-                                        <!-- Cart Icon with Static Item Count -->
-                                       {% if is_granted('ROLE_ETUDIANT') %}
-
-                                        <li>
-                                            <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="cart-icon">
-                                                <i class="bi bi-cart3"></i>
-                                                <span class="cart-count">{{ cart_service.cartCount }}</span>
-                                            </a>
-                                        </li>            
-                                    {% endif %}
+                                        {% if is_granted('ROLE_ETUDIANT') %}
+                                            <li>
+                                                <a href="{{ path('app_gestion_meubles_lignes_panier') }}" class="cart-icon">
+                                                    <i class="bi bi-cart3"></i>
+                                                    <span class="cart-count">{{ cart_service.cartCount }}</span>
+                                                </a>
+                                            </li>            
+                                        {% endif %}
 
                                         {% if app.user %}
                                             <li><a href="{{ path('app_utilisateur_show', {'cin': app.user.cin}) }}"><i class="fa fa-user"></i></a></li>
@@ -636,8 +574,6 @@
                                             <li><a href="{{ path('app_utilisateur_signin') }}"><i class="fa fa-user"></i></a></li>
                                         {% endif %}
                                         <li><a href="{{ path('app_logout') }}"><i class="fa fa-sign-out"></i></a></li>
-                                    {% endif %}
-                                </ul>
 
                                 <a class="menu-trigger">
                                     <span>Menu</span>

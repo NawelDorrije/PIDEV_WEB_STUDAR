@@ -4,7 +4,7 @@
 {% block stylesheets %}
     {{ parent() }}
     {{ encore_entry_link_tags('app') }}
-    {{ encore_entry_link_tags('chat') }}
+    {# Remove the chat entry point since it's not configured #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         /* assets/css/chat.css */
@@ -567,7 +567,7 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('app') }}
-    {{ encore_entry_script_tags('chat') }}
+    {# Remove the chat entry point since it's not configured #}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
             const searchText = document.getElementById('searchText');

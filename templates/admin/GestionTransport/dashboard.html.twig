@@ -255,6 +255,32 @@
         .leaflet-top, .leaflet-bottom {
             z-index: 1000 !important;
         }
+             /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .pagination a {
+            color: #f35525;
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            margin: 0 4px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .pagination a.active {
+            background-color: #f35525;
+            color: white;
+            border-color: #f35525;
+        }
+        
+        .pagination a:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
 
         .modal-content {
             border-radius: var(--border-radius);
@@ -275,7 +301,7 @@
 
 {% block body %}
     <div class="container">
-        <h1 class="text-center mb-4" style="font-weight: 600;">Transport Dashboard</h1>
+        <h1 class="text-center mb-4" style="font-weight: 600;">Tableau de Bord Gestion de Transport</h1>
 
     <div class="container py-4" style="max-width: 1200px;">
     {% for type, messages in app.flashes %}
@@ -293,7 +319,7 @@
             <button class="tab-button active" data-tab="statistics">Statistiques</button>
             <button class="tab-button" data-tab="voitures">Véhicules</button>
             <button class="tab-button" data-tab="transports">Transports</button>
-            <button class="tab-button" data-tab="invoices">Invoices</button>
+            <button class="tab-button" data-tab="invoices">Factures</button>
         </div>
 
         <!-- Tab Contents -->
@@ -419,9 +445,9 @@
                             <p class="text-muted mt-3">Aucun véhicule enregistré</p>
                         </div>
                     {% endfor %}
-                 <div class="d-flex justify-content-center mt-4">
-    {{ knp_pagination_render(voitures, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig') }}
-</div>
+              <div class="pagination">
+                {{ knp_pagination_render(voitures) }}
+            </div>
             </div>
            
         </div>
@@ -464,10 +490,10 @@
                         <div class="col-md-2">ID</div>
                         <div class="col-md-3">Trajet</div>
                         <div class="col-md-1">Distance</div>
-                        <div class="col-md-1">Tarif</div>
-                        <div class="col-md-2">Heure d'arrivée</div>
+                        <div class="col-md-1">Tarif (TND)</div>
+                        <div class="col-md-2">Date d'arrivée</div>
                         <div class="col-md-1">Statut</div>
-                        <div class="col-md-1">Voiture</div>
+                        <div class="col-md-1">Vehicule</div>
                         <div class="col-md-1 text-end">Actions</div>
                     </div>
                     {% for transport in transports %}
@@ -490,7 +516,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="col-md-1 text-muted small">{{ transport.trajetEnKm }} km</div>
-                                <div class="col-md-1 text-dark small">{{ transport.tarif|number_format(2) }} TND</div>
+                                <div class="col-md-1 text-dark small">{{ transport.tarif|number_format(2) }}</div>
                                 <div class="col-md-2 text-muted small">
                                     {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : 'N/A' }}
                                 </div>
@@ -538,10 +564,9 @@
                             <p class="text-muted mt-3">Aucun transport enregistré</p>
                         </div>
                     {% endfor %}
-                <div class="d-flex justify-content-center mt-4">
-    {{ knp_pagination_render(transports, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig',{'position': 'centered','rounded': true,'size': 'sm'
-                    }) }}
-</div>
+                 <div class="pagination">
+                {{ knp_pagination_render(transports) }}
+            </div>
             </div>
 </div>
             </div>
@@ -553,7 +578,7 @@
         <div id="invoices" class="tab-content">
             <div class="card mb-5">
                 <div class="card-header">
-                    <h2 class="mb-0" style="font-weight: 600;">Invoices</h2>
+                    <h2 class="mb-0" style="font-weight: 600;">Factures</h2>
                 </div>
                  <div class="mb-4 mt-3 px-3">
         <form method="get" class="d-flex align-items-center gap-2">
@@ -566,10 +591,10 @@
     </div>
                 <div class="table-container">
                     <div class="row table-header d-none d-md-flex">
-                        <div class="col-md-2">Invoice #</div>
+                        <div class="col-md-2">Facture #</div>
                         <div class="col-md-2">Transport ID</div>
-                        <div class="col-md-3">Student</div>
-                        <div class="col-md-2">Amount (TND)</div>
+                        <div class="col-md-3">Etudiant</div>
+                        <div class="col-md-2">Montant (TND)</div>
                         <div class="col-md-2">Date</div>
                         <div class="col-md-1 text-end">Actions</div>
                     </div>
@@ -588,7 +613,7 @@
                                 <div class="col-md-3 text-muted small">
                                     {{ invoice.transport.reservation.etudiant.nom }} {{ invoice.transport.reservation.etudiant.prenom }}
                                 </div>
-                                <div class="col-md-2 text-dark small">{{ invoice.invoiceData.amount|number_format(2) }} TND</div>
+                                <div class="col-md-2 text-dark small">{{ invoice.invoiceData.amount|number_format(2) }} </div>
                                 <div class="col-md-2 text-muted small">{{ invoice.invoiceData.date|date('d/m/Y') }}</div>
                                 <div class="col-md-1 text-end">
                                     <div class="dropdown">
@@ -618,10 +643,9 @@
                         </div>
                     {% endfor %}
                 </div>
-                <div class="d-flex justify-content-center mt-4">
-                    {{ knp_pagination_render(invoices, '@KnpPaginator/Pagination/bootstrap_v5_pagination.html.twig',{'position': 'centered','rounded': true,'size': 'sm'
-                    }) }}
-                </div>
+                 <div class="pagination">
+                {{ knp_pagination_render(invoices) }}
+            </div>
                 </div>
             </div>
         </div>

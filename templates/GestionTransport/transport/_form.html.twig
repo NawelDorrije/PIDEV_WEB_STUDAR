@@ -72,20 +72,40 @@
                 </div>
             {% endif %}
 
-            {% if form.loadingTime is defined and form.vars.data.status.value == 'Actif' %}
-                <div class="mb-3">
-                    {{ form_label(form.loadingTime, 'Temps de chargement', {'label_attr': {'class': 'form-label small'}}) }}
-                    {{ form_widget(form.loadingTime, {'attr': {'class': 'form-control rounded-0'}}) }}
-                    {{ form_errors(form.loadingTime) }}
-                </div>
-            {% endif %}
+            {# Replace the loading/unloading time sections #}
+            {# Replace the status check condition #}
+            {% if form.vars.data and form.vars.data.status is defined and form.vars.data.status and form.vars.data.status.value == 'Actif' %}
+                {% if form.loadingTimeActual is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.loadingTimeActual, 'Temps de chargement réel', {'label_attr': {'class': 'form-label small'}}) }}
+                        {{ form_widget(form.loadingTimeActual, {'attr': {'class': 'form-control rounded-0'}}) }}
+                        {{ form_errors(form.loadingTimeActual) }}
+                    </div>
+                {% endif %}
 
-            {% if form.unloadingTime is defined and form.vars.data.status.value == 'Actif' %}
-                <div class="mb-3">
-                    {{ form_label(form.unloadingTime, 'Temps de déchargement', {'label_attr': {'class': 'form-label small'}}) }}
-                    {{ form_widget(form.unloadingTime, {'attr': {'class': 'form-control rounded-0'}}) }}
-                    {{ form_errors(form.unloadingTime) }}
-                </div>
+                {% if form.loadingTimeAllowed is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.loadingTimeAllowed, 'Temps de chargement autorisé', {'label_attr': {'class': 'form-label small'}}) }}
+                        {{ form_widget(form.loadingTimeAllowed, {'attr': {'class': 'form-control rounded-0'}}) }}
+                        {{ form_errors(form.loadingTimeAllowed) }}
+                    </div>
+                {% endif %}
+
+                {% if form.unloadingTimeActual is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.unloadingTimeActual, 'Temps de déchargement réel', {'label_attr': {'class': 'form-label small'}}) }}
+                        {{ form_widget(form.unloadingTimeActual, {'attr': {'class': 'form-control rounded-0'}}) }}
+                        {{ form_errors(form.unloadingTimeActual) }}
+                    </div>
+                {% endif %}
+
+                {% if form.unloadingTimeAllowed is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.unloadingTimeAllowed, 'Temps de déchargement autorisé', {'label_attr': {'class': 'form-label small'}}) }}
+                        {{ form_widget(form.unloadingTimeAllowed, {'attr': {'class': 'form-control rounded-0'}}) }}
+                        {{ form_errors(form.unloadingTimeAllowed) }}
+                    </div>
+                {% endif %}
             {% endif %}
 
             <div class="d-flex justify-content-between mt-4">
@@ -102,6 +122,21 @@
                     const reservationSelect = document.getElementById('{{ form.reservation.vars.id }}');
                     const arrivalDisplay = document.getElementById('{{ form.tempsArrivageDisplay.vars.id }}');
                     const etudiantDisplay = document.getElementById('{{ form.etudiantDisplay.vars.id }}');
+                    
+                    {% if form.extraCost is defined %}
+                        const extraCostInput = document.getElementById('{{ form.extraCost.vars.id }}');
+                    {% endif %}
+                    
+                    {% if form.loadingTimeActual is defined %}
+                        const loadingTimeActual = document.getElementById('{{ form.loadingTimeActual.vars.id }}');
+                    {% endif %}
+                    {% if form.unloadingTimeActual is defined %}
+                        const unloadingTimeActual = document.getElementById('{{ form.unloadingTimeActual.vars.id }}');
+                    {% endif %}
+                    
+                    const loadingTimeAllowed = {{ form.vars.data.loadingTimeAllowed|default(0) }};
+                    const unloadingTimeAllowed = {{ form.vars.data.unloadingTimeAllowed|default(0) }};
+                    const costPerMinute = 0.5;
 
                     if (reservationSelect && arrivalDisplay && etudiantDisplay) {
                         if (reservationSelect.value) {
@@ -138,8 +173,35 @@
                                 });
                         }
                     }
-                });
-            </script>
+                 
+                        function updateExtraCost() {
+                            let totalExtraCost = 0;
+                            
+                            if (typeof loadingTimeActual !== 'undefined' && loadingTimeActual && 
+                                loadingTimeActual.value > loadingTimeAllowed) {
+                                const extraMinutes = loadingTimeActual.value - loadingTimeAllowed;
+                                totalExtraCost += extraMinutes * costPerMinute;
+                            }
+                            
+                            if (typeof unloadingTimeActual !== 'undefined' && unloadingTimeActual && 
+                                unloadingTimeActual.value > unloadingTimeAllowed) {
+                                const extraMinutes = unloadingTimeActual.value - unloadingTimeAllowed;
+                                totalExtraCost += extraMinutes * costPerMinute;
+                            }
+                            
+                            if (typeof extraCostInput !== 'undefined' && extraCostInput) {
+                                extraCostInput.value = totalExtraCost.toFixed(2);
+                            }
+                        }
+
+                        if (typeof loadingTimeActual !== 'undefined' && loadingTimeActual) {
+                            loadingTimeActual.addEventListener('input', updateExtraCost);
+                        }
+                        if (typeof unloadingTimeActual !== 'undefined' && unloadingTimeActual) {
+                            unloadingTimeActual.addEventListener('input', updateExtraCost);
+                        }
+                    });
+                </script>
         {{ form_end(form) }}
     </div>
 
