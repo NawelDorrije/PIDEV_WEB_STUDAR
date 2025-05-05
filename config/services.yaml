@@ -6,8 +6,8 @@
 
 # Parameters
 parameters:
-    #images_directory: '%kernel.project_dir%/assets/images'
-    images_directory: '%kernel.project_dir%/public/Uploads/images'
+    images_directory: '%kernel.project_dir%/assets/images'
+    # images_directory: '%kernel.project_dir%/public/Uploads/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
     # public_images_directory: '%kernel.project_dir%/public/assets/images'
