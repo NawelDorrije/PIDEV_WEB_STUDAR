@@ -802,7 +802,7 @@ public function resetPassword(
             return new JsonResponse(['error' => 'Erreur lors de l\'enregistrement de l\'image'], 500);
         }
 
-        $pythonPath = 'C:\\Users\\DorrijeNawel\\anaconda3\\envs\\deepface_env\\python.exe';
+        $pythonPath = 'C:\\Users\\NOUR\\anaconda3\\envs\\deepface_env\\python.exe';
         $pythonScript = __DIR__ . '/../../bin/emotion_detection.py';
         $process = new Process([$pythonPath, $pythonScript, $imagePath]);
         $process->setTimeout(30);
