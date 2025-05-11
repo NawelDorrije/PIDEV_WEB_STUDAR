@@ -750,7 +750,7 @@
                                     <li style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                         <span style="font-weight: 700; font-size: 14px; color: #666;">Adresse:</span>
                                         <span style="font-weight: 400; font-size: 16px; line-height: 1.4; display: inline-block; width: 70%; margin-left:60px;">
-                                            {% set address_parts = logement.adresse|split(',', 2) %}
+                                            {% set address_parts = logement.adresse|split(' ', 2) %}
                                             {{ address_parts[0] }}<br>
                                             {{ address_parts[1]|trim }}
                                         </span>

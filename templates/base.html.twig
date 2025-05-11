@@ -527,16 +527,16 @@
                                 </li>
                             {% endif %}
                         </ul>
-                    <div class="row">
+                    {# <div class="row">
                         <div class="col-12">
-                            <nav class="main-nav">
+                            <nav class="main-nav"> #}
                                 <!-- ***** Logo Start ***** -->
                                 {# <a href="{{ path('app_admin_dashboard') }}" class="logo">
                                     <img class="logo" src="{{ asset('images/logo.png') }}" alt="StuDar">
                                 </a> #}
                                 <!-- ***** Logo End ***** -->
                                         <!-- Agenda Dropdown -->
-                                        <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
+                                        {# <li class="nav-item dropdown {{ app.request.get('_route') starts with 'app_rendezvous_' ? 'active' }}">
                                             <a class="nav-link dropdown-toggle" href="#" id="agendaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 Agenda
                                             </a>
@@ -545,7 +545,7 @@
                                                 <li><a class="dropdown-item" href="{{ path('app_reservation_logement_index') }}"><i class="fas fa-bed me-2"></i> Réservation des logements</a></li>
                                                 <li>
                                                     {% if is_granted('ROLE_TRANSPORTEUR') %}
-                                                        <a class="dropdown-item" href="{{ path('app_reservation_transport_index') }}">
+                                                        <a class="dropdown-item" href="{{ path('app_reservation_transport_index_TRANS') }}">
                                                             <i class="fas fa-bus me-2"></i> Mes Réservations Transport
                                                         </a>
                                                     {% elseif is_granted('ROLE_ETUDIANT') %}
@@ -579,7 +579,7 @@
                                     <span>Menu</span>
                                 </a>
                                 <!-- ***** Menu End ***** -->
-                            </nav>
+                            </nav> #}
                         </div>
                     </div>
                 </div>

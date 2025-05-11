@@ -19,7 +19,7 @@ class GeocodingService
 
     public function geocodeAddress(string $address): ?array
     {
-        $result = $this->geocoder->geocode($address);
+           $result = $this->geocoder->geocode($address);
         if ($result && isset($result['lat'], $result['lon'])) {
             return [
                 'lat' => $result['lat'],

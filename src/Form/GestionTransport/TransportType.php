@@ -35,20 +35,22 @@ class TransportType extends AbstractType
         $formType = $options['form_type'] ?? 'edit';
 
         $builder
-            ->add('reservation', EntityType::class, [
-                'class' => ReservationTransport::class,
-                'choice_label' => function (ReservationTransport $reservation) {
-                    return $reservation->getAdresseDepart() . ' → ' . $reservation->getAdresseDestination();
-                },
-                'label' => 'Réservation',
-                'placeholder' => 'Sélectionner une réservation',
-                'query_builder' => function (EntityRepository $er) {
-                    return $er->createQueryBuilder('r')
-                        ->orderBy('r.id', 'ASC');
-                },
-                'disabled' => $isCompleted,
-                'attr' => ['class' => 'form-control'],
-            ])
+        ->add('reservation', EntityType::class, [
+            'class' => ReservationTransport::class,
+            'choice_label' => function (ReservationTransport $reservation) {
+                return $reservation->getAdresseDepart() . ' → ' . $reservation->getAdresseDestination();
+            },
+            'label' => 'Réservation',
+            'placeholder' => 'Sélectionner une réservation',
+            'query_builder' => function (EntityRepository $er) use ($currentUser) {
+                return $er->createQueryBuilder('r')
+                    ->where('r.transporteur = :user')
+                    ->setParameter('user', $currentUser)
+                    ->orderBy('r.id', 'ASC');
+            },
+            'disabled' => $isCompleted,
+            'attr' => ['class' => 'form-control'],
+        ])
             ->add('voiture', EntityType::class, [
                 'class' => Voiture::class,
                 'choice_label' => function (Voiture $voiture) {

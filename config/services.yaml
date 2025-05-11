@@ -6,7 +6,7 @@
 
 # Parameters
 parameters:
-    #images_directory: '%kernel.project_dir%/assets/images'
+    images_directory_nawel: '%kernel.project_dir%/assets/images'
     images_directory: '%kernel.project_dir%/public/Uploads/images'
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     voiture_photos_directory: '%photos_directory%'
@@ -57,6 +57,11 @@ services:
         arguments:
             $logger: '@monolog.logger'
 
+    App\Form\GestionTransport\TransportType:
+        arguments:
+            $security: '@security.helper'
+        tags:
+            - { name: form.type }
 
     App\Controller\GestionTransport\TransportController:
         # autowire: true is inherited from _defaults
@@ -208,7 +213,5 @@ services:
     # Configure StripeService explicitly
    
     # Configure TransportType form with Security service
-    App\Form\GestionTransport\TransportType:
-        arguments:
-            $security: '@security.helper'
+ 
    

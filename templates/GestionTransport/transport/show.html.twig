@@ -114,12 +114,20 @@
                     <p><i class="far fa-clock text-orange mr-2"></i> Temps estimé: <span id="durationInfo">-</span></p>
                 </div>
                 <div class="button-container">
-                    <button id="startTracking" data-transport-id="{{ transport.id }}" 
-                            class="bg-orange text-white px-6 py-2 rounded-full hover-orange transition transform hover:-translate-y-1 flex items-center justify-center min-w-[180px]">
-                        <i class="fas fa-play mr-2"></i>
-                        Lancer le Suivi
-                    </button>
-                </div>
+    {% if transport.status.value == 'Actif' %}
+        <button id="startTracking" data-transport-id="{{ transport.id }}" 
+                class="bg-orange text-white px-6 py-2 rounded-full hover-orange transition transform hover:-translate-y-1 flex items-center justify-center min-w-[180px]">
+            <i class="fas fa-play mr-2"></i>
+            Lancer le Suivi
+        </button>
+    {% else %}
+        <a href="{{ path('app_transport_pickup', {'id': transport.id}) }}" 
+           class="bg-orange text-white px-6 py-2 rounded-full hover-orange transition transform hover:-translate-y-1 flex items-center justify-center min-w-[180px]">
+            <i class="fas fa-check mr-2"></i>
+            Confirmer Prise en charge
+        </a>
+    {% endif %}
+</div>
                 <div id="directions" class="mt-4 p-4 bg-gray-100 rounded-lg"></div>
                 <div id="alternativeRoutesContainer" class="mt-4"></div>
             </div>

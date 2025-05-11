@@ -46,6 +46,17 @@ class TransportRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    public function findByStatusType(TransportStatus|string $status)
+{
+    // Convert enum to string if needed
+    $statusValue = $status instanceof TransportStatus ? $status->value : $status;
+    
+    return $this->createQueryBuilder('t')
+        ->where('t.status = :status')
+        ->setParameter('status', $statusValue)
+        ->getQuery()
+        ->getResult();
+}
     
     public function countByMonthAndStatus(int $year): array
     {

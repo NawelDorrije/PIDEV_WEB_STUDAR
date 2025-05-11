@@ -187,6 +187,7 @@ class TransportController extends AbstractController
             } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
                 $this->addFlash('erreur', 'Cette réservation est déjà prise par un autre transport.');
                 return $this->render('GestionTransport/transport/edit.html.twig', [
+                    
                     'transport' => $transport,
                     'form' => $form->createView(),
                 ]);
@@ -206,17 +207,14 @@ class TransportController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_transport_delete', methods: ['POST'])]
-    public function delete(Request $request, Transport $transport): Response
+    public function delete(Request $request, Transport $transport, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$transport->getId(), $request->getPayload()->get('_token'))) {
-            $this->entityManager->remove($transport);
-            $this->entityManager->flush();
-            $this->addFlash('succès', 'Transport supprimé avec succès');
-            return $this->redirectToRoute('app_transport_index');
+        if ($this->isCsrfTokenValid('delete'.$transport->getId(), $request->getPayload()->getString('_token'))) {
+            $entityManager->remove($transport);
+            $entityManager->flush();
         }
-
-        $this->addFlash('erreur', 'Invalid CSRF token');
-        return $this->redirectToRoute('app_transport_index');
+            return $this->redirectToRoute('app_transport_index');
+        
     }
 
     #[Route('/{id}/track/simulate', name: 'app_transport_track_simulate', methods: ['POST'])]

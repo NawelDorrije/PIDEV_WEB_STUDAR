@@ -253,7 +253,7 @@ final class MeubleController extends AbstractController
 
                 try {
                     $imageFile->move(
-                        $this->getParameter('images_directory'),
+                        $this->getParameter('images_directory_nawel'),
                         $newFilename
                     );
                     $meuble->setImage($newFilename);
@@ -325,12 +325,12 @@ final class MeubleController extends AbstractController
     
                     try {
                         $imageFile->move(
-                            $this->getParameter('images_directory'),
+                            $this->getParameter('images_directory_nawel'),
                             $newFilename
                         );
                         // Supprimer l'ancienne image si elle existe
                         if ($oldImage) {
-                            $oldImagePath = $this->getParameter('images_directory') . '/' . $oldImage;
+                            $oldImagePath = $this->getParameter('images_directory_nawel') . '/' . $oldImage;
                             if (file_exists($oldImagePath)) {
                                 unlink($oldImagePath);
                             }

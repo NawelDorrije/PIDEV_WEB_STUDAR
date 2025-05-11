@@ -22,7 +22,13 @@
                 {{ form_label(form.reservation, 'Réservation', {'label_attr': {'class': 'form-label small'}}) }}
                 {{ form_widget(form.reservation, {'attr': {'class': 'form-control rounded-0'}}) }}
                 {{ form_errors(form.reservation) }}
+                {% if form.reservation.vars.choices|length == 0 %}
+            <div class="alert alert-info">
+              Aucune réservation disponible pour vous.
+             </div>
+                {% endif %}
             </div>
+
 
             <div class="mb-3">
                 {{ form_label(form.tempsArrivageDisplay, 'Heure d\'arrivée estimée', {'label_attr': {'class': 'form-label small'}}) }}

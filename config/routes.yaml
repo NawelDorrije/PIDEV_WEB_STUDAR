@@ -1,4 +1,14 @@
 # config/routes.yaml
+proxy_mercure:
+    path: /proxy/mercure
+    controller: App\Controller\ProxyController::proxyMercure
+    methods: [GET]
+
+proxy_process_directions:
+    path: /proxy/process-directions
+    controller: App\Controller\ProxyController::proxyProcessDirections
+    methods: [POST]    
+
 _liip_imagine:
     resource: "@LiipImagineBundle/Resources/config/routing.yaml"
 controllers:

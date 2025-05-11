@@ -127,10 +127,6 @@
             transform: translateX(0);
         }
 
-        .leaflet-routing-container {
-            display: none !important;
-        }
-
         .progress {
             height: 8px;
             margin-top: 5px;
@@ -255,13 +251,13 @@
         .leaflet-top, .leaflet-bottom {
             z-index: 1000 !important;
         }
-             /* Pagination */
+
         .pagination {
             display: flex;
             justify-content: center;
             margin-top: 20px;
         }
-        
+
         .pagination a {
             color: #f35525;
             padding: 8px 16px;
@@ -271,13 +267,13 @@
             border-radius: 4px;
             transition: background-color 0.3s;
         }
-        
+
         .pagination a.active {
             background-color: #f35525;
             color: white;
             border-color: #f35525;
         }
-        
+
         .pagination a:hover:not(.active) {
             background-color: #f8f9fa;
         }
@@ -303,356 +299,356 @@
     <div class="container">
         <h1 class="text-center mb-4" style="font-weight: 600;">Tableau de Bord Gestion de Transport</h1>
 
-    <div class="container py-4" style="max-width: 1200px;">
-    {% for type, messages in app.flashes %}
-        {% for message in messages %}
-            <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} mb-4 p-3 rounded-0">
-                {{ message }}
+        <div class="container py-4" style="max-width: 1200px;">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ type == 'erreur' ? 'danger' : type == 'succès' ? 'success' : 'info' }} mb-4 p-3 rounded-0">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <!-- Tab Buttons -->
+            <div class="mb-4 text-center">
+                <button class="tab-button active" data-tab="statistics">Statistiques</button>
+                <button class="tab-button" data-tab="voitures">Véhicules</button>
+                <button class="tab-button" data-tab="transports">Transports</button>
+                <button class="tab-button" data-tab="invoices">Factures</button>
             </div>
-        {% endfor %}
-    {% endfor %}
 
-        <!-- Statistics Section -->
-        
-        <!-- Tab Buttons -->
-        <div class="mb-4 text-center">
-            <button class="tab-button active" data-tab="statistics">Statistiques</button>
-            <button class="tab-button" data-tab="voitures">Véhicules</button>
-            <button class="tab-button" data-tab="transports">Transports</button>
-            <button class="tab-button" data-tab="invoices">Factures</button>
-        </div>
-
-        <!-- Tab Contents -->
-        <!-- Statistics Section -->
-        <div id="statistics" class="tab-content active">
-            <div class="row mb-5">
-                <!-- Vehicles Added Card -->
-                <div class="col-md-4 mb-4">
-                    <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#vehiclesStatsModal">
-                        <div class="card-body text-center">
-                            <h5 class="card-title"><i class="fas fa-car me-2"></i>Véhicules</h5>
-                            <span class="stat-badge">{{ voitures|length }} Total</span>
-                            <p class="mt-2 text-muted">Voir les statistiques mensuelles</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Transport Stats Card -->
-                <div class="col-md-4 mb-4">
-                    <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#transportStatsModal">
-                        <div class="card-body text-center">
-                            <h5 class="card-title"><i class="fas fa-truck me-2"></i>Transports</h5>
-                            {% set complete = transports|filter(t => t.status.value == 'Complété')|length %}
-                            {% set active = transports|filter(t => t.status.value == 'Actif')|length %}
-                            {% set pending = transports|filter(t => t.status.value == 'En attente')|length %}
-                            <span class="stat-badge me-2">{{ complete }} Complété</span>
-                            <span class="stat-badge bg-warning">{{ active }} Actif</span>
-                            <span class="stat-badge bg-secondary">{{ pending }} En attente</span>
-                            <p class="mt-2 text-muted">Voir les statistiques mensuelles</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Revenue Card -->
-                <div class="col-md-4 mb-4">
-                    <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#revenueModal">
-                        <div class="card-body text-center">
-                            <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Revenus</h5>
-                            <span class="stat-badge">
-                                {% if totalRevenue > 0 %}
-                                    {{ totalRevenue|number_format(2, '.', ',') }} TND
-                                {% else %}
-                                    0,00 TND
-                                {% endif %}
-                            </span>
-                            <p class="mt-2 text-muted">
-                                {% if completedTransportsCount > 0 %}
-                                    Basé sur {{ completedTransportsCount }} transport(s) complété(s)
-                                {% else %}
-                                    Aucun transport complété
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Voitures Section -->
-        <div id="voitures" class="tab-content">
-            <div class="card mb-5">
-                <div class="card-header">
-                    <h2 class="mb-0" style="font-weight: 600;">Véhicules</h2>
-                </div>
-                <div class="mb-4 mt-3 px-3">
-                    <div class="d-flex gap-2">
-                        <a class="filter-link {% if app.request.query.get('disponibilite') is null %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard') }}">Tous</a>
-                        <a class="filter-link {% if app.request.query.get('disponibilite') == 'Disponible' %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Disponible'}) }}">Disponibles</a>
-                        <a class="filter-link {% if app.request.query.get('disponibilite') == 'Non disponible' %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Non disponible'}) }}">Non disponibles</a>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <div class="row table-header d-none d-md-flex">
-                        <div class="col-md-3">ID</div>
-                        <div class="col-md-3">Modèle</div>
-                        <div class="col-md-3">Numéro de série</div>
-                        <div class="col-md-2">Disponibilité</div>
-                        <div class="col-md-1 text-end">Actions</div>
-                    </div>
-                    {% for voiture in voitures %}
-                        <div class="border-bottom py-3 vehicle-row">
-                            <div class="row align-items-center">
-                                <div class="col-md-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-dark" style="width: 24px;">
-                                            <i class="fas fa-car"></i>
-                                        </div>
-                                        <div class="text-dark">{{ voiture.idVoiture }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 text-muted small">{{ voiture.model|u.truncate(15, '...') }}</div>
-                                <div class="col-md-3 text-muted small">{{ voiture.numSerie|u.truncate(15, '...') }}</div>
-                                <div class="col-md-2">
-                                    <span class="badge 
-                                        {% if voiture.disponibilite.value == 'Disponible' %} text-success border border-success
-                                        {% elseif voiture.disponibilite.value == 'Non disponible' %} text-warning border border-warning
-                                        {% else %} text-muted border border-muted {% endif %}">
-                                        {{ voiture.disponibilite.value }}
-                                    </span>
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
-                                            <li>
-                                                <a class="dropdown-item small" href="{{ path('admin_voiture_show', {'idVoiture': voiture.idVoiture}) }}">
-                                                    Détails
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
+            <!-- Tab Contents -->
+            <!-- Statistics Section -->
+            <div id="statistics" class="tab-content active">
+                <div class="row mb-5">
+                    <!-- Vehicles Added Card -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#vehiclesStatsModal">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-car me-2"></i>Véhicules</h5>
+                                <span class="stat-badge">{{ voitures|length }} Total</span>
+                                <p class="mt-2 text-muted">Voir les statistiques mensuelles</p>
                             </div>
                         </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-car text-muted" style="font-size: 2rem;"></i>
-                            <p class="text-muted mt-3">Aucun véhicule enregistré</p>
-                        </div>
-                    {% endfor %}
-              <div class="pagination">
-                {{ knp_pagination_render(voitures) }}
-            </div>
-            </div>
-           
-        </div>
-        </div>
+                    </div>
 
-        <!-- Transports Section -->
-        <div id="transports" class="tab-content">
-            <div class="card mb-5">
-                <div class="card-header">
-                    <h2 class="mb-0" style="font-weight: 600;">Suivi des Transports Actifs</h2>
-                </div>
-                <div class="card-body">
-                    <div id="map"></div>
-                    <div class="text-center mb-3">
-                        <button id="startTracking" class="btn btn-primary px-4 py-2">
-                            <i class="fas fa-play me-2"></i>Lancer le Suivi pour Tous
-                        </button>
+                    <!-- Transport Stats Card -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#transportStatsModal">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-truck me-2"></i>Transports</h5>
+                                {% set complete = transports|filter(t => t.status.value == 'Complété')|length %}
+                                {% set active = transports|filter(t => t.status.value == 'Actif')|length %}
+                                {% set pending = transports|filter(t => t.status.value == 'En attente')|length %}
+                                <span class="stat-badge me-2">{{ complete }} Complété</span>
+                                <span class="stat-badge bg-warning">{{ active }} Actif</span>
+                                <span class="stat-badge bg-secondary">{{ pending }} En attente</span>
+                                <p class="mt-2 text-muted">Voir les statistiques mensuelles</p>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-muted text-center">Suivi en temps réel des transports actifs.</p>
+
+                    <!-- Revenue Card -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card stat-card" data-bs-toggle="modal" data-bs-target="#revenueModal">
+                            <div class="card-body text-center">
+                                <h5 class="card-title"><i class="fas fa-money-bill-wave me-2"></i>Revenus</h5>
+                                <span class="stat-badge">
+                                    {% if totalRevenue > 0 %}
+                                        {{ totalRevenue|number_format(2, '.', ',') }} TND
+                                    {% else %}
+                                        0,00 TND
+                                    {% endif %}
+                                </span>
+                                <p class="mt-2 text-muted">
+                                    {% if completedTransportsCount > 0 %}
+                                        Basé sur {{ completedTransportsCount }} transport(s) complété(s)
+                                    {% else %}
+                                        Aucun transport complété
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="mb-0" style="font-weight: 600;">Liste des Transports</h2>
-                </div>
-                <div class="mb-4 mt-3 px-3">
-                    <div class="d-flex gap-2">
-                        <a class="filter-link {% if app.request.query.get('status') is null %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard') }}">Tous</a>
-                        <a class="filter-link {% if app.request.query.get('status') == 'En attente' %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard', {'status': 'En attente'}) }}">En attente</a>
-                        <a class="filter-link {% if app.request.query.get('status') == 'Actif' %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard', {'status': 'Actif'}) }}">Actifs</a>
-                        <a class="filter-link {% if app.request.query.get('status') == 'Complété' %}active{% endif %}" 
-                           href="{{ path('app_gestion_transport_dashboard', {'status': 'Complété'}) }}">Complétés</a>
+
+            <!-- Voitures Section -->
+            <div id="voitures" class="tab-content">
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <h2 class="mb-0" style="font-weight: 600;">Véhicules</h2>
                     </div>
-                </div>
-                <div class="table-container">
-                    <div class="row table-header d-none d-md-flex">
-                        <div class="col-md-2">ID</div>
-                        <div class="col-md-3">Trajet</div>
-                        <div class="col-md-1">Distance</div>
-                        <div class="col-md-1">Tarif (TND)</div>
-                        <div class="col-md-2">Date d'arrivée</div>
-                        <div class="col-md-1">Statut</div>
-                        <div class="col-md-1">Vehicule</div>
-                        <div class="col-md-1 text-end">Actions</div>
+                    <div class="mb-4 mt-3 px-3">
+                        <div class="d-flex gap-2">
+                            <a class="filter-link {% if app.request.query.get('disponibilite') is null %}active{% endif %}" 
+                               href="{{ path('app_gestion_transport_dashboard') }}">Tous</a>
+                            <a class="filter-link {% if app.request.query.get('disponibilite') == 'Disponible' %}active{% endif %}" 
+                               href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Disponible'}) }}">Disponibles</a>
+                            <a class="filter-link {% if app.request.query.get('disponibilite') == 'Non disponible' %}active{% endif %}" 
+                               href="{{ path('app_gestion_transport_dashboard', {'disponibilite': 'Non disponible'}) }}">Non disponibles</a>
+                        </div>
                     </div>
-                    {% for transport in transports %}
-                        <div class="border-bottom py-3 transport-row" data-transport-id="{{ transport.id }}">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-dark" style="width: 24px;">
-                                            <i class="bi bi-truck"></i>
+                    <div class="table-container">
+                        <div class="row table-header d-none d-md-flex">
+                            <div class="col-md-3">ID</div>
+                            <div class="col-md-3">Modèle</div>
+                            <div class="col-md-3">Numéro de série</div>
+                            <div class="col-md-2">Disponibilité</div>
+                            <div class="col-md-1 text-end">Actions</div>
+                        </div>
+                        {% for voiture in voitures %}
+                            <div class="border-bottom py-3 vehicle-row">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3 text-dark" style="width: 24px;">
+                                                <i class="fas fa-car"></i>
+                                            </div>
+                                            <div class="text-dark">{{ voiture.idVoiture }}</div>
                                         </div>
-                                        <div class="text-dark">{{ transport.id }}</div>
                                     </div>
-                                </div>
-                                <div class="col-md-3">
-                                    {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
-                                        <div class="text-dark small">{{ transport.reservation.adresseDepart|u.truncate(15, '...') }}</div>
-                                        <div class="text-muted small">→ {{ transport.reservation.adresseDestination|u.truncate(15, '...') }}</div>
-                                    {% else %}
-                                        <div class="text-muted small">N/A</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-1 text-muted small">{{ transport.trajetEnKm }} km</div>
-                                <div class="col-md-1 text-dark small">{{ transport.tarif|number_format(2) }}</div>
-                                <div class="col-md-2 text-muted small">
-                                    {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : 'N/A' }}
-                                </div>
-                                <div class="col-md-1">
-                                    <span class="badge 
-                                        {% if transport.status.value == 'Complété' %} text-dark border border-dark
-                                        {% elseif transport.status.value == 'Actif' %} text-orange border border-orange
-                                        {% else %} text-muted border border-muted {% endif %}">
-                                        {{ transport.status.value }}
-                                    </span>
-                                </div>
-                                <div class="col-md-1 text-muted small">
-                                    {% if transport.voiture %}
-                                        {{ transport.voiture.idVoiture }}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
-                                            <li>
-                                                <a class="dropdown-item small" href="{{ path('admin_transport_show', {'id': transport.id}) }}">
-                                                    Détails
-                                                </a>
-                                            </li>
-                                            {% if transport.status.value == 'Actif' %}
+                                    <div class="col-md-3 text-muted small">{{ voiture.model|u.truncate(15, '...') }}</div>
+                                    <div class="col-md-3 text-muted small">{{ voiture.numSerie|u.truncate(15, '...') }}</div>
+                                    <div class="col-md-2">
+                                        <span class="badge 
+                                            {% if voiture.disponibilite.value == 'Disponible' %} text-success border border-success
+                                            {% elseif voiture.disponibilite.value == 'Non disponible' %} text-warning border border-warning
+                                            {% else %} text-muted border border-muted {% endif %}">
+                                            {{ voiture.disponibilite.value }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
                                                 <li>
-                                                    <a class="dropdown-item small" href="{{ path('admin_transport_simulate', {'id': transport.id}) }}">
-                                                        Simuler
+                                                    <a class="dropdown-item small" href="{{ path('admin_voiture_show', {'idVoiture': voiture.idVoiture}) }}">
+                                                        Détails
                                                     </a>
                                                 </li>
-                                            {% endif %}
-                                        </ul>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-car text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-3">Aucun véhicule enregistré</p>
+                            </div>
+                        {% endfor %}
+                        <div class="pagination">
+                            {{ knp_pagination_render(voitures) }}
                         </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-truck text-muted" style="font-size: 2rem;"></i>
-                            <p class="text-muted mt-3">Aucun transport enregistré</p>
+                    </div>
+                </div>
+            </div>
+
+           <!-- Transports Section -->
+<div id="transports" class="tab-content">
+    <div class="card mb-5">
+        <div class="card-header">
+            <h2 class="mb-0" style="font-weight: 600;">Suivi des Transports Actifs</h2>
+        </div>
+        <div class="card-body">
+            <div id="map"></div>
+          
+            <p class="text-muted text-center">Suivi en temps réel des transports actifs.</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0" style="font-weight: 600;">Liste des Transports</h2>
+        </div>
+        <div class="mb-4 mt-3 px-3">
+            <div class="d-flex gap-2">
+                <a class="filter-link {% if app.request.query.get('status') is null %}active{% endif %}" 
+                   href="{{ path('app_gestion_transport_dashboard') }}">Tous</a>
+                <a class="filter-link {% if app.request.query.get('status') == 'En attente' %}active{% endif %}" 
+                   href="{{ path('app_gestion_transport_dashboard', {'status': 'En attente'}) }}">En attente</a>
+                <a class="filter-link {% if app.request.query.get('status') == 'Actif' %}active{% endif %}" 
+                   href="{{ path('app_gestion_transport_dashboard', {'status': 'Actif'}) }}">Actifs</a>
+                <a class="filter-link {% if app.request.query.get('status') == 'Complété' %}active{% endif %}" 
+                   href="{{ path('app_gestion_transport_dashboard', {'status': 'Complété'}) }}">Complétés</a>
+            </div>
+        </div>
+        <div class="table-container">
+            <div class="row table-header d-none d-md-flex">
+                <div class="col-md-2">ID</div>
+                 <div class="col-md-2">Transporteur</div> 
+                <div class="col-md-2">Trajet</div>
+                <div class="col-md-1">Distance</div>
+                <div class="col-md-1">Tarif (TND)</div>
+                <div class="col-md-1">Date d'arrivée</div>
+                <div class="col-md-1">Statut</div>
+                <div class="col-md-1">Véhicule</div>
+               
+                <div class="col-md-1 text-end">Actions</div>
+            </div>
+            {% for transport in transports %}
+                <div class="border-bottom py-3 transport-row" data-transport-id="{{ transport.id }}">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-dark" style="width: 24px;">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div class="text-dark">{{ transport.id }}</div>
+                            </div>
+                          
                         </div>
-                    {% endfor %}
-                 <div class="pagination">
+                              <div class="col-md-2 text-muted small">
+                            {% if transport.reservation and transport.reservation.transporteur %}
+                                {{ transport.reservation.transporteur.prenom }} {{ transport.reservation.transporteur.nom }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            {% if transport.reservation and transport.reservation.adresseDepart and transport.reservation.adresseDestination %}
+                                <div class="text-dark small">{{ transport.reservation.adresseDepart|u.truncate(15, '...') }}</div>
+                                <div class="text-muted small">→ {{ transport.reservation.adresseDestination|u.truncate(15, '...') }}</div>
+                            {% else %}
+                                <div class="text-muted small">N/A</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-1 text-muted small">{{ transport.trajetEnKm }} km</div>
+                        <div class="col-md-1 text-dark small">{{ transport.tarif|number_format(2) }}</div>
+                        <div class="col-md-1 text-muted small">
+                            {{ transport.reservation.tempsArrivage ? transport.reservation.tempsArrivage|date('d/m/Y H:i') : 'N/A' }}
+                        </div>
+                        <div class="col-md-1">
+                            <span class="badge 
+                                {% if transport.status.value == 'Complété' %} text-dark border border-dark
+                                {% elseif transport.status.value == 'Actif' %} text-orange border border-orange
+                                {% else %} text-muted border border-muted {% endif %}">
+                                {{ transport.status.value }}
+                            </span>
+                        </div>
+                        <div class="col-md-1 text-muted small">
+                            {% if transport.voiture %}
+                                {{ transport.voiture.idVoiture }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                    <li>
+                                        <a class="dropdown-item small" href="{{ path('admin_transport_show', {'id': transport.id}) }}">
+                                            Détails
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-truck text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mt-3">Aucun transport enregistré</p>
+                </div>
+            {% endfor %}
+            <div class="pagination">
                 {{ knp_pagination_render(transports) }}
             </div>
-            </div>
+        </div>
+    </div>
 </div>
-            </div>
-           
-        </div>
-        </div>
 
-        <!-- Invoices Section -->
-        <div id="invoices" class="tab-content">
-            <div class="card mb-5">
-                <div class="card-header">
-                    <h2 class="mb-0" style="font-weight: 600;">Factures</h2>
-                </div>
-                 <div class="mb-4 mt-3 px-3">
-        <form method="get" class="d-flex align-items-center gap-2">
-    <input type="text" name="search" class="form-control form-control-sm w-25" placeholder="Student name" value="{{ app.request.query.get('search') }}">
-    <input type="date" name="date_from" class="form-control form-control-sm w-auto" value="{{ app.request.query.get('date_from') }}">
-    <input type="date" name="date_to" class="form-control form-control-sm w-auto" value="{{ app.request.query.get('date_to') }}">
-    <button type="submit" class="btn btn-sm btn-primary">Filter</button>
-    <a href="{{ path('app_gestion_transport_dashboard') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
-</form>
-    </div>
-                <div class="table-container">
-                    <div class="row table-header d-none d-md-flex">
-                        <div class="col-md-2">Facture #</div>
-                        <div class="col-md-2">Transport ID</div>
-                        <div class="col-md-3">Etudiant</div>
-                        <div class="col-md-2">Montant (TND)</div>
-                        <div class="col-md-2">Date</div>
-                        <div class="col-md-1 text-end">Actions</div>
+            <!-- Invoices Section -->
+            <div id="invoices" class="tab-content">
+                <div class="card mb-5">
+                    <div class="card-header">
+                        <h2 class="mb-0" style="font-weight: 600;">Factures</h2>
                     </div>
-                    {% for invoice in invoices %}
-                        <div class="border-bottom py-3 invoice-row">
-                            <div class="row align-items-center">
-                                <div class="col-md-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3 text-dark" style="width: 24px;">
-                                            <i class="fas fa-file-invoice"></i>
+                    <div class="mb-4 mt-3 px-3">
+                        <form method="get" action="{{ path('admin_transport_invoices') }}" class="d-flex align-items-center gap-2">
+                            <input type="text" name="search" class="form-control form-control-sm w-25" placeholder="Student name" value="{{ filters.search|default('') }}">
+                            <input type="date" name="date_from" class="form-control form-control-sm w-auto" value="{{ filters.date_from|default('') }}">
+                            <input type="date" name="date_to" class="form-control form-control-sm w-auto" value="{{ filters.date_to|default('') }}">
+                            <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                            <a href="{{ path('admin_transport_invoices') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
+                        </form>
+                    </div>
+                    <div class="table-container">
+                        <div class="row table-header d-none d-md-flex">
+                            <div class="col-md-2">Facture #</div>
+                            <div class="col-md-2">Transport ID</div>
+                            <div class="col-md-3">Etudiant</div>
+                            <div class="col-md-2">Montant (TND)</div>
+                            <div class="col-md-2">Date</div>
+                            <div class="col-md-1 text-end">Actions</div>
+                        </div>
+                        {% if invoices is defined and invoices is not empty %}
+                            {% for invoice in invoices %}
+                                <div class="border-bottom py-3 invoice-row">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 text-dark" style="width: 24px;">
+                                                    <i class="fas fa-file-invoice"></i>
+                                                </div>
+                                                <div class="text-dark">{{ invoice.invoiceData.reference }}</div>
+                                            </div>
                                         </div>
-                                        <div class="text-dark">{{ invoice.invoiceData.reference }}</div>
+                                        <div class="col-md-2 text-muted small">{{ invoice.transport.id }}</div>
+                                        <div class="col-md-3 text-muted small">
+                                            {{ invoice.transport.reservation.etudiant.nom }} {{ invoice.transport.reservation.etudiant.prenom }}
+                                        </div>
+                                        <div class="col-md-2 text-dark small">{{ invoice.invoiceData.amount|number_format(2) }}</div>
+                                        <div class="col-md-2 text-muted small">{{ invoice.invoiceData.date|date('d/m/Y') }}</div>
+                                        <div class="col-md-1 text-end">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                                    <li>
+                                                        <a class="dropdown-item small" href="{{ path('admin_transport_invoice', {'id': invoice.transport.id}) }}">
+                                                            Télécharger PDF
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <form method="post" action="{{ path('admin_transport_bill', {'id': invoice.transport.id}) }}">
+                                                            <button type="submit" class="dropdown-item small">Resend Invoice</button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-2 text-muted small">{{ invoice.transport.id }}</div>
-                                <div class="col-md-3 text-muted small">
-                                    {{ invoice.transport.reservation.etudiant.nom }} {{ invoice.transport.reservation.etudiant.prenom }}
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-file-invoice text-muted" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mt-3">Aucune facture trouvée</p>
                                 </div>
-                                <div class="col-md-2 text-dark small">{{ invoice.invoiceData.amount|number_format(2) }} </div>
-                                <div class="col-md-2 text-muted small">{{ invoice.invoiceData.date|date('d/m/Y') }}</div>
-                                <div class="col-md-1 text-end">
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm p-0 text-dark hover-orange" type="button" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
-                                            <li>
-                                                <a class="dropdown-item small" href="{{ path('admin_transport_invoice', {'id': invoice.transport.id}) }}">
-                                                    Télécharger PDF
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <form method="post" action="{{ path('admin_transport_bill', {'id': invoice.transport.id}) }}">
-                                                    <button type="submit" class="dropdown-item small">Resend Invoice</button>
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-file-invoice text-muted" style="font-size: 2rem;"></i>
+                                <p class="text-muted mt-3">Veuillez utiliser les filtres pour afficher les factures</p>
                             </div>
+                        {% endif %}
+                        <div class="pagination">
+                            {{ knp_pagination_render(invoices) }}
                         </div>
-                                 {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-file-invoice text-muted" style="font-size: 2rem;"></i>
-                            <p class="text-muted mt-3">Aucune facture trouvée</p>
-                        </div>
-                    {% endfor %}
-                </div>
-                 <div class="pagination">
-                {{ knp_pagination_render(invoices) }}
-            </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Statistics Modals -->
+            {% include 'admin/GestionTransport/_stats_modals.html.twig' %}
         </div>
     </div>
-
-    <!-- Statistics Modals -->
-    {% include 'admin/GestionTransport/_stats_modals.html.twig' %}
 {% endblock %}
 
 {% block javascripts %}
@@ -662,449 +658,26 @@
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/@mercure/EventSourcePolyfill"></script>
     <script src="{{ asset('js/admin/transport_stats.js') }}"></script>
+    <script src="{{ asset('js/admin/transport_map.js') }}"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Tab Switching Logic
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            if (tabButtons.length === 0 || tabContents.length === 0) {
-                console.error('Tab buttons or contents not found in DOM');
-                return;
-            }
-
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    console.log(`Switching to tab: ${button.getAttribute('data-tab')}`);
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    button.classList.add('active');
-                    const tabId = button.getAttribute('data-tab');
-                    const targetContent = document.getElementById(tabId);
-                    if (targetContent) {
-                        targetContent.classList.add('active');
-                        console.log(`Activated tab content: ${tabId}`);
-                    } else {
-                        console.error(`Tab content with ID ${tabId} not found`);
-                    }
-                    
-                    if (tabId === 'transports' && window.map) {
-                        setTimeout(() => {
-                            console.log('Invalidating map size');
-                            window.map.invalidateSize();
-                        }, 100);
-                    }
-                });
-            });
-
-            // Initialize Map
-            let map;
-            try {
-                map = L.map('map', {
-                    minZoom: 2,
-                    maxZoom: 18
-                }).setView([36.8065, 10.1815], 8);
-                window.map = map;
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-                    attribution: '© OpenStreetMap contributors',
-                    tileSize: 512,
-                    zoomOffset: -1
-                }).addTo(map);
-
-                setTimeout(() => {
-                    console.log('Initial map size invalidation');
-                    map.invalidateSize();
-                }, 500);
-            } catch (error) {
-                console.error('Map initialization failed:', error);
-            }
-
-            // Store markers and routing controls
-            const transportMarkers = {};
-            const routingControls = {};
-            const transportRoutes = {};
-
-            // Configuration for active transports
-            const cfgs = [
-                {% for transportData in transportsWithCoords|filter(t => t.transport.status.value == 'Actif') %}
-                    {
-                        departLat: {{ transportData.departLat|default('null')|json_encode|raw }},
-                        departLon: {{ transportData.departLon|default('null')|json_encode|raw }},
-                        arriveeLat: {{ transportData.arriveeLat|default('null')|json_encode|raw }},
-                        arriveeLon: {{ transportData.arriveeLon|default('null')|json_encode|raw }},
-                        trackSimulatePath: {{ path('admin_transport_simulate', {'id': transportData.transport.id})|json_encode|raw }},
-                        transportId: {{ transportData.transport.id|json_encode|raw }},
-                        trajetEnKm: {{ transportData.transport.trajetEnKm|json_encode|raw }}
-                    }{% if not loop.last %},{% endif %}
-                {% endfor %}
-            ];
-
-            // Initialize markers and routes
-            const allBounds = [];
-            cfgs.forEach(cfg => {
-                const hasValidDepart = cfg.departLat != null && cfg.departLon != null && 
-                                    !isNaN(cfg.departLat) && !isNaN(cfg.departLon) &&
-                                    cfg.departLat >= -90 && cfg.departLat <= 90 &&
-                                    cfg.departLon >= -180 && cfg.departLon <= 180;
-                const hasValidArrivee = cfg.arriveeLat != null && cfg.arriveeLon != null && 
-                                    !isNaN(cfg.arriveeLat) && !isNaN(cfg.arriveeLon) &&
-                                    cfg.arriveeLat >= -90 && cfg.arriveeLat <= 90 &&
-                                    cfg.arriveeLon >= -180 && cfg.arriveeLon <= 180;
-
-                if (hasValidDepart && hasValidArrivee) {
-                    const from = L.latLng(parseFloat(cfg.departLat), parseFloat(cfg.departLon));
-                    const to = L.latLng(parseFloat(cfg.arriveeLat), parseFloat(cfg.arriveeLon));
-
-                    L.marker(from, {
-                        icon: L.divIcon({
-                            html: '<i class="fas fa-map-marker-alt fa-2x" style="color:#FF0000"></i>',
-                            className: 'custom-icon',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 24]
-                        })
-                    }).addTo(map).bindPopup(`Départ Transport #${cfg.transportId}`);
-
-                    L.marker(to, {
-                        icon: L.divIcon({
-                            html: '<i class="fas fa-map-marker-alt fa-2x" style="color:#28A745"></i>',
-                            className: 'custom-icon',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 24]
-                        })
-                    }).addTo(map).bindPopup(`Destination Transport #${cfg.transportId}`);
-
-                    try {
-                        routingControls[cfg.transportId] = L.Routing.control({
-                            waypoints: [from, to],
-                            router: L.Routing.osrmv1({
-                                serviceUrl: 'https://router.project-osrm.org/route/v1',
-                                profile: 'driving'
-                            }),
-                            showAlternatives: false,
-                            fitSelectedRoutes: false,
-                            createMarker: () => null,
-                            lineOptions: { 
-                                styles: [{ color: '#F5A623', weight: 4, opacity: 0.7 }] 
-                            },
-                            routeWhileDragging: false
-                        }).addTo(map);
-
-                        routingControls[cfg.transportId].on('routesfound', function(e) {
-                            transportRoutes[cfg.transportId] = e.routes;
-                        });
-
-                        allBounds.push(from);
-                        allBounds.push(to);
-                    } catch (error) {
-                        console.error(`Error adding route for transport #${cfg.transportId}:`, error);
-                    }
-                } else {
-                    console.warn(`Invalid coordinates for transport #${cfg.transportId}`);
-                }
-            });
-
-            if (allBounds.length > 0) {
-                try {
-                    const bounds = L.latLngBounds(allBounds);
-                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
-                } catch (error) {
-                    console.error('Error fitting map bounds:', error);
-                    map.setView([36.8065, 10.1815], 8);
-                }
-            }
-
-            // Start Tracking Button
-            let isSimulating = false;
-            let eventSource = null;
-            let isMercureInitialized = false;
-            const startButton = document.getElementById('startTracking');
-            if (startButton) {
-                startButton.addEventListener('click', debounce(async () => {
-                    await startNavigation();
-                }, 1000));
-            } else {
-                console.error('Start tracking button not found');
-            }
-
-            async function startNavigation() {
-                if (isSimulating) {
-                    showModal('Une simulation est déjà en cours.');
-                    return;
-                }
-
-                if (cfgs.length === 0) {
-                    showModal('Aucun transport actif à suivre.');
-                    return;
-                }
-
-                try {
-                    isSimulating = true;
-                    startButton.disabled = true;
-                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    startButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Simulation en cours...';
-                    showLoading();
-
-                    // Initialiser les marqueurs pour tous les transports actifs
-                    cfgs.forEach(cfg => {
-                        const latlng = [parseFloat(cfg.departLat), parseFloat(cfg.departLon)];
-                        if (!isNaN(latlng[0]) && !isNaN(latlng[1])) {
-                            transportMarkers[cfg.transportId] = L.marker(latlng, {
-                                icon: L.divIcon({
-                                    html: '<i class="fas fa-truck fa-2x" style="color:#F5A623"></i>',
-                                    className: 'custom-icon',
-                                    iconSize: [24, 24],
-                                    iconAnchor: [12, 12]
-                                })
-                            }).addTo(map).bindPopup(`Transport #${cfg.transportId} en cours`);
-                        }
-                    });
-
-                    const response = await fetch('{{ path('admin_transport_simulate_all') }}', {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        credentials: 'same-origin'
-                    });
-
-                    const result = await response.json();
-                    if (!response.ok || result.status === 'error') {
-                        throw new Error(result.message || 'Failed to start simulations');
-                    }
-
-                    if (!isMercureInitialized) {
-                        await initializeMercureConnection();
-                        isMercureInitialized = true;
-                    }
-
-                } catch (error) {
-                    console.error('Simulation error:', error);
-                    showModal('Erreur lors du lancement du suivi: ' + error.message);
-                    resetSimulationState();
-                } finally {
-                    const spinner = document.getElementById('loadingSpinner');
-                    if (spinner) spinner.classList.add('hidden');
-                }
-            }
-
-            function initializeMercureConnection() {
-                return new Promise((resolve, reject) => {
-                    try {
-                        if (eventSource) {
-                            console.log('Closing existing Mercure connection');
-                            eventSource.close();
-                            eventSource = null;
-                        }
-
-                        const mercureUrl = new URL('http://localhost:3000/.well-known/mercure');
-                        cfgs.forEach(cfg => {
-                            mercureUrl.searchParams.append('topic', `tracking/transport/${cfg.transportId}`);
-                        });
-
-                        eventSource = new EventSource(mercureUrl);
-
-                        eventSource.onopen = () => {
-                            console.log('Mercure connection established for multiple transports');
-                            const spinner = document.getElementById('loadingSpinner');
-                            if (spinner) spinner.classList.add('hidden');
-                            resolve();
-                        };
-
-                        eventSource.onmessage = function(event) {
-                            try {
-                                const data = JSON.parse(event.data);
-                                let transportId = data.transportId;
-                                if (!transportId && event.lastEventId) {
-                                    transportId = event.lastEventId;
-                                } else if (!transportId && event.topic) {
-                                    transportId = event.topic.split('/').pop();
-                                }
-
-                                if (!transportId) {
-                                    console.error('Could not determine transport ID:', event);
-                                    return;
-                                }
-
-                                const latlng = [parseFloat(data.latitude), parseFloat(data.longitude)];
-                                if (isNaN(latlng[0]) || isNaN(latlng[1])) {
-                                    console.error('Invalid coordinates:', data);
-                                    return;
-                                }
-
-                                updateTransportMarker(transportId, latlng);
-                                updateTransportProgress(transportId, data);
-
-                                if (data.isComplete) {
-                                    updateTransportStatus(transportId, 'Complété');
-                                    checkAllTransportsComplete();
-                                }
-                            } catch (error) {
-                                console.error('Error processing Mercure update:', error);
-                            }
-                        };
-
-                        eventSource.onerror = function(event) {
-                            console.error('Mercure connection error:', event);
-                            showModal('Erreur de connexion au serveur de suivi');
-                            resetSimulationState();
-                            reject(new Error('Mercure connection error'));
-                        };
-
-                        window.mercureEventSource = eventSource;
-                    } catch (error) {
-                        console.error('Error setting up Mercure:', error);
-                        resetSimulationState();
-                        reject(error);
-                    }
-                });
-            }
-
-            function updateTransportMarker(transportId, latlng) {
-                if (transportMarkers[transportId]) {
-                    transportMarkers[transportId].setLatLng(latlng);
-                } else {
-                    transportMarkers[transportId] = L.marker(latlng, {
-                        icon: L.divIcon({
-                            html: '<i class="fas fa-truck fa-2x" style="color:#F5A623"></i>',
-                            className: 'custom-icon',
-                            iconSize: [24, 24],
-                            iconAnchor: [12, 12]
-                        })
-                    }).addTo(map).bindPopup(`Transport #${transportId} en cours`);
-                }
-
-                if (Object.keys(transportMarkers).length <= 3) {
-                    map.panTo(latlng, { animate: true, duration: 0.5 });
-                }
-            }
-
-            function updateTransportProgress(transportId, data) {
-                const row = document.querySelector(`tr[data-transport-id="${transportId}"]`);
-                if (row) {
-                    const progressCell = row.querySelector('.transport-progress');
-                    if (progressCell) {
-                        const cfg = cfgs.find(c => c.transportId == transportId);
-                        const totalDistance = cfg ? cfg.trajetEnKm : 1;
-                        const pct = ((data.distanceCovered / totalDistance) * 100).toFixed(1);
-                        progressCell.innerHTML = `${pct}%<div class="progress"><div class="progress-bar" role="progressbar" style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div></div>`;
-                        
-                        if (data.isComplete) {
-                            updateTransportStatus(transportId, 'Complété');
-                        } else if (pct > 0) {
-                            updateTransportStatus(transportId, 'Actif');
-                        }
-                    }
-                }
-            }
-
-            function updateTransportStatus(transportId, status) {
-                const row = document.querySelector(`tr[data-transport-id="${transportId}"]`);
-                if (row) {
-                    const statusCell = row.querySelector('td:nth-child(6) .badge');
-                    if (statusCell) {
-                        statusCell.textContent = status;
-                        statusCell.className = `badge ${
-                            status === 'Complété' ? 'text-dark border border-dark' :
-                            status === 'Actif' ? 'text-orange border border-orange' :
-                            status === 'En attente' ? 'text-muted border border-muted' : 'text-muted border border-muted'
-                        }`;
-                    }
-                }
-            }
-
-            function checkAllTransportsComplete() {
-                const allComplete = cfgs.every(cfg => {
-                    const row = document.querySelector(`tr[data-transport-id="${cfg.transportId}"]`);
-                    if (row) {
-                        const statusCell = row.querySelector('td:nth-child(6) .badge');
-                        return statusCell && statusCell.textContent === 'Complété';
-                    }
-                    return false;
-                });
-
-                if (allComplete) {
-                    resetSimulationState();
-                    showModal('Simulation terminée pour tous les transports.');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                }
-            }
-
-            function resetSimulationState() {
-                isSimulating = false;
-                isMercureInitialized = false;
-                startButton.disabled = false;
-                startButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                startButton.innerHTML = '<i class="fas fa-play me-2"></i>Lancer le Suivi pour Tous';
-                if (eventSource) {
-                    eventSource.close();
-                    eventSource = null;
-                    window.mercureEventSource = null;
-                }
-            }
-
-            function showModal(message) {
-                const modal = document.createElement('div');
-                modal.className = 'modal fade';
-                modal.innerHTML = `
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Information</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">${message}</div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                const bsModal = new bootstrap.Modal(modal);
-                bsModal.show();
-                modal.addEventListener('hidden.bs.modal', () => modal.remove());
-            }
-
-            function showLoading() {
-                if (!document.getElementById('loadingSpinner')) {
-                    const spinner = document.createElement('div');
-                    spinner.id = 'loadingSpinner';
-                    spinner.className = 'position-fixed top-50 start-50 translate-middle bg-white p-3 rounded shadow-lg d-flex flex-column align-items-center';
-                    spinner.innerHTML = `
-                        <div class="spinner-border text-primary mb-2" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <span>Initialisation du suivi...</span>
-                    `;
-                    document.body.appendChild(spinner);
-                } else {
-                    document.getElementById('loadingSpinner').className = document.getElementById('loadingSpinner').className.replace('hidden', '');
-                }
-            }
-
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
-
-            window.addEventListener('beforeunload', () => {
-                if (eventSource) {
-                    eventSource.close();
-                    eventSource = null;
-                    window.mercureEventSource = null;
-                }
-            });
-        });
-    </script>
+        // Pass route pattern and transport configs to JavaScript
+window.simulateRoutePattern = '{{ path('admin_transport_simulate', {'id': 'ID'}) }}'.replace('ID', ':id');
+ console.log('Simulate route pattern:', window.simulateRoutePattern); 
+        window.transportConfigs = [
+            {% for transportData in transportsWithCoords|filter(t => t.transport.status.value == 'Actif') %}
+            {% if transportData.departLat and transportData.departLon and transportData.arriveeLat and transportData.arriveeLon %}
+            {
+                transportId: {{ transportData.transport.id }},
+                departLat: {{ transportData.departLat }},
+                departLon: {{ transportData.departLon }},
+                arriveeLat: {{ transportData.arriveeLat }},
+                arriveeLon: {{ transportData.arriveeLon }},
+                departAddress: {{ transportData.transport.reservation.adresseDepart|json_encode|raw }},
+                arriveeAddress: {{ transportData.transport.reservation.adresseDestination|json_encode|raw }},
+                trajetEnKm: {{ transportData.transport.trajetEnKm }}
+            }{% if not loop.last %},{% endif %}
+            {% endif %}
+        {% endfor %}
+    ];
+</script>
 {% endblock %}

@@ -204,22 +204,7 @@
                     </tr>
                 </table>
             </div>
-            
-            <div class="preview-mode">
-                <p class="preview-notice">Ceci est un aperçu des détails. Le client recevra une facture officielle par email.</p>
-                <form action="{{ path('app_transport_bill', {'id': transport.id}) }}" method="POST">
-                    <button type="submit" class="button">
-                        Envoyer la facture au client
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="footer">
-        <p>
-            Facture sera envoyée à: {{ transport.reservation.etudiant.email }}<br>
-            Référence: {{ invoiceData.reference is defined ? invoiceData.reference : 'INV-' ~ transport.id ~ '-' ~ date('Ymd') }}
-        </p>
+           
     </div>
 </body>
 </html>
