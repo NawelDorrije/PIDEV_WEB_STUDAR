@@ -97,6 +97,9 @@ Les personnes suivantes ont contribué à ce projet en ajoutant des fonctionnali
 - [Khlass Melek](https://github.com/Khlass-Melek) – Gestion des transports
 - [Nour Choc](https://github.com/noor1510) –  Gestion des rendez-vous
 - [Alaa eddine zamouri](https://github.com/Aloulouzamouri) – Gestion des réclamations
+Encadre par : 
+- [Ghada Ben Khlifa ](https://github.com/BenKhalifaGHADA) – Supervision du projet StuDar, accompagnement technique et méthodologique pour garantir la qualité et la cohérence du développement.
+
 
 ### Comment contribuer ?
 
